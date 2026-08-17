@@ -1,9 +1,11 @@
 
+
+
 <!DOCTYPE html>
 <html lang="vi" class="scroll-smooth h-full">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>☆ Z8™ ☆</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <!-- FontAwesome 6 CDN for authentic Microsoft 365 Office icons -->
@@ -51,14 +53,14 @@
       .text-shadow {
         text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
       }
+      .matching-number {
+        @apply text-red-600 font-bold dark:text-red-400;
+        color: #ef4444 !important;
+      }
       @media (max-width: 1023px) {
         .mobile-hidden {
           display: none !important;
         }
-      }
-      .matching-number {
-        @apply text-red-600 font-bold dark:text-red-400;
-        color: #ef4444 !important;
       }
       #combinedBetInput:empty:before {
         content: "Hỗ trợ: Đề (de, d), Lô (lo, l), Xiên (x, x2, x3, x4, xien), Xiên Quay (xienquay, xq, xienq, quay, q, xquay), 3 Càng (3c, 3cang). Phân cách bằng dấu cách, phẩy, chấm, gạch ngang; dùng 'x', '+' hoặc '*' trước tiền/điểm cược.\A\AVí dụ nhập:\AĐề 12.34.56x50\ALô 01-02-03x10\AXiên 12-34-56x100\A3C 123.456x20";
@@ -89,6 +91,16 @@
         border-bottom-color: #4ade80;
       }
       
+      /* Prevent mobile double-tap zoom & focus zoom */
+      html, body {
+        touch-action: manipulation;
+      }
+      @media screen and (max-width: 768px) {
+        input, select, textarea, [contenteditable], [contenteditable="true"] {
+          font-size: 16px !important;
+        }
+      }
+
       /* Custom Scrollbars */
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -156,11 +168,6 @@
 
     <!-- Right Top Header Actions -->
     <div class="flex items-center space-x-2 text-xs">
-      <!-- Mobile Tab Toggle Button -->
-      <button id="mobileTabToggle" class="p-1 sm:px-2 sm:py-0.5 hover:bg-white/20 rounded transition flex items-center gap-1 border border-white/20" title="Bật/Tắt chế độ xem dạng Tab trên điện thoại">
-        <span id="mobileTabToggleText">📱 Tab: BẬT</span>
-      </button>
-
       <!-- Dark Mode Toggle Button -->
       <button id="darkModeToggle" class="p-1 sm:px-2 sm:py-0.5 hover:bg-white/20 rounded transition flex items-center gap-1" title="Chuyển chế độ Sáng / Tối">
         <span class="dark:hidden">🌙 Tối</span>
@@ -172,26 +179,12 @@
   <!-- ==================== MAIN SPREADSHEET WORKSPACE ==================== -->
   <main class="flex-1 container max-w-7xl mx-auto px-2 sm:px-4 py-3 space-y-4">
 
-    <!-- Mobile Tab Navigation (Only visible on screens < 1024px) -->
-    <div id="mobileTabContainer" class="lg:hidden flex bg-white dark:bg-dark-800 border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden shadow-xs">
-      <button type="button" id="mobileTabBtnInput" class="flex-1 py-2.5 text-center text-xs font-bold border-b-2 border-excel-800 dark:border-emerald-400 text-excel-800 dark:text-emerald-400 transition-all focus:outline-none">
-        📝 Nhập liệu
-      </button>
-      <button type="button" id="mobileTabBtnDetail" class="flex-1 py-2.5 text-center text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all focus:outline-none">
-        🔍 Chi tiết
-      </button>
-      <button type="button" id="mobileTabBtnReport" class="flex-1 py-2.5 text-center text-xs font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all focus:outline-none">
-        📊 Báo cáo
-      </button>
-    </div>
-
     <div class="flex flex-col lg:flex-row gap-4">
       
       <!-- LEFT COLUMN: SPREADSHEET INPUT & UTILITIES -->
-      <div id="leftColumn" class="flex-1 space-y-3 lg:!block">
+      <div class="flex-1 space-y-3">
         
         <!-- SHEET INPUT CONTAINER (STYLED LIKE EXCEL WORKSHEET GRID) -->
-        <div id="betInputContainer" class="space-y-3">
         <div class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 overflow-hidden transition-all hover:shadow-md">
           
           <!-- Sheet Header Tabs -->
@@ -363,7 +356,6 @@
           </div>
 
         </div>
-        </div>
 
         <!-- LOTTERY RESULTS CARD (KQXS EXCEL DATA RANGE) -->
         <div id="lotteryResultsPanel" class="hidden bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-4 transition-all hover:shadow-md space-y-4">
@@ -451,33 +443,12 @@
           </div>
         </div>
 
-        <!-- SHORTCUTS PANEL (LOOKUP TABLE) -->
-        <div id="shortcutsPanel" class="hidden bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-4 transition-all hover:shadow-md">
-          <div class="flex justify-between items-center mb-2">
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-              <i class="fa-solid fa-code text-excel-800 dark:text-emerald-400"></i>
-              <a href="nhaptat.html" class="text-excel-800 dark:text-emerald-400 hover:underline">Nhập tắt:</a>
-            </label>
-            <button type="button" id="btnToggleShortcuts" class="text-xs bg-slate-100 dark:bg-dark-700 hover:bg-slate-200 dark:hover:bg-dark-600 text-slate-600 dark:text-slate-200 px-2 py-0.5 rounded transition-all active:scale-95">Hiện</button>
-          </div>
-          <div id="shortcutsTextareaContainer" class="hidden">
-            <textarea 
-              id="shortcuts" 
-              class="w-full border border-slate-300 dark:border-slate-600 rounded p-2 text-xs font-mono focus:ring-2 focus:ring-excel-800 bg-white dark:bg-dark-700 shadow-inner" 
-              style="height: 99px"
-              placeholder="Định nghĩa các phím tắt..."
-            ></textarea>
-          </div>
-          <p class="text-center mt-3 text-xs text-slate-400">
-            <a href="dothuong.html" class="hover:underline">copyright</a> © by 
-            <a href="ex.html" class="text-excel-800 dark:text-emerald-400 font-bold hover:underline">Angle</a>
-          </p>
-        </div>
+        <!-- Nhập tắt moved to bottom -->
 
       </div>
 
       <!-- RIGHT COLUMN: SPREADSHEET PIVOT TABLES & REPORTS -->
-      <div id="column2" class="flex-1 space-y-4 lg:!block">
+      <div id="column2" class="flex-1 space-y-4">
         
         <!-- Thanh Tab phụ cho 3 card cược trên Mobile (Tailwind styled) -->
         <div id="mobileSubTabContainer" class="lg:hidden flex bg-slate-100 dark:bg-dark-900/60 p-1 rounded-lg gap-1 mb-3">
@@ -562,7 +533,7 @@
         </div>
 
         <!-- LOTTO REPORT & GRAND FINANCIAL SUMMARY TABLE (EXCEL SPREADSHEET TABLE) -->
-        <div id="baoCaoThauCard" class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-4 transition-all hover:shadow-md space-y-4 lg:!block">
+        <div id="baoCaoThauCard" class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-4 transition-all hover:shadow-md space-y-4">
           
           <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
             <h2 class="text-xs font-black uppercase tracking-wider text-excel-800 dark:text-emerald-400 flex items-center gap-1.5">
@@ -697,9 +668,49 @@
 
     </div>
 
+    <!-- SHORTCUTS PANEL (LOOKUP TABLE) -->
+    <div id="shortcutsPanel" class="hidden w-full bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-4 transition-all hover:shadow-md mt-4">
+      <div class="flex justify-between items-center mb-2">
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+          <i class="fa-solid fa-code text-excel-800 dark:text-emerald-400"></i>
+          <a href="nhaptat.html" class="text-excel-800 dark:text-emerald-400 hover:underline">Nhập tắt:</a>
+        </label>
+        <button type="button" id="btnToggleShortcuts" class="text-xs bg-slate-100 dark:bg-dark-700 hover:bg-slate-200 dark:hover:bg-dark-600 text-slate-600 dark:text-slate-200 px-2 py-0.5 rounded transition-all active:scale-95">Hiện</button>
+      </div>
+      <div id="shortcutsTextareaContainer" class="hidden">
+        <textarea 
+          id="shortcuts" 
+          class="w-full border border-slate-300 dark:border-slate-600 rounded p-2 text-xs font-mono focus:ring-2 focus:ring-excel-800 bg-white dark:bg-dark-700 shadow-inner" 
+          style="height: 99px"
+          placeholder="Định nghĩa các phím tắt..."
+        ></textarea>
+      </div>
+      <p class="text-center mt-3 text-xs text-slate-400">
+        <a href="dothuong.html" class="hover:underline">copyright</a> © by 
+        <a href="ex.html" class="text-excel-800 dark:text-emerald-400 font-bold hover:underline">Angle</a>
+      </p>
+    </div>
+
   </main>
 
   <script>
+// Prevent double-tap zoom & gesture zoom on iOS Safari / Mobile browsers
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function (event) {
+  const now = (new Date()).getTime();
+  if (now - lastTouchEnd <= 300) {
+    const target = event.target;
+    if (target && !['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) && !target.isContentEditable) {
+      event.preventDefault();
+    }
+  }
+  lastTouchEnd = now;
+}, false);
+
+document.addEventListener('gesturestart', function (e) {
+  e.preventDefault();
+}, false);
+
 window.onerror = function(message, source, lineno, colno, error) {
   alert("LỖI JS: " + message + "\nTại: " + source + ":" + lineno + ":" + colno + "\nStack: " + (error ? error.stack : "N/A"));
   return false;
@@ -2485,6 +2496,19 @@ function loadAppState() {
   } else if (autoFetchToggle) {
     autoFetchToggle.checked = false;
   }
+
+  // Khắc phục lỗi hiển thị cả 2 (nhập thủ công & kết quả tự động) khi load lại trang
+  if (autoFetchToggle) {
+    const autoResultStatus = document.getElementById('autoResultStatus');
+    const manualFields = document.getElementById('manualFields');
+    if (autoFetchToggle.checked) {
+      if (autoResultStatus) autoResultStatus.classList.remove('hidden');
+      if (manualFields) manualFields.classList.add('hidden');
+    } else {
+      if (autoResultStatus) autoResultStatus.classList.add('hidden');
+      if (manualFields) manualFields.classList.remove('hidden');
+    }
+  }
   
   if (autoFetchToggle && autoFetchToggle.checked) {
     if (resultDateInput) {
@@ -2988,10 +3012,10 @@ function calculateSum(isFromRunBalancing = false) {
 
     resultDiv.appendChild(header);
 
-    let contentHtml = "";
     sorted.forEach(([key, value]) => {
+      const div = document.createElement("div");
       const suffix = title.includes("Lô(đ)") ? 'đ' : '';
-      let text = `${key} = ${value}${suffix}`;
+      div.textContent = `${key} = ${value}${suffix}`;
       totalUniquePairs++;
 
       let isWin = false;
@@ -3023,12 +3047,11 @@ function calculateSum(isFromRunBalancing = false) {
       }
 
       if (isWin) {
-        contentHtml += `<div class="matching-number">${text}${hitText}</div>`;
-      } else {
-        contentHtml += `<div>${text}</div>`;
+        div.className = "matching-number";
+        div.textContent += hitText;
       }
+      content.appendChild(div);
     });
-    content.innerHTML = contentHtml;
     resultDiv.appendChild(content);
   };
 
@@ -3433,16 +3456,16 @@ function calculateSum(isFromRunBalancing = false) {
     };
 
     resultDiv.appendChild(header);
-    let xienHtml = "";
     xienBets.forEach(bet => {
+      const div = document.createElement("div");
       const allHit = bet.numbers.every(num => allPrizesLast2.includes(num));
+      div.textContent = `${bet.numbers.join('-')} = ${bet.amount}`;
       if (allHit) {
-        xienHtml += `<div class="matching-number">${bet.numbers.join('-')} = ${bet.amount} (Trúng)</div>`;
-      } else {
-        xienHtml += `<div>${bet.numbers.join('-')} = ${bet.amount}</div>`;
+        div.className = "matching-number";
+        div.textContent += " (Trúng)";
       }
+      content.appendChild(div);
     });
-    content.innerHTML = xienHtml;
     resultDiv.appendChild(content);
   }
 
@@ -3466,19 +3489,20 @@ function calculateSum(isFromRunBalancing = false) {
     };
 
     resultDiv.appendChild(header);
-    let bcHtml = "";
     Object.entries(baCangSums).sort((a,b) => b[1]-a[1]).forEach(([key, value]) => {
+      const div = document.createElement("div");
       const match3 = key === specialPrizeLast3;
       const match2 = key.slice(-2) === specialPrizeLast2;
+      div.textContent = `${key} = ${value}`;
       if (match3) {
-        bcHtml += `<div class="matching-number">${key} = ${value} (Trúng 3C)</div>`;
+        div.className = "matching-number";
+        div.textContent += " (Trúng 3C)";
       } else if (match2) {
-        bcHtml += `<div class="matching-number">${key} = ${value} (Áp Má)</div>`;
-      } else {
-        bcHtml += `<div>${key} = ${value}</div>`;
+        div.className = "matching-number";
+        div.textContent += " (Áp Má)";
       }
+      content.appendChild(div);
     });
-    content.innerHTML = bcHtml;
     resultDiv.appendChild(content);
   }
 
@@ -4873,14 +4897,17 @@ function setupEventListeners() {
 
   function adjustBaoCaoThauPosition(isChecked) {
     if (!cardsGrid || !baoCaoThauCard || !column2) return;
+    const mobileSubTab = document.getElementById('mobileSubTabContainer');
+    const refNode = mobileSubTab ? mobileSubTab : cardsGrid;
     if (isChecked) {
-      column2.insertBefore(baoCaoThauCard, cardsGrid);
+      column2.insertBefore(baoCaoThauCard, refNode);
     } else {
       column2.appendChild(baoCaoThauCard);
     }
   }
 
   if (toggleExtraPanels) {
+    // Khởi tạo vị trí ban đầu
     adjustBaoCaoThauPosition(toggleExtraPanels.checked);
 
     toggleExtraPanels.addEventListener('change', function() {
@@ -5864,11 +5891,9 @@ function runBalancingStep(isPercent) {
   calculateSum(true);
   updateTransferStepsUI();
 
+  // Auto-switch to "Chuyển đi" tab on Mobile after calculation
   const isMobile = window.matchMedia("(max-width: 1023px)").matches;
   if (isMobile) {
-    if (typeof window.showMobileTab === 'function') {
-      window.showMobileTab('detail');
-    }
     if (typeof window.showSubTab === 'function') {
       window.showSubTab('transfer');
     }
@@ -6037,184 +6062,20 @@ function showSubTab(subTabName) {
   }
 }
 
-let useMobileTabs = true;
-let currentMobileTab = 'input'; // 'input' hoặc 'report'
-
-function initMobileTabs() {
-  const toggleBtn = document.getElementById('mobileTabToggle');
-  const toggleText = document.getElementById('mobileTabToggleText');
-  const tabContainer = document.getElementById('mobileTabContainer');
-  
-  const tabBtnInput = document.getElementById('mobileTabBtnInput');
-  const tabBtnDetail = document.getElementById('mobileTabBtnDetail');
-  const tabBtnReport = document.getElementById('mobileTabBtnReport');
-  
-  const leftColumn = document.getElementById('leftColumn');
-  const rightColumn = document.getElementById('rightColumn');
-  
-  const betInputContainer = document.getElementById('betInputContainer');
-  const shortcutsPanel = document.getElementById('shortcutsPanel');
-  const lotteryResultsPanel = document.getElementById('lotteryResultsPanel');
-  const cardsGrid = document.getElementById('cardsGrid');
-  const baoCaoThauCard = document.getElementById('baoCaoThauCard');
-  const toggleExtraPanels = document.getElementById('toggleExtraPanels');
-  
-  if (!tabBtnInput || !tabBtnDetail || !tabBtnReport) return;
-  
-  const activeClass = "border-excel-800 dark:border-emerald-400 text-excel-800 dark:text-emerald-400 bg-slate-50 dark:bg-dark-700/30";
-  const inactiveClass = "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300";
-  
-  // Khôi phuc trạng thái bật/tắt Tab từ localStorage
-  const savedUseTabs = localStorage.getItem('z8_use_mobile_tabs');
-  if (savedUseTabs !== null) {
-    useMobileTabs = (savedUseTabs === '1');
-  } else {
-    useMobileTabs = true; // Mặc định là bật
-  }
-
-  function showTab(tabName) {
-    currentMobileTab = tabName;
-    
-    // Luôn ẩn/hiện subTabContainer dựa trên tab hiện tại
-    const subTabContainer = document.getElementById('mobileSubTabContainer');
-    if (subTabContainer) {
-      if (useMobileTabs && tabName !== 'detail') {
-        subTabContainer.classList.add('mobile-hidden');
-      }
-    }
-    
-    if (!useMobileTabs) return;
-    
-    // Reset button classes
-    [tabBtnInput, tabBtnDetail, tabBtnReport].forEach(btn => {
-      btn.className = "flex-1 py-2.5 text-center text-xs font-bold border-b-2 transition-all focus:outline-none " + inactiveClass;
-    });
-    
-    // Ẩn tất cả các cột và các phần tử trước
-    if (leftColumn) leftColumn.classList.add('mobile-hidden');
-    if (rightColumn) rightColumn.classList.add('mobile-hidden');
-    
-    if (betInputContainer) betInputContainer.classList.add('mobile-hidden');
-    if (shortcutsPanel) shortcutsPanel.classList.add('mobile-hidden');
-    if (cardsGrid) cardsGrid.classList.add('mobile-hidden');
-    if (baoCaoThauCard) baoCaoThauCard.classList.add('mobile-hidden');
-    if (lotteryResultsPanel) {
-      lotteryResultsPanel.classList.add('mobile-hidden');
-      if (toggleExtraPanels && !toggleExtraPanels.checked) {
-        lotteryResultsPanel.classList.add('hidden');
-      }
-    }
-    
-    if (tabName === 'input') {
-      tabBtnInput.className = "flex-1 py-2.5 text-center text-xs font-bold border-b-2 transition-all focus:outline-none " + activeClass;
-      
-      // Tab Nhập liệu: Hiện cột trái + phần nhập cược & shortcuts
-      if (leftColumn) leftColumn.classList.remove('mobile-hidden');
-      if (betInputContainer) betInputContainer.classList.remove('mobile-hidden');
-      if (shortcutsPanel) shortcutsPanel.classList.remove('mobile-hidden');
-      
-    } else if (tabName === 'detail') {
-      tabBtnDetail.className = "flex-1 py-2.5 text-center text-xs font-bold border-b-2 transition-all focus:outline-none " + activeClass;
-      
-      // Tab Chi tiết: Hiện cột phải + 3 card cược (theo dạng sub tabs)
-      if (rightColumn) rightColumn.classList.remove('mobile-hidden');
-      if (cardsGrid) cardsGrid.classList.remove('mobile-hidden');
-      if (subTabContainer) subTabContainer.classList.remove('mobile-hidden');
-      showSubTab(currentSubTab);
-      
-    } else if (tabName === 'report') {
-      tabBtnReport.className = "flex-1 py-2.5 text-center text-xs font-bold border-b-2 transition-all focus:outline-none " + activeClass;
-      
-      // Tab Báo cáo: Hiện cột trái (chỉ hiện KQXS) + cột phải (chỉ hiện Báo cáo)
-      if (leftColumn) leftColumn.classList.remove('mobile-hidden');
-      if (lotteryResultsPanel) {
-        lotteryResultsPanel.classList.remove('mobile-hidden');
-        lotteryResultsPanel.classList.remove('hidden'); // Hiện kể cả khi tắt checkbox trên PC
-      }
-      
-      if (rightColumn) rightColumn.classList.remove('mobile-hidden');
-      if (baoCaoThauCard) baoCaoThauCard.classList.remove('mobile-hidden');
-    }
-  }
-  window.showMobileTab = showTab;
-
-  function applyMobileTabsMode() {
-    const subTabContainer = document.getElementById('mobileSubTabContainer');
-    if (useMobileTabs) {
-      if (toggleText) toggleText.textContent = "📱 Tab: BẬT";
-      if (toggleBtn) {
-        toggleBtn.className = "p-1 sm:px-2 sm:py-0.5 bg-emerald-600 text-white rounded transition flex items-center gap-1 border border-transparent shadow-xs";
-      }
-      if (tabContainer) {
-        tabContainer.classList.remove('hidden');
-      }
-      showTab(currentMobileTab);
-    } else {
-      if (toggleText) toggleText.textContent = "📱 Tab: TẮT";
-      if (toggleBtn) {
-        toggleBtn.className = "p-1 sm:px-2 sm:py-0.5 bg-transparent text-slate-300 rounded transition flex items-center gap-1 border border-white/20";
-      }
-      if (tabContainer) {
-        tabContainer.classList.add('hidden');
-      }
-      // Hiện tất cả các phần tử (xóa mobile-hidden)
-      if (leftColumn) leftColumn.classList.remove('mobile-hidden');
-      if (rightColumn) rightColumn.classList.remove('mobile-hidden');
-      if (betInputContainer) betInputContainer.classList.remove('mobile-hidden');
-      if (shortcutsPanel) shortcutsPanel.classList.remove('mobile-hidden');
-      if (cardsGrid) cardsGrid.classList.remove('mobile-hidden');
-      if (baoCaoThauCard) baoCaoThauCard.classList.remove('mobile-hidden');
-      if (lotteryResultsPanel) {
-        lotteryResultsPanel.classList.remove('mobile-hidden');
-        // Khôi phục hiển thị dựa trên checkbox toggleExtraPanels
-        if (toggleExtraPanels && !toggleExtraPanels.checked) {
-          lotteryResultsPanel.classList.add('hidden');
-        } else {
-          lotteryResultsPanel.classList.remove('hidden');
-        }
-      }
-      
-      // Hiện thanh tab phụ khi tắt tab lớn
-      if (subTabContainer) subTabContainer.classList.remove('mobile-hidden');
-      showSubTab(currentSubTab);
-    }
-  }
-
-  tabBtnInput.addEventListener('click', () => showTab('input'));
-  tabBtnDetail.addEventListener('click', () => showTab('detail'));
-  tabBtnReport.addEventListener('click', () => showTab('report'));
-  
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', () => {
-      useMobileTabs = !useMobileTabs;
-      localStorage.setItem('z8_use_mobile_tabs', useMobileTabs ? '1' : '0');
-      applyMobileTabsMode();
-    });
-  }
-
-  // Lắng nghe thay đổi kích thước cửa sổ để tự động khôi phục các card cược khi về PC
+function initMobileSubTabs() {
   window.addEventListener('resize', () => {
     const isMobile = window.matchMedia("(max-width: 1023px)").matches;
-    const subTabContainer = document.getElementById('mobileSubTabContainer');
     if (!isMobile) {
-      // Khôi phục tất cả card trên PC
       ['cardResult', 'cardTransfer', 'cardDetail'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('mobile-hidden');
       });
     } else {
-      // Áp dụng lại hiển thị tab phụ trên mobile
-      if (!useMobileTabs || currentMobileTab === 'detail') {
-        if (subTabContainer) subTabContainer.classList.remove('mobile-hidden');
-        showSubTab(currentSubTab);
-      } else {
-        if (subTabContainer) subTabContainer.classList.add('mobile-hidden');
-      }
+      showSubTab(currentSubTab);
     }
   });
-
-  // Khởi tạo hiển thị lần đầu
-  applyMobileTabsMode();
+  
+  showSubTab(currentSubTab);
 }
 
 function initLotteryResultsToggle() {
@@ -6275,9 +6136,54 @@ document.addEventListener("DOMContentLoaded", () => {
     loadShortcuts();
     setupEventListeners();
     loadAppState();
-    initMobileTabs();
+    initMobileSubTabs();
     initLotteryResultsToggle();
     checkDarkModePreference();
+
+    const shortcutsArea = document.getElementById('shortcuts');
+    const STORAGE_KEY = 'lucky_wheel_shortcuts';
+    const DATA_URL = 'https://raw.githubusercontent.com/doducdungvn/doducdungvn.github.io/refs/heads/main/nhaptat.txt';
+
+    if (shortcutsArea) {
+      const saveToStorage = () => {
+        localStorage.setItem(STORAGE_KEY, shortcutsArea.value);
+      };
+
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      if (savedData !== null) {
+        shortcutsArea.value = savedData;
+      }
+
+      if (!shortcutsArea.value.trim()) {
+        fetch(DATA_URL)
+          .then(response => {
+            if (!response.ok) throw new Error('Kết nối thất bại');
+            return response.text();
+          })
+          .then(text => {
+            shortcutsArea.value = text;
+            saveToStorage();
+          })
+          .catch(error => {
+            console.error('Lỗi tải dữ liệu nhập tắt mặc định:', error);
+            shortcutsArea.placeholder = "Không thể tải dữ liệu mặc định. Vui lòng kiểm tra kết nối.";
+          });
+      }
+    }
+
+    const btnScrollTop = document.getElementById('btnScrollTop');
+    if (btnScrollTop) {
+      btnScrollTop.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    const btnScrollBottom = document.getElementById('btnScrollBottom');
+    if (btnScrollBottom) {
+      btnScrollBottom.addEventListener('click', function() {
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+      });
+    }
 
     // Auto-fetch results on page load is disabled by default
     // triggerAutoFetch();
@@ -6388,45 +6294,6 @@ function resetTable() {
   if (totalCol1) totalCol1.textContent = '0';
 }
 </script>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const shortcutsArea = document.getElementById('shortcuts');
-      const STORAGE_KEY = 'lucky_wheel_shortcuts';
-      const DATA_URL = 'https://raw.githubusercontent.com/doducdungvn/doducdungvn.github.io/refs/heads/main/nhaptat.txt';
-
-      // Nếu không tìm thấy ô nhập tắt thì dừng
-      if (!shortcutsArea) return;
-
-      // Hàm lưu vào LocalStorage
-      const saveToStorage = () => {
-        localStorage.setItem(STORAGE_KEY, shortcutsArea.value);
-      };
-
-      // 1. Tải dữ liệu từ LocalStorage ra trước
-      const savedData = localStorage.getItem(STORAGE_KEY);
-      if (savedData !== null) {
-        shortcutsArea.value = savedData;
-      }
-
-      // 2. Chỉ tải từ URL nếu ô nhập liệu TRỐNG (lần đầu hoặc đã xóa hết)
-      if (!shortcutsArea.value.trim()) {
-        fetch(DATA_URL)
-          .then(response => {
-            if (!response.ok) throw new Error('Kết nối thất bại');
-            return response.text();
-          })
-          .then(text => {
-            shortcutsArea.value = text;
-            saveToStorage(); // Lưu luôn dữ liệu mặc định vào storage
-          })
-          .catch(error => {
-            console.error('Lỗi tải dữ liệu nhập tắt mặc định:', error);
-            shortcutsArea.placeholder = "Không thể tải dữ liệu mặc định. Vui lòng kiểm tra kết nối.";
-          });
-      }
-    });
-  </script>
 
   <!-- Modal Cấu hình giá (Ported from thau_lode.html) -->
   <div id="modalPriceConfig" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60 backdrop-blur-sm p-4">
@@ -6557,15 +6424,6 @@ function resetTable() {
       </svg>
     </button>
   </div>
-
-  <script>
-    document.getElementById('btnScrollTop').addEventListener('click', function() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-    document.getElementById('btnScrollBottom').addEventListener('click', function() {
-      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-    });
-  </script>
 </body>
 </html>
 
