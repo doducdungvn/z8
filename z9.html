@@ -249,7 +249,7 @@
         <!-- 2. ACTION CONTROLS PANEL (BELOW INPUT FIELD) -->
         <div class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-3 space-y-3">
           
-          <!-- Main Buttons: Tính tổng | Chuyển 1 | Trợ lý AI -->
+          <!-- 3 Main Buttons: Tính tổng | Chuyển 1 | 🤖 Trợ lý AI -->
           <div class="grid grid-cols-3 gap-2">
             <button id="calculateButton" class="bg-excel-800 hover:bg-excel-900 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Tính toán tổng số tiền cược">
               <i class="fa-solid fa-sigma"></i>
@@ -259,8 +259,8 @@
               <i class="fa-solid fa-share-nodes"></i>
               <span>Chuyển 1</span>
             </button>
-            <button id="btnGeminiAi" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Phân tích rủi ro và tư vấn bằng Gemini AI">
-              <i class="fa-solid fa-robot text-amber-300"></i>
+            <button id="btnGeminiAi" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Phân tích bảng cược và tư vấn 3 kịch bản cân chuyển bằng Gemini AI">
+              <i class="fa-solid fa-robot text-yellow-300"></i>
               <span>Trợ lý AI</span>
             </button>
           </div>
@@ -274,17 +274,17 @@
               </div>
               
               <div class="flex items-center gap-2">
-                <div class="flex items-center gap-1.5 bg-white dark:bg-dark-800 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 text-xs">
-                  <label class="flex items-center gap-1 cursor-pointer font-medium px-1.5 py-0.5">
+                <div class="flex items-center gap-2 bg-white dark:bg-dark-800 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 text-xs">
+                  <label class="flex items-center gap-1 cursor-pointer font-medium px-2 py-1">
                     <input type="radio" name="retainType" id="retainTypeMoney" value="money" checked class="form-radio text-excel-800 focus:ring-excel-800">
                     <span>Tiền</span>
                   </label>
-                  <label class="flex items-center gap-1 cursor-pointer font-medium px-1.5 py-0.5">
+                  <label class="flex items-center gap-1 cursor-pointer font-medium px-2 py-1">
                     <input type="radio" name="retainType" id="retainTypePercentage" value="percentage" class="form-radio text-excel-800 focus:ring-excel-800">
                     <span>%</span>
                   </label>
                 </div>
-
+                
                 <label class="flex items-center gap-1 cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-dark-800 px-2 py-2 rounded border border-slate-200 dark:border-slate-700">
                   <input type="checkbox" id="retainUseBranch" class="form-checkbox text-excel-800 focus:ring-excel-800 rounded">
                   <span id="retainBranchCheckboxLabel">Nhánh</span>
@@ -2428,20 +2428,6 @@ function saveAppState() {
   if (checkedRadio) {
     localStorage.setItem('z8_retain_type', checkedRadio.value);
   }
-  const targetProfitInput = document.getElementById('targetProfitInput');
-  if (targetProfitInput) {
-    localStorage.setItem('z8_target_profit', targetProfitInput.value || '100');
-  }
-
-  const overrideDe = document.getElementById('overrideDe');
-  const overrideLo = document.getElementById('overrideLo');
-  const override3c = document.getElementById('override3c');
-  const overrideX = document.getElementById('overrideX');
-  if (overrideDe) localStorage.setItem('z8_override_de', overrideDe.checked ? '1' : '0');
-  if (overrideLo) localStorage.setItem('z8_override_lo', overrideLo.checked ? '1' : '0');
-  if (override3c) localStorage.setItem('z8_override_3c', override3c.checked ? '1' : '0');
-  if (overrideX) localStorage.setItem('z8_override_x', overrideX.checked ? '1' : '0');
-
   if (typeof balanceState !== 'undefined') {
     localStorage.setItem('z8_balance_state', JSON.stringify(balanceState));
   }
@@ -2471,28 +2457,9 @@ function loadAppState() {
   const savedRetain3c = localStorage.getItem('z8_retain_3c');
   const savedRetainX = localStorage.getItem('z8_retain_x');
   const savedRetainType = localStorage.getItem('z8_retain_type');
-  const savedTargetProfit = localStorage.getItem('z8_target_profit');
   const savedBalanceState = localStorage.getItem('z8_balance_state');
-  const savedOvrDe = localStorage.getItem('z8_override_de');
-  const savedOvrLo = localStorage.getItem('z8_override_lo');
-  const savedOvr3c = localStorage.getItem('z8_override_3c');
-  const savedOvrX = localStorage.getItem('z8_override_x');
-
-  const overrideDe = document.getElementById('overrideDe');
-  const overrideLo = document.getElementById('overrideLo');
-  const override3c = document.getElementById('override3c');
-  const overrideX = document.getElementById('overrideX');
-  if (savedOvrDe !== null && overrideDe) overrideDe.checked = (savedOvrDe === '1');
-  if (savedOvrLo !== null && overrideLo) overrideLo.checked = (savedOvrLo === '1');
-  if (savedOvr3c !== null && override3c) override3c.checked = (savedOvr3c === '1');
-  if (savedOvrX !== null && overrideX) overrideX.checked = (savedOvrX === '1');
 
   let hasData = false;
-
-  const targetProfitInputLoad = document.getElementById('targetProfitInput');
-  if (savedTargetProfit !== null && targetProfitInputLoad) {
-    targetProfitInputLoad.value = savedTargetProfit;
-  }
 
   if (savedBet !== null && combinedBetInput) {
     setRawTextToContentEditable(combinedBetInput, savedBet, false);
@@ -2579,15 +2546,7 @@ function loadAppState() {
     retainBranchX.value = savedRetainBranchX;
   }
 
-  if (savedRetainType && savedRetainType !== 'autosmart') {
-    const radio = document.querySelector(`input[name="retainType"][value="${savedRetainType}"]`);
-    if (radio) radio.checked = true;
-  } else {
-    const moneyRadio = document.getElementById('retainTypeMoney');
-    if (moneyRadio) moneyRadio.checked = true;
-  }
-
-  if (savedRetainType !== null && savedRetainType !== 'money') {
+  if (savedRetainType !== null) {
     const radio = document.querySelector(`input[name="retainType"][value="${savedRetainType}"]`);
     if (radio) radio.checked = true;
   }
@@ -2634,19 +2593,6 @@ function updateRetainBranchUI() {
       container.classList.add('hidden');
     }
   }
-
-  const retainDeEl = document.getElementById('retainDe');
-  const retainLoEl = document.getElementById('retainLo');
-  const retain3cEl = document.getElementById('retain3c');
-  const retainXEl = document.getElementById('retainX');
-
-  [retainDeEl, retainLoEl, retain3cEl, retainXEl].forEach(el => {
-    if (el) {
-      el.readOnly = false;
-      el.title = "";
-      el.className = "w-full text-center font-bold text-xs bg-transparent focus:outline-none p-1";
-    }
-  });
 
   const checkboxLabel = document.getElementById('retainBranchCheckboxLabel');
   if (checkboxLabel) {
@@ -3109,12 +3055,11 @@ function calculateSum(isFromRunBalancing = false) {
   const totalNet = totalVon - totalTrung;
 
   // 2. Calculations for Chuyển column
+  const retainDe = parseFloat(document.getElementById("retainDe")?.value) || 0;
+  const retainLo = parseFloat(document.getElementById("retainLo")?.value) || 0;
+  const retain3c = parseFloat(document.getElementById("retain3c")?.value) || 0;
+  const retainX = parseFloat(document.getElementById("retainX")?.value) || 0;
   const retainType = document.querySelector('input[name="retainType"]:checked')?.value || "money";
-
-  let retainDe = parseFloat(document.getElementById("retainDe")?.value) || 0;
-  let retainLo = parseFloat(document.getElementById("retainLo")?.value) || 0;
-  let retain3c = parseFloat(document.getElementById("retain3c")?.value) || 0;
-  let retainX = parseFloat(document.getElementById("retainX")?.value) || 0;
 
   const retainUseBranch = document.getElementById("retainUseBranch")?.checked || false;
   const retainBranchDe = parseFloat(document.getElementById("retainBranchDe")?.value) || 0;
@@ -3186,7 +3131,7 @@ function calculateSum(isFromRunBalancing = false) {
         excess = val;
         excess = Math.max(0, Math.ceil(excess));
       } else {
-        if (retainType === "money" || retainType === "autosmart") {
+        if (retainType === "money") {
           if (retainUseBranch) {
             if (val >= branchLimit) {
               excess = Math.max(0, val - retainVal);
@@ -4016,9 +3961,7 @@ function updateCopyButtonLabel() {
   if (!copyButton) return;
   const retainType = document.querySelector('input[name="retainType"]:checked')?.value || "money";
   const displayStep = " " + (balanceState.step + 1);
-  let prefix = "";
-  if (retainType === "percentage") prefix = "% ";
-  else if (retainType === "autosmart") prefix = "⚡ Smart ";
+  const prefix = retainType === "percentage" ? "% " : "";
   copyButton.innerHTML = `<i class="fa-solid fa-share-nodes"></i> <span>${prefix}Chuyển${displayStep}</span>`;
 }
 
@@ -4716,63 +4659,6 @@ function setupEventListeners() {
     });
   }
 
-  function getCaretCharacterOffsetWithin(element) {
-    let caretOffset = 0;
-    const doc = element.ownerDocument || element.document;
-    const win = doc.defaultView || doc.parentWindow;
-    const sel = win.getSelection();
-    if (sel && sel.rangeCount > 0) {
-      const range = sel.getRangeAt(0);
-      if (element.contains(range.startContainer)) {
-        const preCaretRange = range.cloneRange();
-        preCaretRange.selectNodeContents(element);
-        preCaretRange.setEnd(range.startContainer, range.startOffset);
-        caretOffset = preCaretRange.toString().length;
-      }
-    }
-    return caretOffset;
-  }
-
-  function setCaretCharacterOffsetWithin(element, offset) {
-    const doc = element.ownerDocument || element.document;
-    const win = doc.defaultView || doc.parentWindow;
-    const sel = win.getSelection();
-    if (!sel) return;
-    const range = doc.createRange();
-    
-    let currentOffset = 0;
-    let found = false;
-
-    function traverse(node) {
-      if (found) return;
-      if (node.nodeType === 3) {
-        const len = node.length;
-        if (currentOffset + len >= offset) {
-          range.setStart(node, Math.min(len, offset - currentOffset));
-          range.collapse(true);
-          found = true;
-          return;
-        }
-        currentOffset += len;
-      } else {
-        for (let i = 0; i < node.childNodes.length; i++) {
-          traverse(node.childNodes[i]);
-          if (found) return;
-        }
-      }
-    }
-
-    traverse(element);
-
-    if (!found) {
-      range.selectNodeContents(element);
-      range.collapse(false);
-    }
-
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-
   if (combinedBetInput && combinedBetInput.tagName.toLowerCase() !== "textarea") {
     combinedBetInput.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
@@ -4784,82 +4670,118 @@ function setupEventListeners() {
     combinedBetInput.addEventListener('paste', function(e) {
       e.preventDefault();
       const text = (e.originalEvent || e).clipboardData.getData('text/plain');
-      if (document.queryCommandSupported && document.queryCommandSupported('insertText')) {
-        document.execCommand('insertText', false, text);
-      } else {
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) {
-          const range = sel.getRangeAt(0);
-          range.deleteContents();
-          const textNode = document.createTextNode(text);
-          range.insertNode(textNode);
-          range.setStartAfter(textNode);
-          range.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
-      }
-      combinedBetInput.dispatchEvent(new Event('input', { bubbles: true }));
+      const safeText = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .replace(/\r\n/g, '<br>')
+        .replace(/[\r\n]/g, '<br>');
+      document.execCommand("insertHTML", false, safeText);
     });
 
     let highlightTimeout = null;
     combinedBetInput.addEventListener('input', function() {
       debouncedSaveAppState();
-      debouncedCalculateSum();
       updateCopyButtonLabel();
       if (highlightTimeout) clearTimeout(highlightTimeout);
       highlightTimeout = setTimeout(() => {
-        const isFocused = (document.activeElement === combinedBetInput);
-        const caretOffset = isFocused ? getCaretCharacterOffsetWithin(combinedBetInput) : null;
+        // 1. Get selection and insert placeholder
+        const sel = window.getSelection();
+        let range = null;
+        let hasMarker = false;
+        let markerTextNode = null;
+        
+        if (sel && sel.rangeCount > 0 && document.activeElement === combinedBetInput) {
+          range = sel.getRangeAt(0);
+          if (combinedBetInput.contains(range.startContainer)) {
+            markerTextNode = document.createTextNode("__CARET_MARKER__");
+            try {
+              range.insertNode(markerTextNode);
+              hasMarker = true;
+            } catch (e) {
+              console.warn("Could not insert caret marker node", e);
+            }
+          }
+        }
 
+        // 2. Read innerText (which now contains the placeholder)
         const inputString = getRawTextFromElement(combinedBetInput);
+
+        // 3. Remove the temporary placeholder text node from the DOM immediately
+        if (hasMarker && markerTextNode && markerTextNode.parentNode) {
+          markerTextNode.parentNode.removeChild(markerTextNode);
+        }
+
+        // 4. Generate highlighted HTML
         const originalLines = inputString.split('\n');
         let currentCat = '';
         let editorHtml = originalLines.map(line => {
-          if (line.trim() === "") return "";
+          if (line.trim() === "") {
+            return "";
+          }
           const res = formatLineWithHighlights(line, currentCat);
           currentCat = res.newCategory;
           return res.html;
         }).join('<br>') + '<br>';
 
-        const currentHtmlClean = combinedBetInput.innerHTML.replace(/<br\s*\/?>/gi, '<br>');
-        const editorHtmlClean = editorHtml.replace(/<br\s*\/?>/gi, '<br>');
+        // 5. Replace __CARET_MARKER__ in editorHtml with a temporary span element
+        let editorHtmlWithMarker = editorHtml;
+        if (hasMarker) {
+          editorHtmlWithMarker = editorHtml.replace(/__CARET_MARKER__/g, '<span id="caret-marker"></span>');
+        }
+
+        // 6. Compare clean HTML
+        const currentHtmlClean = combinedBetInput.innerHTML.replace(/<span id="caret-marker"><\/span>/g, '').replace(/__CARET_MARKER__/g, '');
+        const editorHtmlClean = editorHtml.replace(/__CARET_MARKER__/g, '');
 
         if (currentHtmlClean !== editorHtmlClean) {
-          combinedBetInput.innerHTML = editorHtml;
-          if (isFocused && caretOffset !== null) {
-            setCaretCharacterOffsetWithin(combinedBetInput, caretOffset);
+          combinedBetInput.innerHTML = editorHtmlWithMarker;
+
+          // 7. Restore Selection
+          if (hasMarker) {
+            const markerNode = document.getElementById('caret-marker');
+            if (markerNode) {
+              const newRange = document.createRange();
+              const textNode = document.createTextNode("");
+              markerNode.parentNode.replaceChild(textNode, markerNode);
+              newRange.setStart(textNode, 0);
+              newRange.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(newRange);
+            }
+          }
+        } else if (hasMarker) {
+          // If HTML didn't change, clean up any leftover marker
+          const markerNode = document.getElementById('caret-marker');
+          if (markerNode) {
+            markerNode.parentNode.removeChild(markerNode);
           }
         }
-      }, 300);
+      }, 800);
     });
 
     combinedBetInput.addEventListener('blur', function() {
       saveAppState();
       if (highlightTimeout) clearTimeout(highlightTimeout);
+      const inputString = getRawTextFromElement(combinedBetInput);
+      const originalLines = inputString.split('\n');
+      let currentCat = '';
+      let editorHtml = originalLines.map(line => {
+        if (line.trim() === "") {
+          return "";
+        }
+        const res = formatLineWithHighlights(line, currentCat);
+        currentCat = res.newCategory;
+        return res.html;
+      }).join('<br>') + '<br>';
+      
+      if (combinedBetInput.innerHTML !== editorHtml) {
+        combinedBetInput.innerHTML = editorHtml;
+      }
     });
   }
-
-  ['overrideDe', 'overrideLo', 'override3c', 'overrideX'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('change', () => {
-        updateRetainBranchUI();
-        calculateSum();
-        saveAppState();
-      });
-    }
-  });
-
-  ['retainDe', 'retainLo', 'retain3c', 'retainX'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('input', () => {
-        calculateSum();
-        saveAppState();
-      });
-    }
-  });
 
   const calcBtn = document.getElementById('calculateButton');
   if (calcBtn) {
@@ -4906,14 +4828,14 @@ function setupEventListeners() {
     cpBtn.addEventListener('click', handleCopyButtonClick);
   }
 
-  const cpInputBtn = document.getElementById('copyInputListButton');
-  if (cpInputBtn) {
-    cpInputBtn.addEventListener('click', copyInputList);
-  }
-
   const btnGeminiAi = document.getElementById('btnGeminiAi');
   if (btnGeminiAi) {
     btnGeminiAi.addEventListener('click', fetchGeminiAiAnalysis);
+  }
+
+  const btnFetchGeminiAnalysisModal = document.getElementById('btnFetchGeminiAnalysisModal');
+  if (btnFetchGeminiAnalysisModal) {
+    btnFetchGeminiAnalysisModal.addEventListener('click', fetchGeminiAiAnalysis);
   }
 
   const btnCloseGeminiAiModal = document.getElementById('btnCloseGeminiAiModal');
@@ -4937,7 +4859,7 @@ function setupEventListeners() {
     });
   }
   if (geminiModelSelect) {
-    geminiModelSelect.value = localStorage.getItem('z8_gemini_model') || 'gemini-2.0-flash';
+    geminiModelSelect.value = localStorage.getItem('z8_gemini_model') || 'gemini-3.6-flash';
     geminiModelSelect.addEventListener('change', () => {
       localStorage.setItem('z8_gemini_model', geminiModelSelect.value);
     });
@@ -5022,188 +4944,6 @@ function setupEventListeners() {
     specialPrizeInput.addEventListener('input', updateTwoDigitBoard);
     specialPrizeInput.addEventListener('input', debouncedSaveAppState);
   }
-
-window.applyAiScenario = function(de, lo, bc, x, scenarioName) {
-  // 1. Ensure Money mode is selected
-  const retainTypeMoney = document.getElementById('retainTypeMoney');
-  if (retainTypeMoney) retainTypeMoney.checked = true;
-
-  // 2. Update retention input values
-  const retainDe = document.getElementById('retainDe');
-  const retainLo = document.getElementById('retainLo');
-  const retain3c = document.getElementById('retain3c');
-  const retainX = document.getElementById('retainX');
-
-  if (retainDe) retainDe.value = de;
-  if (retainLo) retainLo.value = lo;
-  if (retain3c) retain3c.value = bc;
-  if (retainX) retainX.value = x;
-
-  // 3. Update UI and recalculate
-  updateRetainBranchUI();
-  calculateSum();
-  saveAppState();
-
-  // 4. Close AI Modal
-  const modal = document.getElementById('modalGeminiAi');
-  if (modal) modal.classList.add('hidden');
-
-  // 5. Perform layoff step & auto-copy transfer text
-  handleCopyButtonClick();
-};
-
-async function fetchGeminiAiAnalysis() {
-  const apiKey = (localStorage.getItem('z8_gemini_api_key') || document.getElementById('geminiApiKey')?.value || '').trim();
-  const model = localStorage.getItem('z8_gemini_model') || document.getElementById('geminiModelSelect')?.value || 'gemini-3.6-flash';
-
-  if (!apiKey) {
-    alert("Vui lòng nhập Gemini API Key trong phần 'Cấu hình giá' trước khi sử dụng Trợ lý AI!");
-    const priceModal = document.getElementById('modalPriceConfig');
-    if (priceModal) priceModal.classList.remove('hidden');
-    const keyInput = document.getElementById('geminiApiKey');
-    if (keyInput) keyInput.focus();
-    return;
-  }
-
-  const combinedBetInput = document.getElementById('combinedBetInput');
-  const betText = combinedBetInput ? getRawTextFromElement(combinedBetInput).trim() : '';
-
-  if (!betText) {
-    alert("Vui lòng nhập dữ liệu tin cược trước khi phân tích!");
-    return;
-  }
-
-  const modal = document.getElementById('modalGeminiAi');
-  const reportContent = document.getElementById('geminiAiReportContent');
-  if (modal) modal.classList.remove('hidden');
-
-  if (reportContent) {
-    reportContent.innerHTML = `
-      <div class="flex flex-col items-center justify-center py-10 space-y-3">
-        <div class="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-        <p class="font-bold text-purple-700 dark:text-purple-400 text-sm">Gemini AI đang đọc hiểu và phân tích rủi ro bảng cược...</p>
-        <p class="text-slate-500 text-xs">Vui lòng chờ trong giây lát</p>
-      </div>
-    `;
-  }
-
-  const prompt = `Bạn là một chuyên gia phân tích rủi ro lô đề và quản lý tài chính cho nhà cái/chủ thầu lô đề Miền Bắc.
-Dưới đây là dữ liệu tin cược khách vừa đánh vào bảng:
-
----
-${betText}
----
-
-Hãy thực hiện 2 việc:
-1. Trình bày bài phân tích chi tiết bằng Tiếng Việt Markdown:
-   - **Phân tích tổng quan bảng cược**: Các con cược nặng tiền, dàn kép, dàn tổng.
-   - **Cảnh báo rủi ro**: Nếu các con cược nặng tiền nổ.
-   - **Đánh giá 3 kịch bản cân chuyển**:
-     - Kịch bản 1: An toàn tuyệt đối (Bảo thủ).
-     - Kịch bản 2: Cân bằng tối ưu (Khuyên dùng).
-     - Kịch bản 3: Tối đa lợi nhuận (Mạo hiểm).
-
-2. Ở DÒNG CUỐI CÙNG BÀI VIẾT, BẮT BUỘC TRẢ VỀ CHÍNH XÁC DÒNG JSON THÔNG SỐ NÀY (Đềk, Lôđiểm, 3Ck, Xiênk):
-JSON_SCENARIOS:{"s1":{"name":"An toàn","de":15,"lo":1,"bc":0,"x":0},"s2":{"name":"Cân bằng","de":25,"lo":3,"bc":1,"x":1},"s3":{"name":"Mạo hiểm","de":40,"lo":5,"bc":2,"x":2}}
-`;
-
-  const modelsToTry = [
-    model,
-    'gemini-3.6-flash',
-    'gemini-2.5-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro'
-  ].filter((v, i, a) => v && a.indexOf(v) === i);
-
-  let successText = null;
-  let lastError = null;
-
-  for (const currentModel of modelsToTry) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
-
-      const data = await response.json();
-      if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        successText = data.candidates[0].content.parts[0].text;
-        break;
-      } else {
-        lastError = data.error?.message || `Model ${currentModel} error (${response.status})`;
-      }
-    } catch (err) {
-      lastError = err.message;
-    }
-  }
-
-  if (successText) {
-    let scenariosData = null;
-    const jsonMatch = successText.match(/JSON_SCENARIOS:(\{.*?\})/s);
-    if (jsonMatch) {
-      try {
-        scenariosData = JSON.parse(jsonMatch[1]);
-      } catch (e) {
-        console.warn("Could not parse JSON scenarios", e);
-      }
-    }
-
-    const cleanText = successText.replace(/JSON_SCENARIOS:\{.*?\}/s, '').trim();
-
-    const formattedHtml = cleanText
-      .replace(/\n\n/g, '<br><br>')
-      .replace(/\n/g, '<br>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/### (.*?)(<br>|$)/g, '<h3 class="text-sm font-bold text-purple-700 dark:text-purple-400 mt-3 mb-1">$1</h3>')
-      .replace(/## (.*?)(<br>|$)/g, '<h2 class="text-base font-bold text-indigo-700 dark:text-indigo-400 mt-4 mb-2">$1</h2>')
-      .replace(/- (.*?)(<br>|$)/g, '• $1<br>');
-
-    const s1 = scenariosData?.s1 || { de: 15, lo: 1, bc: 0, x: 0 };
-    const s2 = scenariosData?.s2 || { de: 25, lo: 3, bc: 1, x: 1 };
-    const s3 = scenariosData?.s3 || { de: 40, lo: 5, bc: 2, x: 2 };
-
-    const actionButtonsHtml = `
-      <div class="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/40 dark:to-indigo-950/40 border border-purple-200 dark:border-purple-800/60 rounded-xl space-y-2.5 mb-4 shadow-xs">
-        <div class="text-xs font-bold text-purple-900 dark:text-purple-200 flex items-center gap-1.5">
-          <i class="fa-solid fa-hand-pointer text-amber-500 text-sm"></i>
-          <span>BẤM VÀO KỊCH BẢN ĐỂ TỰ ĐỘNG CÂN BẢNG & COPY TIN CHUYỂN ĐI:</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <button onclick="applyAiScenario(${s1.de}, ${s1.lo}, ${s1.bc}, ${s1.x}, 'Kịch bản 1 - An toàn')" class="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-sm transition-all active:scale-95 flex flex-col items-center justify-center gap-0.5">
-            <span class="flex items-center gap-1"><i class="fa-solid fa-shield-halved"></i> KB 1: An toàn</span>
-            <span class="text-[10px] font-normal opacity-90">(Đ:${s1.de}k, L:${s1.lo}p, 3c:${s1.bc}k, X:${s1.x}k)</span>
-          </button>
-          <button onclick="applyAiScenario(${s2.de}, ${s2.lo}, ${s2.bc}, ${s2.x}, 'Kịch bản 2 - Cân bằng')" class="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs shadow-sm transition-all active:scale-95 flex flex-col items-center justify-center gap-0.5">
-            <span class="flex items-center gap-1"><i class="fa-solid fa-scale-balanced"></i> KB 2: Cân bằng ⭐</span>
-            <span class="text-[10px] font-normal opacity-90">(Đ:${s2.de}k, L:${s2.lo}p, 3c:${s2.bc}k, X:${s2.x}k)</span>
-          </button>
-          <button onclick="applyAiScenario(${s3.de}, ${s3.lo}, ${s3.bc}, ${s3.x}, 'Kịch bản 3 - Mạo hiểm')" class="w-full py-2.5 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs shadow-sm transition-all active:scale-95 flex flex-col items-center justify-center gap-0.5">
-            <span class="flex items-center gap-1"><i class="fa-solid fa-bolt"></i> KB 3: Mạo hiểm</span>
-            <span class="text-[10px] font-normal opacity-90">(Đ:${s3.de}k, L:${s3.lo}p, 3c:${s3.bc}k, X:${s3.x}k)</span>
-          </button>
-        </div>
-      </div>
-    `;
-
-    if (reportContent) {
-      reportContent.innerHTML = actionButtonsHtml + `<div class="prose dark:prose-invert max-w-none text-xs leading-relaxed">${formattedHtml}</div>`;
-    }
-  } else {
-    if (reportContent) {
-      reportContent.innerHTML = `
-        <div class="p-4 bg-rose-50 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300 rounded-lg border border-rose-300">
-          <h4 class="font-bold mb-1">❌ Lỗi gọi Gemini API:</h4>
-          <p>${lastError || "Không thể kết nối tới các model của Gemini API."}</p>
-          <p class="mt-2 text-[11px]">Vui lòng kiểm tra lại Gemini API Key trong Cấu hình giá.</p>
-        </div>
-      `;
-    }
-  }
-}
 
   // Date and Source selectors for crawler
   const resultDateInput = document.getElementById('resultDateInput');
@@ -5320,14 +5060,6 @@ JSON_SCENARIOS:{"s1":{"name":"An toàn","de":15,"lo":1,"bc":0,"x":0},"s2":{"name
     btnResetBalance.addEventListener('click', resetBalancing);
   }
 
-  const targetProfitInput = document.getElementById('targetProfitInput');
-  if (targetProfitInput) {
-    targetProfitInput.addEventListener('input', () => {
-      debouncedCalculateSum();
-      saveAppState();
-    });
-  }
-
   document.querySelectorAll('input[name="retainType"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
       const retainDe = document.getElementById('retainDe');
@@ -5339,13 +5071,11 @@ JSON_SCENARIOS:{"s1":{"name":"An toàn","de":15,"lo":1,"bc":0,"x":0},"s2":{"name
         if (retainLo) retainLo.value = '5';
         if (retain3c) retain3c.value = '0';
         if (retainX) retainX.value = '0';
-      } else if (e.target.value === 'percentage') {
+      } else {
         if (retainDe) retainDe.value = '50';
         if (retainLo) retainLo.value = '50';
         if (retain3c) retain3c.value = '0';
         if (retainX) retainX.value = '0';
-      } else if (e.target.value === 'autosmart') {
-        // Will be computed dynamically by calculateSum()
       }
       updateRetainBranchUI();
       saveAppState();
@@ -5544,6 +5274,196 @@ JSON_SCENARIOS:{"s1":{"name":"An toàn","de":15,"lo":1,"bc":0,"x":0},"s2":{"name
       });
     });
   }
+}
+
+async function fetchGeminiAiAnalysis() {
+  const modal = document.getElementById('modalGeminiAi');
+  const container = document.getElementById('geminiAiResultContainer');
+  const apiKeyInput = document.getElementById('geminiApiKey');
+  const modelSelect = document.getElementById('geminiModelSelect');
+  
+  if (modal) modal.classList.remove('hidden');
+
+  const apiKey = (apiKeyInput?.value || localStorage.getItem('z8_gemini_api_key') || '').trim();
+  if (!apiKey) {
+    if (container) {
+      container.innerHTML = `
+        <div class="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-lg p-4 text-amber-800 dark:text-amber-200 text-xs space-y-2">
+          <div class="font-bold flex items-center gap-1.5 text-sm"><i class="fa-solid fa-key text-amber-600"></i> Chưa có API Key!</div>
+          <p>Vui lòng nhập <strong>Google Gemini API Key</strong> ở thanh cấu hình phía trên để sử dụng Trợ lý AI.</p>
+          <p class="text-[11px] text-slate-500">Bạn có thể lấy API Key miễn phí 100% tại Google AI Studio: <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 dark:text-indigo-400 font-bold underline">https://aistudio.google.com/app/apikey</a></p>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  const combinedBetInput = document.getElementById('combinedBetInput');
+  const betText = getRawTextFromElement(combinedBetInput).trim();
+  if (!betText) {
+    if (container) {
+      container.innerHTML = `
+        <div class="bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-800 rounded-lg p-4 text-blue-800 dark:text-blue-200 text-xs space-y-2">
+          <div class="font-bold flex items-center gap-1.5 text-sm"><i class="fa-solid fa-circle-info text-blue-600"></i> Khung nhập cược đang trống!</div>
+          <p>Vui lòng nhập tin cược vào ô cược chính trước khi bấm phân tích AI.</p>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  const model = modelSelect?.value || 'gemini-3.6-flash';
+
+  if (container) {
+    container.innerHTML = `
+      <div class="flex flex-col items-center justify-center py-10 space-y-3">
+        <div class="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="font-bold text-purple-700 dark:text-purple-400 text-sm">Gemini AI đang đọc hiểu và phân tích rủi ro bảng cược...</p>
+        <p class="text-slate-500 text-xs">Vui lòng chờ trong giây lát</p>
+      </div>
+    `;
+  }
+
+  const prompt = `Bạn là một chuyên gia phân tích rủi ro lô đề và quản lý tài chính cho nhà cái/chủ thầu lô đề Miền Bắc.
+Dưới đây là dữ liệu tin cược khách vừa đánh vào bảng:
+
+---
+${betText}
+---
+
+Hãy thực hiện 2 việc:
+1. Trình bày bài phân tích chi tiết bằng Tiếng Việt Markdown:
+   - **Phân tích tổng quan bảng cược**: Các con cược nặng tiền, dàn kép, dàn tổng.
+   - **Cảnh báo rủi ro**: Nếu các con cược nặng tiền nổ.
+   - **Đánh giá 3 kịch bản cân chuyển**:
+     - Kịch bản 1: An toàn tuyệt đối (Bảo thủ).
+     - Kịch bản 2: Cân bằng tối ưu (Khuyên dùng).
+     - Kịch bản 3: Tối đa lợi nhuận (Mạo hiểm).
+
+2. Ở DÒNG CUỐI CÙNG BÀI VIẾT, BẮT BUỘC TRẢ VỀ CHÍNH XÁC DÒNG JSON THÔNG SỐ NÀY (Đềk, Lôđiểm, 3Ck, Xiênk):
+JSON_SCENARIOS:{"s1":{"name":"An toàn","de":15,"lo":1,"bc":0,"x":0},"s2":{"name":"Cân bằng","de":25,"lo":3,"bc":1,"x":1},"s3":{"name":"Mạo hiểm","de":40,"lo":5,"bc":2,"x":2}}
+`;
+
+  const modelsToTry = [
+    model,
+    'gemini-3.6-flash',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro'
+  ].filter((v, i, a) => v && a.indexOf(v) === i);
+
+  let successText = null;
+  let lastError = null;
+
+  for (const currentModel of modelsToTry) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        successText = data.candidates[0].content.parts[0].text;
+        break;
+      } else {
+        lastError = data.error?.message || `Model ${currentModel} error (${response.status})`;
+      }
+    } catch (err) {
+      lastError = err.message;
+    }
+  }
+
+  if (successText) {
+    let scenariosData = null;
+    const jsonMatch = successText.match(/JSON_SCENARIOS:(\{.*?\})/s);
+    if (jsonMatch) {
+      try {
+        scenariosData = JSON.parse(jsonMatch[1]);
+      } catch (e) {
+        console.warn("Could not parse JSON scenarios", e);
+      }
+    }
+
+    let cleanMarkdown = successText.replace(/JSON_SCENARIOS:\{.*?\}/s, '').trim();
+
+    let htmlOutput = `
+      <div class="prose dark:prose-invert text-xs max-w-none space-y-3">
+        ${cleanMarkdown.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}
+      </div>
+    `;
+
+    if (scenariosData) {
+      window.latestAiScenarios = scenariosData;
+      htmlOutput += `
+        <div class="mt-4 pt-3 border-t border-purple-200 dark:border-purple-800/60 bg-purple-50/60 dark:bg-purple-950/30 rounded-xl p-3 space-y-2">
+          <div class="font-black text-purple-900 dark:text-purple-200 text-xs flex items-center gap-1.5">
+            <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i>
+            <span>ÁP DỤNG KỊCH BẢN AI KHUYÊN DÙNG:</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button onclick="applyAiScenario('s1')" class="p-2 bg-white dark:bg-dark-700 hover:bg-purple-100 dark:hover:bg-purple-900/50 border border-purple-200 dark:border-purple-700 rounded-lg text-left transition-all active:scale-95 group">
+              <div class="font-bold text-purple-700 dark:text-purple-300 text-xs">🛡️ 1. ${scenariosData.s1?.name || 'An toàn'}</div>
+              <div class="text-[11px] text-slate-500 font-mono mt-0.5">Giữ: Đề ${scenariosData.s1?.de}k, Lô ${scenariosData.s1?.lo}đ, 3C ${scenariosData.s1?.bc}k, X ${scenariosData.s1?.x}k</div>
+            </button>
+            <button onclick="applyAiScenario('s2')" class="p-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-left transition-all active:scale-95 shadow-xs group">
+              <div class="font-bold text-yellow-300 text-xs">⚡ 2. ${scenariosData.s2?.name || 'Cân bằng'} (Khuyên dùng)</div>
+              <div class="text-[11px] text-purple-100 font-mono mt-0.5">Giữ: Đề ${scenariosData.s2?.de}k, Lô ${scenariosData.s2?.lo}đ, 3C ${scenariosData.s2?.bc}k, X ${scenariosData.s2?.x}k</div>
+            </button>
+            <button onclick="applyAiScenario('s3')" class="p-2 bg-white dark:bg-dark-700 hover:bg-purple-100 dark:hover:bg-purple-900/50 border border-purple-200 dark:border-purple-700 rounded-lg text-left transition-all active:scale-95 group">
+              <div class="font-bold text-rose-600 dark:text-rose-400 text-xs">🚀 3. ${scenariosData.s3?.name || 'Mạo hiểm'}</div>
+              <div class="text-[11px] text-slate-500 font-mono mt-0.5">Giữ: Đề ${scenariosData.s3?.de}k, Lô ${scenariosData.s3?.lo}đ, 3C ${scenariosData.s3?.bc}k, X ${scenariosData.s3?.x}k</div>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    if (container) container.innerHTML = htmlOutput;
+  } else {
+    if (container) {
+      container.innerHTML = `
+        <div class="bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-lg p-4 text-rose-800 dark:text-rose-200 text-xs space-y-2">
+          <div class="font-bold flex items-center gap-1.5 text-sm"><i class="fa-solid fa-circle-exclamation text-rose-600"></i> Phân tích thất bại!</div>
+          <p>Lỗi: ${escapeHtml(lastError || 'Không thể kết nối đến Gemini API')}</p>
+          <p class="text-[11px] text-slate-500">Vui lòng kiểm tra lại API Key hoặc chọn model khác (ví dụ: gemini-2.0-flash).</p>
+        </div>
+      `;
+    }
+  }
+}
+
+function applyAiScenario(key) {
+  if (!window.latestAiScenarios || !window.latestAiScenarios[key]) {
+    alert("Không tìm thấy thông số kịch bản!");
+    return;
+  }
+
+  const s = window.latestAiScenarios[key];
+  const retainTypeMoney = document.getElementById('retainTypeMoney');
+  if (retainTypeMoney) retainTypeMoney.checked = true;
+
+  const retainDe = document.getElementById('retainDe');
+  const retainLo = document.getElementById('retainLo');
+  const retain3c = document.getElementById('retain3c');
+  const retainX = document.getElementById('retainX');
+
+  if (retainDe) retainDe.value = s.de !== undefined ? s.de : 20;
+  if (retainLo) retainLo.value = s.lo !== undefined ? s.lo : 5;
+  if (retain3c) retain3c.value = s.bc !== undefined ? s.bc : 0;
+  if (retainX) retainX.value = s.x !== undefined ? s.x : 0;
+
+  updateRetainBranchUI();
+  calculateSum();
+  saveAppState();
+
+  const modal = document.getElementById('modalGeminiAi');
+  if (modal) modal.classList.add('hidden');
+  alert(`Đã áp dụng kịch bản "${s.name || key}"!`);
 }
 
 function updateTransferStepsUI() {
@@ -5900,9 +5820,7 @@ function runBalancingStep(isPercent) {
   const retain3c = parseFloat(document.getElementById("retain3c")?.value) || 0;
   const retainX = parseFloat(document.getElementById("retainX")?.value) || 0;
 
-  const retainType = document.querySelector('input[name="retainType"]:checked')?.value || "autosmart";
-  const retainUseBranchRaw = document.getElementById("retainUseBranch")?.checked || false;
-  const retainUseBranch = retainType === "autosmart" ? false : retainUseBranchRaw;
+  const retainUseBranch = document.getElementById("retainUseBranch")?.checked || false;
   const retainBranchDe = parseFloat(document.getElementById("retainBranchDe")?.value) || 0;
   const retainBranchLo = parseFloat(document.getElementById("retainBranchLo")?.value) || 0;
   const retainBranch3c = parseFloat(document.getElementById("retainBranch3c")?.value) || 0;
@@ -6201,9 +6119,7 @@ function resetBalancing() {
   balanceState.xienBets = [];
   balanceState.history = [];
 
-  // Reset retain configs to default
-  const retainTypeMoney = document.getElementById('retainTypeMoney');
-  if (retainTypeMoney) retainTypeMoney.checked = true;
+  // Reset retain configs to default empty
   const retainDe = document.getElementById('retainDe');
   const retainLo = document.getElementById('retainLo');
   const retain3c = document.getElementById('retain3c');
@@ -6304,6 +6220,7 @@ function showSubTab(subTabName) {
   
   const btnResult = document.getElementById('subTabBtnResult');
   const btnTransfer = document.getElementById('subTabBtnTransfer');
+  const btnDetail = document.getElementById('subTabBtnDetail');
   
   const cardResult = document.getElementById('cardResult');
   const cardTransfer = document.getElementById('cardTransfer');
@@ -6574,6 +6491,75 @@ function resetTable() {
 }
 </script>
 
+  <!-- MODAL TRỢ LÝ AI GEMINI -->
+  <div id="modalGeminiAi" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60 backdrop-blur-sm p-3 sm:p-4">
+    <div class="bg-white dark:bg-dark-800 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl rounded-2xl border border-slate-200 dark:border-slate-700">
+      
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-purple-900 to-indigo-900 text-white">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+            <i class="fa-solid fa-robot text-yellow-300 text-base"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-sm tracking-wide flex items-center gap-2">
+              <span>Trợ Lý AI Phân Tích & Tư Vấn Cân Bảng</span>
+              <span class="text-[10px] bg-purple-500/40 text-purple-200 px-2 py-0.5 rounded-full font-mono border border-purple-400/30">Gemini 3.6</span>
+            </h3>
+            <p class="text-[11px] text-purple-200 font-normal">Tự động đánh giá rủi ro, dự đoán kịch bản và để xuất tham số cân thầu tối ưu</p>
+          </div>
+        </div>
+        <button id="btnCloseGeminiAiModal" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all active:scale-95">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Config & Action Bar -->
+      <div class="p-3 bg-slate-50 dark:bg-dark-900/80 border-b border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs">
+        <div class="sm:col-span-6 flex items-center gap-2">
+          <label class="font-bold text-slate-600 dark:text-slate-400 shrink-0">API Key:</label>
+          <input type="password" id="geminiApiKey" class="w-full border border-slate-300 dark:border-slate-600 rounded px-2.5 py-1 text-xs font-mono bg-white dark:bg-dark-700 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Nhập Google Gemini API Key...">
+        </div>
+        <div class="sm:col-span-4 flex items-center gap-2">
+          <label class="font-bold text-slate-600 dark:text-slate-400 shrink-0">Model:</label>
+          <select id="geminiModelSelect" class="w-full border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs bg-white dark:bg-dark-700 focus:ring-2 focus:ring-purple-500 outline-none">
+            <option value="gemini-3.6-flash">gemini-3.6-flash (Tốc độ cao - Mới)</option>
+            <option value="gemini-2.0-flash">gemini-2.0-flash (Khuyên dùng)</option>
+            <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+            <option value="gemini-1.5-pro">gemini-1.5-pro (Sâu sắc)</option>
+          </select>
+        </div>
+        <div class="sm:col-span-2 flex items-center">
+          <button id="btnFetchGeminiAnalysisModal" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-1 px-3 rounded transition-all flex items-center justify-center gap-1 active:scale-95 shadow-xs">
+            <i class="fa-solid fa-arrows-rotate"></i>
+            <span>Phân tích</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body (AI Analysis Content) -->
+      <div id="geminiAiResultContainer" class="p-4 overflow-y-auto flex-1 font-sans text-xs leading-relaxed space-y-3 bg-white dark:bg-dark-800 text-slate-800 dark:text-slate-200">
+        <div class="text-center py-10 text-slate-400 space-y-2">
+          <i class="fa-solid fa-robot text-4xl text-purple-300 dark:text-purple-900/40"></i>
+          <p class="font-semibold text-sm">Bấm "Trợ lý AI" để bắt đầu phân tích bảng cược hiện tại.</p>
+          <p class="text-[11px] text-slate-400">Hệ thống sẽ tổng hợp danh sách cược, rủi ro nổ bảng và tự động gợi ý 3 kịch bản cân chuyển.</p>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-dark-900">
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+          <i class="fa-solid fa-shield-halved text-purple-600"></i>
+          <span>Bảo mật: API Key lưu trực tiếp trên trình duyệt của bạn</span>
+        </div>
+        <button id="btnCloseGeminiAiBtn" class="bg-slate-200 dark:bg-dark-700 hover:bg-slate-300 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 font-bold px-4 py-1.5 rounded transition-all text-xs">
+          Đóng
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Modal Cấu hình giá (Ported from thau_lode.html) -->
   <div id="modalPriceConfig" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60 backdrop-blur-sm p-4">
     <div class="bg-white dark:bg-dark-800 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl rounded-xl border border-gray-200 dark:border-gray-700">
@@ -6674,29 +6660,7 @@ function resetTable() {
               </div>
               <div>
                 <label class="block text-[11px] text-gray-500 mb-1">Áp Má (1 ăn...)</label>
-              </div>
-            </div>
-
-            <!-- Gemini AI Config Section -->
-            <div class="col-span-1 md:col-span-2 bg-amber-50/70 dark:bg-amber-950/30 p-3 rounded-lg border border-amber-200 dark:border-amber-900/50 mt-2">
-              <h3 class="text-xs font-bold text-amber-800 dark:text-amber-400 mb-2 uppercase tracking-wider flex items-center gap-1.5">
-                <i class="fa-solid fa-robot"></i>
-                <span>Cấu Hình Gemini AI Trợ Lý</span>
-              </h3>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div class="md:col-span-2">
-                  <label class="block text-[11px] font-bold text-amber-900 dark:text-amber-300 mb-1">Gemini API Key (Nhập Key cá nhân của bạn)</label>
-                  <input type="password" id="geminiApiKey" placeholder="AIzaSy..." class="w-full border border-amber-300 dark:border-amber-700 rounded p-1.5 text-xs bg-white dark:bg-dark-700 font-mono">
-                </div>
-                <div>
-                  <label class="block text-[11px] font-bold text-amber-900 dark:text-amber-300 mb-1">Model AI</label>
-                  <select id="geminiModelSelect" class="w-full border border-amber-300 dark:border-amber-700 rounded p-1.5 text-xs bg-white dark:bg-dark-700 font-bold">
-                    <option value="gemini-3.6-flash">Gemini 3.6 Flash (Mới nhất, Khuyên dùng)</option>
-                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ổn định)</option>
-                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                  </select>
-                </div>
+                <input type="text" id="rate3CApMa" value="5" class="w-full border border-gray-300 dark:border-gray-600 rounded p-1.5 text-xs text-center bg-white dark:bg-dark-700 font-bold">
               </div>
             </div>
           </div>
@@ -6712,48 +6676,6 @@ function resetTable() {
     </div>
   </div>
 
-  <!-- Modal Gemini AI Report -->
-  <div id="modalGeminiAi" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60 backdrop-blur-sm p-4">
-    <div class="bg-white dark:bg-dark-800 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl rounded-xl border border-purple-300 dark:border-purple-800">
-      <!-- Modal Header -->
-      <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-900 to-indigo-900 text-white">
-        <h3 class="text-sm font-bold flex items-center gap-2 uppercase tracking-wider text-amber-300">
-          <i class="fa-solid fa-robot"></i>
-          <span>Gemini AI Trợ Lý Phân Tích & Tư Vấn Bảng Cược</span>
-        </h3>
-        <button id="btnCloseGeminiAiModal" class="text-gray-300 hover:text-white text-lg font-bold transition-all p-1">
-          &times;
-        </button>
-      </div>
-      
-      <!-- Modal Body -->
-      <div class="p-5 overflow-y-auto space-y-4 text-slate-800 dark:text-slate-200 text-xs leading-relaxed" id="geminiAiReportContent">
-        <!-- Dynamic content -->
-      </div>
-      
-      <!-- Modal Footer -->
-      <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-dark-900">
-        <span class="text-[11px] text-gray-500">Được cung cấp bởi Google Gemini AI API</span>
-        <button id="btnCloseGeminiAiBtn" class="bg-purple-600 hover:bg-purple-700 text-white py-1.5 px-4 rounded-md text-xs font-bold">
-          Đóng
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Floating Scroll Navigation Buttons -->
-  <div class="fixed bottom-6 right-6 z-40 flex flex-col gap-2.5">
-    <button id="btnScrollTop" class="w-11 h-11 flex items-center justify-center rounded-full bg-white/80 dark:bg-dark-800/80 backdrop-blur-md text-gray-700 dark:text-gray-300 shadow-lg border border-gray-200/50 dark:border-dark-700/50 hover:bg-white dark:hover:bg-dark-800 active:scale-95 transition-all duration-200" title="Cuộn lên đầu trang">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5.5 h-5.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
-      </svg>
-    </button>
-    <button id="btnScrollBottom" class="w-11 h-11 flex items-center justify-center rounded-full bg-white/80 dark:bg-dark-800/80 backdrop-blur-md text-gray-700 dark:text-gray-300 shadow-lg border border-gray-200/50 dark:border-dark-700/50 hover:bg-white dark:hover:bg-dark-800 active:scale-95 transition-all duration-200" title="Cuộn xuống cuối trang">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5.5 h-5.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-      </svg>
-    </button>
-  </div>
 </body>
 </html>
 
