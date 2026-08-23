@@ -1,10 +1,12 @@
 
 
+
+
 <!DOCTYPE html>
 <html lang="vi" class="scroll-smooth h-full">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>☆ Z8™ ☆</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <!-- FontAwesome 6 CDN for authentic Microsoft 365 Office icons -->
@@ -90,6 +92,16 @@
         border-bottom-color: #4ade80;
       }
       
+      /* Prevent mobile double-tap zoom & focus zoom */
+      html, body {
+        touch-action: manipulation;
+      }
+      @media screen and (max-width: 768px) {
+        input, select, textarea, [contenteditable], [contenteditable="true"] {
+          font-size: 16px !important;
+        }
+      }
+
       /* Custom Scrollbars */
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -237,8 +249,8 @@
         <!-- 2. ACTION CONTROLS PANEL (BELOW INPUT FIELD) -->
         <div class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-3 space-y-3">
           
-          <!-- 3 Main Buttons: Tính tổng | Chuyển 1 | Input -->
-          <div class="grid grid-cols-3 gap-2">
+          <!-- 2 Main Buttons: Tính tổng | Chuyển 1 -->
+          <div class="grid grid-cols-2 gap-2">
             <button id="calculateButton" class="bg-excel-800 hover:bg-excel-900 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Tính toán tổng số tiền cược">
               <i class="fa-solid fa-sigma"></i>
               <span>Tính tổng</span>
@@ -246,10 +258,6 @@
             <button id="copyButton" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Thực hiện cân chuyển">
               <i class="fa-solid fa-share-nodes"></i>
               <span>Chuyển 1</span>
-            </button>
-            <button id="copyInputListButton" class="bg-amber-600 hover:bg-amber-700 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Xem danh sách chi tiết cược theo Input">
-              <i class="fa-solid fa-list-check"></i>
-              <span>Input</span>
             </button>
           </div>
 
@@ -338,10 +346,16 @@
               <span class="ml-2 font-semibold text-slate-700 dark:text-slate-300">KQXS & Nhập tắt</span>
             </label>
 
-            <button type="button" id="btnPriceConfig" class="px-3 py-1.5 bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-300 dark:border-slate-600 shadow-xs">
-              <i class="fa-solid fa-sliders text-excel-800 dark:text-emerald-400"></i>
-              <span>Cấu hình giá</span>
-            </button>
+            <div class="flex items-center gap-1.5">
+              <button id="copyInputListButton" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md font-bold transition-all flex items-center gap-1.5 active:scale-95 text-xs shadow-xs" title="Xem danh sách chi tiết cược theo Input">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Input</span>
+              </button>
+              <button type="button" id="btnPriceConfig" class="px-3 py-1.5 bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-300 dark:border-slate-600 shadow-xs">
+                <i class="fa-solid fa-sliders text-excel-800 dark:text-emerald-400"></i>
+                <span>Cấu hình giá</span>
+              </button>
+            </div>
           </div>
 
         </div>
@@ -447,7 +461,7 @@
         </div>
         
         <!-- CARDS GRID (EXCEL DATA TABLES) -->
-        <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-start lg:!grid">
+        <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 items-start lg:!grid">
           
           <!-- Card 1: Kết quả -->
           <div id="cardResult" class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-3 transition-all hover:shadow-md flex flex-col justify-start h-auto">
@@ -498,10 +512,15 @@
           </div>
 
           <!-- Card 3: Chi tiết Input -->
-          <div id="cardDetail" class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-3 transition-all hover:shadow-md flex flex-col justify-start h-auto">
-            <h3 class="font-bold text-xs flex items-center gap-1.5 mb-2 border-b border-slate-200 dark:border-slate-700 pb-2 text-slate-800 dark:text-slate-200">
-              <i class="fa-solid fa-magnifying-glass text-amber-600 dark:text-amber-400"></i>
-              <span>Chi tiết:</span>
+          <div id="cardDetail" class="hidden bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-3 transition-all hover:shadow-md flex flex-col justify-start h-auto">
+            <h3 class="font-bold text-xs flex items-center justify-between gap-1.5 mb-2 border-b border-slate-200 dark:border-slate-700 pb-2 text-slate-800 dark:text-slate-200">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-magnifying-glass text-amber-600 dark:text-amber-400"></i>
+                <span>Chi tiết:</span>
+              </span>
+              <button id="btnCopyInputListInCard" class="text-[10px] bg-amber-50 hover:bg-amber-600 text-amber-700 hover:text-white border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded transition-all flex items-center gap-1 font-semibold" title="Copy danh sách input">
+                <i class="fa-solid fa-copy"></i> Copy
+              </button>
             </h3>
             
             <div class="flex flex-col gap-1.5 mb-2 font-mono text-xs">
@@ -683,6 +702,23 @@
   </main>
 
   <script>
+// Prevent double-tap zoom & gesture zoom on iOS Safari / Mobile browsers
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function (event) {
+  const now = (new Date()).getTime();
+  if (now - lastTouchEnd <= 300) {
+    const target = event.target;
+    if (target && !['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) && !target.isContentEditable) {
+      event.preventDefault();
+    }
+  }
+  lastTouchEnd = now;
+}, false);
+
+document.addEventListener('gesturestart', function (e) {
+  e.preventDefault();
+}, false);
+
 window.onerror = function(message, source, lineno, colno, error) {
   alert("LỖI JS: " + message + "\nTại: " + source + ":" + lineno + ":" + colno + "\nStack: " + (error ? error.stack : "N/A"));
   return false;
@@ -4287,11 +4323,91 @@ function getUncollapsedInnerText(containerId) {
 }
 
 function copyText() {
-  let textToCopy = getUncollapsedInnerText("modifiedResult");
-  textToCopy = textToCopy.replace(/^(?:🔴|🔵|🟤|🟢|🟣)\s*(Đề|Lô\(đ\)|Xiên|3C|Bc)\s*\(.*?$/gm, "$1");
-  textToCopy = textToCopy.replace(/^Lô\(đ\)$/gm, "Lô");
-  textToCopy = textToCopy.replace(/^3C$/gm, "Bc");
-  copyToClipboard(textToCopy, "Đã sao chép kết quả thành công!");
+  // Đọc dữ liệu từ window._pendingCopyTransfers (dữ liệu step hiện tại)
+  // Nếu không có (gọi độc lập), dùng cumulative từ balanceState
+  const pending = window._pendingCopyTransfers;
+
+  // Lấy map cho từng thể loại
+  const deMap    = pending ? pending.de     : (balanceState.deTransfers     || {});
+  const loMap    = pending ? pending.lo     : (balanceState.loTransfers     || {});
+  const bacangMap = pending ? pending.bacang : (balanceState.baCangTransfers || {});
+
+  // Xien: pending dùng indexMap + xienBets, fallback dùng balanceState
+  let xienMap = {}; // key = "xx-yy", val = amount
+  if (pending) {
+    Object.entries(pending.xienIndexMap || {}).forEach(([idx, val]) => {
+      const bet = pending.xienBets[parseInt(idx)];
+      if (bet && val >= 0.1) xienMap[bet.numbers.join('-')] = val;
+    });
+  } else {
+    const combinedBetInput = document.getElementById('combinedBetInput');
+    const inputString = combinedBetInput ? getRawTextFromElement(combinedBetInput) : '';
+    const parsedBets = parseCombinedInput(inputString);
+    const xienBets = [...parsedBets.xien2, ...parsedBets.xien3, ...parsedBets.xien4];
+    Object.entries(balanceState.xienTransfers || {}).forEach(([idx, val]) => {
+      const bet = xienBets[parseInt(idx)];
+      if (bet && val >= 0.1) xienMap[bet.numbers.join('-')] = val;
+    });
+  }
+
+  const categories = [
+    { name: 'Đề',  map: deMap },
+    { name: 'Lô',  map: loMap },
+    { name: 'Bc',  map: bacangMap },
+    { name: 'Xiên', map: xienMap }
+  ];
+
+  // Đọc tuỳ chọn dạng dọc từ checkbox (lưu/đọc localStorage)
+  const chk = document.getElementById('copyVerticalMode');
+  const isVertical = chk ? chk.checked : (localStorage.getItem('z8_copy_vertical') === '1');
+
+  const lines = [];
+
+  categories.forEach(cat => {
+    const map = cat.map;
+    if (!map || Object.keys(map).length === 0) return;
+
+    // Lọc các mục hợp lệ
+    const entries = Object.entries(map).filter(([, val]) => val >= 0.1);
+    if (entries.length === 0) return;
+
+    if (isVertical) {
+      // ===== DẠNG DỌC: mỗi số một dòng riêng =====
+      // Sắp xếp theo giá tăng dần, trong cùng giá thì theo số
+      entries.sort((a, b) => {
+        const vDiff = a[1] - b[1];
+        if (Math.abs(vDiff) > 0.05) return vDiff;
+        return a[0].localeCompare(b[0], undefined, { numeric: true });
+      });
+      // Header thể loại
+      lines.push(cat.name);
+      entries.forEach(([num, val]) => {
+        const displayAmt = Math.round(val * 10) / 10;
+        lines.push(`${num}x${displayAmt}`);
+      });
+    } else {
+      // ===== DẠNG NGANG: nhóm theo giá =====
+      // Ví dụ: "Đề 00.08.33x5, 02.12x10"
+      const amountGroups = {};
+      entries.forEach(([num, val]) => {
+        const roundedVal = Math.round(val * 10) / 10;
+        if (!amountGroups[roundedVal]) amountGroups[roundedVal] = [];
+        amountGroups[roundedVal].push(num);
+      });
+
+      const sortedAmounts = Object.keys(amountGroups).map(Number).sort((a, b) => a - b);
+      const groupStrings = sortedAmounts.map(amt => {
+        const nums = amountGroups[amt];
+        nums.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        return `${nums.join('.')}x${amt}`;
+      });
+
+      lines.push(`${cat.name} ${groupStrings.join(', ')}`);
+    }
+  });
+
+  const textToCopy = lines.join('\n');
+  copyToClipboard(textToCopy, 'Đã sao chép kết quả thành công!');
 }
 
 function copyInputList() {
@@ -4456,6 +4572,12 @@ function loadRates() {
   window.activeConfigTab = 'thau';
   updateConfigTabUI();
   fillConfigInputs();
+
+  // Khôi phục trạng thái checkbox dạng dọc
+  const chk = document.getElementById('copyVerticalMode');
+  if (chk) {
+    chk.checked = (localStorage.getItem('z8_copy_vertical') === '1');
+  }
 }
 
 function saveRates() {
@@ -4463,6 +4585,11 @@ function saveRates() {
   saveCurrentConfigInputs();
   // Then write the complete object to local storage
   localStorage.setItem(RATES_STORAGE_KEY, JSON.stringify(window.priceConfigData));
+  // Lưu trạng thái checkbox dạng dọc
+  const chk = document.getElementById('copyVerticalMode');
+  if (chk) {
+    localStorage.setItem('z8_copy_vertical', chk.checked ? '1' : '0');
+  }
 }
 
 // Setup Event Listeners
@@ -4824,7 +4951,41 @@ function setupEventListeners() {
 
   const cpInputBtn = document.getElementById('copyInputListButton');
   if (cpInputBtn) {
-    cpInputBtn.addEventListener('click', copyInputList);
+    cpInputBtn.addEventListener('click', function() {
+      const card = document.getElementById('cardDetail');
+      const grid = document.getElementById('cardsGrid');
+      if (!card) return;
+      const isHidden = card.classList.contains('hidden');
+      if (isHidden) {
+        // Hiện card Chi tiết
+        card.classList.remove('hidden');
+        // 3 cột trên desktop
+        if (grid) {
+          grid.classList.remove('lg:grid-cols-2');
+          grid.classList.add('lg:grid-cols-3');
+        }
+        // Đổi màu nút sang active (xanh lục)
+        cpInputBtn.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+        cpInputBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+      } else {
+        // Ẩn card Chi tiết
+        card.classList.add('hidden');
+        // 2 cột trên desktop (trải đều)
+        if (grid) {
+          grid.classList.remove('lg:grid-cols-3');
+          grid.classList.add('lg:grid-cols-2');
+        }
+        // Trở về màu mặc định (cam)
+        cpInputBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+        cpInputBtn.classList.add('bg-amber-600', 'hover:bg-amber-700');
+      }
+    });
+  }
+
+  // Nút Copy nhỏ bên trong card Chi tiết
+  const btnCopyInputListInCard = document.getElementById('btnCopyInputListInCard');
+  if (btnCopyInputListInCard) {
+    btnCopyInputListInCard.addEventListener('click', copyInputList);
   }
 
   const logoBtn = document.getElementById('logoButton');
@@ -5706,7 +5867,16 @@ function runBalancingStep(isPercent) {
   }
 
   // Copy text BEFORE updating cumulative state and re-calculating
+  // Lưu dữ liệu step vào window để copyText() đọc đúng lần chuyển này
+  window._pendingCopyTransfers = {
+    de: { ...stepDeTransfers },
+    lo: { ...stepLoTransfers },
+    bacang: { ...stepBaCangTransfers },
+    xienIndexMap: { ...stepXienTransfers },
+    xienBets: xienBets.map(b => ({ numbers: [...b.numbers], amount: b.amount }))
+  };
   copyText();
+  delete window._pendingCopyTransfers;
 
   // Initialize step maps if not existing
   if (!balanceState.lastDeTransfers) balanceState.lastDeTransfers = {};
@@ -6030,7 +6200,17 @@ function showSubTab(subTabName) {
   } else if (subTabName === 'transfer') {
     if (cardTransfer) cardTransfer.classList.remove('mobile-hidden');
   } else if (subTabName === 'detail') {
-    if (cardDetail) cardDetail.classList.remove('mobile-hidden');
+    // Cần remove cả 'hidden' vì card bị ẩn mặc định bởi toggle Input
+    if (cardDetail) {
+      cardDetail.classList.remove('mobile-hidden');
+      cardDetail.classList.remove('hidden');
+      // Đồng bộ màu nút Input sang active
+      const cpInputBtn = document.getElementById('copyInputListButton');
+      if (cpInputBtn) {
+        cpInputBtn.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+        cpInputBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+      }
+    }
   }
 }
 
@@ -6143,19 +6323,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    const btnScrollTop = document.getElementById('btnScrollTop');
-    if (btnScrollTop) {
-      btnScrollTop.addEventListener('click', function() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-    }
-
-    const btnScrollBottom = document.getElementById('btnScrollBottom');
-    if (btnScrollBottom) {
-      btnScrollBottom.addEventListener('click', function() {
-        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-      });
-    }
 
     // Auto-fetch results on page load is disabled by default
     // triggerAutoFetch();
@@ -6375,7 +6542,11 @@ function resetTable() {
       </div>
       
       <!-- Modal Footer -->
-      <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end bg-gray-50 dark:bg-dark-900">
+      <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-dark-900">
+        <label class="flex items-center gap-2 cursor-pointer select-none" title="Copy dữ liệu chuyển đi theo dạng dọc (mỗi số một dòng) thay vì dạng ngang nhóm theo giá">
+          <input type="checkbox" id="copyVerticalMode" class="form-checkbox text-indigo-600 focus:ring-indigo-500 rounded">
+          <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">Dạng dọc khi copy</span>
+        </label>
         <button id="btnClosePriceConfigBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-5 rounded-md text-xs font-bold">
           Xác nhận
         </button>
@@ -6383,19 +6554,7 @@ function resetTable() {
     </div>
   </div>
 
-  <!-- Floating Scroll Navigation Buttons -->
-  <div class="fixed bottom-6 right-6 z-40 flex flex-col gap-2.5">
-    <button id="btnScrollTop" class="w-11 h-11 flex items-center justify-center rounded-full bg-white/80 dark:bg-dark-800/80 backdrop-blur-md text-gray-700 dark:text-gray-300 shadow-lg border border-gray-200/50 dark:border-dark-700/50 hover:bg-white dark:hover:bg-dark-800 active:scale-95 transition-all duration-200" title="Cuộn lên đầu trang">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5.5 h-5.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
-      </svg>
-    </button>
-    <button id="btnScrollBottom" class="w-11 h-11 flex items-center justify-center rounded-full bg-white/80 dark:bg-dark-800/80 backdrop-blur-md text-gray-700 dark:text-gray-300 shadow-lg border border-gray-200/50 dark:border-dark-700/50 hover:bg-white dark:hover:bg-dark-800 active:scale-95 transition-all duration-200" title="Cuộn xuống cuối trang">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5.5 h-5.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-      </svg>
-    </button>
-  </div>
+
 </body>
 </html>
 
