@@ -249,7 +249,7 @@
         <!-- 2. ACTION CONTROLS PANEL (BELOW INPUT FIELD) -->
         <div class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-3 space-y-3">
           
-          <!-- 3 Main Buttons: Tính tổng | Chuyển 1 | 🤖 Trợ lý AI -->
+          <!-- 3 Main Buttons: Tính tổng | Chuyển 1 | Input -->
           <div class="grid grid-cols-3 gap-2">
             <button id="calculateButton" class="bg-excel-800 hover:bg-excel-900 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Tính toán tổng số tiền cược">
               <i class="fa-solid fa-sigma"></i>
@@ -259,9 +259,9 @@
               <i class="fa-solid fa-share-nodes"></i>
               <span>Chuyển 1</span>
             </button>
-            <button id="btnGeminiAi" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Phân tích bảng cược và tư vấn 3 kịch bản cân chuyển bằng Gemini AI">
-              <i class="fa-solid fa-robot text-yellow-300"></i>
-              <span>Trợ lý AI</span>
+            <button id="copyInputListButton" class="bg-amber-600 hover:bg-amber-700 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Xem danh sách chi tiết cược theo Input">
+              <i class="fa-solid fa-list-check"></i>
+              <span>Input</span>
             </button>
           </div>
 
@@ -451,14 +451,15 @@
       <!-- RIGHT COLUMN: SPREADSHEET PIVOT TABLES & REPORTS -->
       <div id="column2" class="flex-1 space-y-4">
         
-        <!-- Thanh Tab phụ cho 2 card cược trên Mobile (Tailwind styled) -->
+        <!-- Thanh Tab phụ cho 3 card cược trên Mobile (Tailwind styled) -->
         <div id="mobileSubTabContainer" class="lg:hidden flex bg-slate-100 dark:bg-dark-900/60 p-1 rounded-lg gap-1 mb-3">
           <button type="button" id="subTabBtnResult" class="flex-1 py-1.5 text-xs font-bold text-center rounded transition-all bg-white dark:bg-dark-800 text-excel-800 dark:text-emerald-400 shadow-sm" onclick="showSubTab('result')">Kết quả</button>
           <button type="button" id="subTabBtnTransfer" class="flex-1 py-1.5 text-xs font-bold text-center rounded transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300" onclick="showSubTab('transfer')">Chuyển đi</button>
+          <button type="button" id="subTabBtnDetail" class="flex-1 py-1.5 text-xs font-bold text-center rounded transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300" onclick="showSubTab('detail')">Chi tiết</button>
         </div>
         
         <!-- CARDS GRID (EXCEL DATA TABLES) -->
-        <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3 items-start lg:!grid">
+        <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-start lg:!grid">
           
           <!-- Card 1: Kết quả -->
           <div id="cardResult" class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-3 transition-all hover:shadow-md flex flex-col justify-start h-auto">
@@ -505,6 +506,28 @@
             </div>
             <div id="wrapper-modifiedResult" class="hidden max-h-80 flex flex-col border border-slate-200 dark:border-slate-700 rounded bg-slate-50 dark:bg-dark-900/40 overflow-y-auto">
               <div id="modifiedResult" class="space-y-1 flex-1 overflow-y-auto p-2 font-mono text-xs"></div>
+            </div>
+          </div>
+
+          <!-- Card 3: Chi tiết Input -->
+          <div id="cardDetail" class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-3 transition-all hover:shadow-md flex flex-col justify-start h-auto">
+            <h3 class="font-bold text-xs flex items-center gap-1.5 mb-2 border-b border-slate-200 dark:border-slate-700 pb-2 text-slate-800 dark:text-slate-200">
+              <i class="fa-solid fa-magnifying-glass text-amber-600 dark:text-amber-400"></i>
+              <span>Chi tiết:</span>
+            </h3>
+            
+            <div class="flex flex-col gap-1.5 mb-2 font-mono text-xs">
+              <div id="inputListCount" class="bg-slate-50 dark:bg-dark-700/60 border border-slate-200 dark:border-slate-700 rounded p-2">
+                <div class="text-slate-400 text-xs font-sans">0 con</div>
+              </div>
+              <div class="bg-slate-50 dark:bg-dark-700/60 border border-slate-200 dark:border-slate-700 rounded p-1.5 flex justify-between items-center">
+                <span class="text-slate-500 font-sans text-[11px]">Tổng:</span>
+                <span id="inputTotalSum" class="font-black text-rose-600 dark:text-rose-400">0</span>
+              </div>
+            </div>
+            
+            <div id="wrapper-inputList" class="hidden max-h-80 flex flex-col border border-slate-200 dark:border-slate-700 rounded bg-slate-50 dark:bg-dark-900/40 overflow-y-auto">
+              <ul id="inputList" class="space-y-1 flex-1 overflow-y-auto p-2 font-mono text-xs"></ul>
             </div>
           </div>
 
@@ -4293,11 +4316,91 @@ function getUncollapsedInnerText(containerId) {
 }
 
 function copyText() {
-  let textToCopy = getUncollapsedInnerText("modifiedResult");
-  textToCopy = textToCopy.replace(/^(?:🔴|🔵|🟤|🟢|🟣)\s*(Đề|Lô\(đ\)|Xiên|3C|Bc)\s*\(.*?$/gm, "$1");
-  textToCopy = textToCopy.replace(/^Lô\(đ\)$/gm, "Lô");
-  textToCopy = textToCopy.replace(/^3C$/gm, "Bc");
-  copyToClipboard(textToCopy, "Đã sao chép kết quả thành công!");
+  // Đọc dữ liệu từ window._pendingCopyTransfers (dữ liệu step hiện tại)
+  // Nếu không có (gọi độc lập), dùng cumulative từ balanceState
+  const pending = window._pendingCopyTransfers;
+
+  // Lấy map cho từng thể loại
+  const deMap    = pending ? pending.de     : (balanceState.deTransfers     || {});
+  const loMap    = pending ? pending.lo     : (balanceState.loTransfers     || {});
+  const bacangMap = pending ? pending.bacang : (balanceState.baCangTransfers || {});
+
+  // Xien: pending dùng indexMap + xienBets, fallback dùng balanceState
+  let xienMap = {}; // key = "xx-yy", val = amount
+  if (pending) {
+    Object.entries(pending.xienIndexMap || {}).forEach(([idx, val]) => {
+      const bet = pending.xienBets[parseInt(idx)];
+      if (bet && val >= 0.1) xienMap[bet.numbers.join('-')] = val;
+    });
+  } else {
+    const combinedBetInput = document.getElementById('combinedBetInput');
+    const inputString = combinedBetInput ? getRawTextFromElement(combinedBetInput) : '';
+    const parsedBets = parseCombinedInput(inputString);
+    const xienBets = [...parsedBets.xien2, ...parsedBets.xien3, ...parsedBets.xien4];
+    Object.entries(balanceState.xienTransfers || {}).forEach(([idx, val]) => {
+      const bet = xienBets[parseInt(idx)];
+      if (bet && val >= 0.1) xienMap[bet.numbers.join('-')] = val;
+    });
+  }
+
+  const categories = [
+    { name: 'Đề',  map: deMap },
+    { name: 'Lô',  map: loMap },
+    { name: 'Bc',  map: bacangMap },
+    { name: 'Xiên', map: xienMap }
+  ];
+
+  // Đọc tuỳ chọn dạng dọc từ checkbox (lưu/đọc localStorage)
+  const chk = document.getElementById('copyVerticalMode');
+  const isVertical = chk ? chk.checked : (localStorage.getItem('z8_copy_vertical') === '1');
+
+  const lines = [];
+
+  categories.forEach(cat => {
+    const map = cat.map;
+    if (!map || Object.keys(map).length === 0) return;
+
+    // Lọc các mục hợp lệ
+    const entries = Object.entries(map).filter(([, val]) => val >= 0.1);
+    if (entries.length === 0) return;
+
+    if (isVertical) {
+      // ===== DẠNG DỌC: mỗi số một dòng riêng =====
+      // Sắp xếp theo giá tăng dần, trong cùng giá thì theo số
+      entries.sort((a, b) => {
+        const vDiff = a[1] - b[1];
+        if (Math.abs(vDiff) > 0.05) return vDiff;
+        return a[0].localeCompare(b[0], undefined, { numeric: true });
+      });
+      // Header thể loại
+      lines.push(cat.name);
+      entries.forEach(([num, val]) => {
+        const displayAmt = Math.round(val * 10) / 10;
+        lines.push(`${num}x${displayAmt}`);
+      });
+    } else {
+      // ===== DẠNG NGANG: nhóm theo giá =====
+      // Ví dụ: "Đề 00.08.33x5, 02.12x10"
+      const amountGroups = {};
+      entries.forEach(([num, val]) => {
+        const roundedVal = Math.round(val * 10) / 10;
+        if (!amountGroups[roundedVal]) amountGroups[roundedVal] = [];
+        amountGroups[roundedVal].push(num);
+      });
+
+      const sortedAmounts = Object.keys(amountGroups).map(Number).sort((a, b) => a - b);
+      const groupStrings = sortedAmounts.map(amt => {
+        const nums = amountGroups[amt];
+        nums.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        return `${nums.join('.')}x${amt}`;
+      });
+
+      lines.push(`${cat.name} ${groupStrings.join(', ')}`);
+    }
+  });
+
+  const textToCopy = lines.join('\n');
+  copyToClipboard(textToCopy, 'Đã sao chép kết quả thành công!');
 }
 
 function copyInputList() {
@@ -4462,6 +4565,12 @@ function loadRates() {
   window.activeConfigTab = 'thau';
   updateConfigTabUI();
   fillConfigInputs();
+
+  // Khôi phục trạng thái checkbox dạng dọc
+  const chk = document.getElementById('copyVerticalMode');
+  if (chk) {
+    chk.checked = (localStorage.getItem('z8_copy_vertical') === '1');
+  }
 }
 
 function saveRates() {
@@ -4469,6 +4578,11 @@ function saveRates() {
   saveCurrentConfigInputs();
   // Then write the complete object to local storage
   localStorage.setItem(RATES_STORAGE_KEY, JSON.stringify(window.priceConfigData));
+  // Lưu trạng thái checkbox dạng dọc
+  const chk = document.getElementById('copyVerticalMode');
+  if (chk) {
+    localStorage.setItem('z8_copy_vertical', chk.checked ? '1' : '0');
+  }
 }
 
 // Setup Event Listeners
@@ -4828,41 +4942,9 @@ function setupEventListeners() {
     cpBtn.addEventListener('click', handleCopyButtonClick);
   }
 
-  const btnGeminiAi = document.getElementById('btnGeminiAi');
-  if (btnGeminiAi) {
-    btnGeminiAi.addEventListener('click', fetchGeminiAiAnalysis);
-  }
-
-  const btnFetchGeminiAnalysisModal = document.getElementById('btnFetchGeminiAnalysisModal');
-  if (btnFetchGeminiAnalysisModal) {
-    btnFetchGeminiAnalysisModal.addEventListener('click', fetchGeminiAiAnalysis);
-  }
-
-  const btnCloseGeminiAiModal = document.getElementById('btnCloseGeminiAiModal');
-  const btnCloseGeminiAiBtn = document.getElementById('btnCloseGeminiAiBtn');
-  const modalGeminiAi = document.getElementById('modalGeminiAi');
-
-  [btnCloseGeminiAiModal, btnCloseGeminiAiBtn].forEach(btn => {
-    if (btn) {
-      btn.addEventListener('click', () => {
-        if (modalGeminiAi) modalGeminiAi.classList.add('hidden');
-      });
-    }
-  });
-
-  const geminiApiKeyInput = document.getElementById('geminiApiKey');
-  const geminiModelSelect = document.getElementById('geminiModelSelect');
-  if (geminiApiKeyInput) {
-    geminiApiKeyInput.value = localStorage.getItem('z8_gemini_api_key') || '';
-    geminiApiKeyInput.addEventListener('change', () => {
-      localStorage.setItem('z8_gemini_api_key', geminiApiKeyInput.value.trim());
-    });
-  }
-  if (geminiModelSelect) {
-    geminiModelSelect.value = localStorage.getItem('z8_gemini_model') || 'gemini-3.6-flash';
-    geminiModelSelect.addEventListener('change', () => {
-      localStorage.setItem('z8_gemini_model', geminiModelSelect.value);
-    });
+  const cpInputBtn = document.getElementById('copyInputListButton');
+  if (cpInputBtn) {
+    cpInputBtn.addEventListener('click', copyInputList);
   }
 
   const logoBtn = document.getElementById('logoButton');
@@ -5274,227 +5356,6 @@ function setupEventListeners() {
       });
     });
   }
-}
-
-async function fetchGeminiAiAnalysis() {
-  const modal = document.getElementById('modalGeminiAi');
-  const container = document.getElementById('geminiAiResultContainer');
-  const apiKeyInput = document.getElementById('geminiApiKey');
-  const modelSelect = document.getElementById('geminiModelSelect');
-  
-  if (modal) modal.classList.remove('hidden');
-
-  const apiKey = (apiKeyInput?.value || localStorage.getItem('z8_gemini_api_key') || '').trim();
-  if (!apiKey) {
-    if (container) {
-      container.innerHTML = `
-        <div class="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-lg p-4 text-amber-800 dark:text-amber-200 text-xs space-y-2">
-          <div class="font-bold flex items-center gap-1.5 text-sm"><i class="fa-solid fa-key text-amber-600"></i> Chưa có API Key!</div>
-          <p>Vui lòng nhập <strong>Google Gemini API Key</strong> ở thanh cấu hình phía trên để sử dụng Trợ lý AI.</p>
-          <p class="text-[11px] text-slate-500">Bạn có thể lấy API Key miễn phí 100% tại Google AI Studio: <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 dark:text-indigo-400 font-bold underline">https://aistudio.google.com/app/apikey</a></p>
-        </div>
-      `;
-    }
-    return;
-  }
-
-  const combinedBetInput = document.getElementById('combinedBetInput');
-  const betText = getRawTextFromElement(combinedBetInput).trim();
-  if (!betText) {
-    if (container) {
-      container.innerHTML = `
-        <div class="bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-800 rounded-lg p-4 text-blue-800 dark:text-blue-200 text-xs space-y-2">
-          <div class="font-bold flex items-center gap-1.5 text-sm"><i class="fa-solid fa-circle-info text-blue-600"></i> Khung nhập cược đang trống!</div>
-          <p>Vui lòng nhập tin cược vào ô cược chính trước khi bấm phân tích AI.</p>
-        </div>
-      `;
-    }
-    return;
-  }
-
-  const model = modelSelect?.value || 'gemini-3.6-flash';
-
-  if (container) {
-    container.innerHTML = `
-      <div class="flex flex-col items-center justify-center py-10 space-y-3">
-        <div class="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-        <p class="font-bold text-purple-700 dark:text-purple-400 text-sm">Gemini AI đang đọc hiểu và phân tích rủi ro bảng cược...</p>
-        <p class="text-slate-500 text-xs">Vui lòng chờ trong giây lát</p>
-      </div>
-    `;
-  }
-
-  const prompt = `Bạn là một chuyên gia phân tích rủi ro lô đề và quản lý tài chính cho nhà cái/chủ thầu lô đề Miền Bắc.
-Dưới đây là dữ liệu tin cược khách vừa đánh vào bảng:
-
----
-${betText}
----
-
-Hãy thực hiện 2 việc:
-1. Trình bày bài phân tích chi tiết bằng Tiếng Việt Markdown:
-   - **Phân tích tổng quan bảng cược**: Các con cược nặng tiền, dàn kép, dàn tổng.
-   - **Cảnh báo rủi ro**: Nếu các con cược nặng tiền nổ.
-   - **Đánh giá 3 kịch bản cân chuyển**:
-     - Kịch bản 1: An toàn tuyệt đối (Bảo thủ).
-     - Kịch bản 2: Cân bằng tối ưu (Khuyên dùng).
-     - Kịch bản 3: Tối đa lợi nhuận (Mạo hiểm).
-
-2. Ở DÒNG CUỐI CÙNG BÀI VIẾT, BẮT BUỘC TRẢ VỀ CHÍNH XÁC DÒNG JSON THÔNG SỐ NÀY (Đềk, Lôđiểm, 3Ck, Xiênk):
-JSON_SCENARIOS:{"s1":{"name":"An toàn","de":15,"lo":1,"bc":0,"x":0},"s2":{"name":"Cân bằng","de":25,"lo":3,"bc":1,"x":1},"s3":{"name":"Mạo hiểm","de":40,"lo":5,"bc":2,"x":2}}
-`;
-
-  const modelsToTry = [
-    model,
-    'gemini-3.6-flash',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
-    'gemini-1.5-pro'
-  ].filter((v, i, a) => v && a.indexOf(v) === i);
-
-  let successText = null;
-  let lastError = null;
-
-  for (const currentModel of modelsToTry) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
-
-      const data = await response.json();
-      if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        successText = data.candidates[0].content.parts[0].text;
-        break;
-      } else {
-        lastError = data.error?.message || `Model ${currentModel} error (${response.status})`;
-      }
-    } catch (err) {
-      lastError = err.message;
-    }
-  }
-
-  if (successText) {
-    let scenariosData = null;
-    let jsonMatch = successText.match(/JSON_SCENARIOS:\s*(\{.*?\})/s) || successText.match(/(\{[\s\S]*?"s1"[\s\S]*?\})/s);
-    if (jsonMatch) {
-      try {
-        const cleanJson = jsonMatch[1].replace(/```json/gi, '').replace(/```/g, '').trim();
-        scenariosData = JSON.parse(cleanJson);
-      } catch (e) {
-        console.warn("Could not parse JSON scenarios", e);
-      }
-    }
-
-    if (!scenariosData || !scenariosData.s1) {
-      scenariosData = {
-        s1: { name: "An toàn", de: 15, lo: 1, bc: 0, x: 0 },
-        s2: { name: "Cân bằng", de: 25, lo: 3, bc: 1, x: 1 },
-        s3: { name: "Mạo hiểm", de: 40, lo: 5, bc: 2, x: 2 }
-      };
-    }
-
-    let cleanMarkdown = successText.replace(/JSON_SCENARIOS:\s*\{.*?\}/s, '').trim();
-
-    window.latestAiScenarios = scenariosData;
-
-    let scenariosBlock = `
-      <div class="mb-4 pb-3 border-b-2 border-purple-200 dark:border-purple-800/80 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/40 dark:to-indigo-950/40 rounded-2xl p-3.5 sm:p-4 space-y-2.5 select-none shadow-sm">
-        <div class="font-black text-purple-950 dark:text-purple-100 text-sm sm:text-base flex items-center justify-between">
-          <span class="flex items-center gap-2">
-            <i class="fa-solid fa-wand-magic-sparkles text-purple-600 dark:text-purple-400 text-base"></i>
-            <span>CLICK CHỌN KỊCH BẢN ĐỂ CÂN BẢNG TỰ ĐỘNG:</span>
-          </span>
-          <span class="text-[11px] font-normal text-purple-600 dark:text-purple-300 bg-white/80 dark:bg-dark-800/80 px-2 py-0.5 rounded-full border border-purple-200 dark:border-purple-700">1-Touch Apply</span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <button type="button" onclick="applyAiScenario('s1')" class="p-3.5 bg-white dark:bg-dark-700 hover:bg-purple-100 dark:hover:bg-purple-900/60 border-2 border-purple-200 dark:border-purple-700 hover:border-purple-400 rounded-xl text-left transition-all active:scale-95 shadow-sm cursor-pointer group">
-            <div class="font-black text-purple-700 dark:text-purple-300 text-sm sm:text-base flex items-center justify-between">
-              <span>🛡️ 1. ${scenariosData.s1?.name || 'An toàn'}</span>
-              <i class="fa-solid fa-arrow-right-to-bracket text-xs text-purple-400 group-hover:translate-x-1 transition-transform"></i>
-            </div>
-            <div class="text-xs text-slate-600 dark:text-slate-300 font-mono font-bold mt-1.5 bg-purple-50/80 dark:bg-purple-950/60 px-2 py-1 rounded border border-purple-100 dark:border-purple-800">
-              Giữ: Đề ${scenariosData.s1?.de}k | Lô ${scenariosData.s1?.lo}đ | 3C ${scenariosData.s1?.bc}k | X ${scenariosData.s1?.x}k
-            </div>
-          </button>
-
-          <button type="button" onclick="applyAiScenario('s2')" class="p-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white border-2 border-purple-500 rounded-xl text-left transition-all active:scale-95 shadow-md cursor-pointer group">
-            <div class="font-black text-yellow-300 text-sm sm:text-base flex items-center justify-between">
-              <span>⚡ 2. ${scenariosData.s2?.name || 'Cân bằng'}</span>
-              <span class="text-[10px] bg-yellow-400 text-purple-950 font-black px-1.5 py-0.5 rounded uppercase">Khuyên dùng</span>
-            </div>
-            <div class="text-xs text-purple-100 font-mono font-bold mt-1.5 bg-white/10 px-2 py-1 rounded border border-white/20">
-              Giữ: Đề ${scenariosData.s2?.de}k | Lô ${scenariosData.s2?.lo}đ | 3C ${scenariosData.s2?.bc}k | X ${scenariosData.s2?.x}k
-            </div>
-          </button>
-
-          <button type="button" onclick="applyAiScenario('s3')" class="p-3.5 bg-white dark:bg-dark-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-2 border-rose-200 dark:border-rose-800/60 hover:border-rose-400 rounded-xl text-left transition-all active:scale-95 shadow-sm cursor-pointer group">
-            <div class="font-black text-rose-600 dark:text-rose-400 text-sm sm:text-base flex items-center justify-between">
-              <span>🚀 3. ${scenariosData.s3?.name || 'Mạo hiểm'}</span>
-              <i class="fa-solid fa-arrow-right-to-bracket text-xs text-rose-400 group-hover:translate-x-1 transition-transform"></i>
-            </div>
-            <div class="text-xs text-slate-600 dark:text-slate-300 font-mono font-bold mt-1.5 bg-rose-50/80 dark:bg-rose-950/60 px-2 py-1 rounded border border-rose-100 dark:border-rose-900/40">
-              Giữ: Đề ${scenariosData.s3?.de}k | Lô ${scenariosData.s3?.lo}đ | 3C ${scenariosData.s3?.bc}k | X ${scenariosData.s3?.x}k
-            </div>
-          </button>
-        </div>
-      </div>
-    `;
-
-    let markdownBlock = `
-      <div class="prose dark:prose-invert text-xs sm:text-sm max-w-none space-y-3">
-        ${cleanMarkdown.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}
-      </div>
-    `;
-
-    let htmlOutput = scenariosBlock + markdownBlock;
-
-    if (container) container.innerHTML = htmlOutput;
-  } else {
-    if (container) {
-      container.innerHTML = `
-        <div class="bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-lg p-4 text-rose-800 dark:text-rose-200 text-xs space-y-2">
-          <div class="font-bold flex items-center gap-1.5 text-sm"><i class="fa-solid fa-circle-exclamation text-rose-600"></i> Phân tích thất bại!</div>
-          <p>Lỗi: ${escapeHtml(lastError || 'Không thể kết nối đến Gemini API')}</p>
-          <p class="text-[11px] text-slate-500">Vui lòng kiểm tra lại API Key hoặc chọn model khác (ví dụ: gemini-2.0-flash).</p>
-        </div>
-      `;
-    }
-  }
-}
-
-function applyAiScenario(key) {
-  if (!window.latestAiScenarios || !window.latestAiScenarios[key]) {
-    alert("Không tìm thấy thông số kịch bản!");
-    return;
-  }
-
-  const s = window.latestAiScenarios[key];
-  const retainTypeMoney = document.getElementById('retainTypeMoney');
-  if (retainTypeMoney) retainTypeMoney.checked = true;
-
-  const retainDe = document.getElementById('retainDe');
-  const retainLo = document.getElementById('retainLo');
-  const retain3c = document.getElementById('retain3c');
-  const retainX = document.getElementById('retainX');
-
-  if (retainDe) retainDe.value = s.de !== undefined ? s.de : 20;
-  if (retainLo) retainLo.value = s.lo !== undefined ? s.lo : 5;
-  if (retain3c) retain3c.value = s.bc !== undefined ? s.bc : 0;
-  if (retainX) retainX.value = s.x !== undefined ? s.x : 0;
-
-  updateRetainBranchUI();
-  calculateSum();
-  saveAppState();
-
-  const modal = document.getElementById('modalGeminiAi');
-  if (modal) modal.classList.add('hidden');
-  alert(`Đã áp dụng kịch bản "${s.name || key}"!`);
 }
 
 function updateTransferStepsUI() {
@@ -5965,7 +5826,16 @@ function runBalancingStep(isPercent) {
   }
 
   // Copy text BEFORE updating cumulative state and re-calculating
+  // Lưu dữ liệu step vào window để copyText() đọc đúng lần chuyển này
+  window._pendingCopyTransfers = {
+    de: { ...stepDeTransfers },
+    lo: { ...stepLoTransfers },
+    bacang: { ...stepBaCangTransfers },
+    xienIndexMap: { ...stepXienTransfers },
+    xienBets: xienBets.map(b => ({ numbers: [...b.numbers], amount: b.amount }))
+  };
   copyText();
+  delete window._pendingCopyTransfers;
 
   // Initialize step maps if not existing
   if (!balanceState.lastDeTransfers) balanceState.lastDeTransfers = {};
@@ -6255,13 +6125,15 @@ function showSubTab(subTabName) {
   
   const cardResult = document.getElementById('cardResult');
   const cardTransfer = document.getElementById('cardTransfer');
+  const cardDetail = document.getElementById('cardDetail');
   
   const activeClasses = ['bg-white', 'dark:bg-dark-800', 'text-excel-800', 'dark:text-emerald-400', 'shadow-sm'];
   const inactiveClasses = ['text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700', 'dark:hover:text-slate-300'];
   
   const buttons = [
     { btn: btnResult, name: 'result' },
-    { btn: btnTransfer, name: 'transfer' }
+    { btn: btnTransfer, name: 'transfer' },
+    { btn: btnDetail, name: 'detail' }
   ];
   
   buttons.forEach(item => {
@@ -6277,7 +6149,7 @@ function showSubTab(subTabName) {
   });
   
   // Hide all cards
-  [cardResult, cardTransfer].forEach(card => {
+  [cardResult, cardTransfer, cardDetail].forEach(card => {
     if (card) card.classList.add('mobile-hidden');
   });
   
@@ -6286,6 +6158,8 @@ function showSubTab(subTabName) {
     if (cardResult) cardResult.classList.remove('mobile-hidden');
   } else if (subTabName === 'transfer') {
     if (cardTransfer) cardTransfer.classList.remove('mobile-hidden');
+  } else if (subTabName === 'detail') {
+    if (cardDetail) cardDetail.classList.remove('mobile-hidden');
   }
 }
 
@@ -6293,7 +6167,7 @@ function initMobileSubTabs() {
   window.addEventListener('resize', () => {
     const isMobile = window.matchMedia("(max-width: 1023px)").matches;
     if (!isMobile) {
-      ['cardResult', 'cardTransfer'].forEach(id => {
+      ['cardResult', 'cardTransfer', 'cardDetail'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('mobile-hidden');
       });
@@ -6398,19 +6272,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    const btnScrollTop = document.getElementById('btnScrollTop');
-    if (btnScrollTop) {
-      btnScrollTop.addEventListener('click', function() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-    }
-
-    const btnScrollBottom = document.getElementById('btnScrollBottom');
-    if (btnScrollBottom) {
-      btnScrollBottom.addEventListener('click', function() {
-        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-      });
-    }
 
     // Auto-fetch results on page load is disabled by default
     // triggerAutoFetch();
@@ -6522,75 +6383,6 @@ function resetTable() {
 }
 </script>
 
-  <!-- MODAL TRỢ LÝ AI GEMINI -->
-  <div id="modalGeminiAi" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60 backdrop-blur-sm p-3 sm:p-4">
-    <div class="bg-white dark:bg-dark-800 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl rounded-2xl border border-slate-200 dark:border-slate-700">
-      
-      <!-- Modal Header -->
-      <div class="flex justify-between items-center px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-purple-900 to-indigo-900 text-white">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-            <i class="fa-solid fa-robot text-yellow-300 text-base"></i>
-          </div>
-          <div>
-            <h3 class="font-black text-sm tracking-wide flex items-center gap-2">
-              <span>Trợ Lý AI Phân Tích & Tư Vấn Cân Bảng</span>
-              <span class="text-[10px] bg-purple-500/40 text-purple-200 px-2 py-0.5 rounded-full font-mono border border-purple-400/30">Gemini 3.6</span>
-            </h3>
-            <p class="text-[11px] text-purple-200 font-normal">Tự động đánh giá rủi ro, dự đoán kịch bản và để xuất tham số cân thầu tối ưu</p>
-          </div>
-        </div>
-        <button id="btnCloseGeminiAiModal" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all active:scale-95">
-          <i class="fa-solid fa-xmark text-sm"></i>
-        </button>
-      </div>
-
-      <!-- Config & Action Bar -->
-      <div class="p-3 bg-slate-50 dark:bg-dark-900/80 border-b border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-12 gap-2 text-xs">
-        <div class="sm:col-span-6 flex items-center gap-2">
-          <label class="font-bold text-slate-600 dark:text-slate-400 shrink-0">API Key:</label>
-          <input type="password" id="geminiApiKey" class="w-full border border-slate-300 dark:border-slate-600 rounded px-2.5 py-1 text-xs font-mono bg-white dark:bg-dark-700 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Nhập Google Gemini API Key...">
-        </div>
-        <div class="sm:col-span-4 flex items-center gap-2">
-          <label class="font-bold text-slate-600 dark:text-slate-400 shrink-0">Model:</label>
-          <select id="geminiModelSelect" class="w-full border border-slate-300 dark:border-slate-600 rounded px-2 py-1 text-xs bg-white dark:bg-dark-700 focus:ring-2 focus:ring-purple-500 outline-none">
-            <option value="gemini-3.6-flash">gemini-3.6-flash (Tốc độ cao - Mới)</option>
-            <option value="gemini-2.0-flash">gemini-2.0-flash (Khuyên dùng)</option>
-            <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-            <option value="gemini-1.5-pro">gemini-1.5-pro (Sâu sắc)</option>
-          </select>
-        </div>
-        <div class="sm:col-span-2 flex items-center">
-          <button id="btnFetchGeminiAnalysisModal" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-1 px-3 rounded transition-all flex items-center justify-center gap-1 active:scale-95 shadow-xs">
-            <i class="fa-solid fa-arrows-rotate"></i>
-            <span>Phân tích</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Modal Body (AI Analysis Content) -->
-      <div id="geminiAiResultContainer" class="p-4 overflow-y-auto flex-1 font-sans text-xs leading-relaxed space-y-3 bg-white dark:bg-dark-800 text-slate-800 dark:text-slate-200">
-        <div class="text-center py-10 text-slate-400 space-y-2">
-          <i class="fa-solid fa-robot text-4xl text-purple-300 dark:text-purple-900/40"></i>
-          <p class="font-semibold text-sm">Bấm "Trợ lý AI" để bắt đầu phân tích bảng cược hiện tại.</p>
-          <p class="text-[11px] text-slate-400">Hệ thống sẽ tổng hợp danh sách cược, rủi ro nổ bảng và tự động gợi ý 3 kịch bản cân chuyển.</p>
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="p-3 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-dark-900">
-        <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-          <i class="fa-solid fa-shield-halved text-purple-600"></i>
-          <span>Bảo mật: API Key lưu trực tiếp trên trình duyệt của bạn</span>
-        </div>
-        <button id="btnCloseGeminiAiBtn" class="bg-slate-200 dark:bg-dark-700 hover:bg-slate-300 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 font-bold px-4 py-1.5 rounded transition-all text-xs">
-          Đóng
-        </button>
-      </div>
-
-    </div>
-  </div>
-
   <!-- Modal Cấu hình giá (Ported from thau_lode.html) -->
   <div id="modalPriceConfig" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60 backdrop-blur-sm p-4">
     <div class="bg-white dark:bg-dark-800 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl rounded-xl border border-gray-200 dark:border-gray-700">
@@ -6699,13 +6491,18 @@ function resetTable() {
       </div>
       
       <!-- Modal Footer -->
-      <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end bg-gray-50 dark:bg-dark-900">
+      <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-dark-900">
+        <label class="flex items-center gap-2 cursor-pointer select-none" title="Copy dữ liệu chuyển đi theo dạng dọc (mỗi số một dòng) thay vì dạng ngang nhóm theo giá">
+          <input type="checkbox" id="copyVerticalMode" class="form-checkbox text-indigo-600 focus:ring-indigo-500 rounded">
+          <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">Dạng dọc khi copy</span>
+        </label>
         <button id="btnClosePriceConfigBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-5 rounded-md text-xs font-bold">
           Xác nhận
         </button>
       </div>
     </div>
   </div>
+
 
 </body>
 </html>
