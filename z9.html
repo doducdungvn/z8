@@ -1,7 +1,4 @@
 
-
-
-
 <!DOCTYPE html>
 <html lang="vi" class="scroll-smooth h-full">
 <head>
@@ -249,8 +246,8 @@
         <!-- 2. ACTION CONTROLS PANEL (BELOW INPUT FIELD) -->
         <div class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-3 space-y-3">
           
-          <!-- 3 Main Buttons: Tính tổng | Chuyển 1 | Input -->
-          <div class="grid grid-cols-3 gap-2">
+          <!-- 2 Main Buttons: Tính tổng | Chuyển 1 -->
+          <div class="grid grid-cols-2 gap-2">
             <button id="calculateButton" class="bg-excel-800 hover:bg-excel-900 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Tính toán tổng số tiền cược">
               <i class="fa-solid fa-sigma"></i>
               <span>Tính tổng</span>
@@ -258,10 +255,6 @@
             <button id="copyButton" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Thực hiện cân chuyển">
               <i class="fa-solid fa-share-nodes"></i>
               <span>Chuyển 1</span>
-            </button>
-            <button id="copyInputListButton" class="bg-amber-600 hover:bg-amber-700 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Xem danh sách chi tiết cược theo Input">
-              <i class="fa-solid fa-list-check"></i>
-              <span>Input</span>
             </button>
           </div>
 
@@ -350,10 +343,16 @@
               <span class="ml-2 font-semibold text-slate-700 dark:text-slate-300">KQXS & Nhập tắt</span>
             </label>
 
-            <button type="button" id="btnPriceConfig" class="px-3 py-1.5 bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-300 dark:border-slate-600 shadow-xs">
-              <i class="fa-solid fa-sliders text-excel-800 dark:text-emerald-400"></i>
-              <span>Cấu hình giá</span>
-            </button>
+            <div class="flex items-center gap-1.5">
+              <button id="copyInputListButton" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md font-bold transition-all flex items-center gap-1.5 active:scale-95 text-xs shadow-xs" title="Xem danh sách chi tiết cược theo Input">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Input</span>
+              </button>
+              <button type="button" id="btnPriceConfig" class="px-3 py-1.5 bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-200 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-300 dark:border-slate-600 shadow-xs">
+                <i class="fa-solid fa-sliders text-excel-800 dark:text-emerald-400"></i>
+                <span>Cấu hình giá</span>
+              </button>
+            </div>
           </div>
 
         </div>
@@ -370,19 +369,14 @@
               <button type="button" id="btnToggleLotteryResults" class="text-[10px] bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded transition-all font-semibold">Hiện</button>
             </div>
             
-            <div class="flex gap-1 text-xs">
-              <button type="button" id="btnSourceMinhNgoc" class="px-2.5 py-1 rounded bg-excel-800 text-white font-semibold border border-transparent shadow-xs">
-                Minh Ngọc
-              </button>
-              <button type="button" id="btnSourceXSKT" class="px-2.5 py-1 rounded bg-slate-200 dark:bg-dark-700 text-slate-700 dark:text-slate-300 font-semibold border border-transparent">
-                xskt.com.vn
-              </button>
-              <button type="button" id="btnSourceMKetqua" class="px-2.5 py-1 rounded bg-slate-200 dark:bg-dark-700 text-slate-700 dark:text-slate-300 font-semibold border border-transparent">
-                mketqua.net
-              </button>
-              <button type="button" id="btnSourceGitHub" class="px-2.5 py-1 rounded bg-slate-200 dark:bg-dark-700 text-slate-700 dark:text-slate-300 font-semibold border border-transparent">
-                GitHub Data
-              </button>
+            <div class="flex gap-1 text-xs items-center">
+              <select id="sourceSelect" class="text-xs font-semibold border border-slate-300 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-excel-800 cursor-pointer">
+                <option value="namdinh">XS Nam Định</option>
+                <option value="minhngoc">Minh Ngọc</option>
+                <option value="xskt">xskt.com.vn</option>
+                <option value="mketqua">mketqua.net</option>
+                <option value="github">GitHub Data</option>
+              </select>
             </div>
           </div>
 
@@ -459,7 +453,7 @@
         </div>
         
         <!-- CARDS GRID (EXCEL DATA TABLES) -->
-        <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 items-start lg:!grid">
+        <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 items-start lg:!grid">
           
           <!-- Card 1: Kết quả -->
           <div id="cardResult" class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-3 transition-all hover:shadow-md flex flex-col justify-start h-auto">
@@ -510,10 +504,15 @@
           </div>
 
           <!-- Card 3: Chi tiết Input -->
-          <div id="cardDetail" class="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-3 transition-all hover:shadow-md flex flex-col justify-start h-auto">
-            <h3 class="font-bold text-xs flex items-center gap-1.5 mb-2 border-b border-slate-200 dark:border-slate-700 pb-2 text-slate-800 dark:text-slate-200">
-              <i class="fa-solid fa-magnifying-glass text-amber-600 dark:text-amber-400"></i>
-              <span>Chi tiết:</span>
+          <div id="cardDetail" class="hidden bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-slate-300 dark:border-slate-700 p-3 transition-all hover:shadow-md flex flex-col justify-start h-auto">
+            <h3 class="font-bold text-xs flex items-center justify-between gap-1.5 mb-2 border-b border-slate-200 dark:border-slate-700 pb-2 text-slate-800 dark:text-slate-200">
+              <span class="flex items-center gap-1.5">
+                <i class="fa-solid fa-magnifying-glass text-amber-600 dark:text-amber-400"></i>
+                <span>Chi tiết:</span>
+              </span>
+              <button id="btnCopyInputListInCard" class="text-[10px] bg-amber-50 hover:bg-amber-600 text-amber-700 hover:text-white border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded transition-all flex items-center gap-1 font-semibold" title="Copy danh sách input">
+                <i class="fa-solid fa-copy"></i> Copy
+              </button>
             </h3>
             
             <div class="flex flex-col gap-1.5 mb-2 font-mono text-xs">
@@ -1396,7 +1395,7 @@ function verifyNonGroupText(text, currentCat) {
     }
     
     const norm = normalizeBetLine(trimmed);
-    const spaceMatch = norm.match(/^(xienquay|xq|xienq|quay|q|xquay|lo\s*xien|de|lo|xien|x|x2|x3|x4|3cang|3c|d|l|c|bc|cang|3\s*cang)$/i);
+    const spaceMatch = norm.match(/^(xienquay|xq|xienq|quay|q|xquay|lo\s*xien|l\s*xien|de|lo|xien|x2|x3|x4|3cang|3c|d|l|c|bc|cang|3\s*cang|bo|he)(?:\b|[.:;\-\s])$/i);
     if (spaceMatch) {
       const rawType = spaceMatch[1].toLowerCase();
       const typeRegex = {
@@ -1441,7 +1440,7 @@ function verifyGroupText(groupText, currentCat) {
   
   const normalizedGroupText = groupText.normalize("NFC");
   
-  const opRegex = /(?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?$/i;
+  const opRegex = /(?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?[\.,;\-]*$/i;
   const opMatch = normalizedGroupText.match(opRegex);
   
   let numbersPart = normalizedGroupText;
@@ -1481,7 +1480,7 @@ function verifyGroupText(groupText, currentCat) {
     return parsedNums.length > 0;
   }
 
-  const tokenRegex = /(\s+|[.,;/\-\+=\*x]+|(?:dau\s*dit|đầu\s*đít|dau\s*duoi|đầu\s*đuôi|đau\s*đit|đau\s*đít|dd|đđ)\s*\d(?![0-9])|(?:kep\s+lech|kép\s+lệch)|(?:chẵn|chan|chăn)\s+(?:chẵn|chan|chăn)|(?:chẵn|chan|chăn)\s+(?:lẻ|le)|(?:lẻ|le)\s+(?:chẵn|chan|chăn)|(?:lẻ|le)\s+(?:lẻ|le)|(?:dau|đầu|đau|đàu|dit|đít|đit|duoi|đuôi|cham|chạm|tong|tổng|bo|bộ|he|hệ|d|đ|t)\s*\d{1,2}(?![0-9])|[a-zA-Z0-9'’‘＇`\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036f]+|.)/gi;
+  const tokenRegex = /(\s+|[.,;/\-\+=\*x]+|(?:dau\s*dit|đầu\s*đít|dau\s*duoi|đầu\s*đuôi|đau\s*đit|đau\s*đít|dd|đđ)\s*\d(?![0-9])|(?:kep\s+lech|kép\s+lệch)|(?:chẵn|chan|chăn)\s+(?:chẵn|chan|chăn)|(?:chẵn|chan|chăn)\s+(?:lẻ|le)|(?:lẻ|le)\s+(?:chẵn|chan|chăn)|(?:lẻ|le)\s+(?:lẻ|le)|(?:dau|đầu|đau|đàu|dit|đít|đit|duoi|đuôi|cham|chạm|tong|tổng|bo|bộ|he|hệ|d|đ|t)\s*\d{1,2}(?![0-9])|[a-zA-Z0-9'’‘ʼ＇`\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036f]+|.)/gi;
   const tokens = numbersPart.match(tokenRegex) || [];
   let html = "";
   let validTokensCount = 0;
@@ -1582,7 +1581,7 @@ function formatLineWithHighlights(lineText, currentCategory) {
   let hasInvalid = false;
   let htmlResult = "";
   
-  const groupRegex = /(?:^|[\s,;])([a-wy-z0-9'’‘ʼ＇`.,\-\s\u00C0-\u024F\u1E00-\u1EFF]+?)(?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*(\d+(?:\.\d+)?)(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?/gi;
+  const groupRegex = /(?:^|[\s,;.:\-]+)([a-wy-z0-9'’‘ʼ＇`.,\-\s\u00C0-\u024F\u1E00-\u1EFF]+?)(?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?[\.,;\-]*/gi;
   
   let lastIndex = 0;
   let match;
@@ -1631,6 +1630,7 @@ function stripAccents(str) {
 
 function normalizeBetLine(line) {
   let normalized = stripAccents(line.trim().toLowerCase());
+  normalized = normalized.replace(/^(xienquay|xq|xienq|quay|q|xquay|lo\s*xien|l\s*xien|de|lo|xien|x|x2|x3|x4|3cang|3c|d|l|c|bc|cang|3\s*cang|bo|he)[.:;\-]+\s*/gi, '$1 ');
   normalized = normalized.replace(/([dđ])`/g, '$1');
   normalized = normalized.replace(/[’‘ʼ＇]/g, "'");
   normalized = normalized.replace(/(\d)\s*,\s*(\d)/g, '$1.$2');
@@ -1653,6 +1653,7 @@ function normalizeBetLine(line) {
   normalized = normalized.replace(/\b(?:3\s*cang|3\s*c)\b/g, '3c');
   normalized = normalized.replace(/\b(?:xien\s*quay|x\s*quay)\b/g, 'xq');
   normalized = normalized.replace(/\b(?:lo\s*xien|l\s*xien)\b/g, 'xien');
+  normalized = normalized.replace(/((?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?)\s*[\.,;](?=[\s.,;\-\d]|$)/gi, '$1 ');
   normalized = normalized.replace(/\s*[,.]\s*(?==|x|mc|moi\s*con|\+|\*)/g, ' ');
   normalized = normalized.replace(/([a-z0-9])\s*(mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*(\d+(?:\.\d+)?)(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?(?![a-z0-9])/g, '$1x$3');
   normalized = normalized.replace(/\bmc\s*(\d+(?:\.\d+)?)(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?(?![a-z0-9])/g, 'x$1');
@@ -1662,11 +1663,11 @@ function normalizeBetLine(line) {
 
 function parseCombinedInput(inputString) {
   let processedInput = inputString.replace(/[’‘ʼ＇`]/g, "'");
-  const keywordRegex = /(^|[\s,;])(xienquay|xquay|xienq|3cang|3càng|3\s*càng|3\s*cang|quay|xien|xiên|xq|de|đề|đê|đe|dê|dè|đè|Dè|Đè|dề|Dề|lo|lô|3c|bc|càng|cang|d(?!\d(?!\d))|đ(?!\d(?!\d))|l|c|q|x)(\d)/gi;
+  const keywordRegex = /(^|[\s,;.])(xienquay|xquay|xienq|3cang|3càng|3\s*càng|3\s*cang|quay|xien|xiên|xq|de|đề|đê|đe|dê|dè|đè|Dè|Đè|dề|Dề|lo|lô|3c|bc|càng|cang|d(?!\d(?!\d))|đ(?!\d(?!\d))|l|c|q|x)(\d)/gi;
   processedInput = processedInput.replace(keywordRegex, "$1$2 $3");
-  const sameLinePattern = /[\s,;]+(xienquay|xq|xienq|quay|q|xquay|lô\s*xiên|lo\s*xien|đề|de|đê|đe|dê|dè|đè|Dè|Đè|dề|Dề|lô|lo|l|xiên|xien|x2|x3|x4)(?=[\s.,;\-\d]|$)|[\s,;]+(3càng|3cang|3\s*càng|3\s*cang|3c|bc|càng|cang)(?=[\s.,;\-\d]|$)|[\s,;]+(d|đ|l|c)(?=[\s.,;\-\d]|$)(?=\s+[a-z0-9'’‘＇`])/gi;
+  const sameLinePattern = /[\s,;.:\-]+(xienquay|xq|xienq|quay|q|xquay|lô\s*xiên|lo\s*xien|đề|de|đê|đe|dê|dè|đè|Dè|Đè|dề|Dề|lô|lo|l|xiên|xien|x2|x3|x4)(?=[\s.,;\-\d:]|$)|[\s,;.:\-]+(3càng|3cang|3\s*càng|3\s*cang|3c|bc|càng|cang)(?=[\s.,;\-\d:]|$)|[\s,;.:\-]+(d|đ|l|c)(?=[\s.,;\-\d:]|$)(?=\s+[a-z0-9'’‘＇`])/gi;
   processedInput = processedInput.replace(sameLinePattern, (match) => {
-    return "\n" + match.replace(/^[\s,;]+/g, '').trim();
+    return "\n" + match.replace(/^[\s,;.:\-]+/g, '').trim();
   });
 
   const betSplitRegex = /([a-z0-9])\s*((?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?)\b[\s.,;\-]+(?=[^\s.,;\-])/gi;
@@ -1700,7 +1701,7 @@ function parseCombinedInput(inputString) {
     let trimmed = normalizeBetLine(originalLine);
 
     let lineType = '';
-    const spaceMatch = trimmed.match(/^(xienquay|xq|xienq|quay|q|xquay|lo\s*xien|de|lo|xien|x|x2|x3|x4|3cang|3c|d|l|c|bc|cang|3\s*cang)(?:\s+(.*))?$/i);
+    const spaceMatch = trimmed.match(/^(xienquay|xq|xienq|quay|q|xquay|lo\s*xien|l\s*xien|de|lo|xien|x2|x3|x4|3cang|3c|d|l|c|bc|cang|3\s*cang|bo|he)(?:\b|[.:;\-\s])\s*(.*)$/i);
     if (spaceMatch) {
       const rawType = spaceMatch[1].toLowerCase();
       if (typeRegex.de.test(rawType)) lineType = 'de';
@@ -1711,7 +1712,7 @@ function parseCombinedInput(inputString) {
 
       if (lineType) {
         activeCategory = lineType;
-        trimmed = spaceMatch[2] ? spaceMatch[2].trim() : '';
+        trimmed = spaceMatch[2] ? spaceMatch[2].replace(/^[.:;\-\s]+/, '').trim() : '';
         if (trimmed === '') {
           return; // Standalone category header line - do not treat as error
         }
@@ -1936,7 +1937,7 @@ function updateTwoDigitBoard() {
 }
 
 // Crawler states
-let currentSource = 'minhngoc';
+let currentSource = 'namdinh';
 let fetchedPrizesData = null;
 
 function isToday(dateString) {
@@ -1979,28 +1980,33 @@ async function triggerAutoFetch(isAuto = false) {
     let errors = [];
 
     if (isAutoFetch) {
-      // 1. Tự động: trước tiên là lấy kết quả ở GitHub Data
+      // 1. Tự động: Ưu tiên lấy từ XS Nam Định -> Minh Ngọc -> GitHub -> XSKT -> mketqua
       try {
-        data = await fetchFromGitHubXSMB(targetDate);
+        data = await fetchFromXONamdinh(targetDate);
       } catch (e) {
-        errors.push("GitHub: " + e.message);
+        errors.push("XS Nam Định: " + e.message);
       }
 
-      // 2. Nếu GitHub lỗi hoặc không có, thử nguồn đã chọn
       if (!data) {
-        if (currentSource === 'github') {
-          // GitHub already tried
-        } else if (currentSource === 'minhngoc') {
-          try { data = await fetchFromMinhNgoc(targetDate); } catch (e) { errors.push("Minh Ngọc: " + e.message); }
-        } else if (currentSource === 'xskt') {
-          try { data = await fetchFromXSKT(targetDate); } catch (e) { errors.push("XSKT: " + e.message); }
-        } else if (currentSource === 'mketqua') {
-          try { data = await fetchFromMKetqua(targetDate); } catch (e) { errors.push("mketqua: " + e.message); }
+        try {
+          data = await fetchFromMinhNgoc(targetDate);
+        } catch (e) {
+          errors.push("Minh Ngọc: " + e.message);
+        }
+      }
+
+      if (!data) {
+        try {
+          data = await fetchFromGitHubXSMB(targetDate);
+        } catch (e) {
+          errors.push("GitHub: " + e.message);
         }
       }
     } else {
-      // 1. Thủ công: tự chọn trang lấy kết quả và ấn tải kq để lấy ở trang đó
-      if (currentSource === 'github') {
+      // 1. Thủ công: tự chọn trang lấy kết quả và ấn tải kq
+      if (currentSource === 'namdinh') {
+        try { data = await fetchFromXONamdinh(targetDate); } catch (e) { errors.push("XS Nam Định: " + e.message); }
+      } else if (currentSource === 'github') {
         try { data = await fetchFromGitHubXSMB(targetDate); } catch (e) { errors.push("GitHub: " + e.message); }
       } else if (currentSource === 'minhngoc') {
         try { data = await fetchFromMinhNgoc(targetDate); } catch (e) { errors.push("Minh Ngọc: " + e.message); }
@@ -2009,29 +2015,26 @@ async function triggerAutoFetch(isAuto = false) {
       } else if (currentSource === 'mketqua') {
         try { data = await fetchFromMKetqua(targetDate); } catch (e) { errors.push("mketqua: " + e.message); }
       }
+    }
 
-      // 2. Nếu nguồn đã chọn lỗi, thử GitHub làm fallback đầu tiên
-      if (!data && currentSource !== 'github') {
-        try {
-          data = await fetchFromGitHubXSMB(targetDate);
-        } catch (e) {
-          errors.push("GitHub (fallback): " + e.message);
-        }
+    // 2. Fallback chain theo thứ tự ưu tiên
+    const triedSources = new Set();
+    triedSources.add(currentSource);
+
+    const fallbackOrder = ['namdinh', 'minhngoc', 'github', 'xskt', 'mketqua'];
+    for (const src of fallbackOrder) {
+      if (data) break;
+      if (triedSources.has(src)) continue;
+      triedSources.add(src);
+      try {
+        if (src === 'namdinh') data = await fetchFromXONamdinh(targetDate);
+        else if (src === 'minhngoc') data = await fetchFromMinhNgoc(targetDate);
+        else if (src === 'github') data = await fetchFromGitHubXSMB(targetDate);
+        else if (src === 'xskt') data = await fetchFromXSKT(targetDate);
+        else if (src === 'mketqua') data = await fetchFromMKetqua(targetDate);
+      } catch (e) {
+        errors.push(src + " (fallback): " + e.message);
       }
-    }
-
-    // 3. Fallback chain cho các nguồn khác
-    if (!data && currentSource !== 'github') {
-      try { data = await fetchFromGitHubXSMB(targetDate); } catch (e) { errors.push("GitHub (fallback): " + e.message); }
-    }
-    if (!data && currentSource !== 'minhngoc') {
-      try { data = await fetchFromMinhNgoc(targetDate); } catch (e) { errors.push("Minh Ngọc (fallback): " + e.message); }
-    }
-    if (!data && currentSource !== 'xskt') {
-      try { data = await fetchFromXSKT(targetDate); } catch (e) { errors.push("XSKT (fallback): " + e.message); }
-    }
-    if (!data && currentSource !== 'mketqua') {
-      try { data = await fetchFromMKetqua(targetDate); } catch (e) { errors.push("mketqua (fallback): " + e.message); }
     }
 
     if (!data) {
@@ -2071,32 +2074,42 @@ async function triggerAutoFetch(isAuto = false) {
 }
 
 function updateSourceButtons(sourceName) {
-  const btnMinhNgoc = document.getElementById('btnSourceMinhNgoc');
-  const btnXSKT = document.getElementById('btnSourceXSKT');
-  const btnMKetqua = document.getElementById('btnSourceMKetqua');
-  const btnGitHub = document.getElementById('btnSourceGitHub');
-  if (!btnMinhNgoc || !btnXSKT || !btnMKetqua || !btnGitHub) return;
+  const select = document.getElementById('sourceSelect');
 
-  const activeCls = 'px-2.5 py-1 rounded bg-primary text-white font-semibold border border-transparent';
-  const inactiveCls = 'px-2.5 py-1 rounded bg-gray-200 dark:bg-dark-700 text-gray-700 dark:text-gray-300 font-semibold border border-transparent';
-
-  btnMinhNgoc.className = inactiveCls;
-  btnXSKT.className = inactiveCls;
-  btnMKetqua.className = inactiveCls;
-  btnGitHub.className = inactiveCls;
-
-  if (sourceName === "Minh Ngọc") {
+  if (sourceName === "XS Nam Định") {
+    currentSource = 'namdinh';
+    if (select) select.value = 'namdinh';
+  } else if (sourceName === "Minh Ngọc") {
     currentSource = 'minhngoc';
-    btnMinhNgoc.className = activeCls;
+    if (select) select.value = 'minhngoc';
   } else if (sourceName === "XSKT.com.vn") {
     currentSource = 'xskt';
-    btnXSKT.className = activeCls;
+    if (select) select.value = 'xskt';
   } else if (sourceName === "mketqua.net") {
     currentSource = 'mketqua';
-    btnMKetqua.className = activeCls;
+    if (select) select.value = 'mketqua';
   } else if (sourceName === "GitHub Data") {
     currentSource = 'github';
-    btnGitHub.className = activeCls;
+    if (select) select.value = 'github';
+  }
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 3500) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error(`Hết thời gian chờ (${timeoutMs}ms)`);
+    }
+    throw error;
   }
 }
 
@@ -2106,13 +2119,13 @@ async function fetchFromGitHubXSMB(dateStr) {
     dateStr = d.toISOString().split('T')[0];
   }
   
-  const res = await fetch("https://raw.githubusercontent.com/khiemdoan/vietnam-lottery-xsmb-analysis/main/data/xsmb.json");
+  const res = await fetchWithTimeout("https://raw.githubusercontent.com/khiemdoan/vietnam-lottery-xsmb-analysis/main/data/xsmb.json", {}, 3500);
   if (!res.ok) throw new Error("Kết nối kho dữ liệu GitHub thất bại.");
   const data = await res.json();
   
-  const record = data.find(item => item.date.startsWith(dateStr));
+  let record = data.find(item => item.date.startsWith(dateStr));
   if (!record) {
-    throw new Error(`Không tìm thấy kết quả ngày ${dateStr} trên kho GitHub.`);
+    throw new Error(`Chưa có dữ liệu ngày ${dateStr} trong kho GitHub.`);
   }
   
   const prizesKeys = [
@@ -2150,17 +2163,79 @@ async function fetchFromGitHubXSMB(dateStr) {
 }
 
 async function fetchHtmlWithProxy(targetUrl) {
-  try {
-    const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}&cache=${(new Date()).getTime()}`);
-    if (!res.ok) throw new Error();
-    const json = await res.json();
-    if (json.contents) return json.contents;
-  } catch (e) {
-    console.warn("Proxy allorigins failed, trying corsproxy...");
+  const proxies = [
+    async (url) => {
+      const res = await fetchWithTimeout(`https://corsproxy.org/?${encodeURIComponent(url)}`, {}, 3000);
+      if (!res.ok) throw new Error("corsproxy.org HTTP " + res.status);
+      const text = await res.text();
+      if (!text || text.includes('data-astro-cid') || text.length < 500) throw new Error("corsproxy.org phản hồi không hợp lệ");
+      return text;
+    },
+    async (url) => {
+      const res = await fetchWithTimeout(`https://proxy.cors.sh/${url}`, {}, 3000);
+      if (!res.ok) throw new Error("cors.sh HTTP " + res.status);
+      const text = await res.text();
+      if (!text || text.length < 500) throw new Error("cors.sh phản hồi không hợp lệ");
+      return text;
+    },
+    async (url) => {
+      const res = await fetchWithTimeout(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`, {}, 3000);
+      if (!res.ok) throw new Error("codetabs HTTP " + res.status);
+      const text = await res.text();
+      if (!text || text.length < 500) throw new Error("codetabs phản hồi không hợp lệ");
+      return text;
+    },
+    async (url) => {
+      const res = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}&cache=${(new Date()).getTime()}`, {}, 3000);
+      if (!res.ok) throw new Error("allorigins HTTP " + res.status);
+      const json = await res.json();
+      if (!json || !json.contents || json.contents.length < 500) throw new Error("allorigins phản hồi không hợp lệ");
+      return json.contents;
+    }
+  ];
+
+  let lastError = null;
+  for (const proxyFn of proxies) {
+    try {
+      return await proxyFn(targetUrl);
+    } catch (e) {
+      lastError = e;
+    }
   }
-  const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
-  if (!res.ok) throw new Error("Cả 2 dịch vụ proxy đều không tải được dữ liệu.");
-  return await res.text();
+  throw new Error("Không tải được dữ liệu (" + (lastError ? lastError.message : "Timeout") + ")");
+}
+
+async function fetchFromXONamdinh(dateStr) {
+  const url = 'https://xosonamdinh.com.vn/Ketquaxoso';
+  const html = await fetchHtmlWithProxy(url);
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  const divs = doc.querySelectorAll('.kq');
+  if (!divs || divs.length === 0) throw new Error("Không tìm thấy bảng kết quả (XS Nam Định).");
+
+  const prizes = [];
+  divs.forEach(div => {
+    const clone = div.cloneNode(true);
+    const span = clone.querySelector('span');
+    if (span) span.remove();
+    const text = clone.textContent || '';
+    const nums = text.split(/[\s\n\r,.\-+*]+/).map(n => n.trim()).filter(n => n.length > 0 && /^\d+$/.test(n));
+    prizes.push(...nums);
+  });
+
+  if (prizes.length === 0) throw new Error("Không trích xuất được giải (XS Nam Định).");
+
+  const titleEl = doc.querySelector('.title') || doc.body;
+  const dateMatch = titleEl ? titleEl.textContent.match(/XSMB\s+mở\s+thưởng\s+ngày\s+([\d/]+)/i) : null;
+  const dateText = dateMatch ? dateMatch[1] : formatDateDDMMYYYY(dateStr);
+
+  return {
+    sourceName: "XS Nam Định",
+    dateText: dateText,
+    specialPrize: prizes[0],
+    prizes: prizes
+  };
 }
 
 async function fetchFromMinhNgoc(dateStr) {
@@ -2835,7 +2910,9 @@ function calculateSum(isFromRunBalancing = false) {
       currentCat = res.newCategory;
       return res.html;
     }).join('<br>') + '<br>';
+    const savedScrollTop = inputEl.scrollTop;
     inputEl.innerHTML = editorHtml;
+    inputEl.scrollTop = savedScrollTop;
   }
 
   const resultDiv = document.getElementById("result");
@@ -4793,6 +4870,18 @@ function setupEventListeners() {
         .replace(/\r\n/g, '<br>')
         .replace(/[\r\n]/g, '<br>');
       document.execCommand("insertHTML", false, safeText);
+      // Scroll xuống cuối và đặt con trỏ cuối nội dung sau khi paste
+      requestAnimationFrame(() => {
+        combinedBetInput.scrollTop = combinedBetInput.scrollHeight;
+        try {
+          const range = document.createRange();
+          const sel = window.getSelection();
+          range.selectNodeContents(combinedBetInput);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } catch(err) {}
+      });
     });
 
     let highlightTimeout = null;
@@ -4840,28 +4929,46 @@ function setupEventListeners() {
           return res.html;
         }).join('<br>') + '<br>';
 
-        // 5. Replace __CARET_MARKER__ in editorHtml with a temporary span element
+        // 5. Replace __CARET_MARKER__ in editorHtml with a temporary span element containing zero-width space for accurate rect calculation
         let editorHtmlWithMarker = editorHtml;
         if (hasMarker) {
-          editorHtmlWithMarker = editorHtml.replace(/__CARET_MARKER__/g, '<span id="caret-marker"></span>');
+          editorHtmlWithMarker = editorHtml.replace(/__CARET_MARKER__/g, '<span id="caret-marker">&#8203;</span>');
         }
 
         // 6. Compare clean HTML
-        const currentHtmlClean = combinedBetInput.innerHTML.replace(/<span id="caret-marker"><\/span>/g, '').replace(/__CARET_MARKER__/g, '');
+        const currentHtmlClean = combinedBetInput.innerHTML.replace(/<span id="caret-marker">&#8203;<\/span>/g, '').replace(/<span id="caret-marker"><\/span>/g, '').replace(/__CARET_MARKER__/g, '');
         const editorHtmlClean = editorHtml.replace(/__CARET_MARKER__/g, '');
 
         if (currentHtmlClean !== editorHtmlClean) {
+          const savedScrollTop = combinedBetInput.scrollTop;
           combinedBetInput.innerHTML = editorHtmlWithMarker;
+          // Khôi phục ngay scrollTop (innerHTML reset về 0)
+          combinedBetInput.scrollTop = savedScrollTop;
 
-          // 7. Restore Selection
+          // 7. Restore Selection & Scroll Caret into view if needed
           if (hasMarker) {
             const markerNode = document.getElementById('caret-marker');
             if (markerNode) {
+              try {
+                const rect = markerNode.getBoundingClientRect();
+                const boxRect = combinedBetInput.getBoundingClientRect();
+                if (rect.height > 0 || rect.width > 0) {
+                  if (rect.bottom > boxRect.bottom - 4) {
+                    // Caret dưới khung → cuộn xuống vừa đủ để thấy dòng hiện tại
+                    combinedBetInput.scrollTop += (rect.bottom - boxRect.bottom + 8);
+                  } else if (rect.top < boxRect.top + 4) {
+                    // Caret trên khung → cuộn lên vừa đủ
+                    combinedBetInput.scrollTop -= (boxRect.top - rect.top + 8);
+                  }
+                }
+              } catch(e) {}
+
               const newRange = document.createRange();
-              const textNode = document.createTextNode("");
-              markerNode.parentNode.replaceChild(textNode, markerNode);
-              newRange.setStart(textNode, 0);
+              newRange.setStartBefore(markerNode);
               newRange.collapse(true);
+              if (markerNode.parentNode) {
+                markerNode.parentNode.removeChild(markerNode);
+              }
               sel.removeAllRanges();
               sel.addRange(newRange);
             }
@@ -4869,7 +4976,7 @@ function setupEventListeners() {
         } else if (hasMarker) {
           // If HTML didn't change, clean up any leftover marker
           const markerNode = document.getElementById('caret-marker');
-          if (markerNode) {
+          if (markerNode && markerNode.parentNode) {
             markerNode.parentNode.removeChild(markerNode);
           }
         }
@@ -4892,7 +4999,9 @@ function setupEventListeners() {
       }).join('<br>') + '<br>';
       
       if (combinedBetInput.innerHTML !== editorHtml) {
+        const savedScrollTop = combinedBetInput.scrollTop;
         combinedBetInput.innerHTML = editorHtml;
+        combinedBetInput.scrollTop = savedScrollTop;
       }
     });
   }
@@ -4944,7 +5053,37 @@ function setupEventListeners() {
 
   const cpInputBtn = document.getElementById('copyInputListButton');
   if (cpInputBtn) {
-    cpInputBtn.addEventListener('click', copyInputList);
+    cpInputBtn.addEventListener('click', function() {
+      const card = document.getElementById('cardDetail');
+      const grid = document.getElementById('cardsGrid');
+      if (!card) return;
+      if (card.classList.contains('hidden')) {
+        // Hiện card Chi tiết
+        card.classList.remove('hidden');
+        card.classList.remove('mobile-hidden');
+        if (grid) {
+          grid.classList.remove('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2');
+          grid.classList.add('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3');
+        }
+        cpInputBtn.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+        cpInputBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+      } else {
+        // Ẩn card Chi tiết
+        card.classList.add('hidden');
+        if (grid) {
+          grid.classList.remove('lg:grid-cols-3');
+          grid.classList.add('lg:grid-cols-2');
+        }
+        cpInputBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+        cpInputBtn.classList.add('bg-amber-600', 'hover:bg-amber-700');
+      }
+    });
+  }
+
+  // Nút Copy nhỏ bên trong card Chi tiết
+  const btnCopyInputListInCard = document.getElementById('btnCopyInputListInCard');
+  if (btnCopyInputListInCard) {
+    btnCopyInputListInCard.addEventListener('click', copyInputList);
   }
 
   const logoBtn = document.getElementById('logoButton');
@@ -5096,17 +5235,19 @@ function setupEventListeners() {
     });
   }
 
-  const btnSourceMinhNgoc = document.getElementById('btnSourceMinhNgoc');
-  if (btnSourceMinhNgoc) btnSourceMinhNgoc.addEventListener('click', () => updateSourceButtons("Minh Ngọc"));
-
-  const btnSourceXSKT = document.getElementById('btnSourceXSKT');
-  if (btnSourceXSKT) btnSourceXSKT.addEventListener('click', () => updateSourceButtons("XSKT.com.vn"));
-
-  const btnSourceMKetqua = document.getElementById('btnSourceMKetqua');
-  if (btnSourceMKetqua) btnSourceMKetqua.addEventListener('click', () => updateSourceButtons("mketqua.net"));
-
-  const btnSourceGitHub = document.getElementById('btnSourceGitHub');
-  if (btnSourceGitHub) btnSourceGitHub.addEventListener('click', () => updateSourceButtons("GitHub Data"));
+  const sourceSelect = document.getElementById('sourceSelect');
+  if (sourceSelect) {
+    sourceSelect.addEventListener('change', function() {
+      const map = {
+        'namdinh': 'XS Nam Định',
+        'minhngoc': 'Minh Ngọc',
+        'xskt': 'XSKT.com.vn',
+        'mketqua': 'mketqua.net',
+        'github': 'GitHub Data'
+      };
+      updateSourceButtons(map[this.value] || 'XS Nam Định');
+    });
+  }
 
   // Retain inputs & type listeners
   const retainInputs = ['retainDe', 'retainLo', 'retain3c', 'retainX', 'retainBranchDe', 'retainBranchLo', 'retainBranch3c', 'retainBranchX'];
@@ -6105,8 +6246,10 @@ function toggleCardDetail(id) {
 }
 
 let currentSubTab = 'result'; // 'result', 'transfer', 'detail'
+let prevSubTab = 'result'; // Tab trước khi chuyển sang detail
 
 function showSubTab(subTabName) {
+  if (subTabName !== 'detail') prevSubTab = subTabName;
   currentSubTab = subTabName;
   
   const isMobile = window.matchMedia("(max-width: 1023px)").matches;
@@ -6148,8 +6291,8 @@ function showSubTab(subTabName) {
     }
   });
   
-  // Hide all cards
-  [cardResult, cardTransfer, cardDetail].forEach(card => {
+  // Hide only cardResult and cardTransfer (cardDetail is controlled independently by the Input button)
+  [cardResult, cardTransfer].forEach(card => {
     if (card) card.classList.add('mobile-hidden');
   });
   
@@ -6159,7 +6302,8 @@ function showSubTab(subTabName) {
   } else if (subTabName === 'transfer') {
     if (cardTransfer) cardTransfer.classList.remove('mobile-hidden');
   } else if (subTabName === 'detail') {
-    if (cardDetail) cardDetail.classList.remove('mobile-hidden');
+    if (cardTransfer) cardTransfer.classList.add('mobile-hidden');
+    if (cardResult) cardResult.classList.add('mobile-hidden');
   }
 }
 
