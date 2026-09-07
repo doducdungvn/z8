@@ -7224,7 +7224,9 @@ function resetTable() {
     function saveTgApiUrl() {
       let val = document.getElementById('tgInputApiUrl')?.value?.trim();
       if (!val) val = "http://127.0.0.1:5005";
+      val = val.replace(/\/api(\/.*)?$/i, '');
       if (val.endsWith('/')) val = val.slice(0, -1);
+      document.getElementById('tgInputApiUrl').value = val;
       TG_BOT_API = val;
       localStorage.setItem('tg_bot_api_url', val);
       alert('Đã lưu địa chỉ Backend: ' + val + '\nĐang kết nối lại...');
