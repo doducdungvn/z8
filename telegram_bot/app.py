@@ -69,6 +69,22 @@ def update_config():
         current["retain_config"] = data["retain_config"]
     if "price_config" in data:
         current["price_config"] = data["price_config"]
+    if "cleanup_after_hours" in data:
+        try:
+            h = float(data["cleanup_after_hours"])
+            if h > 0:
+                current["cleanup_after_hours"] = h
+                current["cleanup_after_seconds"] = int(h * 3600)
+        except Exception:
+            pass
+    elif "cleanup_after_seconds" in data:
+        try:
+            s = int(data["cleanup_after_seconds"])
+            if s > 0:
+                current["cleanup_after_seconds"] = s
+                current["cleanup_after_hours"] = round(s / 3600.0, 2)
+        except Exception:
+            pass
     if "owner_chat_id" in data:
         current["owner_chat_id"] = str(data["owner_chat_id"]).strip()
     if "auto_fetch_kqxs_daily" in data:
@@ -151,7 +167,7 @@ def manual_transfer():
         return jsonify({"success": False, "error": "Chưa thiết lập Chat ID người nhận cược thừa."}), 400
 
     transfer_msg = bot_service.balancer.format_transfer_message(excess, header_prefix="Thầu Chuyển")
-    ok, err = bot_service.send_telegram_message(recipient, transfer_msg)
+    ok, err = bot_service.send_telegram_message(recipient, transfer_msg, track_for_cleanup=True, tag="transfer")
     if ok:
         bot_service.balancer.commit_transfers(excess)
         bot_service.stats["transfers_sent"] += 1
@@ -159,6 +175,21 @@ def manual_transfer():
         return jsonify({"success": True, "message": transfer_msg})
     else:
         return jsonify({"success": False, "error": err}), 500
+
+
+@app.route("/api/bot/cleanup", methods=["GET", "POST"])
+def manage_cleanup():
+    """Kiểm tra và kích hoạt dọn dẹp xóa dấu vết cược sau 24h"""
+    if request.method == "POST":
+        data = request.json or {}
+        force = data.get("force", False)
+        deleted, remaining = bot_service.check_and_cleanup_traces(force=force)
+        return jsonify({"success": True, "deleted_count": deleted, "remaining_count": remaining})
+    return jsonify({
+        "tracked_messages_count": len(bot_service.tracked_messages),
+        "cleanup_after_seconds": bot_service.config.get("cleanup_after_seconds", 86400),
+        "tracked_sample": bot_service.tracked_messages[-20:]
+    })
 
 
 @app.route("/api/bot/kqxs", methods=["GET", "POST"])

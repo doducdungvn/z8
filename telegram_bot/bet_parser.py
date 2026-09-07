@@ -254,6 +254,7 @@ def parse_combined_input(input_str: str):
         'xien3': [],
         'xien4': [],
         'bacang': [],
+        'invalid_items': [],
         'rawOrder': []
     }
 
@@ -296,9 +297,18 @@ def parse_combined_input(input_str: str):
         if not line_type:
             line_type = active_category
 
-        # Regex tìm các cụm: [các số] [x / + / * / =] [tiền]
+        # Tìm các cụm cược: [các số] [x / + / * / =] [tiền]
         group_regex = re.compile(r'([a-wy-z0-9\'’‘＇`.,\-\s]+)([x+*])(\d+(?:\.\d+)?)', re.I)
-        for g_match in group_regex.finditer(trimmed):
+        matches = list(group_regex.finditer(trimmed))
+
+        if not matches:
+            # Dòng không có cược hợp lệ -> ghi nhận trả lại (nếu không phải là header rỗng)
+            cleaned_check = re.sub(r'^[.:;\-\s]+', '', orig_line).strip()
+            if cleaned_check and not re.match(r'^(de|đề|lo|lô|xien|xiên|3cang|3c|bc)$', cleaned_check, re.I):
+                parsed_bets['invalid_items'].append(orig_line)
+            continue
+
+        for g_match in matches:
             raw_num_str = g_match.group(1).strip()
             amt = float(g_match.group(3))
             if amt <= 0:
@@ -307,7 +317,14 @@ def parse_combined_input(input_str: str):
             num_str = resolve_shorthands(raw_num_str)
             numbers = parse_numbers_from_bet_string(num_str, line_type)
             if not numbers:
+                parsed_bets['invalid_items'].append(g_match.group(0))
                 continue
+
+            # Kiểm tra token rác trong cụm số
+            raw_tokens = [s for s in re.split(r'[.,\-\s]+', num_str) if s]
+            for tok in raw_tokens:
+                if not tok.isdigit():
+                    parsed_bets['invalid_items'].append(tok)
 
             if line_type == 'xien':
                 if 2 <= len(numbers) <= 4:
@@ -347,3 +364,99 @@ def parse_bet_message(raw_text: str) -> dict:
         'xien_sum': sum_xien,
     }
     return res
+
+
+def format_ok_receipt(parsed: dict, msg_index: int = 1) -> str:
+    """
+    Định dạng tin nhắn xác nhận cho khách theo đúng chuẩn người dùng yêu cầu:
+    Ok 1 
+    Đề 01.02.04...x3, 12.15...x5, 22.44...x10
+    Lô 17.19...x3, 01.09...x5, 65x25
+    3c 123.456x10
+    Xiên 12-34x10
+    Trả lại: "..." (nếu có)
+    """
+    lines = [f"Ok {msg_index}"]
+
+    # 1. Đề
+    if parsed.get('de'):
+        de_sums = {}
+        for b in parsed['de']:
+            de_sums[b['number']] = de_sums.get(b['number'], 0) + b['amount']
+        
+        groups = {}
+        for num, amt in de_sums.items():
+            amt_r = int(amt) if amt.is_integer() else amt
+            groups.setdefault(amt_r, []).append(num)
+        
+        parts = []
+        for amt in sorted(groups.keys()):
+            nums = sorted(groups[amt], key=lambda x: int(x) if x.isdigit() else x)
+            parts.append(".".join(nums) + f"x{amt}")
+        lines.append("Đề " + ", ".join(parts))
+
+    # 2. Lô
+    if parsed.get('lo'):
+        lo_sums = {}
+        for b in parsed['lo']:
+            lo_sums[b['number']] = lo_sums.get(b['number'], 0) + b['amount']
+        
+        groups = {}
+        for num, amt in lo_sums.items():
+            amt_r = int(amt) if amt.is_integer() else amt
+            groups.setdefault(amt_r, []).append(num)
+        
+        parts = []
+        for amt in sorted(groups.keys()):
+            nums = sorted(groups[amt], key=lambda x: int(x) if x.isdigit() else x)
+            parts.append(".".join(nums) + f"x{amt}")
+        lines.append("Lô " + ", ".join(parts))
+
+    # 3. 3 Càng
+    if parsed.get('bacang'):
+        bc_sums = {}
+        for b in parsed['bacang']:
+            bc_sums[b['number']] = bc_sums.get(b['number'], 0) + b['amount']
+        
+        groups = {}
+        for num, amt in bc_sums.items():
+            amt_r = int(amt) if amt.is_integer() else amt
+            groups.setdefault(amt_r, []).append(num)
+        
+        parts = []
+        for amt in sorted(groups.keys()):
+            nums = sorted(groups[amt], key=lambda x: int(x) if x.isdigit() else x)
+            parts.append(".".join(nums) + f"x{amt}")
+        lines.append("3c " + ", ".join(parts))
+
+    # 4. Xiên
+    all_xien = []
+    for k in ('xien2', 'xien3', 'xien4'):
+        all_xien.extend(parsed.get(k, []))
+    if all_xien:
+        x_sums = {}
+        for b in all_xien:
+            k_str = "-".join(b['numbers'])
+            x_sums[k_str] = x_sums.get(k_str, 0) + b['amount']
+        
+        groups = {}
+        for pair, amt in x_sums.items():
+            amt_r = int(amt) if amt.is_integer() else amt
+            groups.setdefault(amt_r, []).append(pair)
+        
+        parts = []
+        for amt in sorted(groups.keys()):
+            pairs = groups[amt]
+            parts.append(", ".join(pairs) + f"x{amt}")
+        lines.append("Xiên " + "; ".join(parts))
+
+    # 5. Các con không hiểu / Trả lại
+    invalid_items = parsed.get('invalid_items', [])
+    if invalid_items:
+        unique_inv = list(dict.fromkeys(invalid_items))
+        joined_inv = ", ".join(f'"{x}"' for x in unique_inv)
+        lines.append(f"Trả lại: {joined_inv}")
+
+    return "\n".join(lines)
+
+

@@ -6,25 +6,30 @@ import threading
 import requests
 from datetime import datetime
 
-from bet_parser import parse_bet_message
+from bet_parser import parse_bet_message, format_ok_receipt
 from balancer import BoardBalancer
 from lottery_engine import (
     DEFAULT_PRICE_CONFIG,
     fetch_xsmb,
     format_xsmb_message,
     calculate_board_accounting,
-    format_accounting_report
+    format_accounting_report,
+    format_price_config_summary
 )
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
 LOG_PATH = os.path.join(os.path.dirname(__file__), "bot_activity.log")
 KNOWN_USERS_PATH = os.path.join(os.path.dirname(__file__), "known_users.json")
+TRACKED_MESSAGES_PATH = os.path.join(os.path.dirname(__file__), "tracked_messages.json")
 
 
 class TelegramBotService:
     def __init__(self):
         self.config = self.load_config()
         self.known_users = self.load_known_users()
+        self.tracked_messages = self.load_tracked_messages()
+        self.last_cleanup_ts = 0
+        self.last_bet_timestamp = None
         self.balancer = BoardBalancer(self.config.get("retain_config", {}))
         self.is_running = False
         self.polling_thread = None
@@ -32,6 +37,7 @@ class TelegramBotService:
         self.last_daily_report_date = None
         self.cached_kqxs = None
         self.logs = []  # Ring buffer log messages (max 200)
+        self.client_msg_counters = {}  # Đếm số thứ tự tin của từng khách trong ngày (Ok 1, Ok 2...)
         self.stats = {
             "messages_received": 0,
             "transfers_sent": 0,
@@ -55,6 +61,8 @@ class TelegramBotService:
                         cfg["price_config"] = DEFAULT_PRICE_CONFIG
                     if "owner_chat_id" not in cfg:
                         cfg["owner_chat_id"] = ""
+                    if "cleanup_after_seconds" not in cfg:
+                        cfg["cleanup_after_seconds"] = 86400  # 24 giờ tự động xóa vết cược
                     # Đọc bổ sung từ biến môi trường (nếu có, tiện cho Cloud hosting)
                     if os.environ.get("TELEGRAM_BOT_TOKEN") and not cfg.get("bot_token"):
                         cfg["bot_token"] = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -77,7 +85,8 @@ class TelegramBotService:
             "auto_fetch_kqxs_daily": True,# Tự động lấy KQXS lúc 18h30
             "mode": "instant",            # "instant" hoặc "batch"
             "retain_config": BoardBalancer.default_config(),
-            "price_config": DEFAULT_PRICE_CONFIG
+            "price_config": DEFAULT_PRICE_CONFIG,
+            "cleanup_after_seconds": 86400
         }
         self.save_config(default_cfg)
         return default_cfg
@@ -123,6 +132,145 @@ class TelegramBotService:
             "updated_at": datetime.now().strftime("%H:%M:%S %d/%m")
         }
         self.save_known_users()
+
+    def load_tracked_messages(self) -> list:
+        if os.path.exists(TRACKED_MESSAGES_PATH):
+            try:
+                with open(TRACKED_MESSAGES_PATH, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return []
+
+    def save_tracked_messages(self):
+        try:
+            with open(TRACKED_MESSAGES_PATH, "w", encoding="utf-8") as f:
+                json.dump(self.tracked_messages, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+    def track_message(self, chat_id: int | str, message_id: int, tag: str = "bet"):
+        """Lưu lại message_id và chat_id để tự động xóa sau 24h"""
+        if not chat_id or not message_id:
+            return
+        try:
+            cid = str(chat_id)
+            mid = int(message_id)
+            for item in self.tracked_messages:
+                if str(item.get("chat_id")) == cid and item.get("message_id") == mid:
+                    return
+            self.tracked_messages.append({
+                "chat_id": cid,
+                "message_id": mid,
+                "created_at": time.time(),
+                "tag": tag
+            })
+            self.save_tracked_messages()
+        except Exception as e:
+            self.log(f"Lỗi theo dõi tin nhắn #{message_id}: {e}", "WARN")
+
+    def delete_telegram_message(self, chat_id: int | str, message_id: int) -> tuple[bool, str]:
+        """Gọi API Telegram deleteMessage để xóa tin nhắn"""
+        token = self.config.get("bot_token", "").strip()
+        if not token:
+            return False, "Chưa nhập Bot Token"
+        url = f"https://api.telegram.org/bot{token}/deleteMessage"
+        payload = {
+            "chat_id": str(chat_id),
+            "message_id": int(message_id)
+        }
+        try:
+            resp = requests.post(url, json=payload, timeout=8)
+            data = resp.json()
+            if data.get("ok"):
+                return True, ""
+            desc = data.get("description", "Không rõ lỗi")
+            # Nếu tin nhắn đã bị xóa trước đó thì coi như thành công
+            if "message to delete not found" in desc.lower():
+                return True, desc
+            return False, desc
+        except Exception as e:
+            return False, str(e)
+
+    def clean_old_logs(self, max_age_seconds: int = 86400):
+        """Xóa các dòng log cũ hơn 24h trong bot_activity.log để bảo mật tuyệt đối"""
+        if not os.path.exists(LOG_PATH):
+            return
+        try:
+            now = datetime.now()
+            kept_lines = []
+            with open(LOG_PATH, "r", encoding="utf-8", errors="ignore") as f:
+                lines = f.readlines()
+            
+            current_entry_keep = True
+            for line in lines:
+                if len(line) >= 17 and line[0] == '[' and line[9] == ' ' and line[15] == ']':
+                    date_str = line[10:15]  # DD/MM
+                    time_str = line[1:9]    # HH:MM:SS
+                    try:
+                        d, m = map(int, date_str.split('/'))
+                        h, mi, s = map(int, time_str.split(':'))
+                        from datetime import timedelta
+                        entry_dt = datetime(now.year, m, d, h, mi, s)
+                        if entry_dt > now + timedelta(days=1):
+                            entry_dt = entry_dt.replace(year=now.year - 1)
+                        age_sec = (now - entry_dt).total_seconds()
+                        current_entry_keep = (0 <= age_sec <= max_age_seconds)
+                    except Exception:
+                        current_entry_keep = True
+                if current_entry_keep:
+                    kept_lines.append(line)
+            
+            if len(kept_lines) < len(lines):
+                with open(LOG_PATH, "w", encoding="utf-8") as f:
+                    f.writelines(kept_lines)
+        except Exception:
+            pass
+
+    def check_and_cleanup_traces(self, force: bool = False) -> tuple[int, int]:
+        """Tự động kiểm tra và xóa dấu vết cược sau 24h"""
+        cleanup_seconds = int(self.config.get("cleanup_after_seconds", 86400))
+        now = time.time()
+        remaining = []
+        deleted_count = 0
+
+        for item in self.tracked_messages:
+            item_time = item.get("created_at", 0)
+            if force or (now - item_time >= cleanup_seconds):
+                cid = item.get("chat_id")
+                mid = item.get("message_id")
+                ok, err = self.delete_telegram_message(cid, mid)
+                if ok:
+                    deleted_count += 1
+                else:
+                    # Nếu lỗi vĩnh viễn không thể xóa (ví dụ quá 48h, hoặc giới hạn Telegram)
+                    if "can't be deleted" in err.lower() or "not found" in err.lower():
+                        deleted_count += 1
+                    else:
+                        remaining.append(item)
+            else:
+                remaining.append(item)
+
+        h_label = f"{round(cleanup_seconds/3600, 1):g}h"
+        if deleted_count > 0:
+            self.tracked_messages = remaining
+            self.save_tracked_messages()
+            self.log(f"🗑️ [Tự động xóa {h_label}] Đã xóa {deleted_count} tin nhắn cược trên Telegram.", "INFO")
+
+        # Xóa nhật ký log cũ hơn cleanup_seconds
+        self.clean_old_logs(max_age_seconds=cleanup_seconds)
+
+        # Xóa dữ liệu cược trên bảng nếu sau cleanup_seconds không có hoạt động
+        if self.last_bet_timestamp and (now - self.last_bet_timestamp >= cleanup_seconds):
+            has_bets = (len(self.balancer.de_sums) > 0 or len(self.balancer.lo_sums) > 0 or 
+                        len(self.balancer.bacang_sums) > 0 or len(self.balancer.xien_bets) > 0)
+            if has_bets:
+                self.balancer.reset_board()
+                self.client_msg_counters = {}
+                self.last_bet_timestamp = None
+                self.log(f"🗑️ [Tự động xóa {h_label}] Đã tự động reset bảng cược và số thứ tự tin về 0 sau {h_label} không có hoạt động.", "INFO")
+
+        return deleted_count, len(self.tracked_messages)
 
     def resolve_recipient(self, recipient_input: str) -> tuple[str, str]:
         """
@@ -173,7 +321,7 @@ class TelegramBotService:
         except Exception:
             pass
 
-    def send_telegram_message(self, recipient: str, text: str) -> tuple[bool, str]:
+    def send_telegram_message(self, recipient: str, text: str, track_for_cleanup: bool = False, tag: str = "outgoing") -> tuple[bool, str]:
         """Gửi tin nhắn qua Telegram Bot API. Trả về (thành công, thông điệp lỗi nếu có)"""
         token = self.config.get("bot_token", "").strip()
         if not token:
@@ -204,6 +352,14 @@ class TelegramBotService:
                     friendly_err = f"Lỗi Telegram: {desc}"
                 self.log(f"Lỗi gửi tin tới {recipient} (Chat ID: {chat_id}): {friendly_err}", "WARN")
                 return False, friendly_err
+
+            # Nếu bật theo dõi để tự động xóa sau 24h
+            if track_for_cleanup:
+                sent_msg = data.get("result", {})
+                sent_mid = sent_msg.get("message_id")
+                sent_cid = sent_msg.get("chat", {}).get("id") or chat_id
+                if sent_mid and sent_cid:
+                    self.track_message(sent_cid, sent_mid, tag=tag)
 
             return True, ""
         except Exception as e:
@@ -299,6 +455,9 @@ class TelegramBotService:
                 "📊 <b>/baocao</b>: Xem Báo cáo Thầu / Giữ lại / Chuyển\n"
                 "📋 <b>/bang</b>: Xem tổng cược tích lũy hôm nay\n"
                 "🚀 <b>/chuyen</b>: Bắn ngay các cược vượt định mức\n"
+                "⚙️ <b>/gia</b>: Xem cấu hình bảng giá & hoa hồng\n"
+                "⏰ <b>/timer &lt;giờ&gt;</b>: Đổi số giờ tự động xóa vết cược (VD: /timer 12)\n"
+                "🧹 <b>/clean</b>: Xóa dấu vết tin cược cũ ngay lập tức\n"
                 "🗑️ <b>/reset</b>: Xóa cược bắt đầu ngày mới\n"
                 "🆔 <b>/id</b>: Xem Chat ID của bạn\n"
                 "━━━━━━━━━━━━━━━━━━\n"
@@ -385,7 +544,7 @@ class TelegramBotService:
                 self.send_telegram_message(str(chat_id), "⚠️ Chưa cài đặt người nhận cược thừa (target_recipient) trên Web!")
                 return
             transfer_msg = self.balancer.format_transfer_message(excess, header_prefix="Thầu Chuyển")
-            ok, err = self.send_telegram_message(target_recipient, transfer_msg)
+            ok, err = self.send_telegram_message(target_recipient, transfer_msg, track_for_cleanup=True, tag="transfer")
             if ok:
                 self.balancer.commit_transfers(excess)
                 self.stats["transfers_sent"] += 1
@@ -397,8 +556,46 @@ class TelegramBotService:
         # 7. /reset
         if cmd in ["/reset", "reset", "xóa cược", "xoa cuoc"] or cmd.startswith("/reset@"):
             self.balancer.reset_board()
-            self.log("Đã reset bảng cược về 0 theo lệnh Telegram", "INFO")
-            self.send_telegram_message(str(chat_id), "🗑️ Đã làm mới (reset) toàn bộ bảng cược về 0 để bắt đầu ngày mới!")
+            self.client_msg_counters = {}
+            self.log("Đã reset bảng cược và số thứ tự tin về 0 theo lệnh Telegram", "INFO")
+            self.send_telegram_message(str(chat_id), "🗑️ Đã làm mới (reset) toàn bộ bảng cược và số thứ tự tin về 0 để bắt đầu ngày mới!")
+            return
+
+        # 8. /clean hoặc /xoadauvet
+        if cmd in ["/clean", "clean", "/xoadauvet", "xoa dau vet"] or cmd.startswith("/clean@"):
+            del_c, rem_c = self.check_and_cleanup_traces()
+            cur_h = round(self.config.get("cleanup_after_seconds", 86400) / 3600, 1)
+            self.send_telegram_message(str(chat_id), f"🧹 Đã rà soát dấu vết: Xóa {del_c} tin nhắn cược cũ, hiện còn {rem_c} tin đang hẹn giờ tự động xóa (chu kỳ {cur_h:g} giờ).")
+            return
+
+        # 9. /timer hoặc /thoigianxoa
+        if cmd.startswith("/timer") or cmd.startswith("/thoigianxoa") or cmd.startswith("/gio "):
+            parts = cmd.split()
+            if len(parts) >= 2:
+                try:
+                    hours = float(parts[1].replace(",", "."))
+                    if hours <= 0:
+                        self.send_telegram_message(str(chat_id), "⚠️ Số giờ phải lớn hơn 0.")
+                        return
+                    secs = int(hours * 3600)
+                    self.config["cleanup_after_seconds"] = secs
+                    self.config["cleanup_after_hours"] = hours
+                    self.save_config()
+                    self.log(f"Đã cập nhật thời gian tự động xóa dấu vết sang {hours:g} giờ", "INFO")
+                    self.send_telegram_message(str(chat_id), f"⏰ <b>Thành công:</b> Đã cài đặt thời gian tự động xóa vết cược là <b>{hours:g} giờ</b>!")
+                    return
+                except ValueError:
+                    self.send_telegram_message(str(chat_id), "⚠️ Cú pháp không hợp lệ. Ví dụ: <code>/timer 12</code> hoặc <code>/timer 6</code>")
+                    return
+            else:
+                cur_h = round(self.config.get("cleanup_after_seconds", 86400) / 3600, 1)
+                self.send_telegram_message(str(chat_id), f"⏰ Thời gian tự động xóa dấu vết hiện tại là: <b>{cur_h:g} giờ</b>.\nĐể đổi, hãy gõ ví dụ: <code>/timer 12</code> hoặc <code>/timer 6</code>")
+                return
+
+        # 10. /gia hoặc /banggia
+        if cmd in ["/gia", "gia", "/banggia", "bang gia", "/rates"] or cmd.startswith("/gia@"):
+            summary_msg = format_price_config_summary(self.config.get("price_config"))
+            self.send_telegram_message(str(chat_id), summary_msg)
             return
 
         # 1. Kiểm tra quyền của khách
@@ -412,28 +609,38 @@ class TelegramBotService:
         self.log(f"📩 Nhận tin cược từ {sender_label}{group_title}:\n{text}")
 
         # 2. Phân tích cược
+        user_msg_id = message.get("message_id")
         parsed = parse_bet_message(text)
         summary = parsed.get("summary", {})
         total_bets_count = summary.get("de_count", 0) + summary.get("lo_count", 0) + summary.get("bacang_count", 0) + summary.get("xien_count", 0)
 
         if total_bets_count == 0:
+            if parsed.get('invalid_items') and self.config.get("auto_reply_client", True):
+                unique_inv = list(dict.fromkeys(parsed['invalid_items']))
+                joined_inv = ", ".join(f'"{x}"' for x in unique_inv)
+                self.send_telegram_message(str(chat_id), f"Trả lại: {joined_inv}", track_for_cleanup=True, tag="invalid_receipt")
             self.log(f"Tin nhắn từ {sender_label}{group_title} không chứa cú pháp cược hợp lệ: '{text}'", "INFO")
             return
 
-        # 3. Phản hồi xác nhận cho khách (nếu bật)
+        # Lưu vết tin nhắn cược của khách để tự động xóa sau 24h
+        if user_msg_id and chat_id:
+            self.track_message(chat_id, user_msg_id, tag="incoming_bet")
+            self.last_bet_timestamp = time.time()
+
+        # Tăng số thứ tự tin của khách (Ok 1, Ok 2...)
+        chat_id_str = str(chat_id)
+        msg_idx = self.client_msg_counters.get(chat_id_str, 0) + 1
+        self.client_msg_counters[chat_id_str] = msg_idx
+
+        # 3. Phản hồi xác nhận chi tiết cho khách (nếu bật)
         if self.config.get("auto_reply_client", True):
-            receipt_lines = ["✅ <b>ĐÃ NHẬN CƯỢC:</b>"]
-            if summary.get("de_count", 0) > 0:
-                receipt_lines.append(f"• Đề: {summary['de_count']} con ({summary['de_sum']:,.0f}k)")
-            if summary.get("lo_count", 0) > 0:
-                receipt_lines.append(f"• Lô: {summary['lo_count']} con ({summary['lo_sum']:,.0f}đ)")
-            if summary.get("xien_count", 0) > 0:
-                receipt_lines.append(f"• Xiên: {summary['xien_count']} cặp ({summary['xien_sum']:,.0f}k)")
-            if summary.get("bacang_count", 0) > 0:
-                receipt_lines.append(f"• 3 Càng: {summary['bacang_count']} con ({summary['bacang_sum']:,.0f}k)")
-            
-            receipt_lines.append(f"<i>Lúc: {datetime.now().strftime('%H:%M:%S')}</i>")
-            self.send_telegram_message(str(chat_id), "\n".join(receipt_lines))
+            receipt_text = format_ok_receipt(parsed, msg_idx)
+            if len(receipt_text) > 3800:
+                chunks = [receipt_text[i:i+3800] for i in range(0, len(receipt_text), 3800)]
+                for chunk in chunks:
+                    self.send_telegram_message(chat_id_str, chunk, track_for_cleanup=True, tag="receipt")
+            else:
+                self.send_telegram_message(chat_id_str, receipt_text, track_for_cleanup=True, tag="receipt")
 
         # 4. Cân bảng và tính phần cược thừa
         excess = self.balancer.add_bets(parsed)
@@ -447,7 +654,7 @@ class TelegramBotService:
                 target_recipient = self.config.get("target_recipient", "").strip()
                 if target_recipient:
                     transfer_msg = self.balancer.format_transfer_message(excess, header_prefix="Thầu")
-                    success, err = self.send_telegram_message(target_recipient, transfer_msg)
+                    success, err = self.send_telegram_message(target_recipient, transfer_msg, track_for_cleanup=True, tag="transfer")
                     if success:
                         self.balancer.commit_transfers(excess)
                         self.stats["transfers_sent"] += 1
@@ -497,7 +704,7 @@ class TelegramBotService:
 
                     send_to = self.config.get("owner_chat_id") or self.config.get("target_recipient")
                     if send_to:
-                        self.send_telegram_message(send_to, full_report)
+                        self.send_telegram_message(send_to, full_report, track_for_cleanup=True, tag="daily_report")
                         self.log(f"Đã tự động gửi Báo cáo tổng kết ngày {today_str} tới {send_to}", "SUCCESS")
 
     def poll_updates(self):
@@ -507,6 +714,15 @@ class TelegramBotService:
 
         while self.is_running:
             try:
+                # Tự động rà soát và xóa dấu vết cược sau 24h (chạy mỗi 60 giây)
+                now_ts = time.time()
+                if now_ts - getattr(self, "last_cleanup_ts", 0) >= 60:
+                    self.last_cleanup_ts = now_ts
+                    try:
+                        self.check_and_cleanup_traces()
+                    except Exception as ex:
+                        self.log(f"Lỗi tự động xóa dấu vết cược: {ex}", "WARN")
+
                 # Tự động kiểm tra lịch KQXS 18h30
                 try:
                     self.check_daily_schedule()

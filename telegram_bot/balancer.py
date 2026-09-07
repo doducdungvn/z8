@@ -64,34 +64,38 @@ class BoardBalancer:
 
         return self.calculate_excess()
 
-    def _calc_excess_for_item(self, val: float, retain_val: float, branch_limit: float, is_excluded: bool = False) -> float:
+    def _calc_excess_for_item(self, total: float, prev_transfer: float, limit: float, branch_limit: float, is_excluded: bool = False) -> float:
         if is_excluded:
-            return math.ceil(val)
+            excess = total - prev_transfer
+            return max(0.0, math.ceil(excess))
 
         retain_type = self.config.get("retain_type", "money")
         use_branch = self.config.get("retain_use_branch", False)
 
-        if retain_type == "money":
+        if retain_type == "percentage":
             if use_branch:
-                if val >= branch_limit:
-                    excess = max(0.0, val - retain_val)
-                else:
-                    excess = val
+                target_retain = min(total * (limit / 100.0), branch_limit)
+                target_transfer = total - target_retain
             else:
-                excess = val - retain_val
+                target_transfer = total * ((100.0 - limit) / 100.0)
+            excess = target_transfer - prev_transfer
             return max(0.0, math.ceil(excess))
         else:
-            # percentage (%)
+            # money
             if use_branch:
-                target_retain = min(val * (retain_val / 100.0), branch_limit)
-                excess = val - target_retain
+                if total >= branch_limit:
+                    target_transfer = total - limit
+                else:
+                    target_transfer = total
             else:
-                excess = val - (val * (retain_val / 100.0))
+                target_transfer = total - limit
+            excess = target_transfer - prev_transfer
             return max(0.0, math.ceil(excess))
 
     def calculate_excess(self) -> dict:
         """
         Tính toán phần cược mới vượt mức giữ lại (cần bắn đi ngay)
+        Đồng bộ 100% với processCategory trong index.html
         """
         cfg = self.config
         new_transfers = {
@@ -103,37 +107,37 @@ class BoardBalancer:
 
         # 1. Đề
         for num, val in self.de_sums.items():
-            excess = self._calc_excess_for_item(
+            already = self.cumulative_de_transfers.get(num, 0.0)
+            pending = self._calc_excess_for_item(
                 val,
+                already,
                 cfg.get('retain_de', 20.0),
                 cfg.get('branch_de', 0.0)
             )
-            already = self.cumulative_de_transfers.get(num, 0.0)
-            pending = max(0.0, excess - already)
             if pending >= 0.1:
                 new_transfers['de'][num] = pending
 
         # 2. Lô
         for num, val in self.lo_sums.items():
-            excess = self._calc_excess_for_item(
+            already = self.cumulative_lo_transfers.get(num, 0.0)
+            pending = self._calc_excess_for_item(
                 val,
+                already,
                 cfg.get('retain_lo', 5.0),
                 cfg.get('branch_lo', 0.0)
             )
-            already = self.cumulative_lo_transfers.get(num, 0.0)
-            pending = max(0.0, excess - already)
             if pending >= 0.1:
                 new_transfers['lo'][num] = pending
 
         # 3. 3 Càng
         for num, val in self.bacang_sums.items():
-            excess = self._calc_excess_for_item(
+            already = self.cumulative_bacang_transfers.get(num, 0.0)
+            pending = self._calc_excess_for_item(
                 val,
+                already,
                 cfg.get('retain_3c', 0.0),
                 cfg.get('branch_3c', 0.0)
             )
-            already = self.cumulative_bacang_transfers.get(num, 0.0)
-            pending = max(0.0, excess - already)
             if pending >= 0.1:
                 new_transfers['bacang'][num] = pending
 
@@ -142,9 +146,13 @@ class BoardBalancer:
         branch_x = cfg.get('branch_x', 0.0)
         for idx, bet in enumerate(self.xien_bets):
             val = bet['amount']
-            excess = self._calc_excess_for_item(val, retain_x, branch_x)
             already = self.cumulative_xien_transfers.get(idx, 0.0)
-            pending = max(0.0, excess - already)
+            pending = self._calc_excess_for_item(
+                val,
+                already,
+                retain_x,
+                branch_x
+            )
             if pending >= 0.1:
                 key_str = "-".join(bet['numbers'])
                 new_transfers['xien'][key_str] = pending
@@ -235,5 +243,7 @@ class BoardBalancer:
         if not lines:
             return ""
 
-        header = f"🛸 {header_prefix} - {today_str}"
+        step_num = self.step_count + 1
+        prefix = "% " if self.config.get("retain_type") == "percentage" else ""
+        header = f"🛸 {prefix}Chuyển {step_num} ({today_str}):"
         return f"{header}\n" + "\n".join(lines)

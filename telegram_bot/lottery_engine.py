@@ -131,20 +131,64 @@ def format_xsmb_message(kq: dict) -> str:
     return "\n".join(lines)
 
 
+def parse_rate_item(cfg_dict: dict) -> dict:
+    """Chuẩn hóa giá trị tỷ lệ giá (hỗ trợ cả dạng thô từ Web như 2165đ lẫn 21.65k)"""
+    c = cfg_dict or {}
+    lo_cost = float(c.get("rateLoCost", 21.65))
+    if lo_cost > 100:  # Ví dụ web nhập 2165đ -> đổi ra 21.65k
+        lo_cost = lo_cost / 100.0
+    return {
+        "de_comm": float(c.get("rateDeComm", 82.0)) / 100.0,
+        "de_payout": float(c.get("rateDePayout", 80.0)),
+        "lo_cost": lo_cost,
+        "lo_payout": float(c.get("rateLoPayout", 80.0)),
+        "xien_comm": float(c.get("rateXienComm", 65.0)) / 100.0,
+        "x2_payout": float(c.get("rateXien2Payout", 11.0)),
+        "x3_payout": float(c.get("rateXien3Payout", 45.0)),
+        "x4_payout": float(c.get("rateXien4Payout", 140.0)),
+        "c3_comm": float(c.get("rate3CComm", 75.0)) / 100.0,
+        "c3_payout": float(c.get("rate3CPayout", 400.0)),
+        "c3_apma": float(c.get("rate3CApMa", 5.0)),
+    }
+
+
+def format_price_config_summary(price_config: dict = None) -> str:
+    """Tạo bảng báo cáo hiển thị cấu hình giá thầu & giá chuyển"""
+    cfg = price_config or DEFAULT_PRICE_CONFIG
+    thau_raw = cfg.get("thau") if isinstance(cfg.get("thau"), dict) else cfg
+    chuyen_raw = cfg.get("chuyen") if isinstance(cfg.get("chuyen"), dict) else cfg
+
+    t = parse_rate_item(thau_raw)
+    c = parse_rate_item(chuyen_raw)
+
+    lines = [
+        "⚙️ <b>CẤU HÌNH BẢNG GIÁ & HOA HỒNG:</b>",
+        "━━━━━━━━━━━━━━━━━━",
+        "📊 <b>BẢNG THẦU (Nhận của khách):</b>",
+        f"• Đề: Giá xác {t['de_comm']*100:.1f}%, Trúng 1 ăn {t['de_payout']:g}",
+        f"• Lô: Vốn {t['lo_cost']:g}k/đ ({t['lo_cost']*1000:g}đ), Thưởng {t['lo_payout']:g}k/đ",
+        f"• Xiên: Giá xác {t['xien_comm']*100:.1f}% (X2: 1 ăn {t['x2_payout']:g}, X3: 1 ăn {t['x3_payout']:g}, X4: 1 ăn {t['x4_payout']:g})",
+        f"• 3 Càng: Giá xác {t['c3_comm']*100:.1f}%, Trúng 1 ăn {t['c3_payout']:g}, Áp má 1 ăn {t['c3_apma']:g}",
+        "",
+        "🔄 <b>BẢNG CHUYỂN (Bắn thầu trên):</b>",
+        f"• Đề: Giá xác {c['de_comm']*100:.1f}%, Trúng 1 ăn {c['de_payout']:g}",
+        f"• Lô: Vốn {c['lo_cost']:g}k/đ ({c['lo_cost']*1000:g}đ), Thưởng {c['lo_payout']:g}k/đ",
+        f"• Xiên: Giá xác {c['xien_comm']*100:.1f}% (X2: 1 ăn {c['x2_payout']:g}, X3: 1 ăn {c['x3_payout']:g}, X4: 1 ăn {c['x4_payout']:g})",
+        f"• 3 Càng: Giá xác {c['c3_comm']*100:.1f}%, Trúng 1 ăn {c['c3_payout']:g}, Áp má 1 ăn {c['c3_apma']:g}",
+        "━━━━━━━━━━━━━━━━━━",
+        "<i>Chỉnh sửa trực tiếp tại nút '⚙️ Cấu hình giá' trên Web!</i>"
+    ]
+    return "\n".join(lines)
+
+
 def calculate_board_accounting(balancer, kqxs: dict, price_config: dict = None) -> dict:
     cfg = price_config or DEFAULT_PRICE_CONFIG
 
-    rate_de_comm = float(cfg.get("rateDeComm", 82.0)) / 100.0
-    rate_de_payout = float(cfg.get("rateDePayout", 80.0))
-    rate_lo_cost = float(cfg.get("rateLoCost", 21.65))
-    rate_lo_payout = float(cfg.get("rateLoPayout", 80.0))
-    rate_xien_comm = float(cfg.get("rateXienComm", 65.0)) / 100.0
-    rate_x2_payout = float(cfg.get("rateXien2Payout", 11.0))
-    rate_x3_payout = float(cfg.get("rateXien3Payout", 45.0))
-    rate_x4_payout = float(cfg.get("rateXien4Payout", 140.0))
-    rate_3c_comm = float(cfg.get("rate3CComm", 75.0)) / 100.0
-    rate_3c_payout = float(cfg.get("rate3CPayout", 400.0))
-    rate_3c_apma = float(cfg.get("rate3CApMa", 5.0))
+    thau_raw = cfg.get("thau") if isinstance(cfg.get("thau"), dict) else cfg
+    chuyen_raw = cfg.get("chuyen") if isinstance(cfg.get("chuyen"), dict) else cfg
+
+    t = parse_rate_item(thau_raw)
+    c = parse_rate_item(chuyen_raw)
 
     special_last2 = kqxs.get("special_last2", "")
     special_last3 = kqxs.get("special_last3", "")
@@ -155,39 +199,40 @@ def calculate_board_accounting(balancer, kqxs: dict, price_config: dict = None) 
     bacang_sums = balancer.bacang_sums
     xien_bets = balancer.xien_bets
 
+    # 1. BẢNG THẦU (Áp dụng giá Thầu)
     thau_de_xac = sum(de_sums.values())
-    thau_de_von = thau_de_xac * rate_de_comm
+    thau_de_von = thau_de_xac * t["de_comm"]
     thau_de_win_xac = de_sums.get(special_last2, 0) if special_last2 else 0
-    thau_de_trung = thau_de_win_xac * rate_de_payout
+    thau_de_trung = thau_de_win_xac * t["de_payout"]
     thau_de_net = thau_de_von - thau_de_trung
 
     thau_lo_xac = sum(lo_sums.values())
-    thau_lo_von = thau_lo_xac * rate_lo_cost
+    thau_lo_von = thau_lo_xac * t["lo_cost"]
     thau_lo_win_xac = 0
     if all_last2:
         for num, amt in lo_sums.items():
             hits = all_last2.count(num)
             if hits > 0:
                 thau_lo_win_xac += hits * amt
-    thau_lo_trung = thau_lo_win_xac * rate_lo_payout
+    thau_lo_trung = thau_lo_win_xac * t["lo_payout"]
     thau_lo_net = thau_lo_von - thau_lo_trung
 
     thau_3c_xac = sum(bacang_sums.values())
-    thau_3c_von = thau_3c_xac * rate_3c_comm
+    thau_3c_von = thau_3c_xac * t["c3_comm"]
     thau_3c_win_xac = 0
     thau_3c_trung = 0
     if special_last3:
         for num, amt in bacang_sums.items():
             if num == special_last3:
                 thau_3c_win_xac += amt
-                thau_3c_trung += amt * rate_3c_payout
+                thau_3c_trung += amt * t["c3_payout"]
             elif special_last2 and num[-2:] == special_last2:
                 thau_3c_win_xac += amt
-                thau_3c_trung += amt * rate_3c_apma
+                thau_3c_trung += amt * t["c3_apma"]
     thau_3c_net = thau_3c_von - thau_3c_trung
 
     thau_xien_xac = sum(b.get("amount", 0) for b in xien_bets)
-    thau_xien_von = thau_xien_xac * rate_xien_comm
+    thau_xien_von = thau_xien_xac * t["xien_comm"]
     thau_xien_win_xac = 0
     thau_xien_trung = 0
     if all_last2:
@@ -197,7 +242,7 @@ def calculate_board_accounting(balancer, kqxs: dict, price_config: dict = None) 
             if all(n in all_last2 for n in nums):
                 thau_xien_win_xac += amt
                 size = len(nums)
-                win_rate = rate_x2_payout if size == 2 else (rate_x3_payout if size == 3 else rate_x4_payout)
+                win_rate = t["x2_payout"] if size == 2 else (t["x3_payout"] if size == 3 else t["x4_payout"])
                 thau_xien_trung += amt * win_rate
     thau_xien_net = thau_xien_von - thau_xien_trung
 
@@ -213,40 +258,41 @@ def calculate_board_accounting(balancer, kqxs: dict, price_config: dict = None) 
         "totalVon": thau_total_von, "totalTrung": thau_total_trung, "totalNet": thau_total_net
     }
 
+    # 2. BẢNG CHUYỂN (Áp dụng giá Chuyển)
     chuyen_de = balancer.cumulative_de_transfers
     chuyen_lo = balancer.cumulative_lo_transfers
     chuyen_3c = balancer.cumulative_bacang_transfers
     chuyen_xien = balancer.cumulative_xien_transfers
 
     chuyen_de_xac = sum(chuyen_de.values())
-    chuyen_de_von = chuyen_de_xac * rate_de_comm
+    chuyen_de_von = chuyen_de_xac * c["de_comm"]
     chuyen_de_win_xac = chuyen_de.get(special_last2, 0) if special_last2 else 0
-    chuyen_de_trung = chuyen_de_win_xac * rate_de_payout
+    chuyen_de_trung = chuyen_de_win_xac * c["de_payout"]
     chuyen_de_net = chuyen_de_von - chuyen_de_trung
 
     chuyen_lo_xac = sum(chuyen_lo.values())
-    chuyen_lo_von = chuyen_lo_xac * rate_lo_cost
+    chuyen_lo_von = chuyen_lo_xac * c["lo_cost"]
     chuyen_lo_win_xac = 0
     if all_last2:
         for num, amt in chuyen_lo.items():
             hits = all_last2.count(num)
             if hits > 0:
                 chuyen_lo_win_xac += hits * amt
-    chuyen_lo_trung = chuyen_lo_win_xac * rate_lo_payout
+    chuyen_lo_trung = chuyen_lo_win_xac * c["lo_payout"]
     chuyen_lo_net = chuyen_lo_von - chuyen_lo_trung
 
     chuyen_3c_xac = sum(chuyen_3c.values())
-    chuyen_3c_von = chuyen_3c_xac * rate_3c_comm
+    chuyen_3c_von = chuyen_3c_xac * c["c3_comm"]
     chuyen_3c_win_xac = 0
     chuyen_3c_trung = 0
     if special_last3:
         for num, amt in chuyen_3c.items():
             if num == special_last3:
                 chuyen_3c_win_xac += amt
-                chuyen_3c_trung += amt * rate_3c_payout
+                chuyen_3c_trung += amt * c["c3_payout"]
             elif special_last2 and num[-2:] == special_last2:
                 chuyen_3c_win_xac += amt
-                chuyen_3c_trung += amt * rate_3c_apma
+                chuyen_3c_trung += amt * c["c3_apma"]
     chuyen_3c_net = chuyen_3c_von - chuyen_3c_trung
 
     chuyen_xien_xac = 0
@@ -259,11 +305,11 @@ def calculate_board_accounting(balancer, kqxs: dict, price_config: dict = None) 
             bet = xien_bets[idx]
             nums = bet.get("numbers", [])
             chuyen_xien_xac += amt
-            chuyen_xien_von += amt * rate_xien_comm
+            chuyen_xien_von += amt * c["xien_comm"]
             if all_last2 and all(n in all_last2 for n in nums):
                 chuyen_xien_win_xac += amt
                 size = len(nums)
-                win_rate = rate_x2_payout if size == 2 else (rate_x3_payout if size == 3 else rate_x4_payout)
+                win_rate = c["x2_payout"] if size == 2 else (c["x3_payout"] if size == 3 else c["x4_payout"])
                 chuyen_xien_trung += amt * win_rate
         except Exception:
             pass

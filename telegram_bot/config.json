@@ -18,5 +18,36 @@
     "branch_lo": 0,
     "branch_3c": 0,
     "branch_x": 0
-  }
+  },
+  "price_config": {
+    "thau": {
+      "rateDeComm": 82.0,
+      "rateDePayout": 80.0,
+      "rateLoCost": 2165,
+      "rateLoPayout": 80.0,
+      "rateXienComm": 65.0,
+      "rateXien2Payout": 11.0,
+      "rateXien3Payout": 45.0,
+      "rateXien4Payout": 140.0,
+      "rate3CComm": 75.0,
+      "rate3CPayout": 400.0,
+      "rate3CApMa": 5.0
+    },
+    "chuyen": {
+      "rateDeComm": 80.0,
+      "rateDePayout": 80.0,
+      "rateLoCost": 2160,
+      "rateLoPayout": 80.0,
+      "rateXienComm": 62.0,
+      "rateXien2Payout": 11.0,
+      "rateXien3Payout": 45.0,
+      "rateXien4Payout": 140.0,
+      "rate3CComm": 70.0,
+      "rate3CPayout": 400.0,
+      "rate3CApMa": 5.0
+    }
+  },
+  "owner_chat_id": "",
+  "cleanup_after_seconds": 86400,
+  "cleanup_after_hours": 24.0
 }
