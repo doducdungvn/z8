@@ -6956,6 +6956,20 @@ function resetTable() {
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- Backend API URL -->
+            <div class="col-span-full bg-slate-50 dark:bg-dark-900/40 p-2.5 rounded border border-slate-200 dark:border-slate-700">
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                <span>🌐 Địa chỉ Máy Chủ Backend:</span>
+                <span class="text-[10px] text-slate-400 font-normal">Mặc định: <code>http://127.0.0.1:5005</code> hoặc link Render Cloud</span>
+              </label>
+              <div class="flex gap-2">
+                <input type="text" id="tgInputApiUrl" value="http://127.0.0.1:5005" placeholder="http://127.0.0.1:5005 hoặc https://ten-ban.onrender.com" class="flex-1 border border-slate-300 dark:border-slate-600 rounded px-3 py-1.5 text-xs bg-white dark:bg-dark-700 font-mono">
+                <button type="button" id="btnSaveApiUrl" onclick="saveTgApiUrl()" class="px-3 py-1 bg-slate-800 hover:bg-slate-900 text-white rounded font-bold transition-all text-xs flex items-center gap-1">
+                  <i class="fa-solid fa-link"></i> Kết nối
+                </button>
+              </div>
+            </div>
+
             <!-- Bot Token -->
             <div class="col-span-full">
               <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -7203,9 +7217,20 @@ function resetTable() {
 
   <!-- Client Script for Telegram Bot Integration -->
   <script>
-    const TG_BOT_API = "http://127.0.0.1:5005";
+    let TG_BOT_API = localStorage.getItem('tg_bot_api_url') || "http://127.0.0.1:5005";
     let tgLogsInterval = null;
     let tgStatusInterval = null;
+
+    function saveTgApiUrl() {
+      let val = document.getElementById('tgInputApiUrl')?.value?.trim();
+      if (!val) val = "http://127.0.0.1:5005";
+      if (val.endsWith('/')) val = val.slice(0, -1);
+      TG_BOT_API = val;
+      localStorage.setItem('tg_bot_api_url', val);
+      alert('Đã lưu địa chỉ Backend: ' + val + '\nĐang kết nối lại...');
+      checkTgBotStatus();
+      loadTgBotConfig();
+    }
 
     function switchTgTab(tabName) {
       ['config', 'retain', 'board', 'logs'].forEach(t => {
@@ -7278,6 +7303,7 @@ function resetTable() {
         if (!res.ok) return;
         const cfg = await res.json();
 
+        if (document.getElementById('tgInputApiUrl')) document.getElementById('tgInputApiUrl').value = TG_BOT_API;
         if (cfg.bot_token) document.getElementById('tgInputBotToken').value = cfg.bot_token;
         if (cfg.allowed_senders) document.getElementById('tgInputAllowedSenders').value = cfg.allowed_senders.join(", ");
         if (cfg.target_recipient) document.getElementById('tgInputTargetRecipient').value = cfg.target_recipient;
