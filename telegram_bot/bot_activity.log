@@ -1,0 +1,266 @@
+[23:55:23 07/09] [INFO] Bot Telegram bắt đầu lắng nghe tin cược...
+[23:56:34 07/09] [WARN] Lỗi gửi tin tới @matong86: Bad Request: chat not found
+[23:56:50 07/09] [WARN] Lỗi gửi tin tới @matong86: Bad Request: chat not found
+[23:57:10 07/09] [WARN] Lỗi gửi tin tới +84 914 071 647: Bad Request: chat not found
+[23:57:23 07/09] [WARN] Lỗi gửi tin tới 0914071647: Bad Request: chat not found
+[23:57:47 07/09] [WARN] Lỗi gửi tin tới @matong86: Bad Request: chat not found
+[23:59:52 07/09] [WARN] Từ chối tin từ khách chưa được chỉ định: Zeng (@Zeng86) (ID: 1023927138)
+[23:59:52 07/09] [WARN] Từ chối tin từ khách chưa được chỉ định: Zeng (@Zeng86) (ID: 1023927138)
+[00:00:01 08/09] [WARN] Lỗi gửi tin tới @matong86: Bad Request: chat not found
+[00:00:06 08/09] [WARN] Lỗi gửi tin tới @matong86: Bad Request: chat not found
+[00:02:33 08/09] [WARN] Lỗi gửi tin tới @matong86: Bad Request: chat not found
+[00:02:48 08/09] [WARN] Lỗi gửi tin tới @matong86: Bad Request: chat not found
+[00:02:58 08/09] [WARN] Lỗi gửi tin tới @matong86: Bad Request: chat not found
+[00:03:34 08/09] [WARN] Lỗi gửi tin tới @matong86: Người dùng @matong86 chưa từng mở chat hoặc bấm /start với @bot. Hãy bảo @matong86 tìm @bot trên Telegram và bấm /start trước, hoặc điền trực tiếp số Chat ID.
+[00:04:21 08/09] [WARN] Lỗi gửi tin tới @matong86: Người dùng @matong86 chưa từng mở chat hoặc bấm /start với @olalazbot. Hãy bảo @matong86 tìm @olalazbot trên Telegram và bấm /start trước, hoặc điền trực tiếp số Chat ID.
+[00:06:13 08/09] [WARN] Lỗi gửi tin tới @nguyenbich90: Người dùng @nguyenbich90 chưa từng mở chat hoặc bấm /start với @olalazbot. Hãy bảo @nguyenbich90 tìm @olalazbot trên Telegram và bấm /start trước, hoặc điền trực tiếp số Chat ID.
+[00:06:41 08/09] [WARN] Lỗi gửi tin tới @nguyenbich90: Người dùng @nguyenbich90 chưa từng mở chat hoặc bấm /start với @olalazbot. Hãy bảo @nguyenbich90 tìm @olalazbot trên Telegram và bấm /start trước, hoặc điền trực tiếp số Chat ID.
+[00:06:47 08/09] [INFO] Bot Telegram bắt đầu lắng nghe tin cược...
+[00:06:49 08/09] [INFO] Người dùng Bích (@nguyenbich90) đã kết nối và nhận Chat ID: 5354756442
+[00:07:04 08/09] [SUCCESS] Gửi tin nhắn test tới @nguyenbich90 thành công.
+[00:12:34 08/09] [INFO] Bot Telegram bắt đầu lắng nghe tin cược...
+[00:16:20 08/09] [INFO] 📩 Nhận tin cược từ Bích (@nguyenbich90):
+Đề 34x5
+[00:16:21 08/09] [INFO] ⚖️ Cân bảng sau tin Bích (@nguyenbich90): Vượt mức giữ lại 1 con cược.
+[00:16:32 08/09] [SUCCESS] 🚀 Đã tự động bắn cược thừa tới @nguyenbich90:
+🛸 Thầu - 08/09
+Đề 34x5
+[00:26:30 08/09] [INFO] Bot Telegram bắt đầu lắng nghe tin cược...
+[00:28:04 08/09] [INFO] Bot Telegram bắt đầu lắng nghe tin cược...
+[00:28:55 08/09] [INFO] Zeng (@Zeng86) yêu cầu lấy KQXS
+[00:29:59 08/09] [INFO] Zeng (@Zeng86) yêu cầu xuất báo cáo
+[00:32:04 08/09] [INFO] Bot Telegram bắt đầu lắng nghe tin cược...
+[00:32:12 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:32:16 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:32:19 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:32:23 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:32:27 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:32:31 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:32:35 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:32:39 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:33:15 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:33:18 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:33:22 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:33:26 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:33:30 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:33:34 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:33:38 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:33:42 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:33:46 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:33:50 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:33:53 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:33:57 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:34:01 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:34:05 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:34:09 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:34:34 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:34:38 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:34:42 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:34:46 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:34:50 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:34:54 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:34:58 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:35:01 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:35:25 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:35:29 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:35:33 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:35:37 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:01 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:05 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:09 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:12 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:16 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:20 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:24 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:29 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:33 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:37 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:41 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:45 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:49 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:53 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:36:57 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:37:00 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:37:04 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:37:28 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:37:32 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:37:36 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:37:40 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:37:44 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:37:48 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:37:51 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:38:15 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:38:19 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:38:23 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:38:27 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:38:31 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:38:35 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:38:39 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:38:43 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:38:47 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:38:51 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:38:54 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:38:58 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:02 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:06 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:10 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:14 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:18 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:22 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:26 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:30 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:34 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:37 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:41 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:45 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:39:49 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:40:13 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:40:37 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:40:41 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:40:45 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:40:49 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:40:52 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:40:56 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:41:00 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:41:04 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:41:28 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:41:32 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:41:36 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:41:40 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:41:44 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:41:48 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:41:51 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:41:55 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:41:59 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:42:23 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:42:27 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:42:31 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:42:35 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:42:39 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:42:43 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:42:46 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:42:50 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:42:54 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:42:58 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:43:02 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:43:06 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:43:30 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:43:34 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:43:38 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:43:41 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:05 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:09 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:13 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:17 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:21 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:25 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:29 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:32 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:36 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:40 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:44 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:48 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:52 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:44:56 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:45:21 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:45:25 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:45:29 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:45:33 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:45:36 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:45:40 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:45:44 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:45:48 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:45:52 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:45:56 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:46:20 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:46:24 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:46:28 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:46:33 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:46:37 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:46:41 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:46:45 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:46:48 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:46:52 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:46:56 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:47:00 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:47:04 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:47:28 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:47:32 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:47:36 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:47:39 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:47:43 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:47:47 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:47:51 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:47:55 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:47:59 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:03 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:07 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:11 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:14 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:18 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:22 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:26 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:30 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:34 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:38 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:42 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:46 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:48:49 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:49:13 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:49:17 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:49:53 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:49:57 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:50:01 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:50:25 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:50:29 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:50:33 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:50:36 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:50:40 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:50:44 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:50:48 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:50:52 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:51:16 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:51:20 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:51:24 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:51:27 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:51:31 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:51:35 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:51:39 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:51:43 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:51:47 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:51:51 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:51:55 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:51:59 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:52:23 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:52:26 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:52:30 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:52:34 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:52:38 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:52:42 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:53:06 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:53:10 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:53:34 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:53:37 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:53:41 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:53:45 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:53:49 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:53:53 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:53:57 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:54:01 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:54:05 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:54:09 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:54:12 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:54:36 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:54:40 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:54:44 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:54:48 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:54:52 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:54:56 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:55:00 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:55:03 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:55:07 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:55:11 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:55:15 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:55:19 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:55:23 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+[00:55:27 08/09] [WARN] Lỗi getUpdates: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
