@@ -4772,6 +4772,16 @@ function saveRates() {
   if (chk) {
     localStorage.setItem('z8_copy_vertical', chk.checked ? '1' : '0');
   }
+
+  // Tự động đồng bộ giá sang Telegram Bot backend (nếu có API)
+  try {
+    const apiUrl = localStorage.getItem('tg_bot_api_url') || (typeof TG_BOT_API !== 'undefined' ? TG_BOT_API : "http://127.0.0.1:5005");
+    fetch(apiUrl + "/api/bot/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ price_config: window.priceConfigData })
+    }).catch(() => {});
+  } catch(e) {}
 }
 
 // Setup Event Listeners
@@ -7044,6 +7054,42 @@ function resetTable() {
             </div>
           </div>
 
+          <!-- Tùy chọn Tự động xóa dấu vết & Bảng giá -->
+          <div class="bg-slate-50 dark:bg-dark-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-700 space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-bold text-slate-700 dark:text-slate-300">
+                  <i class="fa-solid fa-clock-rotate-left text-amber-500 mr-1"></i>
+                  Thời gian tự động xóa dấu vết dữ liệu cược (giờ):
+                </label>
+                <span class="text-[10px] text-slate-500 font-normal">Mặc định: 24 giờ</span>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <input type="number" id="tgInputCleanupHours" min="0.1" step="0.5" value="24" class="w-28 border border-slate-300 dark:border-slate-600 rounded px-3 py-1.5 text-xs text-center font-bold bg-white dark:bg-dark-700 font-mono">
+                <span class="text-xs text-slate-600 dark:text-slate-300 font-semibold">tiếng (giờ)</span>
+                <span class="text-[11px] text-slate-400 italic">(Nhập số giờ muốn tự xóa: VD 1, 6, 12, 24... Tự xóa tin nhắn Telegram, nhật ký và reset cược)</span>
+              </div>
+            </div>
+
+            <div class="pt-2.5 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <span class="font-bold text-slate-700 dark:text-slate-300 block text-xs">
+                  <i class="fa-solid fa-tags text-indigo-500 mr-1"></i>
+                  Cấu hình Bảng Giá &amp; Hoa Hồng:
+                </span>
+                <span class="text-[11px] text-slate-500">Giá gốc &amp; tỷ lệ trúng cho Bảng Thầu &amp; Bảng Chuyển (Đề, Lô, Xiên, 3 Càng).</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="loadRates(); document.getElementById('modalPriceConfig').classList.remove('hidden');" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-xs transition-all shadow-xs flex items-center gap-1 active:scale-95">
+                  <i class="fa-solid fa-gear"></i> Mở Bảng Giá
+                </button>
+                <button type="button" id="btnSyncPriceToBot" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-xs transition-all shadow-xs flex items-center gap-1 active:scale-95" title="Đồng bộ bảng giá từ Web sang Bot">
+                  <i class="fa-solid fa-arrows-rotate"></i> Đồng bộ sang Bot
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="flex justify-end gap-2 pt-1">
             <button type="button" id="btnSaveTgConfig" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95">
               <i class="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình Bot
@@ -7319,6 +7365,13 @@ function resetTable() {
         document.getElementById('tgCheckAutoReply').checked = !!cfg.auto_reply_client;
         document.getElementById('tgCheckAutoForward').checked = !!cfg.auto_forward_excess;
 
+        // Cleanup hours
+        if (cfg.cleanup_after_hours !== undefined) {
+          document.getElementById('tgInputCleanupHours').value = cfg.cleanup_after_hours;
+        } else if (cfg.cleanup_after_seconds !== undefined) {
+          document.getElementById('tgInputCleanupHours').value = Math.round((cfg.cleanup_after_seconds / 3600) * 10) / 10;
+        }
+
         // Retain config
         const r = cfg.retain_config || {};
         if (r.retain_type === "percentage") {
@@ -7349,6 +7402,7 @@ function resetTable() {
     async function saveTgBotConfig() {
       const allowedRaw = document.getElementById('tgInputAllowedSenders').value;
       const allowedList = allowedRaw.split(',').map(s => s.trim()).filter(Boolean);
+      const cleanupHours = parseFloat(document.getElementById('tgInputCleanupHours').value) || 24;
 
       const payload = {
         bot_token: document.getElementById('tgInputBotToken').value.trim(),
@@ -7357,6 +7411,8 @@ function resetTable() {
         mode: document.getElementById('tgModeBatch').checked ? "batch" : "instant",
         auto_reply_client: document.getElementById('tgCheckAutoReply').checked,
         auto_forward_excess: document.getElementById('tgCheckAutoForward').checked,
+        cleanup_after_hours: cleanupHours,
+        price_config: window.priceConfigData || JSON.parse(localStorage.getItem(RATES_STORAGE_KEY) || "{}"),
         retain_config: {
           retain_type: document.getElementById('tgRetainTypePercent').checked ? "percentage" : "money",
           retain_de: parseFloat(document.getElementById('tgRetainDe').value) || 0,
@@ -7378,7 +7434,7 @@ function resetTable() {
           body: JSON.stringify(payload)
         });
         if (res.ok) {
-          alert("Lưu cấu hình Telegram Bot thành công!");
+          alert("Lưu cấu hình Telegram Bot & Giờ tự động xóa thành công!");
           checkTgBotStatus();
         } else {
           alert("Lỗi khi lưu cấu hình.");
@@ -7387,6 +7443,24 @@ function resetTable() {
         alert("Không kết nối được Backend Telegram Bot trên cổng 5005. Hãy chạy run_bot.bat!");
       }
     }
+
+    document.getElementById('btnSyncPriceToBot')?.addEventListener('click', async () => {
+      saveRates();
+      try {
+        const res = await fetch(TG_BOT_API + "/api/bot/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ price_config: window.priceConfigData })
+        });
+        if (res.ok) {
+          alert("✅ Đã đồng bộ Bảng Giá & Hoa Hồng (Thầu & Chuyển) sang Telegram Bot thành công!");
+        } else {
+          alert("Lỗi khi đồng bộ bảng giá sang Bot.");
+        }
+      } catch (err) {
+        alert("Không kết nối được Backend Bot.");
+      }
+    });
 
     async function fetchTgLogs() {
       const consoleEl = document.getElementById('tgLogsConsole');
