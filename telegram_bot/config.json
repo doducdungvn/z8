@@ -1,0 +1,22 @@
+{
+  "bot_token": "8936175757:AAE-kwAitGfoskr4uGmXNppFw900szGEzFY",
+  "allowed_senders": [
+    "*"
+  ],
+  "target_recipient": "@nguyenbich90",
+  "auto_reply_client": true,
+  "auto_forward_excess": true,
+  "mode": "instant",
+  "retain_config": {
+    "retain_type": "percentage",
+    "retain_de": 50,
+    "retain_lo": 50,
+    "retain_3c": 0,
+    "retain_x": 0,
+    "retain_use_branch": true,
+    "branch_de": 0,
+    "branch_lo": 0,
+    "branch_3c": 0,
+    "branch_x": 0
+  }
+}
