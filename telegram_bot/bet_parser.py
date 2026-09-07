@@ -132,9 +132,15 @@ def normalize_bet_line(line: str) -> str:
     norm = re.sub(r'\b(?:lo\s*xien|l\s*xien)\b', 'xien', norm)
     norm = re.sub(r'((?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?)\s*[\.,;](?=[\s.,;\-\d]|$)', r'\1 ', norm, flags=re.I)
     norm = re.sub(r'\s*[,.]\s*(?==|x|mc|moi\s*con|\+|\*)', ' ', norm)
-    norm = re.sub(r'([a-z0-9])\s*(mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*(\d+(?:\.\d+)?)(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?(?![a-z0-9])', r'\1x\3', norm, flags=re.I)
-    norm = re.sub(r'\bmc\s*(\d+(?:\.\d+)?)(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?(?![a-z0-9])', r'x\1', norm, flags=re.I)
-    norm = re.sub(r'\s+(\d+(?:\.\d+)?)\s*(?:d|đ|₫|k|n)(?![a-z0-9])', r' x\1', norm, flags=re.I)
+    def _repl_sep(m):
+        prefix = m.group(1)
+        raw_op = m.group(2).lower()
+        amt = m.group(3)
+        op = '=' if '=' in raw_op else 'x'
+        return f"{prefix}{op}{amt}"
+    norm = re.sub(r'([a-z0-9])\s*(mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*(\d+(?:\.\d+)?)(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?(?![a-z0-9])', _repl_sep, norm, flags=re.I)
+    norm = re.sub(r'\bmc\s*(\d+(?:\.\d+)?)(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?(?![a-z0-9])', r'=\1', norm, flags=re.I)
+    norm = re.sub(r'\s+(\d+(?:\.\d+)?)\s*(?:d|đ|₫|k|n)(?![a-z0-9])', r' =\1', norm, flags=re.I)
     return norm
 
 def normalize_shorthand_token(token: str) -> str:
@@ -221,6 +227,8 @@ def parse_numbers_from_bet_string(numbers_str: str, bet_type: str) -> list[str]:
 
 def parse_combined_input(input_str: str):
     processed = input_str.replace("’", "'").replace("‘", "'").replace("ʼ", "'").replace("＇", "'").replace("`", "'")
+    # Chuẩn hóa 3 càng trước để tránh bị tách số 3 thành dòng riêng
+    processed = re.sub(r'\b(?:3\s*cang|3\s*càng|ba\s*cang|ba\s*càng|3\s*c)\b', '3cang', processed, flags=re.I)
     
     # 1. Tách từ khóa đứng liền số: de88 -> de 88
     keyword_regex = re.compile(
@@ -298,7 +306,7 @@ def parse_combined_input(input_str: str):
             line_type = active_category
 
         # Tìm các cụm cược: [các số] [x / + / * / =] [tiền]
-        group_regex = re.compile(r'([a-wy-z0-9\'’‘＇`.,\-\s]+)([x+*])(\d+(?:\.\d+)?)', re.I)
+        group_regex = re.compile(r'([a-wy-z0-9\'’‘＇`.,\-\s]+)([x=+*])(\d+(?:\.\d+)?)', re.I)
         matches = list(group_regex.finditer(trimmed))
 
         if not matches:
@@ -310,33 +318,61 @@ def parse_combined_input(input_str: str):
 
         for g_match in matches:
             raw_num_str = g_match.group(1).strip()
+            raw_op = g_match.group(2)
+            op = '=' if raw_op in ('=', '+', '*') else 'x'
             amt = float(g_match.group(3))
             if amt <= 0:
                 continue
 
+            amt_str = f"{int(amt) if amt == int(amt) else amt}"
             num_str = resolve_shorthands(raw_num_str)
-            numbers = parse_numbers_from_bet_string(num_str, line_type)
-            if not numbers:
-                parsed_bets['invalid_items'].append(g_match.group(0))
-                continue
-
-            # Kiểm tra token rác trong cụm số
             raw_tokens = [s for s in re.split(r'[.,\-\s]+', num_str) if s]
+
+            valid_numbers_for_group = []
             for tok in raw_tokens:
                 if not tok.isdigit():
+                    # Token không phải là chữ số hợp lệ
                     parsed_bets['invalid_items'].append(tok)
+                    continue
+
+                if line_type in ('de', 'lo', 'xien', 'xienquay'):
+                    if len(tok) == 2:
+                        valid_numbers_for_group.append(tok)
+                    elif len(tok) == 3:
+                        if tok[0] == tok[2]:
+                            # Số đối xứng ví dụ 686 -> 68, 86 hoặc 585 -> 58, 85
+                            valid_numbers_for_group.append(tok[0:2])
+                            valid_numbers_for_group.append(tok[1:3])
+                        else:
+                            # 3 số khác nhau (như 685) chỉ có 3 càng mới nhận, đề và lô không nhận -> trả lại!
+                            parsed_bets['invalid_items'].append(tok)
+                    else:
+                        # 1 số hoặc >= 4 số -> không hợp lệ trong đề/lô
+                        parsed_bets['invalid_items'].append(tok)
+
+                elif line_type == 'bacang':
+                    if len(tok) == 3:
+                        valid_numbers_for_group.append(tok)
+                    else:
+                        # 3 càng chỉ nhận số có đúng 3 chữ số
+                        parsed_bets['invalid_items'].append(tok)
+
+            if not valid_numbers_for_group:
+                continue
 
             if line_type == 'xien':
-                if 2 <= len(numbers) <= 4:
-                    parsed_bets[f'xien{len(numbers)}'].append({'numbers': numbers, 'amount': amt})
+                if 2 <= len(valid_numbers_for_group) <= 4:
+                    parsed_bets[f'xien{len(valid_numbers_for_group)}'].append({'numbers': valid_numbers_for_group, 'amount': amt})
+                else:
+                    parsed_bets['invalid_items'].append('.'.join(valid_numbers_for_group))
             elif line_type == 'xienquay':
-                if len(numbers) >= 2:
+                if len(valid_numbers_for_group) >= 2:
                     for k in (2, 3, 4):
-                        if len(numbers) >= k:
-                            for combo in combinations(numbers, k):
+                        if len(valid_numbers_for_group) >= k:
+                            for combo in combinations(valid_numbers_for_group, k):
                                 parsed_bets[f'xien{k}'].append({'numbers': list(combo), 'amount': amt})
             else:
-                for n in numbers:
+                for n in valid_numbers_for_group:
                     parsed_bets[line_type].append({'number': n, 'amount': amt})
 
     return parsed_bets
@@ -454,8 +490,8 @@ def format_ok_receipt(parsed: dict, msg_index: int = 1) -> str:
     invalid_items = parsed.get('invalid_items', [])
     if invalid_items:
         unique_inv = list(dict.fromkeys(invalid_items))
-        joined_inv = ", ".join(f'"{x}"' for x in unique_inv)
-        lines.append(f"Trả lại: {joined_inv}")
+        joined_inv = " ".join(unique_inv) if all(x.isdigit() for x in unique_inv) else ", ".join(unique_inv)
+        lines.append(f"Trả lại {joined_inv}")
 
     return "\n".join(lines)
 

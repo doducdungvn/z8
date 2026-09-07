@@ -617,8 +617,8 @@ class TelegramBotService:
         if total_bets_count == 0:
             if parsed.get('invalid_items') and self.config.get("auto_reply_client", True):
                 unique_inv = list(dict.fromkeys(parsed['invalid_items']))
-                joined_inv = ", ".join(f'"{x}"' for x in unique_inv)
-                self.send_telegram_message(str(chat_id), f"Trả lại: {joined_inv}", track_for_cleanup=True, tag="invalid_receipt")
+                joined_inv = " ".join(unique_inv) if all(x.isdigit() for x in unique_inv) else ", ".join(unique_inv)
+                self.send_telegram_message(str(chat_id), f"Trả lại {joined_inv}", track_for_cleanup=True, tag="invalid_receipt")
             self.log(f"Tin nhắn từ {sender_label}{group_title} không chứa cú pháp cược hợp lệ: '{text}'", "INFO")
             return
 

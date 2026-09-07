@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "chat_id": "1023927138",
+    "message_id": 39,
+    "created_at": 1788809240.6198866,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 40,
+    "created_at": 1788809241.7186723,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 42,
+    "created_at": 1788809408.3147962,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 43,
+    "created_at": 1788809409.4315088,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 44,
+    "created_at": 1788809436.8195446,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 45,
+    "created_at": 1788809438.0242743,
+    "tag": "receipt"
+  }
+]
