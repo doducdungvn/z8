@@ -40,5 +40,107 @@
     "message_id": 301,
     "created_at": 1788847971.917699,
     "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "7715286942",
+    "message_id": 76,
+    "created_at": 1788849995.3357115,
+    "tag": "invalid_receipt"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 85,
+    "created_at": 1788850116.6882832,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 98,
+    "created_at": 1788850118.2156549,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 86,
+    "created_at": 1788850118.2228308,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 100,
+    "created_at": 1788850119.2952285,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 87,
+    "created_at": 1788850119.3023155,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 103,
+    "created_at": 1788850121.0004256,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 88,
+    "created_at": 1788850121.009226,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 105,
+    "created_at": 1788850122.0970793,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 89,
+    "created_at": 1788850122.1057913,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 107,
+    "created_at": 1788850123.2153695,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 90,
+    "created_at": 1788850123.2233102,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 110,
+    "created_at": 1788850124.3259542,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 91,
+    "created_at": 1788850124.3341784,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 112,
+    "created_at": 1788850125.3970704,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 92,
+    "created_at": 1788850125.403151,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 114,
+    "created_at": 1788850126.4891303,
+    "tag": "receipt"
   }
 ]
