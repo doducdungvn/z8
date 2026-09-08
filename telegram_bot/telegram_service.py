@@ -14,7 +14,8 @@ from lottery_engine import (
     format_xsmb_message,
     calculate_board_accounting,
     format_accounting_report,
-    format_price_config_summary
+    format_price_config_summary,
+    format_retain_config_summary
 )
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
@@ -63,6 +64,12 @@ class TelegramBotService:
                         cfg["owner_chat_id"] = ""
                     if "cleanup_after_seconds" not in cfg:
                         cfg["cleanup_after_seconds"] = 86400  # 24 giờ tự động xóa vết cược
+                    if "cleanup_after_hours" not in cfg:
+                        cfg["cleanup_after_hours"] = 24.0
+                    if "admin_password" not in cfg or not cfg.get("admin_password"):
+                        cfg["admin_password"] = "123456"
+                    if "authenticated_admins" not in cfg:
+                        cfg["authenticated_admins"] = []
                     # Đọc bổ sung từ biến môi trường (nếu có, tiện cho Cloud hosting)
                     if os.environ.get("TELEGRAM_BOT_TOKEN") and not cfg.get("bot_token"):
                         cfg["bot_token"] = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -70,6 +77,8 @@ class TelegramBotService:
                         cfg["target_recipient"] = os.environ.get("TARGET_RECIPIENT")
                     if os.environ.get("OWNER_CHAT_ID") and not cfg.get("owner_chat_id"):
                         cfg["owner_chat_id"] = os.environ.get("OWNER_CHAT_ID")
+                    if os.environ.get("ADMIN_PASSWORD") and not cfg.get("admin_password"):
+                        cfg["admin_password"] = os.environ.get("ADMIN_PASSWORD")
                     return cfg
             except Exception as e:
                 self.log(f"Lỗi đọc config.json: {e}", "WARN")
@@ -86,10 +95,34 @@ class TelegramBotService:
             "mode": "instant",            # "instant" hoặc "batch"
             "retain_config": BoardBalancer.default_config(),
             "price_config": DEFAULT_PRICE_CONFIG,
-            "cleanup_after_seconds": 86400
+            "cleanup_after_seconds": 86400,
+            "cleanup_after_hours": 24.0,
+            "admin_password": "123456",
+            "authenticated_admins": []
         }
         self.save_config(default_cfg)
         return default_cfg
+
+    def is_admin(self, chat_id: int | str) -> bool:
+        """Kiểm tra một chat_id có quyền quản trị viên hay không"""
+        cid = str(chat_id).strip()
+        if not cid:
+            return False
+        owner = str(self.config.get("owner_chat_id", "")).strip()
+        if owner and cid == owner:
+            return True
+        admins = [str(x).strip() for x in self.config.get("authenticated_admins", [])]
+        return cid in admins
+
+    def msg_need_auth(self) -> str:
+        return (
+            "🔒 <b>KHU VỰC QUẢN TRỊ ĐƯỢC BẢO VỆ BẰNG MẬT KHẨU!</b>\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "Mục này chứa dữ liệu tài chính & cấu hình của Chủ bảng.\n"
+            "👉 Vui lòng nhập mật khẩu để mở khóa:\n"
+            "<code>/mk &lt;mật_khẩu&gt;</code>\n"
+            "<i>(Ví dụ: <code>/mk 123456</code>)</i>"
+        )
 
     def save_config(self, cfg: dict = None):
         if cfg:
@@ -432,41 +465,128 @@ class TelegramBotService:
 
         # Xử lý các lệnh điều khiển hệ thống
         cmd = text.lower().strip()
-        
-        # 1. /start hoặc /id
+        parts = text.split()
+        cmd_root = parts[0].lower() if parts else ""
+
+        # A. Đăng nhập mật khẩu (/mk <pass>, /pass <pass>, /login <pass>, /matkhau <pass>)
+        if cmd_root in ["/mk", "mk", "/pass", "pass", "/login", "login", "/matkhau", "matkhau"] or cmd_root.startswith("/mk@") or cmd_root.startswith("/pass@"):
+            if len(parts) < 2:
+                self.send_telegram_message(str(chat_id), "🔑 <b>Nhập mật khẩu quản trị:</b>\n👉 Hãy gõ: <code>/mk &lt;mật_khẩu&gt;</code>\n<i>(Mật khẩu mặc định: <code>123456</code>)</i>")
+                return
+            entered_pass = parts[1].strip()
+            admin_pass = str(self.config.get("admin_password", "123456")).strip()
+            if entered_pass == admin_pass:
+                admins = self.config.setdefault("authenticated_admins", [])
+                cid_str = str(chat_id)
+                if cid_str not in [str(x) for x in admins]:
+                    admins.append(cid_str)
+                    self.save_config()
+                self.log(f"{sender_label} đã đăng nhập quyền quản trị viên thành công!", "SUCCESS")
+                welcome_msg = (
+                    "🔓 <b>ĐĂNG NHẬP QUẢN TRỊ VIÊN THÀNH CÔNG!</b>\n"
+                    "━━━━━━━━━━━━━━━━━━\n"
+                    "Chào mừng Chủ bảng! Bạn đã mở khóa toàn bộ quyền xem và thiết lập hệ thống:\n\n"
+                    "📊 <b>/baocao</b>: Xem Báo Cáo Thầu / Giữ lại / Chuyển\n"
+                    "📋 <b>/bang</b>: Xem Bảng Cược Tích Lũy hôm nay\n"
+                    "⚙️ <b>/canchuyen</b>: Xem & Sửa Thiết Lập Cân Chuyển\n"
+                    "🏷️ <b>/gia</b>: Xem & Sửa Bảng Giá & Hoa Hồng\n"
+                    "🚀 <b>/chuyen</b>: Bắn Cược Thừa Ngay Lập Tức\n"
+                    "⏰ <b>/timer &lt;giờ&gt;</b>: Đổi số giờ tự động xóa vết cược\n"
+                    "🧹 <b>/clean</b>: Xóa ngay các vết tin cược cũ\n"
+                    "🗑️ <b>/reset</b>: Xóa bảng cược bắt đầu ngày mới\n"
+                    "🔑 <b>/doimk &lt;mk_mới&gt;</b>: Đổi mật khẩu quản trị\n"
+                    "🚪 <b>/logout</b>: Đăng xuất quyền quản trị trên thiết bị này\n"
+                    "━━━━━━━━━━━━━━━━━━\n"
+                    "💡 <i>Gõ /help bất kỳ lúc nào để xem lại danh sách lệnh.</i>"
+                )
+                self.send_telegram_message(str(chat_id), welcome_msg)
+                return
+            else:
+                self.log(f"{sender_label} nhập sai mật khẩu quản trị: '{entered_pass}'", "WARN")
+                self.send_telegram_message(str(chat_id), "❌ <b>Mật khẩu không chính xác!</b>\nVui lòng thử lại: <code>/mk &lt;mật_khẩu&gt;</code>")
+                return
+
+        # B. Đổi mật khẩu (/doimk <mk_moi>, /doimatkhau <mk_moi>)
+        if cmd_root in ["/doimk", "doimk", "/doimatkhau", "doimatkhau"] or cmd_root.startswith("/doimk@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            if len(parts) < 2 or not parts[1].strip():
+                self.send_telegram_message(str(chat_id), "⚠️ Cú pháp: <code>/doimk &lt;mật_khẩu_mới&gt;</code>\nVí dụ: <code>/doimk 654321</code>")
+                return
+            new_pass = parts[1].strip()
+            self.config["admin_password"] = new_pass
+            self.save_config()
+            self.log(f"{sender_label} đã đổi mật khẩu quản trị sang: {new_pass}", "INFO")
+            self.send_telegram_message(str(chat_id), f"🔑 <b>Thành công:</b> Đã đổi mật khẩu quản trị mới là: <code>{new_pass}</code>\nHãy ghi nhớ mật khẩu này cho các lần truy cập sau!")
+            return
+
+        # C. Đăng xuất (/logout, /dangxuat)
+        if cmd_root in ["/logout", "logout", "/dangxuat", "dangxuat"] or cmd_root.startswith("/logout@"):
+            cid_str = str(chat_id)
+            admins = self.config.get("authenticated_admins", [])
+            self.config["authenticated_admins"] = [x for x in admins if str(x) != cid_str]
+            self.save_config()
+            self.log(f"{sender_label} đã đăng xuất quyền quản trị", "INFO")
+            self.send_telegram_message(str(chat_id), "🔒 <b>Đã đăng xuất quyền quản trị.</b>\nĐể truy cập lại các tính năng quản lý, hãy gõ: <code>/mk &lt;mật_khẩu&gt;</code>")
+            return
+
+        # D. /start hoặc /id
         if cmd in ["/start", "start", "/id", "id"] or cmd.startswith("/start@") or cmd.startswith("/id@"):
+            admin_status = " 👑 <i>(Quản trị viên đã đăng nhập)</i>" if self.is_admin(chat_id) else ""
             reply = (
-                f"👋 <b>Xin chào {first_name}!</b>\n\n"
+                f"👋 <b>Xin chào {first_name}!</b>{admin_status}\n\n"
                 f"🆔 <b>Chat ID của bạn:</b> <code>{chat_id}</code>\n"
                 f"👤 <b>Username:</b> @{username if username else '(Chưa có)'}\n\n"
-                f"👉 <i>Hãy sao chép số Chat ID <code>{chat_id}</code> này dán vào ô <b>'Người nhận cược thừa'</b> hoặc <b>'Khách được chỉ định'</b> trên Web nhé!</i>\n\n"
-                f"💡 <i>Gõ /help để xem danh sách các lệnh quản lý.</i>"
+                f"👉 <i>Sao chép Chat ID <code>{chat_id}</code> này dán vào ô <b>'Người nhận cược thừa'</b> hoặc <b>'Khách được chỉ định'</b> trên Web nhé!</i>\n\n"
             )
+            if self.is_admin(chat_id):
+                reply += "💡 <i>Gõ <b>/help</b> để xem đầy đủ các lệnh quản trị hệ thống.</i>"
+            else:
+                reply += "💡 <i>Gửi tin cược (VD: <code>de 88=100</code>, <code>lo 12=10d</code>) để đặt số.\n🔒 Quản trị viên: Gõ <code>/mk &lt;mật_khẩu&gt;</code> để mở khóa quyền quản lý.</i>"
             self.send_telegram_message(str(chat_id), reply)
             self.log(f"Người dùng {sender_label} đã kết nối và nhận Chat ID: {chat_id}", "INFO")
             return
 
-        # 2. /help hoặc help
+        # E. /help hoặc help
         if cmd in ["/help", "help", "/menu", "menu"] or cmd.startswith("/help@"):
-            help_text = (
-                "🤖 <b>CÁC LỆNH ĐIỀU KHIỂN HỆ THỐNG:</b>\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                "🎯 <b>/kqxs</b>: Xem Kết quả Xổ số Miền Bắc hôm nay\n"
-                "📊 <b>/baocao</b>: Xem Báo cáo Thầu / Giữ lại / Chuyển\n"
-                "📋 <b>/bang</b>: Xem tổng cược tích lũy hôm nay\n"
-                "🚀 <b>/chuyen</b>: Bắn ngay các cược vượt định mức\n"
-                "⚙️ <b>/gia</b>: Xem cấu hình bảng giá & hoa hồng\n"
-                "⏰ <b>/timer &lt;giờ&gt;</b>: Đổi số giờ tự động xóa vết cược (VD: /timer 12)\n"
-                "🧹 <b>/clean</b>: Xóa dấu vết tin cược cũ ngay lập tức\n"
-                "🗑️ <b>/reset</b>: Xóa cược bắt đầu ngày mới\n"
-                "🆔 <b>/id</b>: Xem Chat ID của bạn\n"
-                "━━━━━━━━━━━━━━━━━━\n"
-                "<i>Chỉ cần nhắn tin cược (VD: de 88x100, lo 12x20d) để bot tự động nhận & cân bảng!</i>"
-            )
+            if self.is_admin(chat_id):
+                help_text = (
+                    "🤖 <b>CÁC LỆNH QUẢN TRỊ HỆ THỐNG (Chủ Bảng):</b>\n"
+                    "━━━━━━━━━━━━━━━━━━\n"
+                    "📊 <b>/baocao</b>: Xem Báo cáo Thầu / Giữ lại / Chuyển\n"
+                    "📋 <b>/bang</b>: Xem tổng cược tích lũy hôm nay\n"
+                    "⚙️ <b>/canchuyen</b>: Xem & Sửa Thiết lập Cân chuyển / Giữ lại\n"
+                    "🏷️ <b>/gia</b>: Xem & Sửa Bảng Giá Thầu & Chuyển\n"
+                    "🚀 <b>/chuyen</b>: Bắn ngay các cược vượt định mức\n"
+                    "⏰ <b>/timer &lt;giờ&gt;</b>: Đổi số giờ tự động xóa vết cược\n"
+                    "🧹 <b>/clean</b>: Xóa dấu vết tin cược cũ ngay lập tức\n"
+                    "🗑️ <b>/reset</b>: Xóa cược bắt đầu ngày mới\n"
+                    "🎯 <b>/kqxs</b>: Xem Kết quả Xổ số Miền Bắc hôm nay\n"
+                    "🔑 <b>/doimk &lt;mk_mới&gt;</b>: Đổi mật khẩu quản trị\n"
+                    "🚪 <b>/logout</b>: Đăng xuất quyền quản trị\n"
+                    "🆔 <b>/id</b>: Xem Chat ID của bạn\n"
+                    "━━━━━━━━━━━━━━━━━━\n"
+                    "<i>Tin nhắn cược của khách (VD: de 88x100, lo 12x20d) bot vẫn tự động nhận & cân bảng.</i>"
+                )
+            else:
+                help_text = (
+                    "🤖 <b>HƯỚNG DẪN ĐẶT CƯỢC TỰ ĐỘNG:</b>\n"
+                    "━━━━━━━━━━━━━━━━━━\n"
+                    "Bạn chỉ cần nhắn tin cược theo cú pháp, hệ thống sẽ tự động nhận & phản hồi biên nhận:\n"
+                    "• Đề: <code>de 88=100</code>, <code>de 141 292x25k</code>, <code>dau 5=10</code>\n"
+                    "• Lô: <code>lo 65=30d</code>, <code>lo 09 575=10d</code>\n"
+                    "• 3 Càng: <code>3c 686 685 586=10k</code>\n"
+                    "• Xiên: <code>xien 12.34=50k</code>, <code>xq 12.34.56=20k</code>\n"
+                    "━━━━━━━━━━━━━━━━━━\n"
+                    "🆔 <b>/id</b>: Xem Chat ID của bạn\n"
+                    "🎯 <b>/kqxs</b>: Xem Kết quả Xổ số Miền Bắc hôm nay\n"
+                    "🔒 <i>Chức năng quản trị bảng cược yêu cầu mật khẩu:</i> <code>/mk &lt;mật_khẩu&gt;</code>"
+                )
             self.send_telegram_message(str(chat_id), help_text)
             return
 
-        # 3. /kqxs hoặc kết quả
+        # F. /kqxs hoặc kết quả (Mở cho tất cả)
         if cmd in ["/kqxs", "kqxs", "kết quả", "ket qua", "kq"] or cmd.startswith("/kqxs@"):
             self.log(f"{sender_label} yêu cầu lấy KQXS", "INFO")
             kq = fetch_xsmb()
@@ -475,8 +595,11 @@ class TelegramBotService:
             self.send_telegram_message(str(chat_id), msg)
             return
 
-        # 4. /baocao hoặc báo cáo
+        # G. /baocao (Yêu cầu mật khẩu)
         if cmd in ["/baocao", "baocao", "báo cáo", "bao cao", "/bc", "bc"] or cmd.startswith("/baocao@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
             self.log(f"{sender_label} yêu cầu xuất báo cáo", "INFO")
             kq = self.cached_kqxs or fetch_xsmb()
             self.cached_kqxs = kq
@@ -498,8 +621,11 @@ class TelegramBotService:
             self.send_telegram_message(str(chat_id), reply_msg)
             return
 
-        # 5. /bang hoặc /canbang
+        # H. /bang hoặc /canbang (Yêu cầu mật khẩu)
         if cmd in ["/bang", "bảng", "bang", "/canbang", "cân bảng", "can bang"] or cmd.startswith("/bang@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
             b = self.balancer
             de_c = len(b.de_sums)
             de_s = sum(b.de_sums.values())
@@ -532,8 +658,258 @@ class TelegramBotService:
             self.send_telegram_message(str(chat_id), "\n".join(lines))
             return
 
-        # 6. /chuyen
+        # I. /canchuyen, /thietlap, /giulai (Xem & Sửa thiết lập cân chuyển - Yêu cầu mật khẩu)
+        if cmd_root in ["/canchuyen", "canchuyen", "/thietlap", "thietlap", "/giulai", "giulai"] or cmd_root.startswith("/canchuyen@") or cmd_root.startswith("/giulai@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            if len(parts) == 1:
+                summary_msg = format_retain_config_summary(self.config)
+                self.send_telegram_message(str(chat_id), summary_msg)
+                return
+
+            sub_type = parts[1].lower().replace("%", "percentage").replace("phantram", "percentage").replace("pt", "percentage")
+            if sub_type in ["percentage", "percent", "tien", "money", "k"]:
+                r_type = "percentage" if sub_type in ["percentage", "percent"] else "money"
+                r = self.config.setdefault("retain_config", {})
+                r["retain_type"] = r_type
+                nums = []
+                for p in parts[2:]:
+                    val_str = p.replace(",", ".").replace("%", "").replace("k", "").replace("d", "").replace("đ", "")
+                    try:
+                        nums.append(float(val_str))
+                    except ValueError:
+                        pass
+                if len(nums) >= 1: r["retain_de"] = nums[0]
+                if len(nums) >= 2: r["retain_lo"] = nums[1]
+                if len(nums) >= 3: r["retain_3c"] = nums[2]
+                if len(nums) >= 4: r["retain_x"] = nums[3]
+
+                self.balancer.config = r
+                self.save_config()
+                unit = "%" if r_type == "percentage" else "k/đ"
+                self.log(f"Đã cập nhật mức giữ lại ({r_type}): Đề={r.get('retain_de')}{unit}, Lô={r.get('retain_lo')}{unit}, 3C={r.get('retain_3c')}{unit}, X={r.get('retain_x')}{unit}", "INFO")
+                reply = (
+                    f"✅ <b>Thành công:</b> Đã cập nhật mức giữ lại theo <b>{'Phần trăm (%)' if r_type == 'percentage' else 'Tiền (k/đ)'}</b>:\n"
+                    f"• Đề: <code>{r.get('retain_de', 0):g}{unit}</code> | Lô: <code>{r.get('retain_lo', 0):g}{unit}</code> | 3C: <code>{r.get('retain_3c', 0):g}{unit}</code> | Xiên: <code>{r.get('retain_x', 0):g}{unit}</code>"
+                )
+                self.send_telegram_message(str(chat_id), reply)
+                return
+
+            target_item = parts[1].lower()
+            if target_item in ["de", "đề", "lo", "lô", "3c", "3cang", "3_cang", "xien", "x"]:
+                if len(parts) >= 3:
+                    val_raw = parts[2].lower()
+                    is_pct_explicit = "%" in val_raw
+                    val_clean = val_raw.replace(",", ".").replace("%", "").replace("k", "").replace("d", "").replace("đ", "")
+                    try:
+                        v = float(val_clean)
+                        r = self.config.setdefault("retain_config", {})
+                        if is_pct_explicit:
+                            r["retain_type"] = "percentage"
+                        key_map = {"de": "retain_de", "đề": "retain_de", "lo": "retain_lo", "lô": "retain_lo", "3c": "retain_3c", "3cang": "retain_3c", "3_cang": "retain_3c", "xien": "retain_x", "x": "retain_x"}
+                        cfg_k = key_map[target_item]
+                        r[cfg_k] = v
+                        self.balancer.config = r
+                        self.save_config()
+                        u = "%" if r.get("retain_type") == "percentage" else ("đ" if "lo" in target_item else "k")
+                        self.send_telegram_message(str(chat_id), f"✅ <b>Thành công:</b> Đã cập nhật giữ <b>{target_item.upper()}</b> = <code>{v:g}{u}</code>!")
+                        return
+                    except ValueError:
+                        pass
+
+            nums = []
+            for p in parts[1:]:
+                val_str = p.replace(",", ".").replace("%", "").replace("k", "").replace("d", "").replace("đ", "")
+                try:
+                    nums.append(float(val_str))
+                except ValueError:
+                    pass
+            if len(nums) >= 2:
+                r = self.config.setdefault("retain_config", {})
+                if any("%" in p for p in parts[1:]):
+                    r["retain_type"] = "percentage"
+                if len(nums) >= 1: r["retain_de"] = nums[0]
+                if len(nums) >= 2: r["retain_lo"] = nums[1]
+                if len(nums) >= 3: r["retain_3c"] = nums[2]
+                if len(nums) >= 4: r["retain_x"] = nums[3]
+                self.balancer.config = r
+                self.save_config()
+                unit = "%" if r.get("retain_type") == "percentage" else "k/đ"
+                reply = (
+                    f"✅ <b>Thành công:</b> Đã cập nhật mức giữ lại:\n"
+                    f"• Đề: <code>{r.get('retain_de', 0):g}{unit}</code> | Lô: <code>{r.get('retain_lo', 0):g}{unit}</code> | 3C: <code>{r.get('retain_3c', 0):g}{unit}</code> | Xiên: <code>{r.get('retain_x', 0):g}{unit}</code>"
+                )
+                self.send_telegram_message(str(chat_id), reply)
+                return
+
+            self.send_telegram_message(str(chat_id), "⚠️ Cú pháp: <code>/giulai tien 20 5 0 0</code> hoặc <code>/giulai % 50 50 0 0</code> hoặc <code>/giulai de 30k</code>")
+            return
+
+        # J. /toida hoặc /nhanh (Cài đặt mức trần tối đa khi giữ % hoặc mức nhánh khi giữ tiền)
+        if cmd_root in ["/toida", "toida", "/nhanh", "nhanh"] or cmd_root.startswith("/toida@") or cmd_root.startswith("/nhanh@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            r = self.config.setdefault("retain_config", {})
+            is_pct = (r.get("retain_type") == "percentage")
+            title = "Mức trần Tối đa (k/đ)" if is_pct else "Mức Nhánh"
+
+            if len(parts) >= 2:
+                arg1 = parts[1].lower()
+                if arg1 in ["tat", "off", "0", "huy", "dong"]:
+                    r["retain_use_branch"] = False
+                    self.balancer.config = r
+                    self.save_config()
+                    self.send_telegram_message(str(chat_id), f"✅ Đã <b>TẮT</b> cấu hình {title}.")
+                    return
+                elif arg1 in ["bat", "on", "1", "mo"]:
+                    r["retain_use_branch"] = True
+                    self.balancer.config = r
+                    self.save_config()
+                    self.send_telegram_message(str(chat_id), f"✅ Đã <b>BẬT</b> cấu hình {title}.")
+                    return
+
+                # Check if numbers: /toida 20 5 0 0
+                nums = []
+                for p in parts[1:]:
+                    val_str = p.replace(",", ".").replace("%", "").replace("k", "").replace("d", "").replace("đ", "")
+                    try:
+                        nums.append(float(val_str))
+                    except ValueError:
+                        pass
+                if len(nums) >= 1:
+                    r["retain_use_branch"] = True
+                    if len(nums) >= 1: r["branch_de"] = nums[0]
+                    if len(nums) >= 2: r["branch_lo"] = nums[1]
+                    if len(nums) >= 3: r["branch_3c"] = nums[2]
+                    if len(nums) >= 4: r["branch_x"] = nums[3]
+                    self.balancer.config = r
+                    self.save_config()
+                    reply = (
+                        f"✅ <b>Thành công:</b> Đã BẬT và cập nhật <b>{title}</b>:\n"
+                        f"• Đề: <code>{r.get('branch_de', 0):g}k</code> | Lô: <code>{r.get('branch_lo', 0):g}đ</code> | 3C: <code>{r.get('branch_3c', 0):g}k</code> | Xiên: <code>{r.get('branch_x', 0):g}k</code>"
+                    )
+                    self.send_telegram_message(str(chat_id), reply)
+                    return
+
+            cur_st = "BẬT" if r.get("retain_use_branch") else "TẮT"
+            self.send_telegram_message(str(chat_id), (
+                f"⚙️ <b>{title} hiện tại:</b> <code>{cur_st}</code>\n"
+                f"• Đề: <code>{r.get('branch_de', 0):g}k</code> | Lô: <code>{r.get('branch_lo', 0):g}đ</code> | 3C: <code>{r.get('branch_3c', 0):g}k</code> | Xiên: <code>{r.get('branch_x', 0):g}k</code>\n"
+                f"━━━━━━━━━━━━━━━━━━\n"
+                f"👉 Để sửa: <code>/toida &lt;đề&gt; &lt;lô&gt; &lt;3c&gt; &lt;xiên&gt;</code> (VD: <code>/toida 20 5 0 0</code>)\n"
+                f"👉 Hoặc: <code>/toida bat</code> / <code>/toida tat</code>"
+            ))
+            return
+
+        # K. /chuyensang (Đổi người nhận cược thừa - Yêu cầu mật khẩu)
+        if cmd_root in ["/chuyensang", "chuyensang", "/nguoinhan", "nguoinhan"] or cmd_root.startswith("/chuyensang@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            if len(parts) >= 2 and parts[1].strip():
+                target = parts[1].strip()
+                self.config["target_recipient"] = target
+                self.save_config()
+                self.log(f"Đã đổi người nhận cược thừa sang: {target}", "INFO")
+                self.send_telegram_message(str(chat_id), f"✅ <b>Thành công:</b> Đã cài đặt người nhận cược thừa là: <code>{target}</code>")
+                return
+            else:
+                cur = self.config.get("target_recipient", "(Chưa cài đặt)")
+                self.send_telegram_message(str(chat_id), f"🛸 Người nhận cược thừa hiện tại: <code>{cur}</code>\n👉 Để đổi, hãy gõ: <code>/chuyensang &lt;chat_id hoặc @username&gt;</code>")
+                return
+
+        # K. /chedo (Đổi chế độ chuyển tức thì / gom bảng - Yêu cầu mật khẩu)
+        if cmd_root in ["/chedo", "chedo", "/mode", "mode"] or cmd_root.startswith("/chedo@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            if len(parts) >= 2:
+                m_str = parts[1].lower()
+                if m_str in ["tucthi", "tuc_thi", "instant", "nhanh", "1"]:
+                    self.config["mode"] = "instant"
+                    self.save_config()
+                    self.send_telegram_message(str(chat_id), "✅ Đã chuyển sang chế độ <b>Chuyển tức thì (instant)</b>: Cược vượt định mức sẽ được bắn ngay lập tức.")
+                    return
+                elif m_str in ["gomban", "gom_ban", "batch", "gom", "2"]:
+                    self.config["mode"] = "batch"
+                    self.save_config()
+                    self.send_telegram_message(str(chat_id), "✅ Đã chuyển sang chế độ <b>Gom bảng (batch)</b>: Chỉ bắn cược khi bạn gõ lệnh /chuyen hoặc bấm nút trên Web.")
+                    return
+            cur_m = "Tức thì (instant)" if self.config.get("mode") == "instant" else "Gom bảng (batch)"
+            self.send_telegram_message(str(chat_id), f"⚙️ Chế độ chuyển cược hiện tại: <b>{cur_m}</b>\n👉 Để đổi, gõ: <code>/chedo tucthi</code> hoặc <code>/chedo gomban</code>")
+            return
+
+        # L. /gia, /banggia (Xem bảng giá - Yêu cầu mật khẩu)
+        if cmd in ["/gia", "gia", "/banggia", "bang gia", "/rates"] or cmd.startswith("/gia@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            summary_msg = format_price_config_summary(self.config.get("price_config"))
+            self.send_telegram_message(str(chat_id), summary_msg)
+            return
+
+        # M. /giathau hoặc /giachuyen (Sửa bảng giá - Yêu cầu mật khẩu)
+        if cmd_root in ["/giathau", "giathau", "/giachuyen", "giachuyen"] or cmd_root.startswith("/giathau@") or cmd_root.startswith("/giachuyen@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            is_chuyen = "chuyen" in cmd_root
+            target_table = "chuyen" if is_chuyen else "thau"
+            table_name = "Bảng Chuyển" if is_chuyen else "Bảng Thầu"
+
+            if len(parts) >= 3:
+                bet_k = parts[1].lower()
+                p_cfg = self.config.setdefault("price_config", {})
+                tbl_cfg = p_cfg.setdefault(target_table, {})
+
+                try:
+                    val1 = float(parts[2].replace(",", "."))
+                    val2 = float(parts[3].replace(",", ".")) if len(parts) >= 4 else None
+
+                    if bet_k in ["de", "đề", "d"]:
+                        tbl_cfg["rateDeComm"] = val1
+                        if val2 is not None: tbl_cfg["rateDePayout"] = val2
+                        self.save_config()
+                        self.send_telegram_message(str(chat_id), f"✅ Đã cập nhật <b>Đề ({table_name})</b>: Hoa hồng = <code>{tbl_cfg['rateDeComm']:g}%</code>, Trúng = <code>1 ăn {tbl_cfg.get('rateDePayout', 80):g}</code>")
+                        return
+                    elif bet_k in ["lo", "lô", "l"]:
+                        cost_val = int(val1 * 100) if (0 < val1 < 100) else val1
+                        tbl_cfg["rateLoCost"] = cost_val
+                        if val2 is not None: tbl_cfg["rateLoPayout"] = val2
+                        self.save_config()
+                        self.send_telegram_message(str(chat_id), f"✅ Đã cập nhật <b>Lô ({table_name})</b>: Giá vốn = <code>{val1:g}k ({tbl_cfg['rateLoCost']}đ)</code>, Thưởng = <code>1 ăn {tbl_cfg.get('rateLoPayout', 80):g}k</code>")
+                        return
+                    elif bet_k in ["3c", "3cang", "3_cang", "cang", "bc"]:
+                        tbl_cfg["rate3CComm"] = val1
+                        if val2 is not None: tbl_cfg["rate3CPayout"] = val2
+                        self.save_config()
+                        self.send_telegram_message(str(chat_id), f"✅ Đã cập nhật <b>3 Càng ({table_name})</b>: Hoa hồng = <code>{tbl_cfg['rate3CComm']:g}%</code>, Trúng = <code>1 ăn {tbl_cfg.get('rate3CPayout', 400):g}</code>")
+                        return
+                    elif bet_k in ["xien", "xiên", "x"]:
+                        tbl_cfg["rateXienComm"] = val1
+                        self.save_config()
+                        self.send_telegram_message(str(chat_id), f"✅ Đã cập nhật <b>Xiên ({table_name})</b>: Hoa hồng = <code>{tbl_cfg['rateXienComm']:g}%</code>")
+                        return
+                except ValueError:
+                    pass
+
+            prefix = "/giachuyen" if is_chuyen else "/giathau"
+            self.send_telegram_message(str(chat_id), (
+                f"⚠️ <b>Cú pháp chỉnh sửa {table_name}:</b>\n"
+                f"• Đề: <code>{prefix} de &lt;hoa_hồng&gt; &lt;trúng&gt;</code> (VD: <code>{prefix} de 82 80</code>)\n"
+                f"• Lô: <code>{prefix} lo &lt;vốn&gt; &lt;trúng&gt;</code> (VD: <code>{prefix} lo 21.65 80</code>)\n"
+                f"• 3 Càng: <code>{prefix} 3c &lt;hoa_hồng&gt; &lt;trúng&gt;</code> (VD: <code>{prefix} 3c 75 400</code>)\n"
+                f"• Xiên: <code>{prefix} xien &lt;hoa_hồng&gt;</code> (VD: <code>{prefix} xien 65</code>)"
+            ))
+            return
+
+        # N. /chuyen (Yêu cầu mật khẩu)
         if cmd in ["/chuyen", "chuyen", "bắn cược", "ban cuoc"] or cmd.startswith("/chuyen@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
             excess = self.balancer.calculate_excess()
             excess_count = sum(len(v) for v in excess.values())
             if excess_count == 0:
@@ -541,7 +917,7 @@ class TelegramBotService:
                 return
             target_recipient = self.config.get("target_recipient", "").strip()
             if not target_recipient:
-                self.send_telegram_message(str(chat_id), "⚠️ Chưa cài đặt người nhận cược thừa (target_recipient) trên Web!")
+                self.send_telegram_message(str(chat_id), "⚠️ Chưa cài đặt người nhận cược thừa (target_recipient) trên Web hoặc bằng /chuyensang!")
                 return
             transfer_msg = self.balancer.format_transfer_message(excess, header_prefix="Thầu Chuyển")
             ok, err = self.send_telegram_message(target_recipient, transfer_msg, track_for_cleanup=True, tag="transfer")
@@ -553,24 +929,32 @@ class TelegramBotService:
                 self.send_telegram_message(str(chat_id), f"❌ Bắn cược thừa thất bại: {err}")
             return
 
-        # 7. /reset
+        # O. /reset (Yêu cầu mật khẩu)
         if cmd in ["/reset", "reset", "xóa cược", "xoa cuoc"] or cmd.startswith("/reset@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
             self.balancer.reset_board()
             self.client_msg_counters = {}
             self.log("Đã reset bảng cược và số thứ tự tin về 0 theo lệnh Telegram", "INFO")
             self.send_telegram_message(str(chat_id), "🗑️ Đã làm mới (reset) toàn bộ bảng cược và số thứ tự tin về 0 để bắt đầu ngày mới!")
             return
 
-        # 8. /clean hoặc /xoadauvet
+        # P. /clean (Yêu cầu mật khẩu)
         if cmd in ["/clean", "clean", "/xoadauvet", "xoa dau vet"] or cmd.startswith("/clean@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
             del_c, rem_c = self.check_and_cleanup_traces()
             cur_h = round(self.config.get("cleanup_after_seconds", 86400) / 3600, 1)
             self.send_telegram_message(str(chat_id), f"🧹 Đã rà soát dấu vết: Xóa {del_c} tin nhắn cược cũ, hiện còn {rem_c} tin đang hẹn giờ tự động xóa (chu kỳ {cur_h:g} giờ).")
             return
 
-        # 9. /timer hoặc /thoigianxoa
+        # Q. /timer (Yêu cầu mật khẩu)
         if cmd.startswith("/timer") or cmd.startswith("/thoigianxoa") or cmd.startswith("/gio "):
-            parts = cmd.split()
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
             if len(parts) >= 2:
                 try:
                     hours = float(parts[1].replace(",", "."))
@@ -591,12 +975,6 @@ class TelegramBotService:
                 cur_h = round(self.config.get("cleanup_after_seconds", 86400) / 3600, 1)
                 self.send_telegram_message(str(chat_id), f"⏰ Thời gian tự động xóa dấu vết hiện tại là: <b>{cur_h:g} giờ</b>.\nĐể đổi, hãy gõ ví dụ: <code>/timer 12</code> hoặc <code>/timer 6</code>")
                 return
-
-        # 10. /gia hoặc /banggia
-        if cmd in ["/gia", "gia", "/banggia", "bang gia", "/rates"] or cmd.startswith("/gia@"):
-            summary_msg = format_price_config_summary(self.config.get("price_config"))
-            self.send_telegram_message(str(chat_id), summary_msg)
-            return
 
         # 1. Kiểm tra quyền của khách
         if not self.is_sender_allowed(user_id, username):

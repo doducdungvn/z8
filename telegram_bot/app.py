@@ -87,6 +87,10 @@ def update_config():
             pass
     if "owner_chat_id" in data:
         current["owner_chat_id"] = str(data["owner_chat_id"]).strip()
+    if "admin_password" in data:
+        current["admin_password"] = str(data["admin_password"]).strip()
+    if "authenticated_admins" in data:
+        current["authenticated_admins"] = data["authenticated_admins"]
     if "auto_fetch_kqxs_daily" in data:
         current["auto_fetch_kqxs_daily"] = bool(data["auto_fetch_kqxs_daily"])
 

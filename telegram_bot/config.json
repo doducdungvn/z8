@@ -3,16 +3,16 @@
   "allowed_senders": [
     "*"
   ],
-  "target_recipient": "@nguyenbich90",
+  "target_recipient": "@boss99",
   "auto_reply_client": true,
   "auto_forward_excess": true,
   "mode": "instant",
   "retain_config": {
     "retain_type": "percentage",
-    "retain_de": 50,
-    "retain_lo": 50,
-    "retain_3c": 0,
-    "retain_x": 0,
+    "retain_de": 40.0,
+    "retain_lo": 60.0,
+    "retain_3c": 0.0,
+    "retain_x": 0.0,
     "retain_use_branch": true,
     "branch_de": 0,
     "branch_lo": 0,
@@ -21,7 +21,7 @@
   },
   "price_config": {
     "thau": {
-      "rateDeComm": 82.0,
+      "rateDeComm": 83.0,
       "rateDePayout": 80.0,
       "rateLoCost": 2165,
       "rateLoPayout": 80.0,
@@ -49,5 +49,7 @@
   },
   "owner_chat_id": "",
   "cleanup_after_seconds": 86400,
-  "cleanup_after_hours": 24.0
+  "cleanup_after_hours": 24.0,
+  "admin_password": "654321",
+  "authenticated_admins": []
 }

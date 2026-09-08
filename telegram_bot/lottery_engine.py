@@ -164,19 +164,96 @@ def format_price_config_summary(price_config: dict = None) -> str:
     lines = [
         "⚙️ <b>CẤU HÌNH BẢNG GIÁ & HOA HỒNG:</b>",
         "━━━━━━━━━━━━━━━━━━",
-        "📊 <b>BẢNG THẦU (Nhận của khách):</b>",
-        f"• Đề: Giá xác {t['de_comm']*100:.1f}%, Trúng 1 ăn {t['de_payout']:g}",
-        f"• Lô: Vốn {t['lo_cost']:g}k/đ ({t['lo_cost']*1000:g}đ), Thưởng {t['lo_payout']:g}k/đ",
-        f"• Xiên: Giá xác {t['xien_comm']*100:.1f}% (X2: 1 ăn {t['x2_payout']:g}, X3: 1 ăn {t['x3_payout']:g}, X4: 1 ăn {t['x4_payout']:g})",
-        f"• 3 Càng: Giá xác {t['c3_comm']*100:.1f}%, Trúng 1 ăn {t['c3_payout']:g}, Áp má 1 ăn {t['c3_apma']:g}",
+        "📊 <b>1. BẢNG THẦU (Nhận của khách):</b>",
+        f"• Đề: Giá xác <b>{t['de_comm']*100:.1f}%</b>, Trúng 1 ăn <b>{t['de_payout']:g}</b>",
+        f"• Lô: Vốn <b>{t['lo_cost']:g}k/đ</b> ({t['lo_cost']*1000:g}đ), Thưởng <b>{t['lo_payout']:g}k/đ</b>",
+        f"• 3 Càng: Giá xác <b>{t['c3_comm']*100:.1f}%</b>, Trúng 1 ăn <b>{t['c3_payout']:g}</b>",
+        f"• Xiên: Giá xác <b>{t['xien_comm']*100:.1f}%</b> (X2: 1 ăn {t['x2_payout']:g}, X3: 1 ăn {t['x3_payout']:g}, X4: 1 ăn {t['x4_payout']:g})",
         "",
-        "🔄 <b>BẢNG CHUYỂN (Bắn thầu trên):</b>",
-        f"• Đề: Giá xác {c['de_comm']*100:.1f}%, Trúng 1 ăn {c['de_payout']:g}",
-        f"• Lô: Vốn {c['lo_cost']:g}k/đ ({c['lo_cost']*1000:g}đ), Thưởng {c['lo_payout']:g}k/đ",
-        f"• Xiên: Giá xác {c['xien_comm']*100:.1f}% (X2: 1 ăn {c['x2_payout']:g}, X3: 1 ăn {c['x3_payout']:g}, X4: 1 ăn {c['x4_payout']:g})",
-        f"• 3 Càng: Giá xác {c['c3_comm']*100:.1f}%, Trúng 1 ăn {c['c3_payout']:g}, Áp má 1 ăn {c['c3_apma']:g}",
+        "🔄 <b>2. BẢNG CHUYỂN (Bắn thầu trên):</b>",
+        f"• Đề: Giá xác <b>{c['de_comm']*100:.1f}%</b>, Trúng 1 ăn <b>{c['de_payout']:g}</b>",
+        f"• Lô: Vốn <b>{c['lo_cost']:g}k/đ</b> ({c['lo_cost']*1000:g}đ), Thưởng <b>{c['lo_payout']:g}k/đ</b>",
+        f"• 3 Càng: Giá xác <b>{c['c3_comm']*100:.1f}%</b>, Trúng 1 ăn <b>{c['c3_payout']:g}</b>",
+        f"• Xiên: Giá xác <b>{c['xien_comm']*100:.1f}%</b> (X2: 1 ăn {c['x2_payout']:g}, X3: 1 ăn {c['x3_payout']:g}, X4: 1 ăn {c['x4_payout']:g})",
         "━━━━━━━━━━━━━━━━━━",
-        "<i>Chỉnh sửa trực tiếp tại nút '⚙️ Cấu hình giá' trên Web!</i>"
+        "📝 <b>ĐỂ SỬA BẢNG GIÁ TRÊN TELEGRAM:</b>",
+        "• <b>Giá Thầu:</b> <code>/giathau &lt;món&gt; &lt;giá&gt;</code>",
+        "  - Đề: <code>/giathau de 82 80</code> <i>(Xác 82%, trúng 80)</i>",
+        "  - Lô: <code>/giathau lo 21.65 80</code> <i>(Vốn 21.65k, trúng 80)</i>",
+        "  - 3C: <code>/giathau 3c 75 400</code> <i>(Xác 75%, trúng 400)</i>",
+        "  - Xiên: <code>/giathau xien 65</code> <i>(Xác 65%)</i>",
+        "• <b>Giá Chuyển:</b> <code>/giachuyen &lt;món&gt; &lt;giá&gt;</code>",
+        "  - Đề: <code>/giachuyen de 80 80</code>",
+        "  - Lô: <code>/giachuyen lo 21.6 80</code>",
+        "  - 3C: <code>/giachuyen 3c 70 400</code>",
+        "  - Xiên: <code>/giachuyen xien 62</code>"
+    ]
+    return "\n".join(lines)
+
+
+def format_retain_config_summary(config: dict) -> str:
+    """Tạo bảng báo cáo hiển thị cấu hình Cân chuyển & Mức giữ lại"""
+    r = config.get("retain_config", {})
+    r_type = r.get("retain_type", "percentage")
+    is_pct = (r_type == "percentage")
+
+    de_val = r.get("retain_de", 0)
+    lo_val = r.get("retain_lo", 0)
+    c3_val = r.get("retain_3c", 0)
+    x_val = r.get("retain_x", 0)
+
+    unit_de = "%" if is_pct else "k"
+    unit_lo = "%" if is_pct else "đ"
+    unit_3c = "%" if is_pct else "k"
+    unit_x = "%" if is_pct else "k"
+
+    mode = config.get("mode", "instant")
+    mode_str = "Tức thì (cược thừa bắn ngay)" if mode == "instant" else "Gom bảng (chờ lệnh mới bắn)"
+    recipient = config.get("target_recipient", "(Chưa cài đặt)")
+    clean_h = config.get("cleanup_after_hours", 24)
+    auto_reply = "Bật" if config.get("auto_reply_client", True) else "Tắt"
+    auto_fwd = "Bật" if config.get("auto_forward_excess", True) else "Tắt"
+
+    use_branch = bool(r.get("retain_use_branch", False))
+    b_de = r.get("branch_de", 0)
+    b_lo = r.get("branch_lo", 0)
+    b_3c = r.get("branch_3c", 0)
+    b_x = r.get("branch_x", 0)
+    branch_title = "Mức trần Tối Đa (k/đ)" if is_pct else "Mức định mức Nhánh"
+    branch_val_str = f"BẬT (Đề: {b_de:g}k, Lô: {b_lo:g}đ, 3C: {b_3c:g}k, X: {b_x:g}k)" if use_branch else "TẮT"
+
+    lines = [
+        "⚙️ <b>CẤU HÌNH CÂN CHUYỂN & MỨC GIỮ LẠI:</b>",
+        "━━━━━━━━━━━━━━━━━━",
+        f"• <b>Hình thức giữ:</b> <code>{'Phần trăm (%)' if is_pct else 'Tiền mặt (k/đ)'}</code>",
+        f"• <b>Giữ Đề:</b> <code>{de_val:g}{unit_de}</code>",
+        f"• <b>Giữ Lô:</b> <code>{lo_val:g}{unit_lo}</code>",
+        f"• <b>Giữ 3 Càng:</b> <code>{c3_val:g}{unit_3c}</code>",
+        f"• <b>Giữ Xiên:</b> <code>{x_val:g}{unit_x}</code>",
+        f"• <b>{branch_title}:</b> <code>{branch_val_str}</code>",
+        f"• <b>Người nhận cược thừa:</b> <code>{recipient}</code>",
+        f"• <b>Chế độ chuyển:</b> {mode_str}",
+        f"• <b>Tự động xác nhận:</b> {auto_reply} | <b>Tự động bắn:</b> {auto_fwd}",
+        f"• <b>Tự động xóa vết:</b> {clean_h:g} giờ",
+        "━━━━━━━━━━━━━━━━━━",
+        "📝 <b>ĐỂ SỬA THIẾT LẬP CÂN CHUYỂN TRÊN TELEGRAM:</b>",
+        "• <b>Đặt theo Tiền:</b>",
+        "  <code>/giulai tien &lt;đề&gt; &lt;lô&gt; &lt;3c&gt; &lt;xiên&gt;</code>",
+        "  <i>(Ví dụ: <code>/giulai tien 20 5 0 0</code>)</i>",
+        "• <b>Đặt theo Phần trăm:</b>",
+        "  <code>/giulai % &lt;đề&gt; &lt;lô&gt; &lt;3c&gt; &lt;xiên&gt;</code>",
+        "  <i>(Ví dụ: <code>/giulai % 50 50 0 0</code>)</i>",
+        "• <b>Cài đặt Mức trần Tối đa (k/đ) khi giữ %:</b>",
+        "  <code>/toida &lt;đề&gt; &lt;lô&gt; &lt;3c&gt; &lt;xiên&gt;</code>",
+        "  <i>(Ví dụ: <code>/toida 20 5 0 0</code> hoặc <code>/toida tat</code> / <code>/toida bat</code>)</i>",
+        "• <b>Sửa từng món riêng lẻ:</b>",
+        "  <code>/giulai de 30k</code> hoặc <code>/giulai de 50%</code>",
+        "  <code>/giulai lo 10d</code> hoặc <code>/giulai lo 40%</code>",
+        "  <code>/giulai 3c 10k</code> hoặc <code>/giulai x 20k</code>",
+        "• <b>Đổi người nhận cược thừa:</b>",
+        "  <code>/chuyensang &lt;chat_id hoặc @username&gt;</code>",
+        "• <b>Đổi chế độ chuyển:</b> <code>/chedo tucthi</code> hoặc <code>/chedo gomban</code>",
+        "• <b>Đổi giờ xóa vết cược:</b> <code>/timer &lt;giờ&gt;</code>"
     ]
     return "\n".join(lines)
 
