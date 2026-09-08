@@ -192,15 +192,15 @@ class BoardBalancer:
                 "transferred": transfers
             })
 
-    def format_transfer_message(self, transfers: dict, header_prefix: str = "Thầu") -> str:
+    def format_transfer_message(self, transfers: dict, header_prefix: str = "", include_header: bool = False) -> str:
         """
-        Định dạng tin nhắn cược chuyển đi để gửi Telegram theo chuẩn thầu:
-        Đề 88x135, 77x130, 16.61.74x50...
+        Định dạng tin nhắn cược chuyển đi để gửi Telegram:
+        Chỉ bao gồm các loại hình thừa chuẩn định dạng cược, không kèm 'chuyển 1,2,3... ngày ...':
+        Đề 88x135, 77x130, 16.61.74x50
         Lô 01.46.64x10
+        3c 123.456x20
         Xiên 12-34x50
-        3C 123.456x20
         """
-        today_str = datetime.now().strftime("%d/%m")
         lines = []
 
         categories = [
@@ -243,7 +243,11 @@ class BoardBalancer:
         if not lines:
             return ""
 
-        step_num = self.step_count + 1
-        prefix = "% " if self.config.get("retain_type") == "percentage" else ""
-        header = f"🛸 {prefix}Chuyển {step_num} ({today_str}):"
-        return f"{header}\n" + "\n".join(lines)
+        if include_header:
+            today_str = datetime.now().strftime("%d/%m")
+            step_num = self.step_count + 1
+            prefix = "% " if self.config.get("retain_type") == "percentage" else ""
+            header = f"🛸 {prefix}Chuyển {step_num} ({today_str}):"
+            return f"{header}\n" + "\n".join(lines)
+
+        return "\n".join(lines)

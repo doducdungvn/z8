@@ -35,6 +35,7 @@ if bot_service.config.get("bot_token") and not bot_service.is_running:
 def get_status():
     return jsonify({
         "running": bot_service.is_running,
+        "is_running": bot_service.is_running,
         "stats": bot_service.stats,
         "step_count": bot_service.balancer.step_count,
         "has_token": bool(bot_service.config.get("bot_token")),
