@@ -309,19 +309,19 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 text-center">
                 <label class="block text-xs font-bold text-rose-400 mb-1">🔴 Giữ Đề (<span class="unit-retain">k</span>)</label>
-                <input type="number" id="inpRetainDe" value="20" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-center text-sm font-bold text-white font-mono">
+                <input type="number" id="inpRetainDe" value="20" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-center text-sm font-bold text-white font-mono">
               </div>
               <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 text-center">
                 <label class="block text-xs font-bold text-sky-400 mb-1">🔵 Giữ Lô (<span class="unit-lo">đ</span>)</label>
-                <input type="number" id="inpRetainLo" value="5" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-center text-sm font-bold text-white font-mono">
+                <input type="number" id="inpRetainLo" value="5" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-center text-sm font-bold text-white font-mono">
               </div>
               <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 text-center">
                 <label class="block text-xs font-bold text-purple-400 mb-1">🟣 Giữ 3 Càng (<span class="unit-retain">k</span>)</label>
-                <input type="number" id="inpRetain3c" value="0" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-center text-sm font-bold text-white font-mono">
+                <input type="number" id="inpRetain3c" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-center text-sm font-bold text-white font-mono">
               </div>
               <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 text-center">
                 <label class="block text-xs font-bold text-emerald-400 mb-1">🟢 Giữ Xiên (<span class="unit-retain">k</span>)</label>
-                <input type="number" id="inpRetainX" value="0" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-center text-sm font-bold text-white font-mono">
+                <input type="number" id="inpRetainX" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-center text-sm font-bold text-white font-mono">
               </div>
             </div>
           </div>
@@ -341,19 +341,19 @@
             <div id="branchInputsContainer" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
               <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-700 text-center">
                 <label class="block text-[11px] font-bold text-amber-400 mb-1" id="lblBranchDe">Nh. Đề</label>
-                <input type="number" id="inpBranchDe" value="0" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-center text-xs font-bold text-white font-mono">
+                <input type="number" id="inpBranchDe" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-center text-xs font-bold text-white font-mono">
               </div>
               <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-700 text-center">
                 <label class="block text-[11px] font-bold text-amber-400 mb-1" id="lblBranchLo">Nh. Lô</label>
-                <input type="number" id="inpBranchLo" value="0" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-center text-xs font-bold text-white font-mono">
+                <input type="number" id="inpBranchLo" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-center text-xs font-bold text-white font-mono">
               </div>
               <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-700 text-center">
                 <label class="block text-[11px] font-bold text-amber-400 mb-1" id="lblBranch3c">Nh. 3C</label>
-                <input type="number" id="inpBranch3c" value="0" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-center text-xs font-bold text-white font-mono">
+                <input type="number" id="inpBranch3c" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-center text-xs font-bold text-white font-mono">
               </div>
               <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-700 text-center">
                 <label class="block text-[11px] font-bold text-amber-400 mb-1" id="lblBranchX">Nh. Xiên</label>
-                <input type="number" id="inpBranchX" value="0" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-center text-xs font-bold text-white font-mono">
+                <input type="number" id="inpBranchX" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-center text-xs font-bold text-white font-mono">
               </div>
             </div>
           </div>
@@ -1739,6 +1739,46 @@
         document.getElementById('liveConsoleContainer').innerHTML = "";
       });
       document.getElementById('btnRefreshLogs')?.addEventListener('click', fetchLogs);
+
+      // Tự động xóa số 0 có sẵn khi click/focus vào ô nhập để gõ số mới
+      function isNumericField(el) {
+        if (!el || el.tagName !== 'INPUT') return false;
+        if (el.type === 'password') return false;
+        return el.type === 'number' || 
+               el.classList.contains('auto-clear-zero') || 
+               el.id.startsWith('inpRetain') || 
+               el.id.startsWith('inpBranch') || 
+               el.id.startsWith('price');
+      }
+
+      document.addEventListener('focusin', function(e) {
+        const el = e.target;
+        if (isNumericField(el)) {
+          if (el.value === '0' || el.value === 0) {
+            el.value = '';
+          } else {
+            setTimeout(() => { try { el.select(); } catch(err){} }, 10);
+          }
+        }
+      });
+
+      document.addEventListener('click', function(e) {
+        const el = e.target;
+        if (isNumericField(el)) {
+          if (el.value === '0' || el.value === 0) {
+            el.value = '';
+          }
+        }
+      });
+
+      document.addEventListener('focusout', function(e) {
+        const el = e.target;
+        if (isNumericField(el)) {
+          if (el.value === '') {
+            el.value = '0';
+          }
+        }
+      });
     });
   </script>
 </body>

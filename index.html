@@ -7112,7 +7112,7 @@ function resetTable() {
                 <span class="text-xs text-slate-500 font-normal">Mặc định: 24 giờ</span>
               </div>
               <div class="flex items-center gap-2.5 flex-wrap">
-                <input type="number" id="tgInputCleanupHours" min="0.1" step="0.5" value="24" class="w-32 border border-slate-300 dark:border-slate-600 rounded-md px-3.5 py-2 text-sm text-center font-bold bg-white dark:bg-dark-700 font-mono">
+                <input type="number" id="tgInputCleanupHours" min="0.1" step="0.5" value="24" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='24';" class="w-32 border border-slate-300 dark:border-slate-600 rounded-md px-3.5 py-2 text-sm text-center font-bold bg-white dark:bg-dark-700 font-mono">
                 <span class="text-sm text-slate-600 dark:text-slate-300 font-semibold">tiếng (giờ)</span>
                 <span class="text-xs text-slate-400 italic">(Nhập số giờ muốn tự xóa: VD 1, 6, 12, 24... Tự xóa tin nhắn Telegram, nhật ký và reset cược)</span>
               </div>
@@ -7175,19 +7175,19 @@ function resetTable() {
             <div class="grid grid-cols-4 gap-3">
               <div>
                 <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1.5 text-center text-sm">Giữ Đề (Đ)</label>
-                <input type="number" id="tgRetainDe" value="20" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2.5 text-center font-bold text-base bg-white dark:bg-dark-800">
+                <input type="number" id="tgRetainDe" value="20" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2.5 text-center font-bold text-base bg-white dark:bg-dark-800">
               </div>
               <div>
                 <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1.5 text-center text-sm">Giữ Lô (L)</label>
-                <input type="number" id="tgRetainLo" value="5" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2.5 text-center font-bold text-base bg-white dark:bg-dark-800">
+                <input type="number" id="tgRetainLo" value="5" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2.5 text-center font-bold text-base bg-white dark:bg-dark-800">
               </div>
               <div>
                 <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1.5 text-center text-sm">Giữ 3 Càng</label>
-                <input type="number" id="tgRetain3c" value="0" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2.5 text-center font-bold text-base bg-white dark:bg-dark-800">
+                <input type="number" id="tgRetain3c" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2.5 text-center font-bold text-base bg-white dark:bg-dark-800">
               </div>
               <div>
                 <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1.5 text-center text-sm">Giữ Xiên</label>
-                <input type="number" id="tgRetainX" value="0" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2.5 text-center font-bold text-base bg-white dark:bg-dark-800">
+                <input type="number" id="tgRetainX" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2.5 text-center font-bold text-base bg-white dark:bg-dark-800">
               </div>
             </div>
 
@@ -7201,19 +7201,19 @@ function resetTable() {
               <div id="tgBranchInputsContainer" class="hidden grid grid-cols-4 gap-3 pt-1">
                 <div>
                   <label class="block text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 text-center" id="tgLblBranchDe">Nh. Đề</label>
-                  <input type="number" id="tgBranchDe" value="0" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 text-center font-bold text-sm bg-white dark:bg-dark-800">
+                  <input type="number" id="tgBranchDe" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 text-center font-bold text-sm bg-white dark:bg-dark-800">
                 </div>
                 <div>
                   <label class="block text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 text-center" id="tgLblBranchLo">Nh. Lô</label>
-                  <input type="number" id="tgBranchLo" value="0" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 text-center font-bold text-sm bg-white dark:bg-dark-800">
+                  <input type="number" id="tgBranchLo" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 text-center font-bold text-sm bg-white dark:bg-dark-800">
                 </div>
                 <div>
                   <label class="block text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 text-center" id="tgLblBranch3c">Nh. 3C</label>
-                  <input type="number" id="tgBranch3c" value="0" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 text-center font-bold text-sm bg-white dark:bg-dark-800">
+                  <input type="number" id="tgBranch3c" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 text-center font-bold text-sm bg-white dark:bg-dark-800">
                 </div>
                 <div>
                   <label class="block text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 text-center" id="tgLblBranchX">Nh. Xiên</label>
-                  <input type="number" id="tgBranchX" value="0" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 text-center font-bold text-sm bg-white dark:bg-dark-800">
+                  <input type="number" id="tgBranchX" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 text-center font-bold text-sm bg-white dark:bg-dark-800">
                 </div>
               </div>
             </div>
@@ -8015,6 +8015,47 @@ function resetTable() {
         const input = document.getElementById('tgInputBotToken');
         if (input) {
           input.type = input.type === 'password' ? 'text' : 'password';
+        }
+      });
+
+      // Tự động xóa số 0 có sẵn khi click/focus vào ô nhập để gõ số mới
+      function isNumericField(el) {
+        if (!el || el.tagName !== 'INPUT') return false;
+        if (el.type === 'password') return false;
+        return el.type === 'number' || 
+               el.classList.contains('auto-clear-zero') || 
+               el.id.startsWith('tgRetain') || 
+               el.id.startsWith('tgBranch') || 
+               el.id.startsWith('rate') ||
+               el.id.startsWith('retain');
+      }
+
+      document.addEventListener('focusin', function(e) {
+        const el = e.target;
+        if (isNumericField(el)) {
+          if (el.value === '0' || el.value === 0) {
+            el.value = '';
+          } else {
+            setTimeout(() => { try { el.select(); } catch(err){} }, 10);
+          }
+        }
+      });
+
+      document.addEventListener('click', function(e) {
+        const el = e.target;
+        if (isNumericField(el)) {
+          if (el.value === '0' || el.value === 0) {
+            el.value = '';
+          }
+        }
+      });
+
+      document.addEventListener('focusout', function(e) {
+        const el = e.target;
+        if (isNumericField(el)) {
+          if (el.value === '') {
+            el.value = (el.id === 'tgInputCleanupHours') ? '24' : '0';
+          }
         }
       });
 
