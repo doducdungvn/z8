@@ -774,9 +774,12 @@
 
   <!-- ==================== LOGIC JAVASCRIPT ==================== -->
   <script>
-    let API_URL = localStorage.getItem('tg_bot_api_url') || "http://127.0.0.1:5005";
+    let API_URL = (localStorage.getItem('tg_bot_api_url') || "http://127.0.0.1:5005").trim();
+    while (API_URL.endsWith("/")) API_URL = API_URL.slice(0, -1);
     let currentConfig = {};
     let activeTab = "overview";
+    let isBotRunning = false;
+    let isTogglingBot = false;
 
     // Tab Switcher
     function switchTab(tabName) {
@@ -794,14 +797,21 @@
       if (tabName === 'users') fetchUsersAndSenders();
     }
 
+    function getApiUrl(endpoint) {
+      let base = (API_URL || "http://127.0.0.1:5005").trim();
+      while (base.endsWith("/")) base = base.slice(0, -1);
+      const path = endpoint.startsWith("/") ? endpoint : "/" + endpoint;
+      return base + path;
+    }
+
     // Dynamic API Helper
     async function apiGet(endpoint) {
-      const res = await fetch(API_URL + endpoint);
+      const res = await fetch(getApiUrl(endpoint));
       return await res.json();
     }
 
     async function apiPost(endpoint, body = {}) {
-      const res = await fetch(API_URL + endpoint, {
+      const res = await fetch(getApiUrl(endpoint), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
@@ -815,18 +825,18 @@
       const statStatus = document.getElementById('statBotStatus');
       const statUname = document.getElementById('statBotUsername');
       const btnToggle = document.getElementById('btnToggleBot');
-      const lblToggle = document.getElementById('lblBtnToggleBot');
 
       try {
         const data = await apiGet("/api/bot/status");
-        const isRunning = !!data.is_running;
+        const isRunning = !!(data.running !== undefined ? data.running : data.is_running);
+        isBotRunning = isRunning;
 
         if (isRunning) {
           badge.className = "flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-emerald-950/60 text-emerald-400 border border-emerald-800";
           badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Đang chạy';
           statStatus.textContent = "ĐANG CHẠY";
           statStatus.className = "text-xl sm:text-2xl font-black text-emerald-400";
-          if (btnToggle && lblToggle) {
+          if (btnToggle && !isTogglingBot) {
             btnToggle.className = "px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-2 shadow cursor-pointer active:scale-95";
             btnToggle.innerHTML = '<i class="fa-solid fa-stop"></i><span>Dừng Bot</span>';
           }
@@ -835,7 +845,7 @@
           badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span> Đã dừng';
           statStatus.textContent = "ĐÃ DỪNG";
           statStatus.className = "text-xl sm:text-2xl font-black text-rose-400";
-          if (btnToggle && lblToggle) {
+          if (btnToggle && !isTogglingBot) {
             btnToggle.className = "px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-2 shadow cursor-pointer active:scale-95";
             btnToggle.innerHTML = '<i class="fa-solid fa-play"></i><span>Bật Bot</span>';
           }
@@ -1131,13 +1141,29 @@
         if (activeTab === 'logs') fetchLogs();
       }, 3500);
 
+      if (document.getElementById('inputBackendUrl')) {
+        document.getElementById('inputBackendUrl').value = API_URL;
+      }
+
       // Toggle Bot
       document.getElementById('btnToggleBot')?.addEventListener('click', async () => {
-        const stat = document.getElementById('statBotStatus').innerText;
-        const isRunning = stat.includes("CHẠY");
-        const endpoint = isRunning ? "/api/bot/stop" : "/api/bot/start";
-        await apiPost(endpoint);
-        checkStatus();
+        if (isTogglingBot) return;
+        isTogglingBot = true;
+        const btn = document.getElementById('btnToggleBot');
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Đang gửi lệnh...</span>';
+
+        try {
+          const endpoint = isBotRunning ? "/api/bot/stop" : "/api/bot/start";
+          const res = await apiPost(endpoint);
+          if (res.status === "error" && res.message) {
+            alert("❌ Lỗi: " + res.message);
+          }
+        } catch (err) {
+          alert("❌ Không thể kết nối tới Backend API (" + API_URL + "): " + err.message);
+        } finally {
+          isTogglingBot = false;
+          await checkStatus();
+        }
       });
 
       // Refresh All
@@ -1185,11 +1211,20 @@
       });
 
       // Test Backend
-      document.getElementById('btnTestBackend')?.addEventListener('click', () => {
-        const val = document.getElementById('inputBackendUrl').value.trim();
+      document.getElementById('btnTestBackend')?.addEventListener('click', async () => {
+        let val = document.getElementById('inputBackendUrl').value.trim();
+        while (val.endsWith("/")) val = val.slice(0, -1);
+        if (!val) val = "http://127.0.0.1:5005";
         localStorage.setItem('tg_bot_api_url', val);
         API_URL = val;
-        alert("✅ Đã lưu địa chỉ Backend: " + val);
+        document.getElementById('inputBackendUrl').value = val;
+        try {
+          const res = await apiGet("/api/bot/status");
+          const isRun = (res.running !== undefined ? res.running : res.is_running);
+          alert("✅ Kết nối tới Backend thành công!\nTrạng thái Bot: " + (isRun ? "ĐANG CHẠY" : "ĐÃ DỪNG"));
+        } catch (e) {
+          alert("⚠️ Đã lưu địa chỉ Backend (" + val + "), nhưng chưa nhận được phản hồi (" + e.message + "). Nếu dùng Render Cloud Free thì cần chờ 30-50s để server khởi động sau khi ngủ.");
+        }
         checkStatus();
         loadConfig();
       });
