@@ -129,6 +129,7 @@ def test_message():
 
 @app.route("/api/bot/known_users", methods=["GET"])
 def get_known_users():
+    bot_service.known_users = bot_service.load_known_users()
     return jsonify(bot_service.known_users)
 
 

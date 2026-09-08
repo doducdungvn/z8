@@ -323,6 +323,8 @@ class TelegramBotService:
         bot_uname = (self.stats.get("bot_info") or {}).get("username") or "bot"
         if raw.startswith("@") or not raw.lstrip("-").isdigit():
             uname = raw.lstrip("@").lower()
+            # Luôn nạp lại danh sách mới nhất từ known_users.json
+            self.known_users = self.load_known_users()
             # Tra trong known_users
             for uid, info in self.known_users.items():
                 if (info.get("username") or "").lower() == uname:
