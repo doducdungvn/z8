@@ -177,18 +177,12 @@
 
     <!-- Right Top Header Actions -->
     <div class="flex items-center space-x-2 text-xs">
-      <!-- Telegram Bot Button with Live Status Badge -->
-      <button id="btnOpenTelegramBot" type="button" class="px-2.5 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95" title="Quản lý Bot Telegram Cân Cược Tự Động">
-        <i class="fa-brands fa-telegram text-sm"></i>
-        <span class="hidden sm:inline">Telegram Bot</span>
+      <!-- Telegram Bot Button with Live Status Badge (Merged) -->
+      <button id="btnOpenTelegramBot" type="button" class="px-2.5 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded-md font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 text-xs sm:text-sm" title="Quản lý & Cấu hình Bot Telegram">
+        <i class="fa-brands fa-telegram text-sm sm:text-base"></i>
+        <span>Telegram Bot</span>
         <span id="tgBotStatusDot" class="w-2 h-2 rounded-full bg-slate-400 border border-white" title="Trạng thái Bot"></span>
       </button>
-
-      <!-- Direct Link to Standalone Bot Admin Page -->
-      <a href="bot.html" target="_blank" class="px-2 py-1 bg-slate-700/80 hover:bg-slate-700 text-slate-100 rounded font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 text-xs" title="Mở trang Quản trị Bot riêng biệt">
-        <i class="fa-solid fa-up-right-from-square text-[11px] text-sky-400"></i>
-        <span class="hidden md:inline">Trang Bot Riêng</span>
-      </a>
 
       <!-- Dark Mode Toggle Button -->
       <button id="darkModeToggle" class="p-1 sm:px-2 sm:py-0.5 hover:bg-white/20 rounded transition flex items-center gap-1" title="Chuyển chế độ Sáng / Tối">
@@ -219,6 +213,10 @@
               <button type="button" id="tabInputExclude" class="text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-1.5 rounded-t-md focus:outline-none flex items-center gap-1.5 border-t-2 border-transparent">
                 <i class="fa-solid fa-filter-circle-xmark text-rose-500"></i>
                 <span>Loại trừ</span>
+              </button>
+              <button type="button" id="tabInputBot" class="text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-1.5 rounded-t-md focus:outline-none flex items-center gap-1.5 border-t-2 border-transparent" title="Dữ liệu cược cân cầu gửi cho người nhận từ Bot">
+                <i class="fa-brands fa-telegram text-sky-500"></i>
+                <span>Bot</span>
               </button>
             </div>
           </div>
@@ -256,8 +254,50 @@
               </div>
             </div>
 
-            <!-- CLEAR BUTTON (XÓA CƯỢC / XÓA LỌC) RIGHT BELOW INPUT -->
-            <div class="flex justify-end pt-0.5">
+            <!-- Tab Bot Container: Khung và nút Auto, nút Copy -->
+            <div id="botTabContainer" class="hidden space-y-2">
+              <textarea 
+                id="botTabInput" 
+                class="w-full border border-sky-300 dark:border-sky-800 rounded p-3 focus:ring-2 focus:ring-sky-500 bg-sky-50/40 dark:bg-sky-950/20 font-mono text-xs sm:text-sm leading-relaxed overflow-y-auto whitespace-pre-wrap break-all shadow-inner select-text text-slate-800 dark:text-slate-100" 
+                style="height: 300px; outline: none;" 
+                placeholder="Chưa có dữ liệu. Bấm nút 'Auto' bên dưới để lấy dữ liệu mà Bot Telegram đã làm việc cân cầu và gửi cho người nhận..."
+              ></textarea>
+              
+              <!-- Nút Auto và Nút Copy bên trong tab Bot -->
+              <div class="flex items-center justify-between flex-wrap gap-2 pt-0.5 select-none">
+                <span id="botTabStatusBadge" class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                  <i class="fa-solid fa-circle-info text-sky-500 mr-1"></i>
+                  <span id="botTabStatusText">Bấm 'Auto' để nạp cược từ Bot</span>
+                </span>
+                <div class="flex items-center gap-2">
+                  <button type="button" id="btnBotTabAuto" class="text-xs bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white border border-sky-700/50 shadow-xs px-3.5 py-1.5 rounded transition-all flex items-center gap-1.5 active:scale-95 font-bold cursor-pointer" title="Lấy dữ liệu mà Bot Telegram đã làm việc cân cầu và gửi cho người nhận">
+                    <i class="fa-solid fa-arrows-rotate text-xs"></i>
+                    <span>Auto</span>
+                  </button>
+                  <button type="button" id="btnBotTabCopy" class="text-xs bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white border border-emerald-700/50 shadow-xs px-3.5 py-1.5 rounded transition-all flex items-center gap-1.5 active:scale-95 font-bold cursor-pointer" title="Copy toàn bộ nội dung trong khung này để chuyển đi thủ công">
+                    <i class="fa-solid fa-copy text-xs"></i>
+                    <span>Copy</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- TOOLBAR BELOW INPUT: SYNC TOGGLE & CLEAR BUTTON -->
+            <div class="flex items-center justify-end gap-3 pt-0.5 select-none">
+              <!-- Nút gạt Sync cạnh Xóa cược -->
+              <label class="inline-flex items-center gap-1.5 cursor-pointer py-0.5" title="Bật để hiện 2 nút Đẩy cược sang Bot & Lấy cược từ Bot">
+                <span class="text-xs font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1">
+                  <i class="fa-brands fa-telegram"></i>
+                  <span>Sync</span>
+                </span>
+                <span class="relative inline-flex items-center">
+                  <input type="checkbox" id="toggleSyncBotButtons" class="sr-only peer">
+                  <span class="w-8 h-4 bg-slate-300 dark:bg-dark-600 peer-focus:outline-none rounded-full peer peer-checked:bg-sky-600 transition-colors"></span>
+                  <span class="absolute left-0.5 top-0.5 bg-white w-3 h-3 rounded-full transition-transform peer-checked:translate-x-4"></span>
+                </span>
+              </label>
+
+              <!-- CLEAR BUTTON (XÓA CƯỢC / XÓA LỌC) -->
               <button id="btnClearBetInput" class="text-xs bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white border border-rose-200 dark:border-rose-800 px-3 py-1 rounded transition-all flex items-center gap-1.5 active:scale-95 font-semibold disabled:opacity-40 disabled:pointer-events-none" title="Xóa toàn bộ khung nhập cược">
                 <i class="fa-solid fa-eraser"></i>
                 <span id="lblClearBetInput">Xóa cược</span>
@@ -279,6 +319,18 @@
             <button id="copyButton" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm" title="Thực hiện cân chuyển">
               <i class="fa-solid fa-share-nodes"></i>
               <span>Chuyển 1</span>
+            </button>
+          </div>
+
+          <!-- 2 Bot Sync Buttons: Đẩy cược sang Bot | Lấy cược từ Bot (Hiện khi gạt bật Sync) -->
+          <div id="botSyncButtonsContainer" class="hidden grid grid-cols-2 gap-2 pt-0.5">
+            <button id="btnMainPushToBot" type="button" class="bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all border border-sky-700/50 shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm cursor-pointer" title="Đẩy nội dung cược đang nhập sang Telegram Bot để tự động cân và bắn cược thừa">
+              <i class="fa-brands fa-telegram text-sm sm:text-base"></i>
+              <span>Đẩy cược sang Bot</span>
+            </button>
+            <button id="btnMainPullFromBot" type="button" class="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white px-2 sm:px-3 py-2 rounded-lg font-bold transition-all border border-emerald-700/50 shadow-xs flex items-center justify-center gap-1.5 active:scale-95 text-xs sm:text-sm cursor-pointer" title="Lấy toàn bộ dữ liệu cược đang có trong Bot nạp về khung tính của Web">
+              <i class="fa-solid fa-cloud-arrow-down"></i>
+              <span>Lấy cược từ Bot</span>
             </button>
           </div>
 
@@ -4816,6 +4868,9 @@ function setupEventListeners() {
     });
   }
 
+  const tabInputBot = document.getElementById('tabInputBot');
+  const botTabContainer = document.getElementById('botTabContainer');
+
   if (tabInputMain && tabInputExclude && combinedBetInput && excludeInput) {
     const excludeContainer = document.getElementById('excludeContainer');
     
@@ -4830,16 +4885,29 @@ function setupEventListeners() {
         ? "text-xs font-bold bg-white dark:bg-dark-800 text-rose-600 dark:text-rose-400 border-t-2 border-rose-500 border-x border-slate-300 dark:border-slate-600 px-3 py-1.5 rounded-t-md focus:outline-none flex items-center gap-1.5"
         : "text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-1.5 rounded-t-md focus:outline-none flex items-center gap-1.5 border-t-2 border-transparent";
 
+      // Bot tab styling
+      if (tabInputBot) {
+        tabInputBot.className = activeTab === 'bot'
+          ? "text-xs font-bold bg-white dark:bg-dark-800 text-sky-600 dark:text-sky-400 border-t-2 border-sky-500 border-x border-slate-300 dark:border-slate-600 px-3 py-1.5 rounded-t-md focus:outline-none flex items-center gap-1.5"
+          : "text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 px-3 py-1.5 rounded-t-md focus:outline-none flex items-center gap-1.5 border-t-2 border-transparent";
+      }
+
       // Containers visibility
       if (activeTab === 'main') {
         combinedBetInput.classList.remove('hidden');
         if (excludeContainer) excludeContainer.classList.add('hidden');
+        if (botTabContainer) botTabContainer.classList.add('hidden');
         calculateSum();
       } else if (activeTab === 'exclude') {
         combinedBetInput.classList.add('hidden');
         if (excludeContainer) excludeContainer.classList.remove('hidden');
+        if (botTabContainer) botTabContainer.classList.add('hidden');
         calculateSum();
         updateExcludeDisplay();
+      } else if (activeTab === 'bot') {
+        combinedBetInput.classList.add('hidden');
+        if (excludeContainer) excludeContainer.classList.add('hidden');
+        if (botTabContainer) botTabContainer.classList.remove('hidden');
       }
 
       // Update clear button text
@@ -4852,6 +4920,8 @@ function setupEventListeners() {
         } else if (activeTab === 'exclude') {
           lblClear.textContent = "Xóa lọc";
           btnClearBetInput.classList.remove('hidden');
+        } else if (activeTab === 'bot') {
+          btnClearBetInput.classList.add('hidden');
         }
         updateClearAndResetButtons();
       }
@@ -4859,6 +4929,9 @@ function setupEventListeners() {
 
     tabInputMain.addEventListener('click', () => setTabActive('main'));
     tabInputExclude.addEventListener('click', () => setTabActive('exclude'));
+    if (tabInputBot) {
+      tabInputBot.addEventListener('click', () => setTabActive('bot'));
+    }
   }
 
   if (excludeInput) {
@@ -6897,53 +6970,53 @@ function resetTable() {
     <div class="bg-white dark:bg-dark-800 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-xl rounded-lg border border-slate-300 dark:border-slate-700">
       
       <!-- Header (Win 11 Style) -->
-      <div class="flex justify-between items-center px-5 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-dark-900">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-md bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-600 dark:text-sky-400 text-lg shrink-0">
+      <div class="flex justify-between items-center px-4 sm:px-5 py-2.5 sm:py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-dark-900">
+        <div class="flex items-center gap-2.5 sm:gap-3">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-md bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-600 dark:text-sky-400 text-base sm:text-lg shrink-0">
             <i class="fa-brands fa-telegram"></i>
           </div>
-          <div class="flex items-center gap-3 flex-wrap">
-            <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-wide">
+          <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-wide">
               SETUP BOT TELE
             </h3>
-            <div id="tgModalStatusBadge" class="flex items-center gap-2 px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider bg-slate-100 text-slate-600 dark:bg-dark-700 dark:text-slate-400 border border-slate-300 dark:border-slate-600">
+            <div id="tgModalStatusBadge" class="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] sm:text-xs font-semibold uppercase tracking-wider bg-slate-100 text-slate-600 dark:bg-dark-700 dark:text-slate-400 border border-slate-300 dark:border-slate-600">
               <span class="w-2 h-2 rounded-full bg-slate-400"></span>
               <span>Đang kiểm tra...</span>
             </div>
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <button id="btnToggleBotRun" type="button" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-md text-sm font-semibold transition-colors border border-emerald-700/50 shadow-xs flex items-center gap-2 cursor-pointer">
-            <i class="fa-solid fa-play text-xs"></i>
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <button id="btnToggleBotRun" type="button" class="px-3 sm:px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-md text-xs sm:text-sm font-semibold transition-colors border border-emerald-700/50 shadow-xs flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-play text-[10px] sm:text-xs"></i>
             <span id="lblToggleBotRun">Bật Bot</span>
           </button>
-          <button id="btnLockTgModal" type="button" onclick="lockTgModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-md text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer" title="Khóa cài đặt ngay">
+          <button id="btnLockTgModal" type="button" onclick="lockTgModal()" class="px-2.5 sm:px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-md text-xs sm:text-sm font-semibold transition-colors flex items-center gap-1 cursor-pointer" title="Khóa cài đặt ngay">
             <i class="fa-solid fa-lock"></i>
           </button>
-          <button id="btnCloseTgBotModal" type="button" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-white hover:bg-rose-600 rounded-md transition-colors text-xl font-normal cursor-pointer" title="Đóng">
+          <button id="btnCloseTgBotModal" type="button" class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-slate-500 hover:text-white hover:bg-rose-600 rounded-md transition-colors text-lg sm:text-xl font-normal cursor-pointer" title="Đóng">
             &times;
           </button>
         </div>
       </div>
 
       <!-- Lock Screen when session is locked -->
-      <div id="tgModalLockScreen" class="p-8 text-center space-y-5 my-auto">
-        <div class="w-14 h-14 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center mx-auto text-2xl">
+      <div id="tgModalLockScreen" class="p-6 sm:p-8 text-center space-y-4 sm:space-y-5 my-auto">
+        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center mx-auto text-xl sm:text-2xl">
           <i class="fa-solid fa-shield-halved"></i>
         </div>
         <div>
-          <h3 class="font-bold text-lg sm:text-xl text-slate-800 dark:text-white uppercase tracking-wide">Mở Khóa Quản Trị Telegram Bot</h3>
-          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1.5">Dữ liệu cược và cấu hình được bảo vệ. Vui lòng nhập mật khẩu quản trị để tiếp tục:</p>
+          <h3 class="font-bold text-base sm:text-lg text-slate-800 dark:text-white uppercase tracking-wide">Mở Khóa Quản Trị Telegram Bot</h3>
+          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Dữ liệu cược và cấu hình được bảo vệ. Vui lòng nhập mật khẩu quản trị để tiếp tục:</p>
         </div>
-        <form id="formTgModalUnlock" onsubmit="event.preventDefault(); submitTgModalUnlock();" class="max-w-xs mx-auto space-y-3.5">
+        <form id="formTgModalUnlock" onsubmit="event.preventDefault(); submitTgModalUnlock();" class="max-w-xs mx-auto space-y-3">
           <div class="relative">
-            <input type="password" id="tgModalUnlockPassword" placeholder="••••••••" class="w-full border border-slate-300 dark:border-slate-600 rounded-md px-3.5 py-2 text-center text-base font-mono font-bold bg-white dark:bg-dark-700 text-slate-800 dark:text-white focus:border-sky-500 focus:outline-none">
-            <button type="button" onclick="togglePasswordVisibility('tgModalUnlockPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-base px-1.5 py-1 cursor-pointer">
+            <input type="password" id="tgModalUnlockPassword" placeholder="••••••••" class="w-full border border-slate-300 dark:border-slate-600 rounded-md px-3 py-1.5 sm:py-2 text-center text-sm sm:text-base font-mono font-bold bg-white dark:bg-dark-700 text-slate-800 dark:text-white focus:border-sky-500 focus:outline-none">
+            <button type="button" onclick="togglePasswordVisibility('tgModalUnlockPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm sm:text-base px-1.5 py-1 cursor-pointer">
               <i class="fa-solid fa-eye"></i>
             </button>
           </div>
-          <p id="tgModalUnlockError" class="text-sm text-rose-500 font-bold hidden"></p>
-          <button type="submit" id="btnSubmitTgModalUnlock" class="w-full py-2 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md text-sm font-semibold border border-sky-700/50 shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-colors">
+          <p id="tgModalUnlockError" class="text-xs sm:text-sm text-rose-500 font-bold hidden"></p>
+          <button type="submit" id="btnSubmitTgModalUnlock" class="w-full py-1.5 sm:py-2 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md text-xs sm:text-sm font-semibold border border-sky-700/50 shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-colors">
             <i class="fa-solid fa-lock-open"></i> Mở Khóa
           </button>
           <div class="pt-1">
@@ -6958,51 +7031,78 @@ function resetTable() {
       <div id="tgModalBodyContainer" class="flex-1 flex flex-col overflow-hidden hidden">
 
         <!-- Tabs Navigation (Win 11 Tab Strip) -->
-        <div class="flex border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-dark-900/60 px-3 select-none text-sm font-semibold overflow-x-auto gap-1">
-          <button id="tgTabBtnConfig" type="button" onclick="switchTgTab('config')" class="py-2.5 px-4 border-b-2 border-sky-600 text-sky-600 dark:text-sky-400 flex items-center gap-2 focus:outline-none">
+        <div class="flex border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-dark-900/60 px-2 sm:px-3 select-none text-xs sm:text-sm font-semibold overflow-x-auto gap-1">
+          <button id="tgTabBtnConfig" type="button" onclick="switchTgTab('config')" class="py-2 px-2.5 sm:py-2.5 sm:px-3.5 border-b-2 border-sky-600 text-sky-600 dark:text-sky-400 flex items-center gap-1.5 sm:gap-2 focus:outline-none whitespace-nowrap">
             <i class="fa-solid fa-sliders"></i>
             <span>1. Cài đặt &amp; Phân quyền</span>
           </button>
-          <button id="tgTabBtnRetain" type="button" onclick="switchTgTab('retain')" class="py-2.5 px-4 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-dark-800/50 rounded-t-md flex items-center gap-2 focus:outline-none transition-colors">
+          <button id="tgTabBtnRetain" type="button" onclick="switchTgTab('retain')" class="py-2 px-2.5 sm:py-2.5 sm:px-3.5 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-dark-800/50 rounded-t-md flex items-center gap-1.5 sm:gap-2 focus:outline-none transition-colors whitespace-nowrap">
             <i class="fa-solid fa-shield-halved"></i>
             <span>2. Mức Giữ lại</span>
           </button>
-          <button id="tgTabBtnBoard" type="button" onclick="switchTgTab('board')" class="py-2.5 px-4 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-dark-800/50 rounded-t-md flex items-center gap-2 focus:outline-none transition-colors">
+          <button id="tgTabBtnBoard" type="button" onclick="switchTgTab('board')" class="py-2 px-2.5 sm:py-2.5 sm:px-3.5 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-dark-800/50 rounded-t-md flex items-center gap-1.5 sm:gap-2 focus:outline-none transition-colors whitespace-nowrap">
             <i class="fa-solid fa-table-list"></i>
             <span>3. Bảng Cược Hôm Nay</span>
           </button>
-          <button id="tgTabBtnLogs" type="button" onclick="switchTgTab('logs')" class="py-2.5 px-4 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-dark-800/50 rounded-t-md flex items-center gap-2 focus:outline-none transition-colors">
+          <button id="tgTabBtnLogs" type="button" onclick="switchTgTab('logs')" class="py-2 px-2.5 sm:py-2.5 sm:px-3.5 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-dark-800/50 rounded-t-md flex items-center gap-1.5 sm:gap-2 focus:outline-none transition-colors whitespace-nowrap">
             <i class="fa-solid fa-terminal"></i>
             <span>4. Nhật ký Live</span>
           </button>
         </div>
 
       <!-- Body Content -->
-      <div class="p-5 overflow-y-auto space-y-5 flex-1 text-sm">
+      <div class="p-3 sm:p-5 overflow-y-auto space-y-3.5 sm:space-y-4 flex-1 text-xs sm:text-sm">
         
+        <!-- Quick Sync Bar: 3 Nút đồng bộ theo đúng yêu cầu -->
+        <div class="bg-sky-50/80 dark:bg-dark-900/80 p-2.5 sm:p-3 rounded-lg border border-sky-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 shadow-xs">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded bg-sky-600 text-white flex items-center justify-center text-xs shadow-xs shrink-0">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </div>
+            <div>
+              <span class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm block">Đồng Bộ Nhanh 2 Chiều</span>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">Web ⇄ Telegram Bot</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button type="button" id="btnSyncAllWebToBot" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-md font-semibold text-xs transition-colors border border-emerald-700/50 shadow-xs flex items-center gap-1 cursor-pointer" title="Gửi cả bảng giá và mức giữ lại hiện tại của Web sang Bot">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Đồng bộ tất cả từ Web sang Bot
+            </button>
+            <button type="button" id="btnPullAllBotToWeb" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-md font-semibold text-xs transition-colors border border-indigo-700/50 shadow-xs flex items-center gap-1 cursor-pointer" title="Kéo bảng giá và mức giữ lại từ Bot về nạp vào Web">
+              <i class="fa-solid fa-cloud-arrow-down"></i> Lấy cấu hình từ Bot về Web
+            </button>
+            <button type="button" id="btnTgPushWebBetsTop" class="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md font-semibold text-xs transition-colors border border-sky-700/50 shadow-xs flex items-center gap-1 cursor-pointer" title="Nạp nội dung cược đang nhập ở khung Web sang Bot để Bot cân cược và bắn cược thừa tự động">
+              <i class="fa-solid fa-share-nodes"></i> Đẩy cược từ Web sang Bot
+            </button>
+            <button type="button" id="btnPullBetsFromBotTop" class="px-2.5 py-1.5 bg-teal-600 hover:bg-teal-500 active:bg-teal-700 text-white rounded-md font-semibold text-xs transition-colors border border-teal-700/50 shadow-xs flex items-center gap-1 cursor-pointer" title="Kéo toàn bộ dữ liệu cược hôm nay từ Bot về nạp vào Web">
+              <i class="fa-solid fa-download"></i> Lấy dữ liệu cược từ Bot về Web
+            </button>
+          </div>
+        </div>
+
         <!-- TAB 1: Cài đặt Bot & Phân quyền -->
-        <div id="tgTabContentConfig" class="space-y-4">
-          <div class="bg-sky-50 dark:bg-sky-950/20 p-3.5 rounded-lg border border-sky-200 dark:border-sky-900/40 text-slate-700 dark:text-slate-300 space-y-1.5">
-            <div class="font-bold text-sky-800 dark:text-sky-300 flex items-center gap-2 text-sm sm:text-base">
+        <div id="tgTabContentConfig" class="space-y-3.5">
+          <div class="bg-sky-50 dark:bg-sky-950/20 p-3 rounded-lg border border-sky-200 dark:border-sky-900/40 text-slate-700 dark:text-slate-300 space-y-1">
+            <div class="font-bold text-sky-800 dark:text-sky-300 flex items-center gap-1.5 text-xs sm:text-sm">
               <i class="fa-solid fa-circle-info"></i>
               <span>Hướng dẫn kết nối Bot Telegram</span>
             </div>
-            <p class="text-xs sm:text-sm leading-relaxed">
+            <p class="text-[11px] sm:text-xs leading-relaxed">
               1. Mở Telegram, tìm <b>@BotFather</b> và gõ lệnh <code>/newbot</code> để tạo Bot và lấy <b>HTTP API Token</b>.<br>
               2. Dán Token vào ô bên dưới, điền ID khách được phép gửi cược và Chat ID của người nhận cược thừa.
             </p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             <!-- Backend API URL -->
-            <div class="col-span-full bg-slate-50 dark:bg-dark-900/40 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
-              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between text-sm">
+            <div class="col-span-full bg-slate-50 dark:bg-dark-900/40 p-2.5 sm:p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between text-xs sm:text-sm">
                 <span>🌐 Địa chỉ Máy Chủ Backend:</span>
-                <span class="text-xs text-slate-400 font-normal">Mặc định: <code>http://127.0.0.1:5005</code> hoặc link Render Cloud</span>
+                <span class="text-[11px] sm:text-xs text-slate-400 font-normal">Mặc định: <code>http://127.0.0.1:5005</code></span>
               </label>
               <div class="flex gap-2">
-                <input type="text" id="tgInputApiUrl" value="http://127.0.0.1:5005" placeholder="http://127.0.0.1:5005 hoặc https://ten-ban.onrender.com" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-md px-3.5 py-2 text-sm bg-white dark:bg-dark-700 font-mono">
-                <button type="button" id="btnSaveApiUrl" onclick="saveTgApiUrl()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white rounded-md font-semibold transition-colors text-sm flex items-center gap-1.5 cursor-pointer border border-slate-900/60 shadow-xs">
+                <input type="text" id="tgInputApiUrl" value="http://127.0.0.1:5005" placeholder="http://127.0.0.1:5005 hoặc https://ten-ban.onrender.com" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-md px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm bg-white dark:bg-dark-700 font-mono">
+                <button type="button" id="btnSaveApiUrl" onclick="saveTgApiUrl()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white rounded-md font-semibold transition-colors text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer border border-slate-900/60 shadow-xs">
                   <i class="fa-solid fa-link"></i> Kết nối
                 </button>
               </div>
@@ -7010,76 +7110,76 @@ function resetTable() {
 
             <!-- Bot Token -->
             <div class="col-span-full">
-              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1.5 text-sm">
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1 text-xs sm:text-sm">
                 Telegram Bot Token: <span class="text-rose-500">*</span>
               </label>
               <div class="flex gap-2">
-                <input type="password" id="tgInputBotToken" placeholder="VD: 1234567890:ABCdefGHIjklMNOpqrsTUVwxyz..." class="flex-1 border border-slate-300 dark:border-slate-600 rounded-md px-3.5 py-2 text-sm bg-white dark:bg-dark-700 font-mono">
-                <button type="button" id="btnToggleTokenVisibility" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 border border-slate-300 dark:border-slate-600 rounded-md text-slate-600 dark:text-slate-300 cursor-pointer transition-colors" title="Ẩn/Hiện Token">
+                <input type="password" id="tgInputBotToken" placeholder="VD: 1234567890:ABCdefGHIjklMNOpqrsTUVwxyz..." class="flex-1 border border-slate-300 dark:border-slate-600 rounded-md px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm bg-white dark:bg-dark-700 font-mono">
+                <button type="button" id="btnToggleTokenVisibility" class="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 border border-slate-300 dark:border-slate-600 rounded-md text-slate-600 dark:text-slate-300 cursor-pointer transition-colors" title="Ẩn/Hiện Token">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                <button type="button" id="btnCheckBotToken" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md font-semibold transition-colors border border-sky-700/50 shadow-xs flex items-center gap-1.5 cursor-pointer">
+                <button type="button" id="btnCheckBotToken" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md font-semibold transition-colors border border-sky-700/50 shadow-xs flex items-center gap-1.5 cursor-pointer text-xs sm:text-sm">
                   <i class="fa-solid fa-plug"></i> Test Token
                 </button>
               </div>
-              <p id="tgBotInfoText" class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1.5 hidden"></p>
+              <p id="tgBotInfoText" class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1 hidden"></p>
             </div>
 
             <!-- Phân quyền Chủ Bot & Đổi Mật Khẩu Bảo Mật -->
-            <div class="col-span-full bg-sky-50/80 dark:bg-sky-950/30 p-3.5 rounded-lg border border-sky-200 dark:border-sky-900/50 space-y-2.5">
+            <div class="col-span-full bg-sky-50/80 dark:bg-sky-950/30 p-2.5 sm:p-3.5 rounded-lg border border-sky-200 dark:border-sky-900/50 space-y-2">
               <div class="flex items-center justify-between">
-                <label class="block font-bold text-sky-900 dark:text-sky-300 flex items-center gap-1.5 text-sm">
+                <label class="block font-bold text-sky-900 dark:text-sky-300 flex items-center gap-1.5 text-xs sm:text-sm">
                   <i class="fa-solid fa-crown text-amber-500"></i>
                   <span>Telegram Chủ Bot (Owner Chat ID hoặc @username):</span>
                 </label>
-                <button type="button" id="btnTgChangePasswordModal" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white rounded-md text-xs font-semibold transition-colors border border-amber-700/50 shadow-xs flex items-center gap-1.5 cursor-pointer">
-                  <i class="fa-solid fa-key"></i> Đổi Mật Khẩu
+                <button type="button" id="btnTgChangePasswordModal" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white rounded-md text-xs font-semibold transition-colors border border-amber-700/50 shadow-xs flex items-center gap-1 cursor-pointer">
+                  <i class="fa-solid fa-key"></i> Đổi MK
                 </button>
               </div>
               <div class="flex gap-2">
-                <input type="text" id="tgInputOwnerChatId" placeholder="VD: 123456789 hoặc @chubang88" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-md px-3.5 py-2 text-sm bg-white dark:bg-dark-700 font-mono font-bold">
+                <input type="text" id="tgInputOwnerChatId" placeholder="VD: 123456789 hoặc @chubang88" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-md px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm bg-white dark:bg-dark-700 font-mono font-bold">
               </div>
-              <p class="text-xs text-sky-800 dark:text-sky-300/90 leading-relaxed">
+              <p class="text-[11px] sm:text-xs text-sky-800 dark:text-sky-300/90 leading-relaxed">
                 👑 <b>Bảo vệ tối thượng:</b> Khi tài khoản Telegram này nhắn tin, Bot sẽ <b>tự động nhận diện là Chủ bảng</b> để xem Báo cáo và điều khiển mà <b>không cần gõ mật khẩu</b>. Người lạ / khách cược tuyệt đối bị chặn 100%!
               </p>
             </div>
 
             <!-- Khách được chỉ định -->
             <div>
-              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1.5 text-sm">
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1 text-xs sm:text-sm">
                 Khách được chỉ định (Allowed Senders):
               </label>
-              <input type="text" id="tgInputAllowedSenders" placeholder="VD: 12345678, @khach1, @khach2 (hoặc * để nhận tất cả)" class="w-full border border-slate-300 dark:border-slate-600 rounded-md px-3.5 py-2 text-sm bg-white dark:bg-dark-700 font-mono">
-              <p class="text-xs text-slate-500 mt-1">Phân cách bằng dấu phẩy. Bot sẽ chỉ nhận cược từ những người này.</p>
+              <input type="text" id="tgInputAllowedSenders" placeholder="VD: 12345678, @khach1, @khach2 (hoặc * để nhận tất cả)" class="w-full border border-slate-300 dark:border-slate-600 rounded-md px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm bg-white dark:bg-dark-700 font-mono">
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-1">Phân cách bằng dấu phẩy. Bot sẽ chỉ nhận cược từ những người này.</p>
             </div>
 
             <!-- Người nhận cược thừa -->
             <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <label class="block font-bold text-slate-700 dark:text-slate-300 text-sm">
-                  Người nhận cược thừa (Target Recipient): <span class="text-rose-500">*</span>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs sm:text-sm">
+                  Người nhận cược thừa: <span class="text-rose-500">*</span>
                 </label>
                 <button type="button" id="btnRefreshKnownUsers" class="text-xs text-sky-600 hover:text-sky-700 dark:text-sky-400 flex items-center gap-1 font-semibold cursor-pointer" title="Xem danh sách người đã chat với Bot">
-                  <i class="fa-solid fa-users"></i> Người đã chat với Bot
+                  <i class="fa-solid fa-users"></i> Người đã chat
                 </button>
               </div>
               <div class="flex gap-2">
-                <input type="text" id="tgInputTargetRecipient" placeholder="VD: 987654321, -1001234567890 hoặc @matong86" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-md px-3.5 py-2 text-sm bg-white dark:bg-dark-700 font-mono">
-                <button type="button" id="btnTestRecipientMsg" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-md font-semibold transition-colors border border-indigo-700/50 shadow-xs flex items-center gap-1.5 shrink-0 text-sm cursor-pointer" title="Gửi tin nhắn test tới người nhận">
+                <input type="text" id="tgInputTargetRecipient" placeholder="VD: 987654321, -1001234567890 hoặc @matong86" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-md px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm bg-white dark:bg-dark-700 font-mono">
+                <button type="button" id="btnTestRecipientMsg" class="px-3 py-1.5 sm:px-3.5 sm:py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-md font-semibold transition-colors border border-indigo-700/50 shadow-xs flex items-center gap-1 shrink-0 text-xs sm:text-sm cursor-pointer" title="Gửi tin nhắn test tới người nhận">
                   <i class="fa-solid fa-paper-plane"></i> Gửi thử
                 </button>
               </div>
               <div id="tgKnownUsersContainer" class="hidden mt-1.5 p-2 bg-slate-100 dark:bg-dark-700 rounded-md text-xs space-y-1.5 border border-slate-200 dark:border-slate-600"></div>
-              <p class="text-xs text-amber-600 dark:text-amber-400 mt-1.5 font-medium leading-relaxed">
+              <p class="text-[11px] sm:text-xs text-amber-600 dark:text-amber-400 mt-1 font-medium leading-relaxed">
                 ⚠️ <b>Lưu ý quan trọng:</b> Telegram không cho bot gửi tin bằng Số điện thoại hay @username nếu người đó <b>chưa từng bấm /start</b> với Bot. Hãy bảo người nhận mở Telegram tìm <b id="tgRecipientBotTag">Bot của bạn</b> và bấm <b>START</b> để lấy số Chat ID!
               </p>
             </div>
           </div>
 
           <!-- Tùy chọn hoạt động -->
-          <div class="bg-slate-50 dark:bg-dark-900/60 p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2.5">
-            <span class="font-bold text-slate-700 dark:text-slate-300 block mb-1 uppercase tracking-wider text-xs">Chế độ &amp; Tùy chọn chuyển</span>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div class="bg-slate-50 dark:bg-dark-900/60 p-2.5 sm:p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 space-y-2">
+            <span class="font-bold text-slate-700 dark:text-slate-300 block mb-1 uppercase tracking-wider text-[11px] sm:text-xs">Chế độ &amp; Tùy chọn chuyển</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="radio" name="tgBotMode" id="tgModeInstant" value="instant" checked class="form-radio text-sky-600 focus:ring-sky-600">
                 <span class="font-bold text-slate-700 dark:text-slate-300">Chuyển tức thì (Khuyên dùng)</span>
@@ -7089,10 +7189,10 @@ function resetTable() {
                 <span>Gom bảng (Chỉ chuyển khi bấm nút)</span>
               </label>
             </div>
-            <div class="pt-2 border-t border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            <div class="pt-2 border-t border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" id="tgCheckAutoReply" checked class="form-checkbox text-sky-600 focus:ring-sky-600 rounded">
-                <span>Tự động nhắn xác nhận (báo nhận cược) cho khách</span>
+                <span>Tự động nhắn xác nhận cho khách</span>
               </label>
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" id="tgCheckAutoForward" checked class="form-checkbox text-sky-600 focus:ring-sky-600 rounded">
@@ -7102,72 +7202,72 @@ function resetTable() {
           </div>
 
           <!-- Tùy chọn Tự động xóa dấu vết & Bảng giá -->
-          <div class="bg-slate-50 dark:bg-dark-900/60 p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 space-y-3.5">
+          <div class="bg-slate-50 dark:bg-dark-900/60 p-2.5 sm:p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 space-y-3">
             <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <label class="block font-bold text-slate-700 dark:text-slate-300 text-sm">
-                  <i class="fa-solid fa-clock-rotate-left text-amber-500 mr-1.5"></i>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-bold text-slate-700 dark:text-slate-300 text-xs sm:text-sm">
+                  <i class="fa-solid fa-clock-rotate-left text-amber-500 mr-1"></i>
                   Thời gian tự động xóa dấu vết dữ liệu cược (giờ):
                 </label>
-                <span class="text-xs text-slate-500 font-normal">Mặc định: 24 giờ</span>
+                <span class="text-[11px] sm:text-xs text-slate-500 font-normal">Mặc định: 24 giờ</span>
               </div>
-              <div class="flex items-center gap-2.5 flex-wrap">
-                <input type="number" id="tgInputCleanupHours" min="0.1" step="0.5" value="24" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='24';" class="w-32 border border-slate-300 dark:border-slate-600 rounded-md px-3.5 py-2 text-sm text-center font-bold bg-white dark:bg-dark-700 font-mono">
-                <span class="text-sm text-slate-600 dark:text-slate-300 font-semibold">tiếng (giờ)</span>
-                <span class="text-xs text-slate-400 italic">(Nhập số giờ muốn tự xóa: VD 1, 6, 12, 24... Tự xóa tin nhắn Telegram, nhật ký và reset cược)</span>
+              <div class="flex items-center gap-2 flex-wrap">
+                <input type="number" id="tgInputCleanupHours" min="0.1" step="0.5" value="24" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='24';" class="w-24 sm:w-28 border border-slate-300 dark:border-slate-600 rounded-md px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm text-center font-bold bg-white dark:bg-dark-700 font-mono">
+                <span class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-semibold">tiếng (giờ)</span>
+                <span class="text-[11px] sm:text-xs text-slate-400 italic">(Nhập số giờ muốn tự xóa: VD 1, 6, 12, 24...)</span>
               </div>
             </div>
 
-            <div class="pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2.5">
+            <div class="pt-2.5 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2">
               <div>
-                <span class="font-bold text-slate-700 dark:text-slate-300 block text-sm">
-                  <i class="fa-solid fa-tags text-indigo-500 mr-1.5"></i>
+                <span class="font-bold text-slate-700 dark:text-slate-300 block text-xs sm:text-sm">
+                  <i class="fa-solid fa-tags text-indigo-500 mr-1"></i>
                   Cấu hình Bảng Giá &amp; Hoa Hồng:
                 </span>
-                <span class="text-xs text-slate-500">Giá gốc &amp; tỷ lệ trúng cho Bảng Thầu &amp; Bảng Chuyển (Đề, Lô, Xiên, 3 Càng).</span>
+                <span class="text-[11px] sm:text-xs text-slate-500">Giá gốc &amp; tỷ lệ trúng cho Bảng Thầu &amp; Bảng Chuyển.</span>
               </div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <button type="button" onclick="loadRates(); document.getElementById('modalPriceConfig').classList.remove('hidden');" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md font-semibold text-sm transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <button type="button" onclick="loadRates(); document.getElementById('modalPriceConfig').classList.remove('hidden');" class="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md font-semibold text-xs sm:text-sm transition-colors shadow-xs flex items-center gap-1 cursor-pointer">
                   <i class="fa-solid fa-gear"></i> Mở Bảng Giá
                 </button>
-                <button type="button" id="btnSyncPriceToBot" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-md font-semibold text-sm transition-colors border border-emerald-700/50 shadow-xs flex items-center gap-1.5 cursor-pointer" title="Đồng bộ bảng giá từ Web sang Bot">
-                  <i class="fa-solid fa-cloud-arrow-up"></i> Đẩy Giá sang Bot
+                <button type="button" id="btnSyncPriceToBot" class="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-md font-semibold text-xs sm:text-sm transition-colors border border-emerald-700/50 shadow-xs flex items-center gap-1 cursor-pointer" title="Đồng bộ bảng giá từ Web sang Bot">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Đẩy Giá
                 </button>
-                <button type="button" id="btnPullPriceFromBot" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-md font-semibold text-sm transition-colors border border-indigo-700/50 shadow-xs flex items-center gap-1.5 cursor-pointer" title="Lấy bảng giá từ Bot nạp vào Web">
-                  <i class="fa-solid fa-cloud-arrow-down"></i> Lấy Giá từ Bot
+                <button type="button" id="btnPullPriceFromBot" class="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-md font-semibold text-xs sm:text-sm transition-colors border border-indigo-700/50 shadow-xs flex items-center gap-1 cursor-pointer" title="Lấy bảng giá từ Bot nạp vào Web">
+                  <i class="fa-solid fa-cloud-arrow-down"></i> Lấy Giá
                 </button>
               </div>
             </div>
           </div>
 
-          <div class="flex justify-end gap-2.5 pt-1">
-            <button type="button" id="btnSaveTgConfig" class="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md font-semibold transition-colors border border-sky-700/50 shadow-xs flex items-center gap-2 text-sm cursor-pointer">
+          <div class="flex justify-end gap-2 pt-1">
+            <button type="button" id="btnSaveTgConfig" class="px-4 py-2 sm:px-5 sm:py-2.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md font-semibold transition-colors border border-sky-700/50 shadow-xs flex items-center gap-1.5 text-xs sm:text-sm cursor-pointer">
               <i class="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình Bot
             </button>
           </div>
         </div>
 
         <!-- TAB 2: Cấu hình Giữ lại -->
-        <div id="tgTabContentRetain" class="hidden space-y-4">
-          <div class="flex justify-between items-center bg-slate-50 dark:bg-dark-900/60 p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 flex-wrap gap-2.5">
+        <div id="tgTabContentRetain" class="hidden space-y-3.5">
+          <div class="flex justify-between items-center bg-slate-50 dark:bg-dark-900/60 p-2.5 sm:p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 flex-wrap gap-2">
             <div>
-              <span class="font-bold text-slate-800 dark:text-slate-200 block text-sm">Cấu hình Mức Giữ Lại cho Bot</span>
-              <p class="text-xs text-slate-500 mt-0.5">Mức cược tối đa giữ lại cho mỗi con số trước khi bắn phần thừa cho thầu trên.</p>
+              <span class="font-bold text-slate-800 dark:text-slate-200 block text-xs sm:text-sm">Cấu hình Mức Giữ Lại cho Bot</span>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Mức cược tối đa giữ lại cho mỗi con số trước khi bắn phần thừa cho thầu trên.</p>
             </div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <button type="button" id="btnSyncWebRetainToBot" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 rounded-md font-semibold text-sm transition-colors border border-slate-300 dark:border-slate-600 shadow-xs flex items-center gap-1.5 cursor-pointer" title="Sao chép mức giữ lại đang có ở ngoài Web vào đây">
-                <i class="fa-solid fa-arrow-down"></i> Lấy từ Thiết Lập Web
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" id="btnSyncWebRetainToBot" class="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 rounded-md font-semibold text-xs sm:text-sm transition-colors border border-slate-300 dark:border-slate-600 shadow-xs flex items-center gap-1 cursor-pointer" title="Sao chép mức giữ lại đang có ở ngoài Web vào đây">
+                <i class="fa-solid fa-arrow-down"></i> Lấy từ Web
               </button>
-              <button type="button" id="btnPullRetainFromBot" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-md font-semibold text-sm transition-colors border border-indigo-700/50 shadow-xs flex items-center gap-1.5 cursor-pointer" title="Đẩy mức giữ lại này ra ngoài Web">
+              <button type="button" id="btnPullRetainFromBot" class="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-md font-semibold text-xs sm:text-sm transition-colors border border-indigo-700/50 shadow-xs flex items-center gap-1 cursor-pointer" title="Đẩy mức giữ lại này ra ngoài Web">
                 <i class="fa-solid fa-arrow-up"></i> Áp dụng ra Web
               </button>
             </div>
           </div>
 
-          <div class="bg-white dark:bg-dark-700/60 p-4 rounded-lg border border-slate-200 dark:border-slate-700 space-y-3.5">
+          <div class="bg-white dark:bg-dark-700/60 p-3 sm:p-4 rounded-lg border border-slate-200 dark:border-slate-700 space-y-3">
             <div class="flex items-center justify-between gap-2">
-              <span class="font-bold text-slate-700 dark:text-slate-300 text-sm">Loại tính giữ lại:</span>
-              <div class="flex items-center gap-3 bg-slate-100 dark:bg-dark-800 px-3 py-1.5 rounded-md border border-slate-300 dark:border-slate-600 text-sm">
+              <span class="font-bold text-slate-700 dark:text-slate-300 text-xs sm:text-sm">Loại tính giữ lại:</span>
+              <div class="flex items-center gap-2 sm:gap-3 bg-slate-100 dark:bg-dark-800 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md border border-slate-300 dark:border-slate-600 text-xs sm:text-sm">
                 <label class="flex items-center gap-1.5 cursor-pointer font-bold">
                   <input type="radio" name="tgRetainType" id="tgRetainTypeMoney" value="money" checked class="form-radio text-sky-600">
                   <span>Tiền (k / đ)</span>
@@ -7179,167 +7279,167 @@ function resetTable() {
               </div>
             </div>
 
-            <!-- 4 ô giữ lại chính -->
-            <div class="grid grid-cols-4 gap-3">
+            <!-- 4 ô giữ lại chính: Responsive và không bị vỡ trên Mobile -->
+            <div class="grid grid-cols-4 gap-1.5 sm:gap-3">
               <div>
-                <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1.5 text-center text-sm">Giữ Đề (Đ)</label>
-                <input type="number" id="tgRetainDe" value="20" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2.5 text-center font-bold text-base bg-white dark:bg-dark-800">
+                <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1 text-center text-[11px] sm:text-xs truncate" title="Giữ Đề (Đ)">Giữ Đề (Đ)</label>
+                <input type="number" id="tgRetainDe" value="20" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-1.5 sm:p-2 text-center font-bold text-sm sm:text-base bg-white dark:bg-dark-800">
               </div>
               <div>
-                <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1.5 text-center text-sm">Giữ Lô (L)</label>
-                <input type="number" id="tgRetainLo" value="5" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2.5 text-center font-bold text-base bg-white dark:bg-dark-800">
+                <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1 text-center text-[11px] sm:text-xs truncate" title="Giữ Lô (L)">Giữ Lô (L)</label>
+                <input type="number" id="tgRetainLo" value="5" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-1.5 sm:p-2 text-center font-bold text-sm sm:text-base bg-white dark:bg-dark-800">
               </div>
               <div>
-                <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1.5 text-center text-sm">Giữ 3 Càng</label>
-                <input type="number" id="tgRetain3c" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2.5 text-center font-bold text-base bg-white dark:bg-dark-800">
+                <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1 text-center text-[11px] sm:text-xs truncate" title="Giữ 3 Càng">Giữ 3 Càng</label>
+                <input type="number" id="tgRetain3c" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-1.5 sm:p-2 text-center font-bold text-sm sm:text-base bg-white dark:bg-dark-800">
               </div>
               <div>
-                <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1.5 text-center text-sm">Giữ Xiên</label>
-                <input type="number" id="tgRetainX" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2.5 text-center font-bold text-base bg-white dark:bg-dark-800">
+                <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1 text-center text-[11px] sm:text-xs truncate" title="Giữ Xiên">Giữ Xiên</label>
+                <input type="number" id="tgRetainX" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-1.5 sm:p-2 text-center font-bold text-sm sm:text-base bg-white dark:bg-dark-800">
               </div>
             </div>
 
             <!-- Tùy chọn Nhánh / Tối đa -->
-            <div class="pt-2.5 border-t border-slate-200 dark:border-slate-700 space-y-2.5">
-              <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-700 dark:text-slate-300 text-sm">
+            <div class="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-2">
+              <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-700 dark:text-slate-300 text-xs sm:text-sm">
                 <input type="checkbox" id="tgRetainUseBranch" class="form-checkbox text-sky-600 rounded">
                 <span id="tgLblBranchCheckbox">Bật cấu hình Nhánh / Tối đa</span>
               </label>
 
-              <div id="tgBranchInputsContainer" class="hidden grid grid-cols-4 gap-3 pt-1">
+              <div id="tgBranchInputsContainer" class="hidden grid grid-cols-4 gap-1.5 sm:gap-3 pt-1">
                 <div>
-                  <label class="block text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 text-center" id="tgLblBranchDe">Nh. Đề</label>
-                  <input type="number" id="tgBranchDe" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 text-center font-bold text-sm bg-white dark:bg-dark-800">
+                  <label class="block text-[10px] sm:text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 text-center truncate" id="tgLblBranchDe">Nh. Đề</label>
+                  <input type="number" id="tgBranchDe" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-1.5 sm:p-2 text-center font-bold text-xs sm:text-sm bg-white dark:bg-dark-800">
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 text-center" id="tgLblBranchLo">Nh. Lô</label>
-                  <input type="number" id="tgBranchLo" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 text-center font-bold text-sm bg-white dark:bg-dark-800">
+                  <label class="block text-[10px] sm:text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 text-center truncate" id="tgLblBranchLo">Nh. Lô</label>
+                  <input type="number" id="tgBranchLo" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-1.5 sm:p-2 text-center font-bold text-xs sm:text-sm bg-white dark:bg-dark-800">
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 text-center" id="tgLblBranch3c">Nh. 3C</label>
-                  <input type="number" id="tgBranch3c" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 text-center font-bold text-sm bg-white dark:bg-dark-800">
+                  <label class="block text-[10px] sm:text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 text-center truncate" id="tgLblBranch3c">Nh. 3C</label>
+                  <input type="number" id="tgBranch3c" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-1.5 sm:p-2 text-center font-bold text-xs sm:text-sm bg-white dark:bg-dark-800">
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 text-center" id="tgLblBranchX">Nh. Xiên</label>
-                  <input type="number" id="tgBranchX" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 text-center font-bold text-sm bg-white dark:bg-dark-800">
+                  <label class="block text-[10px] sm:text-xs font-bold text-amber-600 dark:text-amber-400 mb-1 text-center truncate" id="tgLblBranchX">Nh. Xiên</label>
+                  <input type="number" id="tgBranchX" value="0" onfocus="if(this.value==='0')this.value='';else this.select();" onblur="if(this.value==='')this.value='0';" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-1.5 sm:p-2 text-center font-bold text-xs sm:text-sm bg-white dark:bg-dark-800">
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="flex justify-end gap-2.5 pt-1">
-            <button type="button" id="btnSaveTgRetainConfig" class="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md font-semibold transition-colors border border-sky-700/50 shadow-xs flex items-center gap-2 text-sm cursor-pointer">
+          <div class="flex justify-end gap-2 pt-1">
+            <button type="button" id="btnSaveTgRetainConfig" class="px-4 py-2 sm:px-5 sm:py-2.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md font-semibold transition-colors border border-sky-700/50 shadow-xs flex items-center gap-1.5 text-xs sm:text-sm cursor-pointer">
               <i class="fa-solid fa-floppy-disk"></i> Lưu Mức Giữ Lại
             </button>
           </div>
         </div>
 
         <!-- TAB 3: Bảng Cược Hôm Nay -->
-        <div id="tgTabContentBoard" class="hidden space-y-3.5">
+        <div id="tgTabContentBoard" class="hidden space-y-3 sm:space-y-3.5">
           <!-- Thanh công cụ trên cùng -->
-          <div class="flex items-center justify-between flex-wrap gap-2 p-2 bg-slate-50 dark:bg-dark-900/60 rounded-md border border-slate-200 dark:border-slate-800">
-            <div class="flex items-center gap-2.5 flex-wrap">
-              <span id="tgBoardStepBadge" class="text-xs font-semibold px-2.5 py-1 bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300 rounded-md border border-sky-300 dark:border-sky-800">
+          <div class="flex items-center justify-between flex-wrap gap-1.5 sm:gap-2 p-2 bg-slate-50 dark:bg-dark-900/60 rounded-md border border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="tgBoardStepBadge" class="text-[11px] sm:text-xs font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300 rounded-md border border-sky-300 dark:border-sky-800">
                 Đã chuyển: 0 lần
               </span>
-              <span id="tgBoardStatsText" class="text-xs text-slate-600 dark:text-slate-400 font-semibold">
+              <span id="tgBoardStatsText" class="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 font-semibold">
                 Đề: 0 con | Lô: 0 con | 3C: 0 con | Xiên: 0 cặp
               </span>
             </div>
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" id="btnTgPushWebBets" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-md font-semibold transition-colors border border-indigo-700/50 shadow-xs flex items-center gap-1 text-xs cursor-pointer" title="Đẩy nội dung cược đang nhập trên Web sang Bot để cân giữ lại & chuyển">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> Đẩy cược Web sang Bot
+            <div class="flex items-center gap-1 sm:gap-1.5 flex-wrap">
+              <button type="button" id="btnTgPushWebBets" class="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-md font-semibold transition-colors border border-indigo-700/50 shadow-xs flex items-center gap-1 text-[11px] sm:text-xs cursor-pointer" title="Đẩy nội dung cược đang nhập trên Web sang Bot để cân giữ lại & chuyển">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Đẩy cược Web
               </button>
-              <button type="button" id="btnTgImportToWeb" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-md font-semibold transition-colors border border-emerald-700/50 shadow-xs flex items-center gap-1 text-xs cursor-pointer" title="Đưa toàn bộ cược hôm nay vào khung web để tính toán">
+              <button type="button" id="btnTgImportToWeb" class="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-md font-semibold transition-colors border border-emerald-700/50 shadow-xs flex items-center gap-1 text-[11px] sm:text-xs cursor-pointer" title="Đưa toàn bộ cược hôm nay vào khung web để tính toán">
                 <i class="fa-solid fa-file-import"></i> Nạp vào Web
               </button>
-              <button type="button" id="btnTgViewReport" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white rounded-md font-semibold transition-colors border border-amber-700/50 shadow-xs flex items-center gap-1 text-xs cursor-pointer" title="Xem Báo Cáo Thầu hôm nay">
-                <i class="fa-solid fa-chart-pie"></i> Báo Cáo Thầu
+              <button type="button" id="btnTgViewReport" class="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white rounded-md font-semibold transition-colors border border-amber-700/50 shadow-xs flex items-center gap-1 text-[11px] sm:text-xs cursor-pointer" title="Xem Báo Cáo Thầu hôm nay">
+                <i class="fa-solid fa-chart-pie"></i> Báo Cáo
               </button>
-              <button type="button" id="btnTgViewKQXS" class="px-2.5 py-1.5 bg-teal-600 hover:bg-teal-500 active:bg-teal-700 text-white rounded-md font-semibold transition-colors border border-teal-700/50 shadow-xs flex items-center gap-1 text-xs cursor-pointer" title="Xem Kết Quả Xổ Số hôm nay">
-                <i class="fa-solid fa-trophy"></i> Xem KQXS
+              <button type="button" id="btnTgViewKQXS" class="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-teal-600 hover:bg-teal-500 active:bg-teal-700 text-white rounded-md font-semibold transition-colors border border-teal-700/50 shadow-xs flex items-center gap-1 text-[11px] sm:text-xs cursor-pointer" title="Xem Kết Quả Xổ Số hôm nay">
+                <i class="fa-solid fa-trophy"></i> KQXS
               </button>
-              <button type="button" id="btnTgManualTransfer" class="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md font-semibold transition-colors border border-sky-700/50 shadow-xs flex items-center gap-1 text-xs cursor-pointer">
-                <i class="fa-solid fa-share-nodes"></i> Bắn thừa ngay
+              <button type="button" id="btnTgManualTransfer" class="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md font-semibold transition-colors border border-sky-700/50 shadow-xs flex items-center gap-1 text-[11px] sm:text-xs cursor-pointer">
+                <i class="fa-solid fa-share-nodes"></i> Bắn thừa
               </button>
-              <button type="button" id="btnTgResetBoard" class="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white rounded-md font-semibold transition-colors border border-rose-700/50 shadow-xs flex items-center gap-1 text-xs cursor-pointer">
-                <i class="fa-solid fa-rotate-left"></i> Làm mới
+              <button type="button" id="btnTgResetBoard" class="px-2 py-1 sm:px-2.5 sm:py-1.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white rounded-md font-semibold transition-colors border border-rose-700/50 shadow-xs flex items-center gap-1 text-[11px] sm:text-xs cursor-pointer">
+                <i class="fa-solid fa-rotate-left"></i> Reset
               </button>
             </div>
           </div>
 
           <!-- 4 Sub-tabs Windows 11 Fluent 2D -->
-          <div class="flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
-            <button type="button" id="btnTgSubTabClientBets" class="tg-sub-tab px-3 py-1.5 bg-sky-600 text-white rounded-md font-semibold text-xs sm:text-sm border border-sky-700 shadow-xs cursor-pointer flex items-center gap-1.5 transition-colors">
-              <i class="fa-solid fa-inbox"></i> 📥 Tin Gốc Khách (<span id="tgCountClientMsgs">0</span>)
+          <div class="flex items-center gap-1 border-b border-slate-200 dark:border-slate-800 pb-1.5 overflow-x-auto">
+            <button type="button" id="btnTgSubTabClientBets" class="tg-sub-tab px-2.5 sm:px-3 py-1 sm:py-1.5 bg-sky-600 text-white rounded-md font-semibold text-xs border border-sky-700 shadow-xs cursor-pointer flex items-center gap-1 sm:gap-1.5 transition-colors whitespace-nowrap">
+              <i class="fa-solid fa-inbox"></i> 📥 Tin Gốc (<span id="tgCountClientMsgs">0</span>)
             </button>
-            <button type="button" id="btnTgSubTabRetained" class="tg-sub-tab px-3 py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-md font-semibold text-xs sm:text-sm border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1.5 transition-colors">
-              <i class="fa-solid fa-shield-halved"></i> 🛡️ Tin Giữ Lại
+            <button type="button" id="btnTgSubTabRetained" class="tg-sub-tab px-2.5 sm:px-3 py-1 sm:py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-md font-semibold text-xs border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1 sm:gap-1.5 transition-colors whitespace-nowrap">
+              <i class="fa-solid fa-shield-halved"></i> 🛡️ Giữ Lại
             </button>
-            <button type="button" id="btnTgSubTabTransfers" class="tg-sub-tab px-3 py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-md font-semibold text-xs sm:text-sm border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1.5 transition-colors">
+            <button type="button" id="btnTgSubTabTransfers" class="tg-sub-tab px-2.5 sm:px-3 py-1 sm:py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-md font-semibold text-xs border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1 sm:gap-1.5 transition-colors whitespace-nowrap">
               <i class="fa-solid fa-paper-plane"></i> 🛸 Tin Chuyển (<span id="tgCountTransfers">0</span>)
             </button>
-            <button type="button" id="btnTgSubTabTotal" class="tg-sub-tab px-3 py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-md font-semibold text-xs sm:text-sm border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1.5 transition-colors">
-              <i class="fa-solid fa-calculator"></i> 📊 Tổng Bảng Nhận
+            <button type="button" id="btnTgSubTabTotal" class="tg-sub-tab px-2.5 sm:px-3 py-1 sm:py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-md font-semibold text-xs border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1 sm:gap-1.5 transition-colors whitespace-nowrap">
+              <i class="fa-solid fa-calculator"></i> 📊 Tổng Bảng
             </button>
           </div>
 
           <!-- View 1: Tin Gốc Khách Gửi -->
           <div id="tgSubViewClientBets" class="space-y-2">
-            <div id="tgClientMessagesList" class="space-y-2 max-h-96 overflow-y-auto pr-1">
-              <p class="text-slate-400 italic p-3 text-center">Chưa có tin nhắn nào từ khách hôm nay.</p>
+            <div id="tgClientMessagesList" class="space-y-2 max-h-80 sm:max-h-96 overflow-y-auto pr-1">
+              <p class="text-slate-400 italic p-3 text-center text-xs">Chưa có tin nhắn nào từ khách hôm nay.</p>
             </div>
           </div>
 
           <!-- View 2: Tin Giữ Lại -->
           <div id="tgSubViewRetained" class="hidden space-y-2">
             <div class="flex items-center justify-between pb-1 flex-wrap gap-2">
-              <span class="text-xs font-semibold text-slate-500">Cược thực tế đang giữ lại (sau khi đã trừ phần bắn chuyển):</span>
-              <div class="flex gap-2">
-                <button type="button" id="btnCopyTgRetainedText" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 rounded text-xs border border-slate-300 dark:border-slate-600 flex items-center gap-1 cursor-pointer">
-                  <i class="fa-solid fa-copy"></i> Copy Tin Giữ
+              <span class="text-[11px] sm:text-xs font-semibold text-slate-500">Cược thực tế đang giữ lại (sau khi đã trừ phần bắn chuyển):</span>
+              <div class="flex gap-1.5">
+                <button type="button" id="btnCopyTgRetainedText" class="px-2 sm:px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 rounded text-xs border border-slate-300 dark:border-slate-600 flex items-center gap-1 cursor-pointer">
+                  <i class="fa-solid fa-copy"></i> Copy
                 </button>
-                <button type="button" id="btnImportTgRetainedToWeb" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs border border-emerald-700 flex items-center gap-1 cursor-pointer">
-                  <i class="fa-solid fa-file-import"></i> Nạp Tin Giữ Vào Web
+                <button type="button" id="btnImportTgRetainedToWeb" class="px-2 sm:px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs border border-emerald-700 flex items-center gap-1 cursor-pointer">
+                  <i class="fa-solid fa-file-import"></i> Nạp Vào Web
                 </button>
               </div>
             </div>
-            <div id="tgRetainedDisplayArea" class="bg-slate-50 dark:bg-dark-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800 font-mono text-xs sm:text-sm max-h-80 overflow-y-auto space-y-2">
+            <div id="tgRetainedDisplayArea" class="bg-slate-50 dark:bg-dark-900 p-2.5 sm:p-3 rounded-lg border border-slate-200 dark:border-slate-800 font-mono text-xs max-h-72 sm:max-h-80 overflow-y-auto space-y-1.5">
               <p class="text-slate-400 italic">Chưa có dữ liệu giữ lại.</p>
             </div>
           </div>
 
           <!-- View 3: Tin Chuyển (Thầu Chuyển) -->
           <div id="tgSubViewTransfers" class="hidden space-y-2">
-            <div id="tgTransfersList" class="space-y-2 max-h-96 overflow-y-auto pr-1">
-              <p class="text-slate-400 italic p-3 text-center">Chưa có bước chuyển nào được thực hiện.</p>
+            <div id="tgTransfersList" class="space-y-2 max-h-80 sm:max-h-96 overflow-y-auto pr-1">
+              <p class="text-slate-400 italic p-3 text-center text-xs">Chưa có bước chuyển nào được thực hiện.</p>
             </div>
           </div>
 
           <!-- View 4: Tổng Bảng Cược Nhận -->
           <div id="tgSubViewTotal" class="hidden space-y-2">
-            <div id="tgBoardDisplayArea" class="bg-slate-50 dark:bg-dark-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 font-mono text-sm max-h-80 overflow-y-auto space-y-2">
+            <div id="tgBoardDisplayArea" class="bg-slate-50 dark:bg-dark-900 p-2.5 sm:p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 font-mono text-xs sm:text-sm max-h-72 sm:max-h-80 overflow-y-auto space-y-2">
               <p class="text-slate-400 italic">Chưa có dữ liệu cược nào được nhận hôm nay.</p>
             </div>
           </div>
 
           <!-- Khu vực hiển thị Báo Cáo Bot -->
-          <div id="tgReportDisplayArea" class="hidden p-3.5 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm space-y-2.5">
+          <div id="tgReportDisplayArea" class="hidden p-3 sm:p-3.5 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg text-xs sm:text-sm space-y-2">
             <div class="flex items-center justify-between">
-              <span class="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-2 text-base">
+              <span class="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5 text-xs sm:text-sm">
                 <i class="fa-solid fa-file-lines"></i> BÁO CÁO TỔNG KẾT HÔM NAY
               </span>
-              <button type="button" id="btnCopyTgReportText" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 font-semibold rounded-md text-xs border border-slate-300 dark:border-slate-600 shadow-xs flex items-center gap-1.5 cursor-pointer transition-colors">
+              <button type="button" id="btnCopyTgReportText" class="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 font-semibold rounded-md text-xs border border-slate-300 dark:border-slate-600 shadow-xs flex items-center gap-1 cursor-pointer transition-colors">
                 <i class="fa-solid fa-copy"></i> Copy Tin Báo Cáo
               </button>
             </div>
-            <pre id="tgReportTextContent" class="whitespace-pre-wrap font-mono text-sm bg-white dark:bg-dark-800 p-3 rounded-md border border-amber-200 dark:border-amber-900/60 text-slate-800 dark:text-slate-200 leading-relaxed"></pre>
+            <pre id="tgReportTextContent" class="whitespace-pre-wrap font-mono text-xs sm:text-sm bg-white dark:bg-dark-800 p-2.5 sm:p-3 rounded-md border border-amber-200 dark:border-amber-900/60 text-slate-800 dark:text-slate-200 leading-relaxed"></pre>
           </div>
 
           <!-- Lệnh Telegram Cheat Sheet -->
-          <div class="p-3 bg-sky-50 dark:bg-sky-950/30 rounded-lg border border-sky-200 dark:border-sky-800 text-sm space-y-1.5">
-            <span class="font-bold text-sky-800 dark:text-sky-300 block mb-1">💡 Lệnh điều khiển trực tiếp trên Telegram:</span>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-700 dark:text-slate-300 font-mono">
+          <div class="p-2.5 sm:p-3 bg-sky-50 dark:bg-sky-950/30 rounded-lg border border-sky-200 dark:border-sky-800 text-xs sm:text-sm space-y-1">
+            <span class="font-bold text-sky-800 dark:text-sky-300 block mb-0.5">💡 Lệnh điều khiển trực tiếp trên Telegram:</span>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-slate-700 dark:text-slate-300 font-mono">
               <div>• <b>/kqxs</b>: Xem KQXS hôm nay</div>
               <div>• <b>/baocao</b>: Xem báo cáo Thầu / Giữ / Chuyển</div>
               <div>• <b>/bang</b>: Xem tổng cược hôm nay</div>
@@ -7351,17 +7451,17 @@ function resetTable() {
         </div>
 
         <!-- TAB 4: Nhật ký Live -->
-        <div id="tgTabContentLogs" class="hidden space-y-3">
-          <div class="flex justify-between items-center text-sm">
-            <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Nhật ký giao dịch thời gian thực (Auto-refresh 3s):</span>
+        <div id="tgTabContentLogs" class="hidden space-y-2.5 sm:space-y-3">
+          <div class="flex justify-between items-center text-xs sm:text-sm">
+            <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Nhật ký giao dịch thời gian thực (Auto 3s):</span>
             </span>
-            <button type="button" id="btnRefreshTgLogs" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-md text-slate-700 dark:text-slate-200 font-semibold transition-colors text-xs cursor-pointer border border-slate-300 dark:border-slate-600 shadow-xs flex items-center gap-1.5">
+            <button type="button" id="btnRefreshTgLogs" class="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-md text-slate-700 dark:text-slate-200 font-semibold transition-colors text-xs cursor-pointer border border-slate-300 dark:border-slate-600 shadow-xs flex items-center gap-1">
               <i class="fa-solid fa-rotate"></i> Làm mới
             </button>
           </div>
-          <div id="tgLogsConsole" class="bg-slate-900 text-slate-100 p-3.5 rounded-md font-mono text-xs leading-relaxed max-h-80 overflow-y-auto space-y-1 select-text shadow-inner">
+          <div id="tgLogsConsole" class="bg-slate-900 text-slate-100 p-2.5 sm:p-3.5 rounded-md font-mono text-[11px] sm:text-xs leading-relaxed max-h-72 sm:max-h-80 overflow-y-auto space-y-1 select-text shadow-inner">
             <p class="text-slate-500 italic">Đang tải nhật ký...</p>
           </div>
         </div>
@@ -7409,12 +7509,12 @@ function resetTable() {
         const content = document.getElementById('tgTabContent' + t.charAt(0).toUpperCase() + t.slice(1));
         if (t === tabName) {
           if (btn) {
-            btn.className = "py-3 px-4 border-b-2 border-sky-600 text-sky-600 dark:text-sky-400 flex items-center gap-2 focus:outline-none font-bold text-sm";
+            btn.className = "py-2 px-2.5 sm:py-2.5 sm:px-3.5 border-b-2 border-sky-600 text-sky-600 dark:text-sky-400 flex items-center gap-1.5 sm:gap-2 focus:outline-none font-semibold text-xs sm:text-sm whitespace-nowrap";
           }
           if (content) content.classList.remove('hidden');
         } else {
           if (btn) {
-            btn.className = "py-3 px-4 border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center gap-2 focus:outline-none font-bold text-sm";
+            btn.className = "py-2 px-2.5 sm:py-2.5 sm:px-3.5 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-dark-800/50 rounded-t-md flex items-center gap-1.5 sm:gap-2 focus:outline-none transition-colors font-semibold text-xs sm:text-sm whitespace-nowrap";
           }
           if (content) content.classList.add('hidden');
         }
@@ -8133,12 +8233,12 @@ function resetTable() {
           if (k === tabName) {
             view?.classList.remove('hidden');
             if (btn) {
-              btn.className = "tg-sub-tab px-3 py-1.5 bg-sky-600 text-white rounded-md font-semibold text-xs sm:text-sm border border-sky-700 shadow-xs cursor-pointer flex items-center gap-1.5 transition-colors";
+              btn.className = "tg-sub-tab px-2.5 sm:px-3 py-1 sm:py-1.5 bg-sky-600 text-white rounded-md font-semibold text-xs border border-sky-700 shadow-xs cursor-pointer flex items-center gap-1 sm:gap-1.5 transition-colors whitespace-nowrap";
             }
           } else {
             view?.classList.add('hidden');
             if (btn) {
-              btn.className = "tg-sub-tab px-3 py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-md font-semibold text-xs sm:text-sm border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1.5 transition-colors";
+              btn.className = "tg-sub-tab px-2.5 sm:px-3 py-1 sm:py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-md font-semibold text-xs border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1 sm:gap-1.5 transition-colors whitespace-nowrap";
             }
           }
         });
@@ -8149,10 +8249,11 @@ function resetTable() {
       document.getElementById('btnTgSubTabTransfers')?.addEventListener('click', () => switchTgBoardSubTab('transfers'));
       document.getElementById('btnTgSubTabTotal')?.addEventListener('click', () => switchTgBoardSubTab('total'));
 
-      // Đẩy cược từ Web sang Bot
-      document.getElementById('btnTgPushWebBets')?.addEventListener('click', async () => {
+      // --- CÁC HÀM ĐỒNG BỘ 1 CHẠM WEB ⇄ BOT THEO YÊU CẦU ---
+      // 1. Đẩy cược từ Web sang Bot (dùng chung cho cả 3 nút)
+      async function pushWebBetsToBot() {
         const combinedInput = document.getElementById('combinedBetInput');
-        const text = getRawTextFromElement(combinedInput).trim();
+        const text = (typeof getRawTextFromElement === 'function' && combinedInput) ? getRawTextFromElement(combinedInput).trim() : (combinedInput?.innerText || "").trim();
         if (!text) {
           alert("Khung cược của Web đang trống! Hãy nhập hoặc dán nội dung cược trước khi đẩy sang Bot.");
           return;
@@ -8166,21 +8267,306 @@ function resetTable() {
           });
           const data = await res.json();
           if (data.success) {
-            let msg = `✅ Đã đẩy thành công ${data.total_bets} cược từ Web sang Bot!`;
+            let msg = `✅ ĐÃ ĐẨY CƯỢC TỪ WEB SANG BOT THÀNH CÔNG (${data.total_bets} cược)!`;
             if (data.transferred) {
-              msg += `\n🚀 Đã tự động bắn cược thừa cho người nhận:\n${data.transfer_message}`;
+              msg += `\n\n🚀 Bot đã tự động bắn cược thừa cho người nhận:\n${data.transfer_message}`;
             } else if (data.excess_count > 0) {
-              msg += `\n⚖️ Có ${data.excess_count} con cược vượt hạn mức (chưa bắn do chưa cấu hình người nhận).`;
+              msg += `\n\n⚖️ Có ${data.excess_count} con cược vượt mức giữ lại (chưa bắn do chưa cài Chat ID người nhận).`;
             } else {
-              msg += `\n🛡️ Tất cả cược đều nằm trong hạn mức giữ lại an toàn!`;
+              msg += `\n\n🛡️ Toàn bộ cược đều nằm trong mức giữ lại an toàn của chủ bảng!`;
             }
             alert(msg);
-            fetchTgBoard();
+            if (typeof fetchTgBoard === 'function') fetchTgBoard();
           } else {
             alert(data.error || "Lỗi khi đẩy cược sang Bot.");
           }
         } catch (e) {
-          alert("Không kết nối được Backend Bot.");
+          alert("Không kết nối được Backend Bot. Hãy đảm bảo Bot đang chạy trên cổng 5005!");
+        }
+      }
+
+      // 2. Nút "Đồng bộ tất cả từ Web sang Bot": Gửi bảng giá + mức giữ lại hiện tại của Web sang Bot
+      async function syncAllWebToBot() {
+        if (typeof saveRates === 'function') saveRates();
+        const priceConfig = window.priceConfigData || JSON.parse(localStorage.getItem(RATES_STORAGE_KEY) || "{}");
+
+        const webRetainDe = parseFloat(document.getElementById('retainDe')?.value) || 20;
+        const webRetainLo = parseFloat(document.getElementById('retainLo')?.value) || 5;
+        const webRetain3c = parseFloat(document.getElementById('retain3c')?.value) || 0;
+        const webRetainX = parseFloat(document.getElementById('retainX')?.value) || 0;
+        const webRetainType = document.querySelector('input[name="retainType"]:checked')?.value || "money";
+        const webUseBranch = document.getElementById('retainUseBranch')?.checked || false;
+
+        const retainConfig = {
+          type: webRetainType,
+          de: webRetainDe,
+          lo: webRetainLo,
+          bacang: webRetain3c,
+          xien: webRetainX,
+          use_branch: webUseBranch,
+          branch_de: parseFloat(document.getElementById('tgBranchDe')?.value) || 0,
+          branch_lo: parseFloat(document.getElementById('tgBranchLo')?.value) || 0,
+          branch_bacang: parseFloat(document.getElementById('tgBranch3c')?.value) || 0,
+          branch_xien: parseFloat(document.getElementById('tgBranchX')?.value) || 0
+        };
+
+        // Đồng bộ lên các ô nhập trong Modal Bot
+        const tgRetainDe = document.getElementById('tgRetainDe');
+        const tgRetainLo = document.getElementById('tgRetainLo');
+        const tgRetain3c = document.getElementById('tgRetain3c');
+        const tgRetainX = document.getElementById('tgRetainX');
+        if (tgRetainDe) tgRetainDe.value = webRetainDe;
+        if (tgRetainLo) tgRetainLo.value = webRetainLo;
+        if (tgRetain3c) tgRetain3c.value = webRetain3c;
+        if (tgRetainX) tgRetainX.value = webRetainX;
+        if (webRetainType === "percentage") {
+          const rP = document.getElementById('tgRetainTypePercent');
+          if (rP) rP.checked = true;
+        } else {
+          const rM = document.getElementById('tgRetainTypeMoney');
+          if (rM) rM.checked = true;
+        }
+        const chkBranch = document.getElementById('tgRetainUseBranch');
+        if (chkBranch) {
+          chkBranch.checked = webUseBranch;
+          document.getElementById('tgBranchInputsContainer')?.classList.toggle('hidden', !webUseBranch);
+        }
+
+        try {
+          const res = await fetch(TG_BOT_API + "/api/bot/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              price_config: priceConfig,
+              retain_config: retainConfig
+            })
+          });
+          if (res.ok) {
+            alert(`✅ ĐÃ ĐỒNG BỘ TẤT CẢ TỪ WEB SANG BOT THÀNH CÔNG!\n- Đã gửi Bảng Giá & Tỷ lệ trúng (Thầu & Chuyển)\n- Đã gửi Mức Giữ Lại (Đề: ${webRetainDe}, Lô: ${webRetainLo}, 3C: ${webRetain3c}, Xiên: ${webRetainX})`);
+          } else {
+            alert("Lỗi khi gửi cấu hình sang Bot.");
+          }
+        } catch (err) {
+          alert("Không kết nối được Backend Bot trên cổng 5005.");
+        }
+      }
+
+      // 3. Nút "Lấy cấu hình từ Bot về Web": Kéo bảng giá + mức giữ lại từ Bot về nạp vào Web
+      async function pullAllBotToWeb() {
+        try {
+          const res = await fetch(TG_BOT_API + "/api/bot/config");
+          if (!res.ok) throw new Error();
+          const data = await res.json();
+          const cfg = data.config || {};
+          let report = [];
+
+          // Kéo bảng giá
+          if (cfg.price_config && Object.keys(cfg.price_config).length > 0) {
+            window.priceConfigData = cfg.price_config;
+            localStorage.setItem(RATES_STORAGE_KEY, JSON.stringify(cfg.price_config));
+            if (typeof loadRates === 'function') loadRates();
+            report.push("Bảng giá & Tỷ lệ trúng");
+          }
+
+          // Kéo mức giữ lại
+          if (cfg.retain_config) {
+            const rc = cfg.retain_config;
+            const elDe = document.getElementById('retainDe');
+            const elLo = document.getElementById('retainLo');
+            const el3c = document.getElementById('retain3c');
+            const elX = document.getElementById('retainX');
+            if (elDe && rc.de !== undefined) elDe.value = rc.de;
+            if (elLo && rc.lo !== undefined) elLo.value = rc.lo;
+            if (el3c && rc.bacang !== undefined) el3c.value = rc.bacang;
+            if (elX && rc.xien !== undefined) elX.value = rc.xien;
+
+            const radioPercent = document.querySelector('input[name="retainType"][value="percentage"]');
+            const radioMoney = document.querySelector('input[name="retainType"][value="money"]');
+            if (rc.type === "percentage" && radioPercent) radioPercent.checked = true;
+            if (rc.type === "money" && radioMoney) radioMoney.checked = true;
+
+            const chk = document.getElementById('retainUseBranch');
+            if (chk && rc.use_branch !== undefined) {
+              chk.checked = rc.use_branch;
+              chk.dispatchEvent(new Event('change'));
+            }
+
+            // Đồng bộ luôn vào ô modal
+            const tgDe = document.getElementById('tgRetainDe');
+            const tgLo = document.getElementById('tgRetainLo');
+            const tg3c = document.getElementById('tgRetain3c');
+            const tgX = document.getElementById('tgRetainX');
+            if (tgDe && rc.de !== undefined) tgDe.value = rc.de;
+            if (tgLo && rc.lo !== undefined) tgLo.value = rc.lo;
+            if (tg3c && rc.bacang !== undefined) tg3c.value = rc.bacang;
+            if (tgX && rc.xien !== undefined) tgX.value = rc.xien;
+
+            report.push(`Mức giữ lại (Đ:${rc.de ?? 0}, L:${rc.lo ?? 0}, 3C:${rc.bacang ?? 0}, X:${rc.xien ?? 0})`);
+          }
+
+          if (report.length > 0) {
+            alert(`✅ ĐÃ LẤY CẤU HÌNH TỪ BOT VỀ WEB THÀNH CÔNG!\n- ${report.join("\n- ")}`);
+          } else {
+            alert("Bot chưa có cấu hình riêng để nạp về.");
+          }
+        } catch (e) {
+          alert("Không kết nối được Backend Bot để lấy cấu hình.");
+        }
+      }
+
+      // 4. Nút "Lấy dữ liệu cược từ Bot về Web": Kéo toàn bộ cược hôm nay nạp vào khung tính của Web
+      async function pullBetsFromBotToWeb() {
+        try {
+          const res = await fetch(TG_BOT_API + "/api/bot/board");
+          if (!res.ok) throw new Error("Backend offline");
+          const data = await res.json();
+          const lines = [];
+
+          if (data.de_sums && Object.keys(data.de_sums).length > 0) {
+            lines.push("Đề " + Object.entries(data.de_sums).map(([k,v]) => `${k}x${v}`).join(', '));
+          }
+          if (data.lo_sums && Object.keys(data.lo_sums).length > 0) {
+            lines.push("Lô " + Object.entries(data.lo_sums).map(([k,v]) => `${k}x${v}`).join(', '));
+          }
+          if (data.bacang_sums && Object.keys(data.bacang_sums).length > 0) {
+            lines.push("3C " + Object.entries(data.bacang_sums).map(([k,v]) => `${k}x${v}`).join(', '));
+          }
+          if (data.retained && data.retained.xien && data.retained.xien.length > 0) {
+            lines.push("Xiên " + data.retained.xien.map(x => `${x.numbers.join('-')}x${x.amount}`).join(', '));
+          }
+
+          if (lines.length === 0) {
+            const rawMsgs = data.raw_messages || [];
+            if (rawMsgs.length > 0) {
+              const rawLines = rawMsgs.map(m => m.text).filter(Boolean);
+              if (rawLines.length > 0) lines.push(...rawLines);
+            }
+          }
+
+          if (lines.length === 0) {
+            alert("Bot chưa có dữ liệu cược nào hôm nay để lấy về.");
+            return;
+          }
+
+          const combinedInput = document.getElementById('combinedBetInput');
+          if (combinedInput) {
+            const curText = (typeof getRawTextFromElement === 'function') ? getRawTextFromElement(combinedInput).trim() : combinedInput.innerText.trim();
+            const newText = (curText ? curText + "\n" : "") + lines.join("\n");
+            combinedInput.innerText = newText;
+            if (typeof calculateSum === 'function') calculateSum();
+            document.getElementById('modalTelegramBot')?.classList.add('hidden');
+            alert(`✅ ĐÃ LẤY DỮ LIỆU CƯỢC TỪ BOT VỀ WEB THÀNH CÔNG!\nĐã nạp ${lines.length} nhóm cược vào khung nhập và tự động tính tổng.`);
+          }
+        } catch (err) {
+          alert("Không kết nối được Backend Bot để lấy cược. Hãy đảm bảo Bot đang chạy trên cổng 5005!");
+        }
+      }
+
+      // Gắn sự kiện cho các nút:
+      document.getElementById('btnSyncAllWebToBot')?.addEventListener('click', syncAllWebToBot);
+      document.getElementById('btnPullAllBotToWeb')?.addEventListener('click', pullAllBotToWeb);
+      document.getElementById('btnTgPushWebBets')?.addEventListener('click', pushWebBetsToBot);
+      document.getElementById('btnTgPushWebBetsTop')?.addEventListener('click', pushWebBetsToBot);
+      document.getElementById('btnMainPushToBot')?.addEventListener('click', pushWebBetsToBot);
+      document.getElementById('btnPullBetsFromBotTop')?.addEventListener('click', pullBetsFromBotToWeb);
+      document.getElementById('btnMainPullFromBot')?.addEventListener('click', pullBetsFromBotToWeb);
+      document.getElementById('btnTgImportToWeb')?.addEventListener('click', pullBetsFromBotToWeb);
+
+      // Nút gạt Sync cạnh "Xóa cược" điều khiển ẩn/hiện 2 nút "Đẩy cược sang bot" và "Lấy cược từ bot"
+      const toggleSyncBtn = document.getElementById('toggleSyncBotButtons');
+      const botSyncContainer = document.getElementById('botSyncButtonsContainer');
+      const savedSyncState = localStorage.getItem('z8_show_sync_buttons');
+
+      function updateSyncButtonsVisibility(show) {
+        if (show) {
+          botSyncContainer?.classList.remove('hidden');
+        } else {
+          botSyncContainer?.classList.add('hidden');
+        }
+        if (toggleSyncBtn) toggleSyncBtn.checked = show;
+        localStorage.setItem('z8_show_sync_buttons', show ? '1' : '0');
+      }
+
+      // Khôi phục trạng thái nút gạt (mặc định tắt nếu chưa bật)
+      updateSyncButtonsVisibility(savedSyncState === '1');
+
+      toggleSyncBtn?.addEventListener('change', (e) => {
+        updateSyncButtonsVisibility(e.target.checked);
+      });
+
+      // TAB BOT: NÚT AUTO VÀ NÚT COPY
+      const botTabInput = document.getElementById('botTabInput');
+      const botTabStatusText = document.getElementById('botTabStatusText');
+
+      document.getElementById('btnBotTabAuto')?.addEventListener('click', async () => {
+        if (botTabStatusText) botTabStatusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sky-500 mr-1"></i>Đang lấy dữ liệu từ Bot...';
+        try {
+          const res = await fetch(TG_BOT_API + "/api/bot/board");
+          if (!res.ok) throw new Error("Mã phản hồi: " + res.status);
+          const data = await res.json();
+          let transferTexts = [];
+          if (data.history && data.history.length > 0) {
+            transferTexts = data.history.map(s => s.transfer_text).filter(Boolean);
+          }
+          if (transferTexts.length === 0 && data.pending_text && data.pending_text.trim()) {
+            transferTexts.push(data.pending_text.trim());
+          }
+          if (transferTexts.length === 0) {
+            alert("Bot chưa có dữ liệu cược cân cầu gửi cho người nhận hôm nay.");
+            if (botTabStatusText) botTabStatusText.textContent = "Chưa có cược chuyển từ Bot";
+            return;
+          }
+          const fullContent = transferTexts.join("\n");
+          if (botTabInput) {
+            botTabInput.value = fullContent;
+          }
+          const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          if (botTabStatusText) {
+            botTabStatusText.innerHTML = `<span class="text-emerald-600 dark:text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-1"></i>Đã nạp ${transferTexts.length} phần cược (${timeStr})</span>`;
+          }
+        } catch (err) {
+          console.error("Lỗi lấy dữ liệu cược Bot:", err);
+          alert("Không thể kết nối đến Bot Telegram để lấy dữ liệu cược chuyển. Hãy đảm bảo Bot đang chạy trên cổng 5005!");
+          if (botTabStatusText) botTabStatusText.textContent = "Lỗi kết nối Backend Bot";
+        }
+      });
+
+      document.getElementById('btnBotTabCopy')?.addEventListener('click', () => {
+        const val = botTabInput ? botTabInput.value.trim() : "";
+        if (!val) {
+          alert("Khung chưa có nội dung để copy! Hãy bấm nút 'Auto' để lấy dữ liệu từ Bot trước.");
+          return;
+        }
+        const copySuccess = () => {
+          const btn = document.getElementById('btnBotTabCopy');
+          if (btn) {
+            const origHtml = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-check text-xs"></i><span>Đã Copy!</span>`;
+            btn.classList.replace('bg-emerald-600', 'bg-emerald-700');
+            setTimeout(() => {
+              if (btn) {
+                btn.innerHTML = origHtml;
+                btn.classList.replace('bg-emerald-700', 'bg-emerald-600');
+              }
+            }, 2000);
+          }
+          if (botTabStatusText) {
+            botTabStatusText.innerHTML = `<span class="text-emerald-600 dark:text-emerald-400 font-semibold"><i class="fa-solid fa-clipboard-check mr-1"></i>Đã copy vào bộ nhớ tạm!</span>`;
+          }
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(val).then(copySuccess).catch(() => {
+            if (botTabInput) {
+              botTabInput.select();
+              document.execCommand('copy');
+              copySuccess();
+            }
+          });
+        } else if (botTabInput) {
+          botTabInput.select();
+          document.execCommand('copy');
+          copySuccess();
         }
       });
 
