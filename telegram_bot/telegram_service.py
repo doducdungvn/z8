@@ -559,6 +559,9 @@ class TelegramBotService:
                     "📊 <b>/baocao</b>: Xem Báo cáo Thầu / Giữ lại / Chuyển\n"
                     "📋 <b>/bang</b>: Xem tổng cược tích lũy hôm nay\n"
                     "⚙️ <b>/canchuyen [bat|tat]</b>: Bật/Tắt Cân Chuyển hoặc Xem/Sửa mức giữ\n"
+                    "🛸 <b>/nguoinhan [id|@user|xoa]</b>: Xem/Đổi/Xóa người nhận cược thừa\n"
+                    "👥 <b>/khach [them|xoa|tatca]</b>: Xem/Thêm/Xóa khách gửi cược\n"
+                    "📒 <b>/danhba</b>: Xem danh bạ những người đã chat với Bot\n"
                     "🏷️ <b>/gia</b>: Xem & Sửa Bảng Giá Thầu & Chuyển\n"
                     "🚀 <b>/chuyen [bat|tat]</b>: Bật/Tắt hoặc Bắn ngay các cược vượt định mức\n"
                     "⏰ <b>/timer &lt;giờ&gt;</b>: Đổi số giờ tự động xóa vết cược\n"
@@ -836,22 +839,198 @@ class TelegramBotService:
             ))
             return
 
-        # K. /chuyensang (Đổi người nhận cược thừa - Yêu cầu mật khẩu)
-        if cmd_root in ["/chuyensang", "chuyensang", "/nguoinhan", "nguoinhan"] or cmd_root.startswith("/chuyensang@"):
+        # K1. /nguoinhan hoặc /chuyensang (Xem/Thêm/Sửa/Xóa người nhận cược thừa - Yêu cầu mật khẩu)
+        if cmd_root in ["/chuyensang", "chuyensang", "/nguoinhan", "nguoinhan"] or cmd_root.startswith("/chuyensang@") or cmd_root.startswith("/nguoinhan@"):
             if not self.is_admin(chat_id):
                 self.send_telegram_message(str(chat_id), self.msg_need_auth())
                 return
-            if len(parts) >= 2 and parts[1].strip():
-                target = parts[1].strip()
-                self.config["target_recipient"] = target
-                self.save_config()
-                self.log(f"Đã đổi người nhận cược thừa sang: {target}", "INFO")
-                self.send_telegram_message(str(chat_id), f"✅ <b>Thành công:</b> Đã cài đặt người nhận cược thừa là: <code>{target}</code>")
-                return
+            if len(parts) >= 2:
+                sub = parts[1].strip()
+                if sub.lower() in ["xoa", "huy", "tat", "delete", "clear", "none", "0"]:
+                    self.config["target_recipient"] = ""
+                    self.save_config()
+                    self.log(f"{sender_label} đã xóa người nhận cược thừa", "INFO")
+                    self.send_telegram_message(str(chat_id), "🗑️ <b>Thành công:</b> Đã <b>XÓA</b> người nhận cược thừa!\n<i>(Hệ thống sẽ không bắn cược thừa sang bất kỳ ai cho đến khi bạn cài đặt lại).</i>")
+                    return
+                else:
+                    target = sub
+                    # Phân giải thử xem có trong danh bạ không để hiển thị thông tin chi tiết
+                    resolved_id, _ = self.resolve_recipient(target)
+                    display_target = target
+                    if resolved_id and target.startswith("@"):
+                        display_target = f"{target} (Chat ID: <code>{resolved_id}</code>)"
+                    elif resolved_id:
+                        self.known_users = self.load_known_users()
+                        user_match = self.known_users.get(str(resolved_id))
+                        if user_match and user_match.get("username"):
+                            display_target = f"@{user_match['username']} (Chat ID: <code>{resolved_id}</code>)"
+                        elif user_match and user_match.get("first_name"):
+                            display_target = f"{user_match['first_name']} (Chat ID: <code>{resolved_id}</code>)"
+                        else:
+                            display_target = f"<code>{target}</code>"
+
+                    self.config["target_recipient"] = target
+                    self.save_config()
+                    self.log(f"{sender_label} đã đổi người nhận cược thừa sang: {target}", "INFO")
+                    self.send_telegram_message(str(chat_id), f"✅ <b>Thành công:</b> Đã cài đặt người nhận cược thừa là:\n👉 <b>{display_target}</b>\n\n💡 <i>Cược vượt định mức sẽ tự động được gửi tới người này.</i>")
+                    return
             else:
-                cur = self.config.get("target_recipient", "(Chưa cài đặt)")
-                self.send_telegram_message(str(chat_id), f"🛸 Người nhận cược thừa hiện tại: <code>{cur}</code>\n👉 Để đổi, hãy gõ: <code>/chuyensang &lt;chat_id hoặc @username&gt;</code>")
+                cur = self.config.get("target_recipient", "").strip()
+                if not cur:
+                    cur_display = "<i>(Chưa cài đặt)</i>"
+                else:
+                    resolved_id, _ = self.resolve_recipient(cur)
+                    if resolved_id and cur.startswith("@"):
+                        cur_display = f"{cur} (Chat ID: <code>{resolved_id}</code>)"
+                    elif resolved_id:
+                        self.known_users = self.load_known_users()
+                        user_match = self.known_users.get(str(resolved_id))
+                        if user_match and user_match.get("username"):
+                            cur_display = f"@{user_match['username']} (Chat ID: <code>{resolved_id}</code>)"
+                        else:
+                            cur_display = f"<code>{cur}</code>"
+                    else:
+                        cur_display = f"<code>{cur}</code>"
+
+                reply = (
+                    f"🛸 <b>NGƯỜI NHẬN CƯỢC THỪA (Thầu trên):</b>\n"
+                    f"━━━━━━━━━━━━━━━━━━\n"
+                    f"• <b>Hiện tại:</b> {cur_display}\n"
+                    f"━━━━━━━━━━━━━━━━━━\n"
+                    f"👉 <b>Cài / Sửa người nhận:</b>\n"
+                    f"  <code>/nguoinhan &lt;@username hoặc Chat ID&gt;</code>\n"
+                    f"  <i>(Ví dụ: <code>/nguoinhan @lalalew</code> hoặc <code>/nguoinhan 7715286942</code>)</i>\n"
+                    f"👉 <b>Xóa người nhận:</b> <code>/nguoinhan xoa</code>\n"
+                    f"👉 <b>Xem danh bạ đã chat:</b> <code>/danhba</code>"
+                )
+                self.send_telegram_message(str(chat_id), reply)
                 return
+
+        # K2. /khach hoặc /nguoigui (Xem/Thêm/Sửa/Xóa khách được phép cược - Yêu cầu mật khẩu)
+        if cmd_root in ["/khach", "khach", "/nguoigui", "nguoigui", "/khachhang", "khachhang"] or cmd_root.startswith("/khach@") or cmd_root.startswith("/nguoigui@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+
+            self.known_users = self.load_known_users()
+            allowed = self.config.setdefault("allowed_senders", ["*"])
+
+            if len(parts) >= 2:
+                sub_action = parts[1].lower()
+
+                # A. Nhận từ tất cả mọi người
+                if sub_action in ["tatca", "all", "*", "tat_ca", "reset", "mohet"]:
+                    self.config["allowed_senders"] = ["*"]
+                    self.save_config()
+                    self.log(f"{sender_label} đã mở nhận cược từ TẤT CẢ mọi người (*)", "INFO")
+                    self.send_telegram_message(str(chat_id), "🌐 <b>Thành công:</b> Đã chuyển sang chế độ <b>NHẬN CƯỢC TỪ TẤT CẢ MỌI NGƯỜI (*)</b>.\nBất kỳ ai nhắn tin cược đúng cú pháp bot đều sẽ nhận.")
+                    return
+
+                # B. Thêm khách
+                if sub_action in ["them", "add", "+", "t"]:
+                    if len(parts) < 3:
+                        self.send_telegram_message(str(chat_id), "⚠️ Cú pháp: <code>/khach them &lt;@username hoặc Chat ID&gt;</code>\nVí dụ: <code>/khach them @Zeng86</code> hoặc <code>/khach them 1023927138</code>")
+                        return
+                    new_user = parts[2].strip()
+                    allowed_clean = [x for x in allowed if x != "*"]
+                    exists = any(x.lower().lstrip("@") == new_user.lower().lstrip("@") for x in allowed_clean)
+                    if exists:
+                        self.send_telegram_message(str(chat_id), f"⚠️ Khách <b>{new_user}</b> đã có trong danh sách từ trước!")
+                        return
+                    allowed_clean.append(new_user)
+                    self.config["allowed_senders"] = allowed_clean
+                    self.save_config()
+                    self.log(f"{sender_label} đã thêm khách: {new_user}", "INFO")
+                    self.send_telegram_message(str(chat_id), f"✅ <b>Thành công:</b> Đã thêm khách <b>{new_user}</b> vào danh sách cho phép!\n👉 Hiện có: <b>{len(allowed_clean)}</b> khách được chỉ định.")
+                    return
+
+                # C. Xóa khách
+                if sub_action in ["xoa", "del", "remove", "-", "x"]:
+                    if len(parts) < 3:
+                        self.send_telegram_message(str(chat_id), "⚠️ Cú pháp: <code>/khach xoa &lt;@username hoặc Chat ID&gt;</code>\nVí dụ: <code>/khach xoa @Zeng86</code>")
+                        return
+                    target_del = parts[2].strip().lower().lstrip("@")
+                    allowed_clean = [x for x in allowed if x.lower().lstrip("@") != target_del]
+                    if len(allowed_clean) == len(allowed):
+                        self.send_telegram_message(str(chat_id), f"⚠️ Không tìm thấy khách <b>{parts[2]}</b> trong danh sách!")
+                        return
+                    if len(allowed_clean) == 0:
+                        allowed_clean = ["*"]
+                        note = "Danh sách trống nên tự động chuyển về nhận từ TẤT CẢ (*)."
+                    else:
+                        note = f"Hiện còn <b>{len(allowed_clean)}</b> khách được chỉ định."
+                    self.config["allowed_senders"] = allowed_clean
+                    self.save_config()
+                    self.log(f"{sender_label} đã xóa khách: {parts[2]}", "INFO")
+                    self.send_telegram_message(str(chat_id), f"🗑️ <b>Thành công:</b> Đã xóa khách <b>{parts[2]}</b> khỏi danh sách!\n{note}")
+                    return
+
+            # Hiển thị danh sách khách hiện tại
+            is_all = ("*" in allowed or not allowed)
+            lines = [
+                "👥 <b>DANH SÁCH KHÁCH ĐƯỢC PHÉP ĐẶT CƯỢC:</b>",
+                "━━━━━━━━━━━━━━━━━━"
+            ]
+            if is_all:
+                lines.append("🌐 <b>Chế độ:</b> <code>Nhận từ TẤT CẢ mọi người (*)</code>")
+                lines.append("<i>Bất kỳ ai nhắn tin cược bot cũng sẽ nhận & phân tích.</i>")
+            else:
+                lines.append(f"🔒 <b>Chỉ nhận từ {len(allowed)} khách được chỉ định:</b>")
+                for idx, u in enumerate(allowed, start=1):
+                    u_clean = str(u).lstrip("@").lower()
+                    info_extra = ""
+                    for uid, k_info in self.known_users.items():
+                        if str(uid) == u_clean or (k_info.get("username") or "").lower() == u_clean:
+                            fn = k_info.get("first_name", "")
+                            un = f"@{k_info.get('username')}" if k_info.get("username") else ""
+                            info_extra = f" <i>({fn} {un} - ID: {uid})</i>"
+                            break
+                    lines.append(f"<b>{idx}.</b> <code>{u}</code>{info_extra}")
+
+            lines.append("━━━━━━━━━━━━━━━━━━")
+            lines.append("📝 <b>LỆNH QUẢN LÝ KHÁCH HÀNG:</b>")
+            lines.append("• <b>Thêm khách:</b> <code>/khach them &lt;@username hoặc ID&gt;</code>")
+            lines.append("  <i>(Ví dụ: <code>/khach them @Zeng86</code> hoặc <code>/khach them 1023927138</code>)</i>")
+            lines.append("• <b>Xóa khách:</b> <code>/khach xoa &lt;@username hoặc ID&gt;</code>")
+            lines.append("• <b>Nhận từ tất cả:</b> <code>/khach tatca</code>")
+            lines.append("• <b>Xem danh bạ đã chat:</b> <code>/danhba</code>")
+
+            self.send_telegram_message(str(chat_id), "\n".join(lines))
+            return
+
+        # K3. /danhba (Xem danh sách những người đã từng mở chat hoặc bấm /start với Bot - Yêu cầu mật khẩu)
+        if cmd_root in ["/danhba", "danhba", "/users", "users"] or cmd_root.startswith("/danhba@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+
+            self.known_users = self.load_known_users()
+            if not self.known_users:
+                self.send_telegram_message(str(chat_id), "📒 <b>Danh bạ Bot:</b> Chưa có người dùng nào bấm /start với Bot.\n👉 Hãy bảo khách hoặc người nhận mở Bot bấm <b>/start</b> trước.")
+                return
+
+            lines = [
+                f"📒 <b>DANH BẠ NGƯỜI DÙNG ĐÃ CHAT VỚI BOT ({len(self.known_users)} người):</b>",
+                "━━━━━━━━━━━━━━━━━━"
+            ]
+            for idx, (uid, info) in enumerate(self.known_users.items(), start=1):
+                name = info.get("first_name") or "Khách"
+                uname = f"@{info.get('username')}" if info.get("username") else "(Không có username)"
+                cid = info.get("chat_id", uid)
+                t = info.get("updated_at", "")
+                t_str = f" <i>({t})</i>" if t else ""
+                lines.append(
+                    f"<b>{idx}. {name}</b> - {uname}\n"
+                    f"   🆔 Chat ID: <code>{cid}</code>{t_str}"
+                )
+
+            lines.append("━━━━━━━━━━━━━━━━━━")
+            lines.append("💡 <i>Sao chép Chat ID hoặc @username để:</i>\n"
+                         "• Đặt người nhận cược: <code>/nguoinhan &lt;ID hoặc @user&gt;</code>\n"
+                         "• Thêm khách cho phép: <code>/khach them &lt;ID hoặc @user&gt;</code>")
+
+            self.send_telegram_message(str(chat_id), "\n".join(lines))
+            return
 
         # K. /chedo (Đổi chế độ chuyển tức thì / gom bảng - Yêu cầu mật khẩu)
         if cmd_root in ["/chedo", "chedo", "/mode", "mode"] or cmd_root.startswith("/chedo@"):

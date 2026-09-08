@@ -3,7 +3,7 @@
   "allowed_senders": [
     "*"
   ],
-  "target_recipient": "@boss99",
+  "target_recipient": "",
   "auto_reply_client": true,
   "auto_forward_excess": true,
   "mode": "instant",
