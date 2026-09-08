@@ -522,37 +522,29 @@ def calculate_board_accounting(balancer, kqxs: dict, price_config: dict = None) 
 
 def format_accounting_report(report_data: dict, tab: str = "thau") -> str:
     """
-    Định dạng tin nhắn báo cáo chốt tiền theo đúng chuẩn người dùng:
-    08/09/2026:
-    De: 2.089(75)= 4.162
-    Lo: 230(77)= 1.123
-    Thau bu: 5.284  (hoặc Khach thua: 5.284 / Nop / Lay ve / Loi / Lo)
+    Định dạng tin nhắn báo cáo chốt tiền theo chuẩn tiếng Việt có dấu:
+    ngày 08/09:
+    Đề 5.770(60)= 278
+    Lô 280(20)= 4.532
+    Khách bù: 4.810 (hoặc Thầu bù / Nộp / Lấy về / Lời / Lỗ)
     trong ngoặc là xác trúng
     """
+    import re
     data = report_data.get(tab, {})
     raw_date = report_data.get("date", "")
-    day_month_year = ""
-    if "/" in raw_date:
-        parts = raw_date.split("/")
-        if len(parts) == 3:
-            day_month_year = f"{int(parts[0]):02d}/{int(parts[1]):02d}/{int(parts[2])}"
-        elif len(parts) == 2:
-            day_month_year = f"{int(parts[0]):02d}/{int(parts[1]):02d}/{datetime.now().year}"
-        else:
-            day_month_year = datetime.now().strftime("%d/%m/%Y")
-    elif "-" in raw_date:
-        parts = raw_date.split("-")
-        if len(parts) == 3:
-            if len(parts[0]) == 4:  # YYYY-MM-DD
-                day_month_year = f"{int(parts[2]):02d}/{int(parts[1]):02d}/{int(parts[0])}"
-            else:  # DD-MM-YYYY
-                day_month_year = f"{int(parts[0]):02d}/{int(parts[1]):02d}/{int(parts[2])}"
-        else:
-            day_month_year = datetime.now().strftime("%d/%m/%Y")
-    else:
-        day_month_year = datetime.now().strftime("%d/%m/%Y")
+    day, month = "", ""
+    if raw_date:
+        m_ymd = re.search(r"(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})", raw_date)
+        m_dmy = re.search(r"(\d{1,2})[/\-](\d{1,2})(?:[/\-](\d{2,4}))?", raw_date)
+        if m_ymd:
+            day, month = m_ymd.group(3).zfill(2), m_ymd.group(2).zfill(2)
+        elif m_dmy:
+            day, month = m_dmy.group(1).zfill(2), m_dmy.group(2).zfill(2)
+    if not day or not month:
+        now = datetime.now()
+        day, month = f"{now.day:02d}", f"{now.month:02d}"
 
-    lines = [f"{day_month_year}:"]
+    lines = [f"ngày {day}/{month}:"]
 
     def fmt_num(val):
         return f"{round(val):,}".replace(",", ".")
@@ -560,32 +552,32 @@ def format_accounting_report(report_data: dict, tab: str = "thau") -> str:
     if data.get("deXac", 0) > 0:
         win_xac = data.get("deWinXac", 0)
         net_abs = abs(data.get("deNet", 0))
-        lines.append(f"De: {fmt_num(data['deXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
+        lines.append(f"Đề {fmt_num(data['deXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
 
     if data.get("loXac", 0) > 0:
         win_xac = data.get("loWinXac", 0)
         net_abs = abs(data.get("loNet", 0))
-        lines.append(f"Lo: {fmt_num(data['loXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
+        lines.append(f"Lô {fmt_num(data['loXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
 
     if data.get("baCangXac", 0) > 0:
         win_xac = data.get("baCangWinXac", 0)
         net_abs = abs(data.get("baCangNet", 0))
-        lines.append(f"3c: {fmt_num(data['baCangXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
+        lines.append(f"3C {fmt_num(data['baCangXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
 
     if data.get("xienXac", 0) > 0:
         win_xac = data.get("xienWinXac", 0)
         net_abs = abs(data.get("xienNet", 0))
-        lines.append(f"Xien: {fmt_num(data['xienXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
+        lines.append(f"Xiên {fmt_num(data['xienXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
 
     net_val = data.get("totalNet", 0)
     net_val_abs = fmt_num(abs(net_val))
 
     if tab == "thau":
-        net_label = "Khach thua" if net_val >= 0 else "Thau bu"
+        net_label = "Khách bù" if net_val >= 0 else "Thầu bù"
     elif tab == "chuyen":
-        net_label = "Nop" if net_val >= 0 else "Lay ve"
+        net_label = "Nộp" if net_val >= 0 else "Lấy về"
     else:
-        net_label = "Loi" if net_val >= 0 else "Lo"
+        net_label = "Lời" if net_val >= 0 else "Lỗ"
 
     lines.append(f"{net_label}: {net_val_abs}")
     return "\n".join(lines)
