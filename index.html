@@ -6997,6 +6997,26 @@ function resetTable() {
               <p id="tgBotInfoText" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 hidden"></p>
             </div>
 
+            <!-- Mật khẩu Quản trị Bot (Bảo vệ dữ liệu & xem các mục) -->
+            <div class="col-span-full bg-amber-50/80 dark:bg-amber-950/30 p-3 rounded-lg border border-amber-200 dark:border-amber-900/50">
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5 text-xs">
+                  <i class="fa-solid fa-shield-halved text-amber-600"></i>
+                  <span>Mật khẩu Quản trị Bot (Admin Password): <span class="text-rose-500">*</span></span>
+                </label>
+                <span class="text-[10px] text-slate-500 font-normal">Mặc định: <code>123456</code></span>
+              </div>
+              <div class="flex gap-2">
+                <input type="password" id="tgInputAdminPassword" value="123456" placeholder="Nhập mật khẩu quản trị..." class="flex-1 border border-slate-300 dark:border-slate-600 rounded px-3 py-1.5 text-xs bg-white dark:bg-dark-700 font-mono font-bold">
+                <button type="button" id="btnToggleAdminPassVisibility" class="px-2.5 py-1 bg-white dark:bg-dark-700 border border-slate-300 dark:border-slate-600 rounded hover:bg-slate-100 text-slate-600 dark:text-slate-300" title="Ẩn/Hiện Mật khẩu">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+              <p class="text-[10.5px] text-amber-800 dark:text-amber-300/90 mt-1.5 leading-relaxed">
+                🔒 <b>Bảo vệ dữ liệu tuyệt đối:</b> Bất kỳ ai vào bot trên Telegram đều <b>KHÔNG THỂ</b> xem Báo cáo (/baocao), Bảng cược (/bang), Bảng giá (/gia), Thiết lập cân chuyển (/canchuyen) hoặc xóa cược (/reset) nếu không gõ mật khẩu bằng lệnh: <code>/mk &lt;mật_khẩu&gt;</code>. Khách chỉ có thể gửi cược và xem KQXS!
+              </p>
+            </div>
+
             <!-- Khách được chỉ định -->
             <div>
               <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -7153,19 +7173,19 @@ function resetTable() {
 
               <div id="tgBranchInputsContainer" class="hidden grid grid-cols-4 gap-2 pt-1">
                 <div>
-                  <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1 text-center">Nh. Đề</label>
+                  <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1 text-center" id="tgLblBranchDe">Nh. Đề</label>
                   <input type="number" id="tgBranchDe" value="0" class="w-full border border-slate-300 dark:border-slate-600 rounded p-1.5 text-center font-bold bg-white dark:bg-dark-800">
                 </div>
                 <div>
-                  <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1 text-center">Nh. Lô</label>
+                  <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1 text-center" id="tgLblBranchLo">Nh. Lô</label>
                   <input type="number" id="tgBranchLo" value="0" class="w-full border border-slate-300 dark:border-slate-600 rounded p-1.5 text-center font-bold bg-white dark:bg-dark-800">
                 </div>
                 <div>
-                  <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1 text-center">Nh. 3C</label>
+                  <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1 text-center" id="tgLblBranch3c">Nh. 3C</label>
                   <input type="number" id="tgBranch3c" value="0" class="w-full border border-slate-300 dark:border-slate-600 rounded p-1.5 text-center font-bold bg-white dark:bg-dark-800">
                 </div>
                 <div>
-                  <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1 text-center">Nh. Xiên</label>
+                  <label class="block text-[11px] font-bold text-amber-600 dark:text-amber-400 mb-1 text-center" id="tgLblBranchX">Nh. Xiên</label>
                   <input type="number" id="tgBranchX" value="0" class="w-full border border-slate-300 dark:border-slate-600 rounded p-1.5 text-center font-bold bg-white dark:bg-dark-800">
                 </div>
               </div>
@@ -7353,6 +7373,7 @@ function resetTable() {
 
         if (document.getElementById('tgInputApiUrl')) document.getElementById('tgInputApiUrl').value = TG_BOT_API;
         if (cfg.bot_token) document.getElementById('tgInputBotToken').value = cfg.bot_token;
+        if (cfg.admin_password && document.getElementById('tgInputAdminPassword')) document.getElementById('tgInputAdminPassword').value = cfg.admin_password;
         if (cfg.allowed_senders) document.getElementById('tgInputAllowedSenders').value = cfg.allowed_senders.join(", ");
         if (cfg.target_recipient) document.getElementById('tgInputTargetRecipient').value = cfg.target_recipient;
 
@@ -7393,6 +7414,7 @@ function resetTable() {
         if (r.branch_lo !== undefined) document.getElementById('tgBranchLo').value = r.branch_lo;
         if (r.branch_3c !== undefined) document.getElementById('tgBranch3c').value = r.branch_3c;
         if (r.branch_x !== undefined) document.getElementById('tgBranchX').value = r.branch_x;
+        if (typeof updateTgRetainLabels === 'function') updateTgRetainLabels();
 
       } catch (e) {
         console.warn("Không tải được config bot:", e);
@@ -7406,6 +7428,7 @@ function resetTable() {
 
       const payload = {
         bot_token: document.getElementById('tgInputBotToken').value.trim(),
+        admin_password: document.getElementById('tgInputAdminPassword')?.value?.trim() || "123456",
         allowed_senders: allowedList,
         target_recipient: document.getElementById('tgInputTargetRecipient').value.trim(),
         mode: document.getElementById('tgModeBatch').checked ? "batch" : "instant",
@@ -7568,6 +7591,20 @@ function resetTable() {
         });
       }
 
+      // Nút Ẩn/Hiện Token
+      document.getElementById('btnToggleTokenVisibility')?.addEventListener('click', () => {
+        const inp = document.getElementById('tgInputBotToken');
+        if (!inp) return;
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+      });
+
+      // Nút Ẩn/Hiện Mật khẩu Quản trị
+      document.getElementById('btnToggleAdminPassVisibility')?.addEventListener('click', () => {
+        const inp = document.getElementById('tgInputAdminPassword');
+        if (!inp) return;
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+      });
+
       // Nút Bật/Dừng Bot
       const btnToggle = document.getElementById('btnToggleBotRun');
       if (btnToggle) {
@@ -7677,13 +7714,31 @@ function resetTable() {
       document.getElementById('btnSaveTgConfig')?.addEventListener('click', saveTgBotConfig);
       document.getElementById('btnSaveTgRetainConfig')?.addEventListener('click', saveTgBotConfig);
 
-      // Checkbox Nhánh
+      // Checkbox Nhánh / Tối đa
       const chkBranch = document.getElementById('tgRetainUseBranch');
       if (chkBranch) {
         chkBranch.addEventListener('change', (e) => {
           document.getElementById('tgBranchInputsContainer')?.classList.toggle('hidden', !e.target.checked);
         });
       }
+
+      function updateTgRetainLabels() {
+        const isPercent = document.getElementById('tgRetainTypePercent')?.checked;
+        const lblBox = document.getElementById('tgLblBranchCheckbox');
+        const lblDe = document.getElementById('tgLblBranchDe');
+        const lblLo = document.getElementById('tgLblBranchLo');
+        const lbl3c = document.getElementById('tgLblBranch3c');
+        const lblX = document.getElementById('tgLblBranchX');
+
+        if (lblBox) lblBox.textContent = isPercent ? "Bật mức trần Tối đa (k / đ)" : "Bật cấu hình Nhánh";
+        if (lblDe) lblDe.textContent = isPercent ? "T.Đ (k)" : "Nh. Đề";
+        if (lblLo) lblLo.textContent = isPercent ? "T.L (đ)" : "Nh. Lô";
+        if (lbl3c) lbl3c.textContent = isPercent ? "T.3c (k)" : "Nh. 3C";
+        if (lblX) lblX.textContent = isPercent ? "T.X (k)" : "Nh. Xiên";
+      }
+
+      document.getElementById('tgRetainTypeMoney')?.addEventListener('change', updateTgRetainLabels);
+      document.getElementById('tgRetainTypePercent')?.addEventListener('change', updateTgRetainLabels);
 
       // Nút đồng bộ mức giữ lại từ Web sang Bot
       const btnSyncRetain = document.getElementById('btnSyncWebRetainToBot');
