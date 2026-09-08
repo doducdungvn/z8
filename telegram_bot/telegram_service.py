@@ -191,7 +191,7 @@ class TelegramBotService:
         except Exception:
             pass
 
-    def record_client_bet(self, chat_id_str: str, sender_label: str, username: str, parsed: dict):
+    def record_client_bet(self, chat_id_str: str, sender_label: str, username: str, parsed: dict, raw_text: str = "", msg_index: int = 1):
         c = self.client_bets.setdefault(chat_id_str, {
             "name": sender_label,
             "username": username,
@@ -199,12 +199,25 @@ class TelegramBotService:
             "lo": {},
             "bacang": {},
             "xien": [],
+            "history": [],
             "msg_count": 0,
             "last_settled": None
         })
         c["name"] = sender_label
         c["username"] = username
         c["msg_count"] = c.get("msg_count", 0) + 1
+
+        if "history" not in c:
+            c["history"] = []
+
+        if raw_text:
+            c["history"].append({
+                "timestamp": datetime.now().strftime("%H:%M:%S %d/%m"),
+                "raw_text": raw_text,
+                "msg_index": msg_index,
+                "summary": parsed.get("summary", {}),
+                "invalid_items": parsed.get("invalid_items", [])
+            })
 
         for b in parsed.get("de", []):
             num = str(b["number"]).zfill(2)
@@ -226,6 +239,77 @@ class TelegramBotService:
             })
 
         self.save_client_bets()
+
+    def get_all_raw_messages(self) -> list:
+        """Lấy danh sách tất cả tin nhắn gốc đã nhận từ các khách"""
+        all_msgs = []
+        for cid_str, cdata in self.client_bets.items():
+            name = cdata.get("name") or cid_str
+            username = cdata.get("username") or ""
+            history = cdata.get("history") or []
+            for item in history:
+                all_msgs.append({
+                    "chat_id": cid_str,
+                    "sender_name": name,
+                    "username": username,
+                    "timestamp": item.get("timestamp"),
+                    "raw_text": item.get("raw_text"),
+                    "msg_index": item.get("msg_index"),
+                    "summary": item.get("summary", {}),
+                    "invalid_items": item.get("invalid_items", [])
+                })
+        return all_msgs
+
+    def add_web_bets(self, bet_text: str) -> dict:
+        """
+        Nhận cược từ Web nạp sang Bot:
+        Phân tích cú pháp, nạp vào bảng cân cược và bắn cược thừa nếu vượt hạn mức.
+        """
+        from bet_parser import parse_bet_message
+        parsed = parse_bet_message(bet_text)
+        summary = parsed.get("summary", {})
+        total_bets_count = summary.get("de_count", 0) + summary.get("lo_count", 0) + summary.get("bacang_count", 0) + summary.get("xien_count", 0)
+        
+        if total_bets_count == 0:
+            return {"success": False, "error": "Nội dung không chứa cú pháp cược hợp lệ.", "parsed": parsed}
+
+        chat_id_str = "web_input"
+        sender_label = "Chủ Bảng (Web)"
+        msg_idx = self.client_msg_counters.get(chat_id_str, 0) + 1
+        self.client_msg_counters[chat_id_str] = msg_idx
+        self.record_client_bet(chat_id_str, sender_label, "web_user", parsed, raw_text=bet_text, msg_index=msg_idx)
+
+        excess = self.balancer.add_bets(parsed)
+        excess_count = sum(len(v) for v in excess.values())
+        self.log(f"📥 Đã nạp {total_bets_count} cược từ Web vào Bot. Vượt mức giữ lại {excess_count} con.", "SUCCESS")
+
+        transfer_msg = ""
+        transferred = False
+        if self.config.get("auto_forward_excess", True) and excess_count > 0:
+            target_recipient = self.config.get("target_recipient", "").strip()
+            if target_recipient:
+                transfer_msg = self.balancer.format_transfer_message(excess, header_prefix="Thầu")
+                ok, err = self.send_telegram_message(target_recipient, transfer_msg, track_for_cleanup=True, tag="transfer")
+                if ok:
+                    self.balancer.commit_transfers(excess)
+                    self.stats["transfers_sent"] += 1
+                    transferred = True
+                    self.log(f"🛸 Đã tự động bắn cược thừa từ Web tới {target_recipient}:\n{transfer_msg}", "SUCCESS")
+
+        return {
+            "success": True,
+            "total_bets": total_bets_count,
+            "excess_count": excess_count,
+            "transferred": transferred,
+            "transfer_message": transfer_msg,
+            "board": {
+                "step_count": self.balancer.step_count,
+                "de_sums": self.balancer.de_sums,
+                "lo_sums": self.balancer.lo_sums,
+                "bacang_sums": self.balancer.bacang_sums,
+                "xien_count": len(self.balancer.xien_bets)
+            }
+        }
 
     def load_tracked_messages(self) -> list:
         if os.path.exists(TRACKED_MESSAGES_PATH):
@@ -1398,7 +1482,7 @@ class TelegramBotService:
         self.client_msg_counters[chat_id_str] = msg_idx
 
         # Ghi nhận cược theo từng khách để chốt tiền âm/dương khi có KQXS
-        self.record_client_bet(chat_id_str, sender_label, username, parsed)
+        self.record_client_bet(chat_id_str, sender_label, username, parsed, raw_text=text, msg_index=msg_idx)
 
         # 3. Phản hồi xác nhận chi tiết cho khách (nếu bật)
         if self.config.get("auto_reply_client", True):

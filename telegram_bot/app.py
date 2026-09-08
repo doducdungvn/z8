@@ -178,14 +178,39 @@ def get_logs():
 @app.route("/api/bot/board", methods=["GET"])
 def get_board():
     b = bot_service.balancer
+    retained = b.get_retained_bets()
+    raw_messages = bot_service.get_all_raw_messages()
     return jsonify({
         "step_count": b.step_count,
         "de_sums": b.de_sums,
         "lo_sums": b.lo_sums,
         "bacang_sums": b.bacang_sums,
         "xien_count": len(b.xien_bets),
-        "history": b.transfer_history
+        "history": b.transfer_history,
+        "retained": retained,
+        "raw_messages": raw_messages
     })
+
+
+@app.route("/api/bot/sync_web_bets", methods=["POST"])
+def sync_web_bets():
+    data = request.json or {}
+    bet_text = str(data.get("bet_text", "")).strip()
+    if not bet_text:
+        return jsonify({"success": False, "error": "Chưa có nội dung cược để đồng bộ."}), 400
+
+    res = bot_service.add_web_bets(bet_text)
+    status_code = 200 if res.get("success") else 400
+    return jsonify(res), status_code
+
+
+@app.route("/api/bot/reload_shorthands", methods=["POST"])
+def reload_shorthands_route():
+    from bet_parser import reload_shorthands
+    count = reload_shorthands()
+    bot_service.log(f"Đã nạp lại {count} từ viết tắt từ nhaptat.txt", "SUCCESS")
+    return jsonify({"success": True, "count": count})
+
 
 
 @app.route("/api/bot/reset_board", methods=["POST"])

@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 import unicodedata
@@ -101,6 +102,40 @@ SHORTHANDS = {
     "ditto": "05.06.07.08.09.15.16.17.18.19.25.26.27.28.29.35.36.37.38.39.45.46.47.48.49.55.56.57.58.59.65.66.67.68.69.75.76.77.78.79.85.86.87.88.89.95.96.97.98.99"
 }
 
+def load_shorthands_from_file(file_path: str = None) -> bool:
+    """Nạp động các từ viết tắt từ file nhaptat.txt"""
+    candidates = [file_path] if file_path else [
+        os.path.join(os.path.dirname(__file__), "..", "nhaptat.txt"),
+        os.path.join(os.path.dirname(__file__), "nhaptat.txt"),
+        r"c:\inetpub\wwwroot\lk\nhaptat.txt"
+    ]
+    for p in candidates:
+        if p and os.path.exists(p):
+            try:
+                with open(p, "r", encoding="utf-8", errors="ignore") as f:
+                    count = 0
+                    for line in f:
+                        line = line.strip()
+                        if not line or "=" not in line or line.startswith("#"):
+                            continue
+                        parts = line.split("=", 1)
+                        k = parts[0].strip().lower()
+                        v = parts[1].strip()
+                        if k and v:
+                            SHORTHANDS[k] = v
+                            count += 1
+                return True
+            except Exception:
+                pass
+    return False
+
+# Tự động nạp khi module khởi động
+load_shorthands_from_file()
+
+def reload_shorthands() -> int:
+    load_shorthands_from_file()
+    return len(SHORTHANDS)
+
 def strip_accents(s: str) -> str:
     s = s.replace("đ", "d").replace("Đ", "D")
     s = unicodedata.normalize("NFD", s)
@@ -118,12 +153,31 @@ def normalize_bet_line(line: str) -> str:
     norm = re.sub(r'\b(?:chan\s+le|chanle)\b', 'chanle', norm)
     norm = re.sub(r'\b(?:le\s+chan|lechan)\b', 'lechan', norm)
     norm = re.sub(r'\b(?:le\s+le|lele)\b', 'lele', norm)
+    norm = re.sub(r'\b(?:to\s+to|toto)\b', 'toto', norm)
+    norm = re.sub(r'\b(?:to\s+be|tobe)\b', 'tobe', norm)
+    norm = re.sub(r'\b(?:be\s+to|beto)\b', 'beto', norm)
+    norm = re.sub(r'\b(?:be\s+be|bebe)\b', 'bebe', norm)
+    norm = re.sub(r'\b(?:dau\s+to|dauto)\b', 'dauto', norm)
+    norm = re.sub(r'\b(?:dau\s+be|daube)\b', 'daube', norm)
+    norm = re.sub(r'\b(?:dau\s+chan|dauchan)\b', 'dauchan', norm)
+    norm = re.sub(r'\b(?:dau\s+le|daule)\b', 'daule', norm)
+    norm = re.sub(r'\b(?:dit\s+to|duoi\s+to|ditto)\b', 'ditto', norm)
+    norm = re.sub(r'\b(?:dit\s+be|duoi\s+be|ditbe)\b', 'ditbe', norm)
+    norm = re.sub(r'\b(?:dit\s+chan|duoi\s+chan|ditchan)\b', 'ditchan', norm)
+    norm = re.sub(r'\b(?:dit\s+le|duoi\s+le|ditle)\b', 'ditle', norm)
+    norm = re.sub(r'\b(?:tong\s+to|tongto)\b', 'tongto', norm)
+    norm = re.sub(r'\b(?:tong\s+be|tongbe)\b', 'tongbe', norm)
+    norm = re.sub(r'\b(?:tong\s+chan|tongchan)\b', 'tongchan', norm)
+    norm = re.sub(r'\b(?:tong\s+le|tongle)\b', 'tongle', norm)
     norm = re.sub(r'\b(?:daudit|dau\s+dit|dau\s+duoi|dd|đđ)\s*(\d)(?![0-9])', r'daudit\1', norm)
-    norm = re.sub(r'\b(?:kep lech|keplech)\b', 'kl', norm)
-    norm = re.sub(r'\b(?:lip|kep)(?=[x=+*\d\s]|$)', 'k ', norm)
+    norm = re.sub(r'\b(?:sat\s*kep|satkep|ap\s*kep|apkep)\b', 'apkep', norm)
+    norm = re.sub(r'\b(?:kep\s*am|kepam)\b', 'kepam', norm)
+    norm = re.sub(r'\b(?:kep\s*lech|keplech)\b', 'kl', norm)
+    norm = re.sub(r'\b(?:kep\s*bang|kepbang|lip|kep)(?=[x=+*\d\s]|$)', 'k ', norm)
     norm = re.sub(r'\b(?:dau)\s*(\d)(?![0-9])', r'dau\1', norm)
     norm = re.sub(r'\b(?:dit|duoi)\s*(\d)(?![0-9])', r'dit\1', norm)
     norm = re.sub(r'\b(?:cham)\s*(\d)(?![0-9])', r'cham\1', norm)
+    norm = re.sub(r'\b(?:c)\s*(\d)(?![0-9])', r'cham\1', norm)
     norm = re.sub(r'\b(?:tong)\s*(\d)(?![0-9])', r't\1', norm)
     norm = re.sub(r'\b(?:d)\s*(\d)(?![0-9])', r'd\1', norm)
     norm = re.sub(r'\b(?:t)\s*(\d)(?![0-9])', r't\1', norm)
@@ -154,6 +208,9 @@ def normalize_shorthand_token(token: str) -> str:
         dit_k = "d'" + d
         if dau_k in SHORTHANDS and dit_k in SHORTHANDS:
             return SHORTHANDS[dau_k] + '.' + SHORTHANDS[dit_k]
+    m_c = re.match(r'^c(\d)$', t)
+    if m_c:
+        return 'cham' + m_c.group(1)
     m_dau = re.match(r'^dau(\d)$', t)
     if m_dau:
         return 'd' + m_dau.group(1)
@@ -177,16 +234,17 @@ def normalize_shorthand_token(token: str) -> str:
 
 def resolve_shorthands(numbers_str: str) -> str:
     s = numbers_str
-    # Mở rộng dau0,8 -> dau0, dau8
+    # Mở rộng dau0,8 -> dau0, dau8 hoặc c1,2,3 -> cham1, cham2, cham3
     def expand_prefix_multi(m):
-        prefix = m.group(1)
+        raw_prefix = m.group(1).lower()
+        prefix = "cham" if raw_prefix == "c" else raw_prefix
         first = m.group(2)
         rest = m.group(3)
         digits = [d for d in re.split(r'[^0-9]+', rest) if d]
         expanded = [prefix + first] + [prefix + d for d in digits]
         return ','.join(expanded)
 
-    combined_regex = re.compile(r'(dau|dit|daudit|d\'|d|he|bo|t|cham)([0-9]{1,2})((?:[.,\-\s]+[0-9]{1,2})+)', re.I)
+    combined_regex = re.compile(r'(dau|dit|daudit|d\'|d|he|bo|t|cham|c)([0-9]{1,2})((?:[.,\-\s]+[0-9]{1,2})+)', re.I)
     s = combined_regex.sub(expand_prefix_multi, s)
 
     parts = re.split(r'([.,\-\s]+)', s)
@@ -204,6 +262,7 @@ def resolve_shorthands(numbers_str: str) -> str:
         else:
             resolved.append(part)
     return ''.join(resolved)
+
 
 def parse_numbers_from_bet_string(numbers_str: str, bet_type: str) -> list[str]:
     segments = [s for s in re.split(r'[.,\-\s]+', numbers_str) if s]

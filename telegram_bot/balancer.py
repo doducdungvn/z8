@@ -185,12 +185,67 @@ class BoardBalancer:
                     break
 
         if has_transfer:
+            transfer_text = self.format_transfer_message(transfers, include_header=False)
             self.step_count += 1
             self.transfer_history.append({
                 "step": self.step_count,
                 "timestamp": datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
-                "transferred": transfers
+                "transferred": transfers,
+                "transfer_text": transfer_text
             })
+
+    def get_retained_bets(self) -> dict:
+        """
+        Lấy chi tiết các cược đang thực giữ lại (tổng nhận trừ tổng chuyển)
+        """
+        retained_de = {}
+        for num, total in self.de_sums.items():
+            transferred = self.cumulative_de_transfers.get(num, 0.0)
+            held = total - transferred
+            if held > 0:
+                retained_de[num] = held
+
+        retained_lo = {}
+        for num, total in self.lo_sums.items():
+            transferred = self.cumulative_lo_transfers.get(num, 0.0)
+            held = total - transferred
+            if held > 0:
+                retained_lo[num] = held
+
+        retained_3c = {}
+        for num, total in self.bacang_sums.items():
+            transferred = self.cumulative_bacang_transfers.get(num, 0.0)
+            held = total - transferred
+            if held > 0:
+                retained_3c[num] = held
+
+        retained_xien = []
+        for idx, bet in enumerate(self.xien_bets):
+            transferred = self.cumulative_xien_transfers.get(idx, 0.0)
+            held = bet['amount'] - transferred
+            if held > 0:
+                retained_xien.append({
+                    "numbers": bet['numbers'],
+                    "amount": held
+                })
+
+        return {
+            "de": retained_de,
+            "lo": retained_lo,
+            "bacang": retained_3c,
+            "xien": retained_xien,
+            "summary": {
+                "de_count": len(retained_de),
+                "de_sum": sum(retained_de.values()),
+                "lo_count": len(retained_lo),
+                "lo_sum": sum(retained_lo.values()),
+                "bacang_count": len(retained_3c),
+                "bacang_sum": sum(retained_3c.values()),
+                "xien_count": len(retained_xien),
+                "xien_sum": sum(x['amount'] for x in retained_xien)
+            }
+        }
+
 
     def format_transfer_message(self, transfers: dict, header_prefix: str = "", include_header: bool = False) -> str:
         """
