@@ -5662,32 +5662,26 @@ function setupEventListeners() {
         return Math.round(val || 0).toLocaleString('vi-VN');
       };
 
-      // Xử lý ngày hiển thị dạng DD/MM/YYYY: (ví dụ 08/09/2026:)
+      // Xử lý ngày hiển thị dạng ngày DD/MM: (ví dụ ngày 08/09:)
       const rawDate = window.lastCalculatedReport ? window.lastCalculatedReport.date : (new Date()).toLocaleDateString('vi-VN');
-      let dateHeader = "";
+      let day = '', month = '';
       if (rawDate) {
-        if (rawDate.includes('-')) {
-          const parts = rawDate.split('-');
-          if (parts.length >= 3) {
-            if (parts[0].length === 4) { // YYYY-MM-DD
-              dateHeader = `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}:`;
-            } else { // DD-MM-YYYY
-              dateHeader = `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}:`;
-            }
-          }
-        } else if (rawDate.includes('/')) {
-          const parts = rawDate.split('/');
-          if (parts.length >= 3) {
-            dateHeader = `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}:`;
-          } else if (parts.length === 2) {
-            dateHeader = `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${(new Date()).getFullYear()}:`;
-          }
+        const matchYmd = rawDate.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+        const matchDmy = rawDate.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+        if (matchYmd) {
+          day = matchYmd[3].padStart(2, '0');
+          month = matchYmd[2].padStart(2, '0');
+        } else if (matchDmy) {
+          day = matchDmy[1].padStart(2, '0');
+          month = matchDmy[2].padStart(2, '0');
         }
       }
-      if (!dateHeader) {
+      if (!day || !month) {
         const now = new Date();
-        dateHeader = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}:`;
+        day = String(now.getDate()).padStart(2, '0');
+        month = String(now.getMonth() + 1).padStart(2, '0');
       }
+      const dateHeader = `ngày ${day}/${month}:`;
 
       const activeTab = window.activeReportTab || 'thau';
       const curData = (activeTab === 'chuyen') ? data.chuyen : ((activeTab === 'giulai') ? data.giulai : data.thau);
@@ -5695,31 +5689,31 @@ function setupEventListeners() {
       const lines = [];
       lines.push(dateHeader);
 
-      // Định dạng theo chuẩn người dùng: De: 2.089(75)= 4.162 (trong ngoặc là xác trúng)
+      // Định dạng tiếng Việt có dấu: Đề 5.770(60)= 278, Lô 280(20)= 4.532
       if (curData.deXac > 0) {
-        lines.push(`De: ${formatMoneyK(curData.deXac)}(${formatMoneyK(curData.deWinXac || 0)})= ${formatMoneyK(Math.abs(curData.deNet || 0))}`);
+        lines.push(`Đề ${formatMoneyK(curData.deXac)}(${formatMoneyK(curData.deWinXac || 0)})= ${formatMoneyK(Math.abs(curData.deNet || 0))}`);
       }
       if (curData.loXac > 0) {
-        lines.push(`Lo: ${formatMoneyK(curData.loXac)}(${formatMoneyK(curData.loWinXac || 0)})= ${formatMoneyK(Math.abs(curData.loNet || 0))}`);
+        lines.push(`Lô ${formatMoneyK(curData.loXac)}(${formatMoneyK(curData.loWinXac || 0)})= ${formatMoneyK(Math.abs(curData.loNet || 0))}`);
       }
       if (curData.baCangXac > 0) {
-        lines.push(`3c: ${formatMoneyK(curData.baCangXac)}(${formatMoneyK(curData.baCangWinXac || 0)})= ${formatMoneyK(Math.abs(curData.baCangNet || 0))}`);
+        lines.push(`3C ${formatMoneyK(curData.baCangXac)}(${formatMoneyK(curData.baCangWinXac || 0)})= ${formatMoneyK(Math.abs(curData.baCangNet || 0))}`);
       }
       if (curData.xienXac > 0) {
-        lines.push(`Xien: ${formatMoneyK(curData.xienXac)}(${formatMoneyK(curData.xienWinXac || 0)})= ${formatMoneyK(Math.abs(curData.xienNet || 0))}`);
+        lines.push(`Xiên ${formatMoneyK(curData.xienXac)}(${formatMoneyK(curData.xienWinXac || 0)})= ${formatMoneyK(Math.abs(curData.xienNet || 0))}`);
       }
 
-      // Dòng kết quả tổng kết theo từng tab
+      // Dòng kết quả tổng kết theo từng tab (Khách bù/Thầu bù)
       let netLabel = "";
       const netVal = curData.totalNet || 0;
       const netValFormatted = formatMoneyK(Math.abs(netVal));
 
       if (activeTab === 'thau') {
-        netLabel = (netVal >= 0) ? "Khach thua" : "Thau bu";
+        netLabel = (netVal >= 0) ? "Khách bù" : "Thầu bù";
       } else if (activeTab === 'chuyen') {
-        netLabel = (netVal >= 0) ? "Nop" : "Lay ve";
+        netLabel = (netVal >= 0) ? "Nộp" : "Lấy về";
       } else { // giulai
-        netLabel = (netVal >= 0) ? "Loi" : "Lo";
+        netLabel = (netVal >= 0) ? "Lời" : "Lỗ";
       }
 
       lines.push(`${netLabel}: ${netValFormatted}`);
