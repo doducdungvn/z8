@@ -43,6 +43,34 @@
 </head>
 <body class="h-full flex flex-col font-sans antialiased select-none">
 
+  <!-- ==================== SECURITY LOCK SCREEN OVERLAY ==================== -->
+  <div id="adminLockScreenOverlay" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 text-center space-y-5 animate-in fade-in zoom-in duration-200">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 border border-sky-500/40 flex items-center justify-center mx-auto text-sky-400 text-2xl shadow-inner">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <div>
+        <h2 class="text-base sm:text-lg font-bold text-white tracking-wide uppercase">TRUNG TÂM QUẢN TRỊ BẢO MẬT</h2>
+        <p class="text-xs text-slate-400 mt-1 leading-relaxed">Dữ liệu cược, tài chính và cấu hình được mã hóa bảo vệ.<br>Vui lòng nhập mật khẩu quản trị để mở khóa.</p>
+      </div>
+      <form id="formAdminUnlock" onsubmit="event.preventDefault(); submitAdminUnlock();" class="space-y-4 text-left">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5 text-center">Mật Khẩu Quản Trị:</label>
+          <div class="relative">
+            <input type="password" id="inpUnlockPassword" placeholder="••••••••" autofocus class="w-full bg-slate-800/90 border border-slate-700 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 rounded-xl px-4 py-3 text-sm text-center font-mono font-bold text-white tracking-widest outline-none transition">
+            <button type="button" onclick="togglePasswordVisibility('inpUnlockPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs px-2 py-1 cursor-pointer">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <p id="unlockErrorMsg" class="text-xs text-rose-400 font-semibold text-center hidden"></p>
+        <button type="submit" id="btnSubmitUnlock" class="w-full py-3 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold tracking-wider uppercase transition shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+          <i class="fa-solid fa-lock-open"></i> Mở Khóa Quản Trị
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- ==================== TOP NAVIGATION HEADER ==================== -->
   <header class="bg-slate-950 border-b border-slate-800 shrink-0 px-3 sm:px-6 py-3 flex items-center justify-between gap-3 shadow-md">
     <div class="flex items-center gap-3">
@@ -65,6 +93,12 @@
       <button id="btnToggleBot" type="button" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-2 shadow cursor-pointer active:scale-95">
         <i class="fa-solid fa-play"></i>
         <span id="lblBtnToggleBot">Bật Bot</span>
+      </button>
+
+      <!-- Nút Khóa Màn Hình -->
+      <button id="btnLockAdmin" type="button" onclick="lockAdmin()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer active:scale-95" title="Khóa màn hình quản trị ngay lập tức">
+        <i class="fa-solid fa-lock"></i>
+        <span class="hidden md:inline">Khóa Ngay</span>
       </button>
 
       <!-- Nút Làm mới -->
@@ -575,32 +609,93 @@
             <div>
               <h3 class="font-bold text-sm text-white flex items-center gap-2">
                 <i class="fa-solid fa-table-list text-purple-400"></i>
-                Tổng Cược & Báo Cáo Tài Chính Hôm Nay
+                Báo Cáo Tài Chính & Bảng Cược Khách
               </h3>
-              <p class="text-xs text-slate-400">Cược tích lũy bot đã nhận từ khách trong ngày.</p>
+              <p class="text-xs text-slate-400">Xem KQXS, chốt tiền tự động & gửi tin nhắn âm/dương cho từng khách cược.</p>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-              <button type="button" id="btnFetchKQXS" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1">
+              <div class="flex items-center gap-1.5 bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-700">
+                <span class="text-xs text-slate-400"><i class="fa-regular fa-calendar"></i></span>
+                <input type="date" id="inpSettleDate" class="bg-transparent text-white text-xs font-bold focus:outline-none cursor-pointer">
+              </div>
+              <button type="button" id="btnFetchKQXS" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer">
                 <i class="fa-solid fa-trophy"></i> Xem KQXS
               </button>
-              <button type="button" id="btnViewAccountingReport" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1">
-                <i class="fa-solid fa-chart-pie"></i> Báo Cáo Tiền Nong
+              <button type="button" id="btnViewAccountingReport" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+                <i class="fa-solid fa-chart-pie"></i> Tính Báo Cáo
               </button>
-              <button type="button" id="btnResetBoardModal" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1">
-                <i class="fa-solid fa-trash"></i> Reset Bảng Cược
+              <button type="button" id="btnTriggerSettleTelegram" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer" title="Gửi tin nhắn chốt âm/dương cho từng khách và người nhận">
+                <i class="fa-brands fa-telegram"></i> Bắn Tin Chốt (Telegram)
+              </button>
+              <button type="button" id="btnResetBoardModal" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+                <i class="fa-solid fa-trash"></i> Reset
               </button>
             </div>
           </div>
 
-          <!-- Chi tiết bảng cược -->
-          <div id="boardDetailedContent" class="bg-slate-900 p-4 rounded-xl border border-slate-700 min-h-[140px] text-xs space-y-3">
+          <!-- Chi tiết bảng cược tổng -->
+          <div id="boardDetailedContent" class="bg-slate-900 p-4 rounded-xl border border-slate-700 min-h-[120px] text-xs space-y-3">
             <p class="text-slate-500 italic">Đang tải dữ liệu bảng cược...</p>
           </div>
 
-          <!-- Khung Báo Cáo Tài Chính nếu có -->
-          <div id="accountingReportBox" class="hidden bg-slate-950 p-4 rounded-xl border border-slate-700 space-y-2">
-            <h4 class="font-bold text-xs text-amber-400 uppercase">📊 Kết Quả Báo Cáo Tài Chính:</h4>
-            <pre id="accountingReportText" class="text-xs font-mono text-slate-200 whitespace-pre-wrap leading-relaxed"></pre>
+          <!-- Khung Báo Cáo Tài Chính 3 Bảng -->
+          <div id="accountingReportBox" class="hidden space-y-4">
+            <h4 class="font-bold text-xs text-amber-400 uppercase flex items-center gap-1.5">
+              <i class="fa-solid fa-file-invoice-dollar"></i> Kết Quả Báo Cáo Tài Chính:
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Bảng Thầu -->
+              <div class="bg-slate-950 p-4 rounded-xl border border-sky-500/30 space-y-3 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+                    <span class="font-bold text-xs text-sky-400 uppercase">📋 Bảng Thầu (Nhận khách)</span>
+                    <button type="button" onclick="copyReportText('thau')" class="px-2 py-0.5 bg-sky-900/60 hover:bg-sky-800 text-sky-200 border border-sky-700 rounded text-[11px] font-bold transition flex items-center gap-1 cursor-pointer">
+                      <i class="fa-regular fa-copy"></i> Copy
+                    </button>
+                  </div>
+                  <pre id="reportTextThau" class="text-xs font-mono text-slate-200 whitespace-pre-wrap leading-relaxed select-all"></pre>
+                </div>
+              </div>
+
+              <!-- Bảng Chuyển -->
+              <div class="bg-slate-950 p-4 rounded-xl border border-emerald-500/30 space-y-3 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+                    <span class="font-bold text-xs text-emerald-400 uppercase">🛸 Bảng Chuyển (Thầu trên)</span>
+                    <button type="button" onclick="copyReportText('chuyen')" class="px-2 py-0.5 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 border border-emerald-700 rounded text-[11px] font-bold transition flex items-center gap-1 cursor-pointer">
+                      <i class="fa-regular fa-copy"></i> Copy
+                    </button>
+                  </div>
+                  <pre id="reportTextChuyen" class="text-xs font-mono text-slate-200 whitespace-pre-wrap leading-relaxed select-all"></pre>
+                </div>
+              </div>
+
+              <!-- Bảng Giữ Lại -->
+              <div class="bg-slate-950 p-4 rounded-xl border border-amber-500/30 space-y-3 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+                    <span class="font-bold text-xs text-amber-400 uppercase">🛡️ Bảng Giữ Lại (Ăn thua)</span>
+                    <button type="button" onclick="copyReportText('giulai')" class="px-2 py-0.5 bg-amber-900/60 hover:bg-amber-800 text-amber-200 border border-amber-700 rounded text-[11px] font-bold transition flex items-center gap-1 cursor-pointer">
+                      <i class="fa-regular fa-copy"></i> Copy
+                    </button>
+                  </div>
+                  <pre id="reportTextGiulai" class="text-xs font-mono text-slate-200 whitespace-pre-wrap leading-relaxed select-all"></pre>
+                </div>
+              </div>
+            </div>
+
+            <!-- Danh sách từng khách cược trong ngày -->
+            <div id="clientReportsContainer" class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span class="font-bold text-xs text-slate-300 uppercase flex items-center gap-1.5">
+                  <i class="fa-solid fa-users"></i> Chi Tiết Khách Cược Trong Ngày
+                </span>
+                <span id="clientReportsCountBadge" class="text-[11px] text-slate-400">0 khách</span>
+              </div>
+              <div id="clientReportsList" class="space-y-2 text-xs">
+                <p class="text-slate-500 italic">Chưa có khách nào cược hôm nay.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -635,24 +730,73 @@
               </div>
             </div>
 
-            <!-- Mật khẩu quản trị -->
-            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
-              <h4 class="font-bold text-xs text-slate-200 uppercase tracking-wider">
-                🔑 Mật Khẩu Quản Trị Hệ Thống (/mk)
+            <!-- ĐỊNH DANH CHỦ BOT (TELEGRAM OWNER) -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-sky-500/30 space-y-3">
+              <h4 class="font-bold text-xs text-sky-400 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-crown text-amber-400"></i> 1. Định Danh Chủ Bot (Telegram Owner)
               </h4>
-              <p class="text-xs text-slate-400">
-                Bảo vệ an toàn 100%: Người lạ vào bot trên Telegram KHÔNG THỂ xem báo cáo, bảng cược hay giá nếu không gõ mật khẩu.
+              <p class="text-xs text-slate-400 leading-relaxed">
+                👑 <b>Bảo vệ tối thượng:</b> Cài đặt Chat ID hoặc @username Telegram của bạn. Khi tài khoản này nhắn tin, Bot sẽ <b>tự động nhận diện là Chủ bảng</b> và mở toàn bộ quyền điều khiển mà <b>không cần gõ mật khẩu</b>. Người ngoài/khách cược tuyệt đối không thể xem báo cáo hay can thiệp.
               </p>
               <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Mật khẩu hiện tại:</label>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Telegram của Chủ Bot (Chat ID hoặc @username):</label>
                 <div class="flex gap-2">
-                  <input type="text" id="inpAdminPassword" value="123456" class="flex-1 bg-slate-800 border border-slate-700 rounded p-2 text-xs font-mono font-bold text-white">
-                  <button type="button" id="btnSaveAdminPassword" class="px-3.5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded text-xs font-bold transition">Đổi Mật Khẩu</button>
+                  <input type="text" id="inpOwnerChatId" placeholder="VD: 123456789 hoặc @chubang88" class="flex-1 bg-slate-800 border border-slate-700 rounded p-2 text-xs font-mono font-bold text-white">
+                  <button type="button" id="btnSaveOwnerChatId" class="px-3.5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-floppy-disk"></i> Lưu Chủ Bot
+                  </button>
+                  <button type="button" id="btnClearOwnerChatId" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-rose-400 border border-slate-700 rounded text-xs font-bold transition cursor-pointer" title="Xóa Chủ Bot">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
                 </div>
               </div>
-              <p class="text-[11px] text-slate-500 italic">
-                Trên Telegram, bạn gõ <code>/mk &lt;mật_khẩu&gt;</code> để mở khóa quyền quản lý.
+            </div>
+
+            <!-- ĐỔI MẬT KHẨU QUẢN TRỊ HỆ THỐNG -->
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+              <h4 class="font-bold text-xs text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-key text-amber-400"></i> 2. Đổi Mật Khẩu Quản Trị Hệ Thống
+              </h4>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Mật khẩu dùng để <b>mở khóa Web Quản Trị</b> và đăng nhập quyền quản trị trên Telegram bằng lệnh <code>/mk &lt;mật_khẩu&gt;</code>.<br>
+                <i>(Hệ thống tự động xóa tin nhắn mật khẩu trên Telegram ngay khi gửi để không bao giờ bị lưu lại trong lịch sử chat)</i>.
               </p>
+              <div class="space-y-2.5 text-xs">
+                <div>
+                  <label class="block text-slate-400 mb-1 font-semibold">Mật khẩu hiện tại:</label>
+                  <div class="relative">
+                    <input type="password" id="inpCurrentAdminPassword" placeholder="Nhập mật khẩu đang dùng..." class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs font-mono font-bold text-white pr-9">
+                    <button type="button" onclick="togglePasswordVisibility('inpCurrentAdminPassword', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs px-1 py-1 cursor-pointer">
+                      <i class="fa-solid fa-eye"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Mật khẩu mới (tối thiểu 4 ký tự):</label>
+                    <div class="relative">
+                      <input type="password" id="inpNewAdminPassword" placeholder="Nhập mật khẩu mới..." class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs font-mono font-bold text-white pr-9">
+                      <button type="button" onclick="togglePasswordVisibility('inpNewAdminPassword', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs px-1 py-1 cursor-pointer">
+                        <i class="fa-solid fa-eye"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Xác nhận mật khẩu mới:</label>
+                    <div class="relative">
+                      <input type="password" id="inpConfirmAdminPassword" placeholder="Nhập lại mật khẩu mới..." class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-xs font-mono font-bold text-white pr-9">
+                      <button type="button" onclick="togglePasswordVisibility('inpConfirmAdminPassword', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs px-1 py-1 cursor-pointer">
+                        <i class="fa-solid fa-eye"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="pt-1">
+                  <button type="button" id="btnChangeAdminPassword" class="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow active:scale-95">
+                    <i class="fa-solid fa-shield-check"></i> Cập Nhật Mật Khẩu Mới
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -897,12 +1041,12 @@
         // Allowed Senders Badges
         renderSenderBadges(data.allowed_senders || ["*"]);
 
-        // Cleanup & Password
+        // Cleanup & Owner Chat ID
         if (data.cleanup_after_hours !== undefined) {
           document.getElementById('inpCleanupHours').value = data.cleanup_after_hours;
         }
-        if (data.admin_password) {
-          document.getElementById('inpAdminPassword').value = data.admin_password;
+        if (data.owner_chat_id && document.getElementById('inpOwnerChatId')) {
+          document.getElementById('inpOwnerChatId').value = data.owner_chat_id;
         }
 
         // Retain
@@ -1129,16 +1273,103 @@
       } catch (e) {}
     }
 
+    // Copy Report Text by tab
+    function copyReportText(tab) {
+      let elId = 'reportTextThau';
+      if (tab === 'chuyen') elId = 'reportTextChuyen';
+      if (tab === 'giulai') elId = 'reportTextGiulai';
+      const text = document.getElementById(elId)?.textContent || '';
+      if (!text) {
+        alert("Chưa có nội dung báo cáo!");
+        return;
+      }
+      navigator.clipboard.writeText(text).then(() => {
+        alert("✅ Đã sao chép tin báo cáo vào bộ nhớ tạm (Clipboard)!");
+      }).catch(() => {
+        window.prompt("Sao chép tin báo cáo tại đây:", text);
+      });
+    }
+
+    // Toggle Password Visibility
+    function togglePasswordVisibility(inputId, btn) {
+      const inp = document.getElementById(inputId);
+      if (!inp) return;
+      if (inp.type === "password") {
+        inp.type = "text";
+        btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+      } else {
+        inp.type = "password";
+        btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+      }
+    }
+
+    // Unlock Admin
+    async function submitAdminUnlock() {
+      const pwd = document.getElementById('inpUnlockPassword').value.trim();
+      const errEl = document.getElementById('unlockErrorMsg');
+      const btn = document.getElementById('btnSubmitUnlock');
+      if (!pwd) {
+        errEl.textContent = "Vui lòng nhập mật khẩu quản trị!";
+        errEl.classList.remove('hidden');
+        return;
+      }
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực...';
+      try {
+        const res = await apiPost("/api/bot/verify_password", { password: pwd });
+        if (res && res.success) {
+          sessionStorage.setItem('tg_admin_unlocked', 'true');
+          document.getElementById('adminLockScreenOverlay')?.classList.add('hidden');
+          errEl.classList.add('hidden');
+          checkStatus();
+          loadConfig();
+        } else {
+          errEl.textContent = res.error || "Mật khẩu không chính xác!";
+          errEl.classList.remove('hidden');
+          document.getElementById('inpUnlockPassword').select();
+        }
+      } catch (e) {
+        errEl.textContent = "Lỗi kết nối tới Backend server: " + e.message;
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Mở Khóa Quản Trị';
+      }
+    }
+
+    // Lock Admin
+    function lockAdmin() {
+      sessionStorage.removeItem('tg_admin_unlocked');
+      const overlay = document.getElementById('adminLockScreenOverlay');
+      if (overlay) {
+        overlay.classList.remove('hidden');
+        const inp = document.getElementById('inpUnlockPassword');
+        if (inp) {
+          inp.value = '';
+          inp.focus();
+        }
+        document.getElementById('unlockErrorMsg')?.classList.add('hidden');
+      }
+    }
+
     // Setup Event Listeners
     document.addEventListener('DOMContentLoaded', () => {
       switchTab('overview');
-      checkStatus();
-      loadConfig();
+
+      // Kiểm tra trạng thái mở khóa bảo mật
+      if (sessionStorage.getItem('tg_admin_unlocked') === 'true') {
+        document.getElementById('adminLockScreenOverlay')?.classList.add('hidden');
+        checkStatus();
+        loadConfig();
+      } else {
+        document.getElementById('adminLockScreenOverlay')?.classList.remove('hidden');
+        setTimeout(() => document.getElementById('inpUnlockPassword')?.focus(), 200);
+      }
 
       // Poll status & logs periodically
       setInterval(() => {
-        checkStatus();
-        if (activeTab === 'logs') fetchLogs();
+        if (sessionStorage.getItem('tg_admin_unlocked') === 'true') {
+          checkStatus();
+          if (activeTab === 'logs') fetchLogs();
+        }
       }, 3500);
 
       if (document.getElementById('inputBackendUrl')) {
@@ -1352,19 +1583,83 @@
         loadConfig();
       });
 
-      // View KQXS
+      // Khởi tạo ngày hôm nay cho bộ chọn ngày chốt tiền
+      const dateInp = document.getElementById('inpSettleDate');
+      if (dateInp) {
+        const d = new Date();
+        dateInp.value = d.toISOString().split('T')[0];
+      }
+
+      // View KQXS theo ngày
       document.getElementById('btnFetchKQXS')?.addEventListener('click', async () => {
-        const kq = await apiGet("/api/bot/kqxs");
-        alert(`🎯 KẾT QUẢ XSMB NGÀY ${kq.date || ''}:\n\n👑 Giải Đặc Biệt: ${kq.special || 'Đang cập nhật'}\n🔴 Đề: ${kq.special_last2 || '--'}\n🟣 3 Càng: ${kq.special_last3 || '--'}`);
+        const dVal = document.getElementById('inpSettleDate')?.value;
+        const kq = await apiGet("/api/bot/kqxs" + (dVal ? `?date=${dVal}` : ''));
+        if (!kq || !kq.success) {
+          alert(`⚠️ Chưa lấy được kết quả ngày ${dVal || 'hôm nay'}: ${kq?.error || 'Lỗi không xác định'}`);
+          return;
+        }
+        alert(`🎯 KẾT QUẢ XSMB NGÀY ${kq.date || ''}:\n\n👑 Giải Đặc Biệt: ${kq.special_prize || 'Đang cập nhật'}\n🔴 Đề (2 số cuối): ${kq.special_last2 || '--'}\n🟣 3 Càng: ${kq.special_last3 || '--'}\nĐủ 27 giải: ${kq.is_complete ? 'ĐÃ ĐỦ' : 'CHƯA ĐỦ'}`);
       });
 
-      // View Accounting Report
+      // View Accounting Report theo ngày
       document.getElementById('btnViewAccountingReport')?.addEventListener('click', async () => {
-        const rep = await apiGet("/api/bot/report");
+        const dVal = document.getElementById('inpSettleDate')?.value;
+        const rep = await apiGet("/api/bot/report" + (dVal ? `?date=${dVal}` : ''));
         const box = document.getElementById('accountingReportBox');
-        const text = document.getElementById('accountingReportText');
         box.classList.remove('hidden');
-        text.textContent = `📋 BẢNG THẦU:\n${rep.text_thau}\n\n🛡️ BẢNG GIỮ LẠI:\n${rep.text_giulai}\n\n🚀 BẢNG CHUYỂN:\n${rep.text_chuyen}`;
+
+        document.getElementById('reportTextThau').textContent = rep.text_thau || '';
+        document.getElementById('reportTextChuyen').textContent = rep.text_chuyen || '';
+        document.getElementById('reportTextGiulai').textContent = rep.text_giulai || '';
+
+        // Hiển thị danh sách khách
+        const cListEl = document.getElementById('clientReportsList');
+        const cBadge = document.getElementById('clientReportsCountBadge');
+        const clients = rep.clients || [];
+        cBadge.textContent = `${clients.length} khách`;
+
+        if (clients.length === 0) {
+          cListEl.innerHTML = '<p class="text-slate-500 italic">Chưa có khách nào đặt cược trong ngày này.</p>';
+        } else {
+          cListEl.innerHTML = clients.map((c, idx) => {
+            const net = c.accounting?.totalNet || 0;
+            const netClass = net >= 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+            const netText = net >= 0 ? `Khách thua: +${Math.abs(Math.round(net)).toLocaleString('vi-VN')}` : `Thầu bù: -${Math.abs(Math.round(net)).toLocaleString('vi-VN')}`;
+            return `
+              <div class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 flex items-center justify-between gap-3">
+                <div>
+                  <div class="font-bold text-white">${idx + 1}. ${c.name || 'Khách'} <span class="text-slate-500 font-mono text-[11px]">(${c.chat_id})</span></div>
+                  <div class="text-[11px] text-slate-400">Đã gửi: <b>${c.msg_count}</b> tin | Vốn: <b>${Math.round(c.accounting?.totalVon || 0).toLocaleString('vi-VN')}</b> | Trúng: <b>${Math.round(c.accounting?.totalTrung || 0).toLocaleString('vi-VN')}</b></div>
+                </div>
+                <div class="text-right">
+                  <div class="${netClass} text-xs">${netText}</div>
+                  <button type="button" onclick="navigator.clipboard.writeText(\`${c.report_text}\`); alert('Đã copy bảng chốt của khách!');" class="mt-1 px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-semibold border border-slate-700 transition cursor-pointer">
+                    <i class="fa-regular fa-copy"></i> Copy tin
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      });
+
+      // Bắn tin chốt sang Telegram
+      document.getElementById('btnTriggerSettleTelegram')?.addEventListener('click', async () => {
+        const dVal = document.getElementById('inpSettleDate')?.value;
+        if (!confirm(`Bạn có chắc chắn muốn CHỐT TIỀN và BẮN TIN NHẮN ÂM/DƯƠNG sang Telegram cho từng khách cược và người nhận không?`)) {
+          return;
+        }
+        try {
+          const res = await apiPost("/api/bot/settle_now", { date: dVal, send_telegram: true });
+          if (res.success) {
+            alert(`✅ ĐÃ BẮN TIN CHỐT TIỀN THÀNH CÔNG!\n\n• Ngày: ${res.date}\n• Đã gửi cho: ${res.settled_clients_count} khách cược\n• Đã gửi bảng chuyển cho người nhận`);
+            document.getElementById('btnViewAccountingReport')?.click();
+          } else {
+            alert(`❌ Lỗi: ${res.error || 'Thất bại'}`);
+          }
+        } catch (e) {
+          alert(`❌ Lỗi kết nối tới backend: ${e.message}`);
+        }
       });
 
       // Reset Board
@@ -1391,15 +1686,52 @@
         }
       });
 
-      // Save Admin Password
-      document.getElementById('btnSaveAdminPassword')?.addEventListener('click', async () => {
-        const pw = document.getElementById('inpAdminPassword').value.trim();
-        if (!pw) {
-          alert("Vui lòng nhập mật khẩu.");
+      // Save Owner Chat ID
+      document.getElementById('btnSaveOwnerChatId')?.addEventListener('click', async () => {
+        const ownerVal = document.getElementById('inpOwnerChatId').value.trim();
+        await apiPost("/api/bot/config", { owner_chat_id: ownerVal });
+        alert("👑 Đã lưu nick Chủ Bot là: " + (ownerVal || "(Chưa cài)"));
+        loadConfig();
+      });
+
+      // Clear Owner Chat ID
+      document.getElementById('btnClearOwnerChatId')?.addEventListener('click', async () => {
+        if (confirm("Bạn có chắc muốn hủy định danh Chủ Bot không?")) {
+          document.getElementById('inpOwnerChatId').value = "";
+          await apiPost("/api/bot/config", { owner_chat_id: "" });
+          alert("🗑️ Đã xóa định danh Chủ Bot!");
+          loadConfig();
+        }
+      });
+
+      // Change Admin Password
+      document.getElementById('btnChangeAdminPassword')?.addEventListener('click', async () => {
+        const oldP = document.getElementById('inpCurrentAdminPassword').value.trim();
+        const newP = document.getElementById('inpNewAdminPassword').value.trim();
+        const cfmP = document.getElementById('inpConfirmAdminPassword').value.trim();
+
+        if (!oldP) {
+          alert("Vui lòng nhập mật khẩu hiện tại!");
           return;
         }
-        await apiPost("/api/bot/config", { admin_password: pw });
-        alert("🔑 Đã đổi mật khẩu quản trị thành công là: " + pw);
+        if (!newP || newP.length < 4) {
+          alert("Mật khẩu mới phải có ít nhất 4 ký tự!");
+          return;
+        }
+        if (newP !== cfmP) {
+          alert("Mật khẩu mới và Xác nhận mật khẩu không khớp!");
+          return;
+        }
+
+        const res = await apiPost("/api/bot/change_password", { old_password: oldP, new_password: newP });
+        if (res && res.success) {
+          alert("🔑 ĐÃ ĐỔI MẬT KHẨU QUẢN TRỊ THÀNH CÔNG!\nHãy ghi nhớ mật khẩu mới này.");
+          document.getElementById('inpCurrentAdminPassword').value = "";
+          document.getElementById('inpNewAdminPassword').value = "";
+          document.getElementById('inpConfirmAdminPassword').value = "";
+        } else {
+          alert("❌ Lỗi: " + (res.error || "Không thể đổi mật khẩu"));
+        }
       });
 
       // Clear Console
