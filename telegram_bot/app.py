@@ -180,6 +180,8 @@ def get_board():
     b = bot_service.balancer
     retained = b.get_retained_bets()
     raw_messages = bot_service.get_all_raw_messages()
+    pending = b.calculate_excess()
+    pending_text = b.format_transfer_message(pending, include_header=False)
     return jsonify({
         "step_count": b.step_count,
         "de_sums": b.de_sums,
@@ -188,7 +190,9 @@ def get_board():
         "xien_count": len(b.xien_bets),
         "history": b.transfer_history,
         "retained": retained,
-        "raw_messages": raw_messages
+        "raw_messages": raw_messages,
+        "pending_transfers": pending,
+        "pending_text": pending_text
     })
 
 
