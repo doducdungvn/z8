@@ -222,9 +222,13 @@ def format_retain_config_summary(config: dict) -> str:
     branch_title = "Mức trần Tối Đa (k/đ)" if is_pct else "Mức định mức Nhánh"
     branch_val_str = f"BẬT (Đề: {b_de:g}k, Lô: {b_lo:g}đ, 3C: {b_3c:g}k, X: {b_x:g}k)" if use_branch else "TẮT"
 
+    is_fwd_on = config.get("auto_forward_excess", True)
+    fwd_status_str = "🟢 <b>BẬT (Đang hoạt động)</b>" if is_fwd_on else "🔴 <b>TẮT (Đang tạm dừng)</b>"
+
     lines = [
         "⚙️ <b>CẤU HÌNH CÂN CHUYỂN & MỨC GIỮ LẠI:</b>",
         "━━━━━━━━━━━━━━━━━━",
+        f"• <b>Chức năng Cân Chuyển:</b> {fwd_status_str}",
         f"• <b>Hình thức giữ:</b> <code>{'Phần trăm (%)' if is_pct else 'Tiền mặt (k/đ)'}</code>",
         f"• <b>Giữ Đề:</b> <code>{de_val:g}{unit_de}</code>",
         f"• <b>Giữ Lô:</b> <code>{lo_val:g}{unit_lo}</code>",
@@ -237,6 +241,9 @@ def format_retain_config_summary(config: dict) -> str:
         f"• <b>Tự động xóa vết:</b> {clean_h:g} giờ",
         "━━━━━━━━━━━━━━━━━━",
         "📝 <b>ĐỂ SỬA THIẾT LẬP CÂN CHUYỂN TRÊN TELEGRAM:</b>",
+        "• <b>Bật / Tắt Cân Chuyển:</b>",
+        "  <code>/canchuyen bat</code> hoặc <code>/canchuyen tat</code>",
+        "  <i>(Hoặc dùng: <code>/chuyen bat</code> / <code>/chuyen tat</code>)</i>",
         "• <b>Đặt theo Tiền:</b>",
         "  <code>/giulai tien &lt;đề&gt; &lt;lô&gt; &lt;3c&gt; &lt;xiên&gt;</code>",
         "  <i>(Ví dụ: <code>/giulai tien 20 5 0 0</code>)</i>",

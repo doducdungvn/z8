@@ -556,9 +556,9 @@ class TelegramBotService:
                     "━━━━━━━━━━━━━━━━━━\n"
                     "📊 <b>/baocao</b>: Xem Báo cáo Thầu / Giữ lại / Chuyển\n"
                     "📋 <b>/bang</b>: Xem tổng cược tích lũy hôm nay\n"
-                    "⚙️ <b>/canchuyen</b>: Xem & Sửa Thiết lập Cân chuyển / Giữ lại\n"
+                    "⚙️ <b>/canchuyen [bat|tat]</b>: Bật/Tắt Cân Chuyển hoặc Xem/Sửa mức giữ\n"
                     "🏷️ <b>/gia</b>: Xem & Sửa Bảng Giá Thầu & Chuyển\n"
-                    "🚀 <b>/chuyen</b>: Bắn ngay các cược vượt định mức\n"
+                    "🚀 <b>/chuyen [bat|tat]</b>: Bật/Tắt hoặc Bắn ngay các cược vượt định mức\n"
                     "⏰ <b>/timer &lt;giờ&gt;</b>: Đổi số giờ tự động xóa vết cược\n"
                     "🧹 <b>/clean</b>: Xóa dấu vết tin cược cũ ngay lập tức\n"
                     "🗑️ <b>/reset</b>: Xóa cược bắt đầu ngày mới\n"
@@ -659,13 +659,44 @@ class TelegramBotService:
             return
 
         # I. /canchuyen, /thietlap, /giulai (Xem & Sửa thiết lập cân chuyển - Yêu cầu mật khẩu)
-        if cmd_root in ["/canchuyen", "canchuyen", "/thietlap", "thietlap", "/giulai", "giulai"] or cmd_root.startswith("/canchuyen@") or cmd_root.startswith("/giulai@"):
+        if cmd_root in ["/canchuyen", "canchuyen", "/thietlap", "thietlap", "/giulai", "giulai", "/bancuoc", "bancuoc", "/batcanchuyen", "batcanchuyen", "/tatcanchuyen", "tatcanchuyen"] or cmd_root.startswith("/canchuyen@") or cmd_root.startswith("/giulai@") or cmd_root.startswith("/bancuoc@"):
             if not self.is_admin(chat_id):
                 self.send_telegram_message(str(chat_id), self.msg_need_auth())
                 return
+
+            # Xử lý lệnh dạng /batcanchuyen hoặc /tatcanchuyen
+            if cmd_root in ["/batcanchuyen", "batcanchuyen"]:
+                self.config["auto_forward_excess"] = True
+                self.save_config()
+                self.log(f"{sender_label} đã BẬT chức năng cân chuyển cược", "INFO")
+                mode_txt = "Tức thì (instant)" if self.config.get("mode") == "instant" else "Gom bảng (batch)"
+                self.send_telegram_message(str(chat_id), f"🟢 <b>Thành công:</b> Đã <b>BẬT</b> chức năng cân chuyển cược tự động!\n\n💡 <i>Chế độ hiện tại: <b>{mode_txt}</b>. Cược của khách vượt định mức giữ lại sẽ được tự động cân và chuyển sang người nhận.</i>")
+                return
+            elif cmd_root in ["/tatcanchuyen", "tatcanchuyen"]:
+                self.config["auto_forward_excess"] = False
+                self.save_config()
+                self.log(f"{sender_label} đã TẮT chức năng cân chuyển cược", "INFO")
+                self.send_telegram_message(str(chat_id), "🔴 <b>Thành công:</b> Đã <b>TẮT</b> chức năng cân chuyển cược tự động!\n\n💡 <i>Bot vẫn nhận cược và gửi tin xác nhận (Ok...) cho khách bình thường, nhưng TẠM DỪNG tự động cân và bắn cược thừa sang thầu trên.\n👉 Để bật lại: gõ <code>/canchuyen bat</code></i>")
+                return
+
             if len(parts) == 1:
                 summary_msg = format_retain_config_summary(self.config)
                 self.send_telegram_message(str(chat_id), summary_msg)
+                return
+
+            arg1 = parts[1].lower()
+            if arg1 in ["tat", "off", "0", "huy", "dong", "disable", "pause", "tamdung", "dung"]:
+                self.config["auto_forward_excess"] = False
+                self.save_config()
+                self.log(f"{sender_label} đã TẮT chức năng cân chuyển cược", "INFO")
+                self.send_telegram_message(str(chat_id), "🔴 <b>Thành công:</b> Đã <b>TẮT</b> chức năng cân chuyển cược tự động!\n\n💡 <i>Bot vẫn nhận cược và gửi tin xác nhận (Ok...) cho khách bình thường, nhưng TẠM DỪNG tự động cân và bắn cược thừa sang thầu trên.\n👉 Để bật lại: gõ <code>/canchuyen bat</code></i>")
+                return
+            elif arg1 in ["bat", "on", "1", "mo", "enable", "chay"]:
+                self.config["auto_forward_excess"] = True
+                self.save_config()
+                self.log(f"{sender_label} đã BẬT chức năng cân chuyển cược", "INFO")
+                mode_txt = "Tức thì (instant)" if self.config.get("mode") == "instant" else "Gom bảng (batch)"
+                self.send_telegram_message(str(chat_id), f"🟢 <b>Thành công:</b> Đã <b>BẬT</b> chức năng cân chuyển cược tự động!\n\n💡 <i>Chế độ hiện tại: <b>{mode_txt}</b>. Cược của khách vượt định mức giữ lại sẽ được tự động cân và chuyển sang người nhận.\n👉 Để tắt: gõ <code>/canchuyen tat</code></i>")
                 return
 
             sub_type = parts[1].lower().replace("%", "percentage").replace("phantram", "percentage").replace("pt", "percentage")
@@ -906,10 +937,26 @@ class TelegramBotService:
             return
 
         # N. /chuyen (Yêu cầu mật khẩu)
-        if cmd in ["/chuyen", "chuyen", "bắn cược", "ban cuoc"] or cmd.startswith("/chuyen@"):
+        if cmd_root in ["/chuyen", "chuyen", "bắn cược", "ban cuoc"] or cmd_root.startswith("/chuyen@"):
             if not self.is_admin(chat_id):
                 self.send_telegram_message(str(chat_id), self.msg_need_auth())
                 return
+            if len(parts) >= 2:
+                arg1 = parts[1].lower()
+                if arg1 in ["tat", "off", "0", "huy", "dong", "disable", "pause", "tamdung"]:
+                    self.config["auto_forward_excess"] = False
+                    self.save_config()
+                    self.log(f"{sender_label} đã TẮT chức năng cân chuyển cược", "INFO")
+                    self.send_telegram_message(str(chat_id), "🔴 <b>Thành công:</b> Đã <b>TẮT</b> chức năng cân chuyển cược tự động!\n\n💡 <i>Bot vẫn nhận tin của khách nhưng TẠM DỪNG bắn cược thừa sang thầu trên.\n👉 Gõ <code>/chuyen bat</code> để bật lại.</i>")
+                    return
+                elif arg1 in ["bat", "on", "1", "mo", "enable"]:
+                    self.config["auto_forward_excess"] = True
+                    self.save_config()
+                    self.log(f"{sender_label} đã BẬT chức năng cân chuyển cược", "INFO")
+                    mode_txt = "Tức thì (instant)" if self.config.get("mode") == "instant" else "Gom bảng (batch)"
+                    self.send_telegram_message(str(chat_id), f"🟢 <b>Thành công:</b> Đã <b>BẬT</b> chức năng cân chuyển cược tự động!\n\n💡 <i>Chế độ hiện tại: <b>{mode_txt}</b>. Cược vượt mức giữ lại sẽ được tự động cân và chuyển sang người nhận.</i>")
+                    return
+
             excess = self.balancer.calculate_excess()
             excess_count = sum(len(v) for v in excess.values())
             if excess_count == 0:
@@ -924,7 +971,8 @@ class TelegramBotService:
             if ok:
                 self.balancer.commit_transfers(excess)
                 self.stats["transfers_sent"] += 1
-                self.send_telegram_message(str(chat_id), f"🚀 Đã bắn {excess_count} con cược thừa sang {target_recipient} thành công!")
+                note = "" if self.config.get("auto_forward_excess", True) else "\n<i>(Lưu ý: Tự động cân chuyển đang TẮT. Gõ <code>/chuyen bat</code> để bật tự động).</i>"
+                self.send_telegram_message(str(chat_id), f"🚀 Đã bắn {excess_count} con cược thừa sang {target_recipient} thành công!{note}")
             else:
                 self.send_telegram_message(str(chat_id), f"❌ Bắn cược thừa thất bại: {err}")
             return

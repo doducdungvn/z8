@@ -34,5 +34,11 @@
     "message_id": 45,
     "created_at": 1788809438.0242743,
     "tag": "receipt"
+  },
+  {
+    "chat_id": "12345678",
+    "message_id": 301,
+    "created_at": 1788847971.917699,
+    "tag": "incoming_bet"
   }
 ]

@@ -8,16 +8,11 @@
   "auto_forward_excess": true,
   "mode": "instant",
   "retain_config": {
-    "retain_type": "percentage",
-    "retain_de": 40.0,
-    "retain_lo": 60.0,
-    "retain_3c": 0.0,
-    "retain_x": 0.0,
-    "retain_use_branch": true,
-    "branch_de": 0,
-    "branch_lo": 0,
-    "branch_3c": 0,
-    "branch_x": 0
+    "retain_type": "money",
+    "retain_de": 20,
+    "retain_lo": 5,
+    "retain_3c": 0,
+    "retain_x": 0
   },
   "price_config": {
     "thau": {
@@ -50,6 +45,8 @@
   "owner_chat_id": "",
   "cleanup_after_seconds": 86400,
   "cleanup_after_hours": 24.0,
-  "admin_password": "654321",
-  "authenticated_admins": []
+  "admin_password": "123456",
+  "authenticated_admins": [
+    999111222
+  ]
 }
