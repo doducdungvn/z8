@@ -38,59 +38,130 @@ class MinhNgocParser(HTMLParser):
                 break
 
     def handle_endtag(self, tag):
-        self.in_target = False
+        if tag in ["td", "th", "tr"]:
+            self.in_target = False
 
     def handle_data(self, data):
         if self.in_target:
-            nums = re.findall(r"\b\d+\b", data)
+            nums = re.findall(r"\b\d{2,6}\b", data)
             for n in nums:
                 if self.target_class == "giaidb" and not self.db:
                     self.db = n
                 self.prizes.append(n)
 
 
-def fetch_xsmb() -> dict:
-    url = "https://www.minhngoc.net.vn/getkqxs/mien-bac.js"
+def fetch_xsmb(date_str: str = None) -> dict:
+    """
+    Lấy kết quả xổ số Miền Bắc.
+    Hỗ trợ cả ngày hôm nay (qua getkqxs/mien-bac.js hoặc lưu trữ) lẫn ngày cụ thể trong quá khứ (minhngoc.net.vn/ket-qua-xo-so/mien-bac/DD-MM-YYYY.html)
+    """
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
+    # Chuẩn hóa định dạng ngày
+    target_date_slash = None
+    target_date_dash = None
+    is_today = True
+
+    now = datetime.now()
+    today_slash = now.strftime("%d/%m/%Y")
+    today_dash = now.strftime("%d-%m-%Y")
+
+    if date_str:
+        clean_d = str(date_str).strip()
+        # Hỗ trợ DD/MM/YYYY, YYYY-MM-DD, DD-MM-YYYY
+        if "/" in clean_d:
+            pts = clean_d.split("/")
+            if len(pts) == 3:
+                day, month, year = int(pts[0]), int(pts[1]), int(pts[2])
+                target_date_slash = f"{day:02d}/{month:02d}/{year}"
+                target_date_dash = f"{day:02d}-{month:02d}-{year}"
+            elif len(pts) == 2:
+                day, month = int(pts[0]), int(pts[1])
+                target_date_slash = f"{day:02d}/{month:02d}/{now.year}"
+                target_date_dash = f"{day:02d}-{month:02d}-{now.year}"
+        elif "-" in clean_d:
+            pts = clean_d.split("-")
+            if len(pts) == 3:
+                if len(pts[0]) == 4:  # YYYY-MM-DD
+                    year, month, day = int(pts[0]), int(pts[1]), int(pts[2])
+                else:  # DD-MM-YYYY
+                    day, month, year = int(pts[0]), int(pts[1]), int(pts[2])
+                target_date_slash = f"{day:02d}/{month:02d}/{year}"
+                target_date_dash = f"{day:02d}-{month:02d}-{year}"
+
+        if target_date_dash and target_date_dash != today_dash:
+            is_today = False
+
+    if not target_date_slash:
+        target_date_slash = today_slash
+        target_date_dash = today_dash
+
+    # 1. Nếu là ngày hôm nay, thử lấy từ feed trực tiếp trước (phù hợp lúc đang quay thưởng)
+    if is_today:
+        try:
+            live_url = "https://www.minhngoc.net.vn/getkqxs/mien-bac.js"
+            req = urllib.request.Request(live_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                content = resp.read().decode("utf-8", errors="ignore")
+
+            appends = re.findall(r"\$\(\"#box_kqxs_minhngoc\"\)\.append\('(.*?)'\);", content)
+            full_html = "".join(appends).replace(r"\'", "'").replace(r'\"', '"').replace(r"\/", "/")
+
+            date_match = re.search(r"(\d{1,2}[-/]\d{1,2}[-/]\d{4})", full_html)
+            res_date = date_match.group(1).replace("-", "/") if date_match else target_date_slash
+
+            parser = MinhNgocParser()
+            parser.feed(full_html)
+            prizes = parser.prizes
+            if len(prizes) >= 27:
+                db = parser.db or prizes[0]
+                return {
+                    "success": True,
+                    "date": res_date,
+                    "special_prize": db,
+                    "special_last2": db[-2:] if len(db) >= 2 else "",
+                    "special_last3": db[-3:] if len(db) >= 3 else "",
+                    "prizes": prizes[:27],
+                    "all_last2": [p[-2:] for p in prizes[:27] if len(p) >= 2],
+                    "is_complete": True
+                }
+        except Exception:
+            pass
+
+    # 2. Lấy từ trang lưu trữ theo ngày (minhngoc.net.vn/ket-qua-xo-so/mien-bac/DD-MM-YYYY.html)
     try:
-        req = urllib.request.Request(url, headers=headers)
+        archive_url = f"https://www.minhngoc.net.vn/ket-qua-xo-so/mien-bac/{target_date_dash}.html"
+        req = urllib.request.Request(archive_url, headers=headers)
         with urllib.request.urlopen(req, timeout=10) as resp:
-            content = resp.read().decode("utf-8", errors="ignore")
+            html = resp.read().decode("utf-8", errors="ignore")
 
-        appends = re.findall(r"\$\(\"#box_kqxs_minhngoc\"\)\.append\('(.*?)'\);", content)
-        full_html = "".join(appends).replace(r"\'", "'").replace(r'\"', '"').replace(r"\/", "/")
-
-        date_match = re.search(r"(\d{1,2}[-/]\d{1,2}[-/]\d{4})", full_html)
-        date_str = date_match.group(1).replace("-", "/") if date_match else datetime.now().strftime("%d/%m/%Y")
+        boxes = re.findall(r'<div[^>]*class=\"[^\"]*box_kqxs[^\"]*\"[^>]*>.*?(?=<div[^>]*class=\"[^\"]*box_kqxs[^\"]*\"|$)', html, re.DOTALL)
+        target_chunk = boxes[0] if boxes else html
 
         parser = MinhNgocParser()
-        parser.feed(full_html)
-
+        parser.feed(target_chunk)
         prizes = parser.prizes
         db = parser.db or (prizes[0] if prizes else "")
 
-        special_last2 = db[-2:] if len(db) >= 2 else ""
-        special_last3 = db[-3:] if len(db) >= 3 else ""
-
-        all_last2 = [p[-2:] for p in prizes if len(p) >= 2]
         is_complete = len(prizes) >= 27
+        valid_prizes = prizes[:27] if is_complete else prizes
 
         return {
-            "success": True,
-            "date": date_str,
+            "success": True if valid_prizes else False,
+            "date": target_date_slash,
             "special_prize": db,
-            "special_last2": special_last2,
-            "special_last3": special_last3,
-            "prizes": prizes,
-            "all_last2": all_last2,
-            "is_complete": is_complete
+            "special_last2": db[-2:] if len(db) >= 2 else "",
+            "special_last3": db[-3:] if len(db) >= 3 else "",
+            "prizes": valid_prizes,
+            "all_last2": [p[-2:] for p in valid_prizes if len(p) >= 2],
+            "is_complete": is_complete,
+            "error": "" if valid_prizes else f"Chưa có kết quả ngày {target_date_slash}"
         }
     except Exception as e:
         return {
             "success": False,
             "error": str(e),
-            "date": datetime.now().strftime("%d/%m/%Y"),
+            "date": target_date_slash,
             "special_prize": "",
             "special_last2": "",
             "special_last3": "",
@@ -450,65 +521,159 @@ def calculate_board_accounting(balancer, kqxs: dict, price_config: dict = None) 
 
 
 def format_accounting_report(report_data: dict, tab: str = "thau") -> str:
+    """
+    Định dạng tin nhắn báo cáo chốt tiền theo đúng chuẩn người dùng:
+    08/09/2026:
+    De: 2.089(75)= 4.162
+    Lo: 230(77)= 1.123
+    Thau bu: 5.284  (hoặc Khach thua: 5.284 / Nop / Lay ve / Loi / Lo)
+    trong ngoặc là xác trúng
+    """
     data = report_data.get(tab, {})
     raw_date = report_data.get("date", "")
-    day_month_text = ""
+    day_month_year = ""
     if "/" in raw_date:
         parts = raw_date.split("/")
-        day_month_text = f"{int(parts[0])}/{int(parts[1])}"
+        if len(parts) == 3:
+            day_month_year = f"{int(parts[0]):02d}/{int(parts[1]):02d}/{int(parts[2])}"
+        elif len(parts) == 2:
+            day_month_year = f"{int(parts[0]):02d}/{int(parts[1]):02d}/{datetime.now().year}"
+        else:
+            day_month_year = datetime.now().strftime("%d/%m/%Y")
     elif "-" in raw_date:
         parts = raw_date.split("-")
-        day_month_text = f"{int(parts[2])}/{int(parts[1])}"
+        if len(parts) == 3:
+            if len(parts[0]) == 4:  # YYYY-MM-DD
+                day_month_year = f"{int(parts[2]):02d}/{int(parts[1]):02d}/{int(parts[0])}"
+            else:  # DD-MM-YYYY
+                day_month_year = f"{int(parts[0]):02d}/{int(parts[1]):02d}/{int(parts[2])}"
+        else:
+            day_month_year = datetime.now().strftime("%d/%m/%Y")
     else:
-        day_month_text = datetime.now().strftime("%d/%m")
+        day_month_year = datetime.now().strftime("%d/%m/%Y")
 
-    header_title = "Thầu"
-    if tab == "chuyen":
-        header_title = "Chuyển"
-    elif tab == "giulai":
-        header_title = "Giữ lại"
-
-    lines = [f"{header_title} - {day_month_text}"]
+    lines = [f"{day_month_year}:"]
 
     def fmt_num(val):
         return f"{round(val):,}".replace(",", ".")
 
     if data.get("deXac", 0) > 0:
-        lines.append(f"Đề: {fmt_num(data['deXac'])} / {fmt_num(data.get('deWinXac', 0))}")
+        win_xac = data.get("deWinXac", 0)
+        net_abs = abs(data.get("deNet", 0))
+        lines.append(f"De: {fmt_num(data['deXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
 
     if data.get("loXac", 0) > 0:
-        lines.append(f"Lô: {fmt_num(data['loXac'])} / {fmt_num(data.get('loWinXac', 0))}")
-
-    if data.get("xienXac", 0) > 0:
-        lines.append(f"Xiên: {fmt_num(data['xienXac'])} / {fmt_num(data.get('xienWinXac', 0))}")
+        win_xac = data.get("loWinXac", 0)
+        net_abs = abs(data.get("loNet", 0))
+        lines.append(f"Lo: {fmt_num(data['loXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
 
     if data.get("baCangXac", 0) > 0:
-        lines.append(f"3c: {fmt_num(data['baCangXac'])} / {fmt_num(data.get('baCangWinXac', 0))}")
+        win_xac = data.get("baCangWinXac", 0)
+        net_abs = abs(data.get("baCangNet", 0))
+        lines.append(f"3c: {fmt_num(data['baCangXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
+
+    if data.get("xienXac", 0) > 0:
+        win_xac = data.get("xienWinXac", 0)
+        net_abs = abs(data.get("xienNet", 0))
+        lines.append(f"Xien: {fmt_num(data['xienXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
 
     net_val = data.get("totalNet", 0)
     net_val_abs = fmt_num(abs(net_val))
 
     if tab == "thau":
-        if net_val > 0:
-            net_label = "Khách thua"
-        elif net_val < 0:
-            net_label = "Thầu bù"
-        else:
-            net_label = "Hòa"
+        net_label = "Khach thua" if net_val >= 0 else "Thau bu"
     elif tab == "chuyen":
-        if net_val > 0:
-            net_label = "Nộp"
-        elif net_val < 0:
-            net_label = "Lấy về"
-        else:
-            net_label = "Hòa"
+        net_label = "Nop" if net_val >= 0 else "Lay ve"
     else:
-        if net_val > 0:
-            net_label = "Lời"
-        elif net_val < 0:
-            net_label = "Lỗ"
-        else:
-            net_label = "Hòa"
+        net_label = "Loi" if net_val >= 0 else "Lo"
 
     lines.append(f"{net_label}: {net_val_abs}")
     return "\n".join(lines)
+
+
+def calculate_single_client_accounting(client_bets: dict, kqxs: dict, price_config: dict = None) -> dict:
+    """
+    Tính toán chi tiết tài chính cho riêng một khách cược theo giá Thầu (bảng nhận của khách).
+    client_bets: dict chứa:
+      'de': {num: amt}
+      'lo': {num: amt}
+      'bacang': {num: amt}
+      'xien': [{'numbers': [...], 'amount': ...}]
+    """
+    cfg = price_config or DEFAULT_PRICE_CONFIG
+    thau_raw = cfg.get("thau") if isinstance(cfg.get("thau"), dict) else cfg
+    t = parse_rate_item(thau_raw)
+
+    special_last2 = kqxs.get("special_last2", "")
+    special_last3 = kqxs.get("special_last3", "")
+    all_last2 = kqxs.get("all_last2", [])
+
+    de_sums = client_bets.get("de", {})
+    lo_sums = client_bets.get("lo", {})
+    bacang_sums = client_bets.get("bacang", {})
+    xien_bets = client_bets.get("xien", [])
+
+    de_xac = sum(de_sums.values())
+    de_von = de_xac * t["de_comm"]
+    de_win_xac = de_sums.get(special_last2, 0) if special_last2 else 0
+    de_trung = de_win_xac * t["de_payout"]
+    de_net = de_von - de_trung
+
+    lo_xac = sum(lo_sums.values())
+    lo_von = lo_xac * t["lo_cost"]
+    lo_win_xac = 0
+    if all_last2:
+        for num, amt in lo_sums.items():
+            hits = all_last2.count(num)
+            if hits > 0:
+                lo_win_xac += hits * amt
+    lo_trung = lo_win_xac * t["lo_payout"]
+    lo_net = lo_von - lo_trung
+
+    c3_xac = sum(bacang_sums.values())
+    c3_von = c3_xac * t["c3_comm"]
+    c3_win_xac = 0
+    c3_trung = 0
+    if special_last3:
+        for num, amt in bacang_sums.items():
+            if num == special_last3:
+                c3_win_xac += amt
+                c3_trung += amt * t["c3_payout"]
+            elif special_last2 and num[-2:] == special_last2:
+                c3_win_xac += amt
+                c3_trung += amt * t["c3_apma"]
+    c3_net = c3_von - c3_trung
+
+    xien_xac = sum(b.get("amount", 0) for b in xien_bets)
+    xien_von = xien_xac * t["xien_comm"]
+    xien_win_xac = 0
+    xien_trung = 0
+    if all_last2:
+        for b in xien_bets:
+            nums = b.get("numbers", [])
+            amt = b.get("amount", 0)
+            if all(n in all_last2 for n in nums):
+                xien_win_xac += amt
+                size = len(nums)
+                win_rate = t["x2_payout"] if size == 2 else (t["x3_payout"] if size == 3 else t["x4_payout"])
+                xien_trung += amt * win_rate
+    xien_net = xien_von - xien_trung
+
+    total_von = de_von + lo_von + c3_von + xien_von
+    total_trung = de_trung + lo_trung + c3_trung + xien_trung
+    total_net = total_von - total_trung
+
+    acc = {
+        "deXac": de_xac, "deVon": de_von, "deWinXac": de_win_xac, "deTrung": de_trung, "deNet": de_net,
+        "loXac": lo_xac, "loVon": lo_von, "loWinXac": lo_win_xac, "loTrung": lo_trung, "loNet": lo_net,
+        "baCangXac": c3_xac, "baCangVon": c3_von, "baCangWinXac": c3_win_xac, "baCangTrung": c3_trung, "baCangNet": c3_net,
+        "xienXac": xien_xac, "xienVon": xien_von, "xienWinXac": xien_win_xac, "xienTrung": xien_trung, "xienNet": xien_net,
+        "totalVon": total_von, "totalTrung": total_trung, "totalNet": total_net
+    }
+    date_val = kqxs.get("date", datetime.now().strftime("%d/%m/%Y"))
+    report_text = format_accounting_report({"thau": acc, "date": date_val}, "thau")
+    return {
+        "accounting": acc,
+        "report_text": report_text,
+        "date": date_val
+    }

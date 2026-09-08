@@ -9,6 +9,8 @@ if hasattr(sys.stdout, 'reconfigure'):
 # Bảng từ viết tắt (shorthands) đồng bộ 100% với index.html
 SHORTHANDS = {
     "k": "00.11.22.33.44.55.66.77.88.99",
+    "kep": "00.11.22.33.44.55.66.77.88.99",
+    "lip": "00.11.22.33.44.55.66.77.88.99",
     "kl": "050.161.272.383.494",
     "apkep": "010.121.232.343.454.565.676.787.898",
     "kepam": "070.141.292.363.585",
@@ -117,8 +119,8 @@ def normalize_bet_line(line: str) -> str:
     norm = re.sub(r'\b(?:le\s+chan|lechan)\b', 'lechan', norm)
     norm = re.sub(r'\b(?:le\s+le|lele)\b', 'lele', norm)
     norm = re.sub(r'\b(?:daudit|dau\s+dit|dau\s+duoi|dd|đđ)\s*(\d)(?![0-9])', r'daudit\1', norm)
-    norm = re.sub(r'\b(?:kep lech)\b', 'kl', norm)
-    norm = re.sub(r'\b(?:lip|kep)\b', 'k', norm)
+    norm = re.sub(r'\b(?:kep lech|keplech)\b', 'kl', norm)
+    norm = re.sub(r'\b(?:lip|kep)(?=[x=+*\d\s]|$)', 'k ', norm)
     norm = re.sub(r'\b(?:dau)\s*(\d)(?![0-9])', r'dau\1', norm)
     norm = re.sub(r'\b(?:dit|duoi)\s*(\d)(?![0-9])', r'dit\1', norm)
     norm = re.sub(r'\b(?:cham)\s*(\d)(?![0-9])', r'cham\1', norm)
@@ -168,7 +170,8 @@ def normalize_shorthand_token(token: str) -> str:
         'chanle': 'cl', 'lechan': 'lc', 'chanchan': 'cc', 'lele': 'll',
         'dc': 'dauchan', 'dl': 'daule', 'dt': 'dauto', 'db': 'daube',
         'tb': 'tobe', 'tt': 'toto', 'bt': 'beto', 'bb': 'bebe',
-        'tc': 'tongchan', 'tl': 'tongle', 'chan': 'ditchan', 'le': 'ditle'
+        'tc': 'tongchan', 'tl': 'tongle', 'chan': 'ditchan', 'le': 'ditle',
+        'lip': 'k', 'kep': 'k'
     }
     return aliases.get(t, t)
 
@@ -252,7 +255,7 @@ def parse_combined_input(input_str: str):
         r'([a-z0-9])\s*((?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?)\b[\s.,;\-]+(?=[^\s.,;\-])',
         re.I
     )
-    processed = bet_split_regex.sub(r'\1\2\n', processed)
+    processed = bet_split_regex.sub(r'\1 \2\n', processed)
 
     lines = processed.split('\n')
     parsed_bets = {
@@ -405,67 +408,67 @@ def parse_bet_message(raw_text: str) -> dict:
 def format_ok_receipt(parsed: dict, msg_index: int = 1) -> str:
     """
     Định dạng tin nhắn xác nhận cho khách theo đúng chuẩn người dùng yêu cầu:
-    Ok 1 
-    Đề 01.02.04...x3, 12.15...x5, 22.44...x10
-    Lô 17.19...x3, 01.09...x5, 65x25
-    3c 123.456x10
-    Xiên 12-34x10
-    Trả lại: "..." (nếu có)
+    Ok tin 1
+    (Nếu có số lỗi không hiểu: Trả lại ...)
+    Không liệt kê các con cược nữa.
     """
-    lines = [f"Ok {msg_index}"]
+    lines = [f"Ok tin {msg_index}"]
 
-    # 1. Đề
+    invalid_items = parsed.get('invalid_items', [])
+    if invalid_items:
+        unique_inv = list(dict.fromkeys(invalid_items))
+        joined_inv = " ".join(unique_inv) if all(x.isdigit() for x in unique_inv) else ", ".join(unique_inv)
+        lines.append(f"Trả lại {joined_inv}")
+
+    return "\n".join(lines)
+
+
+def format_ok_receipt_detailed(parsed: dict, msg_index: int = 1) -> str:
+    """Phiên bản liệt kê chi tiết (dự phòng khi cần tra cứu)"""
+    lines = [f"Ok tin {msg_index}"]
+
     if parsed.get('de'):
         de_sums = {}
         for b in parsed['de']:
             de_sums[b['number']] = de_sums.get(b['number'], 0) + b['amount']
-        
         groups = {}
         for num, amt in de_sums.items():
             amt_r = int(amt) if amt.is_integer() else amt
             groups.setdefault(amt_r, []).append(num)
-        
         parts = []
         for amt in sorted(groups.keys()):
             nums = sorted(groups[amt], key=lambda x: int(x) if x.isdigit() else x)
             parts.append(".".join(nums) + f"x{amt}")
         lines.append("Đề " + ", ".join(parts))
 
-    # 2. Lô
     if parsed.get('lo'):
         lo_sums = {}
         for b in parsed['lo']:
             lo_sums[b['number']] = lo_sums.get(b['number'], 0) + b['amount']
-        
         groups = {}
         for num, amt in lo_sums.items():
             amt_r = int(amt) if amt.is_integer() else amt
             groups.setdefault(amt_r, []).append(num)
-        
         parts = []
         for amt in sorted(groups.keys()):
             nums = sorted(groups[amt], key=lambda x: int(x) if x.isdigit() else x)
             parts.append(".".join(nums) + f"x{amt}")
         lines.append("Lô " + ", ".join(parts))
 
-    # 3. 3 Càng
     if parsed.get('bacang'):
         bc_sums = {}
         for b in parsed['bacang']:
             bc_sums[b['number']] = bc_sums.get(b['number'], 0) + b['amount']
-        
         groups = {}
         for num, amt in bc_sums.items():
             amt_r = int(amt) if amt.is_integer() else amt
             groups.setdefault(amt_r, []).append(num)
-        
         parts = []
         for amt in sorted(groups.keys()):
             nums = sorted(groups[amt], key=lambda x: int(x) if x.isdigit() else x)
             parts.append(".".join(nums) + f"x{amt}")
         lines.append("3c " + ", ".join(parts))
 
-    # 4. Xiên
     all_xien = []
     for k in ('xien2', 'xien3', 'xien4'):
         all_xien.extend(parsed.get(k, []))
@@ -474,19 +477,16 @@ def format_ok_receipt(parsed: dict, msg_index: int = 1) -> str:
         for b in all_xien:
             k_str = "-".join(b['numbers'])
             x_sums[k_str] = x_sums.get(k_str, 0) + b['amount']
-        
         groups = {}
         for pair, amt in x_sums.items():
             amt_r = int(amt) if amt.is_integer() else amt
             groups.setdefault(amt_r, []).append(pair)
-        
         parts = []
         for amt in sorted(groups.keys()):
             pairs = groups[amt]
             parts.append(", ".join(pairs) + f"x{amt}")
         lines.append("Xiên " + "; ".join(parts))
 
-    # 5. Các con không hiểu / Trả lại
     invalid_items = parsed.get('invalid_items', [])
     if invalid_items:
         unique_inv = list(dict.fromkeys(invalid_items))

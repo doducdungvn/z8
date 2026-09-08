@@ -46,7 +46,38 @@ def get_status():
 
 @app.route("/api/bot/config", methods=["GET"])
 def get_config():
-    return jsonify(bot_service.config)
+    cfg = dict(bot_service.config)
+    cfg["has_admin_password"] = bool(cfg.get("admin_password"))
+    cfg.pop("admin_password", None)
+    return jsonify(cfg)
+
+
+@app.route("/api/bot/verify_password", methods=["POST"])
+def verify_password():
+    data = request.json or {}
+    pwd = str(data.get("password", "")).strip()
+    actual = str(bot_service.config.get("admin_password", "123456")).strip()
+    if pwd and pwd == actual:
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Mật khẩu không chính xác!"}), 401
+
+
+@app.route("/api/bot/change_password", methods=["POST"])
+def change_password():
+    data = request.json or {}
+    old_pwd = str(data.get("old_password", "")).strip()
+    new_pwd = str(data.get("new_password", "")).strip()
+    actual = str(bot_service.config.get("admin_password", "123456")).strip()
+
+    if old_pwd != actual:
+        return jsonify({"success": False, "error": "Mật khẩu hiện tại không đúng!"}), 400
+    if not new_pwd or len(new_pwd) < 4:
+        return jsonify({"success": False, "error": "Mật khẩu mới phải có ít nhất 4 ký tự!"}), 400
+
+    bot_service.config["admin_password"] = new_pwd
+    bot_service.save_config()
+    bot_service.log("Đã đổi mật khẩu quản trị hệ thống thành công", "SUCCESS")
+    return jsonify({"success": True, "message": "Đã đổi mật khẩu quản trị thành công!"})
 
 
 @app.route("/api/bot/config", methods=["POST"])
@@ -88,7 +119,7 @@ def update_config():
             pass
     if "owner_chat_id" in data:
         current["owner_chat_id"] = str(data["owner_chat_id"]).strip()
-    if "admin_password" in data:
+    if "admin_password" in data and str(data["admin_password"]).strip():
         current["admin_password"] = str(data["admin_password"]).strip()
     if "authenticated_admins" in data:
         current["authenticated_admins"] = data["authenticated_admins"]
@@ -96,7 +127,10 @@ def update_config():
         current["auto_fetch_kqxs_daily"] = bool(data["auto_fetch_kqxs_daily"])
 
     bot_service.save_config(current)
-    return jsonify({"success": True, "config": bot_service.config})
+    safe_cfg = dict(bot_service.config)
+    safe_cfg["has_admin_password"] = bool(safe_cfg.get("admin_password"))
+    safe_cfg.pop("admin_password", None)
+    return jsonify({"success": True, "config": safe_cfg})
 
 
 @app.route("/api/bot/start", methods=["POST"])
@@ -200,7 +234,13 @@ def manage_cleanup():
 
 @app.route("/api/bot/kqxs", methods=["GET", "POST"])
 def get_kqxs():
+    date_arg = request.args.get("date") or (request.json or {}).get("date") if request.is_json else None
     force = request.args.get("force") == "true" or request.method == "POST"
+
+    if date_arg:
+        kq = fetch_xsmb(date_arg)
+        return jsonify(kq)
+
     if force or not bot_service.cached_kqxs:
         bot_service.cached_kqxs = fetch_xsmb()
     return jsonify(bot_service.cached_kqxs)
@@ -208,17 +248,63 @@ def get_kqxs():
 
 @app.route("/api/bot/report", methods=["GET"])
 def get_report():
-    if not bot_service.cached_kqxs:
-        bot_service.cached_kqxs = fetch_xsmb()
-    
-    acc = calculate_board_accounting(bot_service.balancer, bot_service.cached_kqxs, bot_service.config.get("price_config"))
+    date_arg = request.args.get("date")
+    if date_arg:
+        kq = fetch_xsmb(date_arg)
+    else:
+        if not bot_service.cached_kqxs:
+            bot_service.cached_kqxs = fetch_xsmb()
+        kq = bot_service.cached_kqxs
+
+    price_cfg = bot_service.config.get("price_config")
+    acc = calculate_board_accounting(bot_service.balancer, kq, price_cfg)
+
+    # Chi tiết từng khách cược
+    clients_summary = []
+    for cid_str, cdata in bot_service.client_bets.items():
+        c_res = calculate_single_client_accounting(cdata, kq, price_cfg)
+        clients_summary.append({
+            "chat_id": cid_str,
+            "name": cdata.get("name"),
+            "username": cdata.get("username"),
+            "msg_count": cdata.get("msg_count", 0),
+            "accounting": c_res["accounting"],
+            "report_text": c_res["report_text"],
+            "last_settled": cdata.get("last_settled")
+        })
+
     return jsonify({
         "accounting": acc,
         "text_thau": format_accounting_report(acc, "thau"),
         "text_chuyen": format_accounting_report(acc, "chuyen"),
         "text_giulai": format_accounting_report(acc, "giulai"),
-        "kqxs": bot_service.cached_kqxs
+        "clients": clients_summary,
+        "kqxs": kq
     })
+
+
+@app.route("/api/bot/client_bets", methods=["GET"])
+def get_client_bets():
+    return jsonify(bot_service.client_bets)
+
+
+@app.route("/api/bot/settle_now", methods=["POST"])
+def settle_now():
+    data = request.json or {}
+    date_arg = data.get("date")
+    send_tg = data.get("send_telegram", True)
+
+    kq = fetch_xsmb(date_arg)
+    if not kq.get("success") or not kq.get("prizes"):
+        return jsonify({"success": False, "error": f"Chưa có kết quả xổ số ngày {date_arg or 'hôm nay'} để chốt tiền."}), 400
+
+    res = bot_service.settle_all(
+        kq,
+        notify_clients=send_tg,
+        notify_recipient=send_tg,
+        notify_owner=send_tg
+    )
+    return jsonify(res)
 
 
 if __name__ == "__main__":
