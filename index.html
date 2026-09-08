@@ -7126,12 +7126,15 @@ function resetTable() {
                 </span>
                 <span class="text-xs text-slate-500">Giá gốc &amp; tỷ lệ trúng cho Bảng Thầu &amp; Bảng Chuyển (Đề, Lô, Xiên, 3 Càng).</span>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
                 <button type="button" onclick="loadRates(); document.getElementById('modalPriceConfig').classList.remove('hidden');" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md font-semibold text-sm transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer">
                   <i class="fa-solid fa-gear"></i> Mở Bảng Giá
                 </button>
                 <button type="button" id="btnSyncPriceToBot" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-md font-semibold text-sm transition-colors border border-emerald-700/50 shadow-xs flex items-center gap-1.5 cursor-pointer" title="Đồng bộ bảng giá từ Web sang Bot">
-                  <i class="fa-solid fa-arrows-rotate"></i> Đồng bộ sang Bot
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Đẩy Giá sang Bot
+                </button>
+                <button type="button" id="btnPullPriceFromBot" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-md font-semibold text-sm transition-colors border border-indigo-700/50 shadow-xs flex items-center gap-1.5 cursor-pointer" title="Lấy bảng giá từ Bot nạp vào Web">
+                  <i class="fa-solid fa-cloud-arrow-down"></i> Lấy Giá từ Bot
                 </button>
               </div>
             </div>
@@ -7146,14 +7149,19 @@ function resetTable() {
 
         <!-- TAB 2: Cấu hình Giữ lại -->
         <div id="tgTabContentRetain" class="hidden space-y-4">
-          <div class="flex justify-between items-center bg-slate-50 dark:bg-dark-900/60 p-3.5 rounded-lg border border-slate-200 dark:border-slate-700">
+          <div class="flex justify-between items-center bg-slate-50 dark:bg-dark-900/60 p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 flex-wrap gap-2.5">
             <div>
               <span class="font-bold text-slate-800 dark:text-slate-200 block text-sm">Cấu hình Mức Giữ Lại cho Bot</span>
               <p class="text-xs text-slate-500 mt-0.5">Mức cược tối đa giữ lại cho mỗi con số trước khi bắn phần thừa cho thầu trên.</p>
             </div>
-            <button type="button" id="btnSyncWebRetainToBot" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 rounded-md font-semibold text-sm transition-colors border border-slate-300 dark:border-slate-600 shadow-xs flex items-center gap-1.5 cursor-pointer">
-              <i class="fa-solid fa-arrows-rotate"></i> Lấy từ Thiết Lập Web
-            </button>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button type="button" id="btnSyncWebRetainToBot" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 rounded-md font-semibold text-sm transition-colors border border-slate-300 dark:border-slate-600 shadow-xs flex items-center gap-1.5 cursor-pointer" title="Sao chép mức giữ lại đang có ở ngoài Web vào đây">
+                <i class="fa-solid fa-arrow-down"></i> Lấy từ Thiết Lập Web
+              </button>
+              <button type="button" id="btnPullRetainFromBot" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-md font-semibold text-sm transition-colors border border-indigo-700/50 shadow-xs flex items-center gap-1.5 cursor-pointer" title="Đẩy mức giữ lại này ra ngoài Web">
+                <i class="fa-solid fa-arrow-up"></i> Áp dụng ra Web
+              </button>
+            </div>
           </div>
 
           <div class="bg-white dark:bg-dark-700/60 p-4 rounded-lg border border-slate-200 dark:border-slate-700 space-y-3.5">
@@ -7227,32 +7235,91 @@ function resetTable() {
         </div>
 
         <!-- TAB 3: Bảng Cược Hôm Nay -->
-        <div id="tgTabContentBoard" class="hidden space-y-4">
-          <div class="flex items-center justify-between flex-wrap gap-2.5">
-            <div class="flex items-center gap-3 flex-wrap">
-              <span id="tgBoardStepBadge" class="text-sm font-semibold px-3 py-1 bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300 rounded-md border border-sky-300 dark:border-sky-800">
+        <div id="tgTabContentBoard" class="hidden space-y-3.5">
+          <!-- Thanh công cụ trên cùng -->
+          <div class="flex items-center justify-between flex-wrap gap-2 p-2 bg-slate-50 dark:bg-dark-900/60 rounded-md border border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <span id="tgBoardStepBadge" class="text-xs font-semibold px-2.5 py-1 bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300 rounded-md border border-sky-300 dark:border-sky-800">
                 Đã chuyển: 0 lần
               </span>
-              <span id="tgBoardStatsText" class="text-sm text-slate-600 dark:text-slate-400 font-semibold">
+              <span id="tgBoardStatsText" class="text-xs text-slate-600 dark:text-slate-400 font-semibold">
                 Đề: 0 con | Lô: 0 con | 3C: 0 con | Xiên: 0 cặp
               </span>
             </div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <button type="button" id="btnTgViewReport" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white rounded-md font-semibold transition-colors border border-amber-700/50 shadow-xs flex items-center gap-1.5 text-sm cursor-pointer" title="Xem Báo Cáo Thầu hôm nay">
-                <i class="fa-solid fa-chart-pie"></i> Báo Cáo Thầu
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <button type="button" id="btnTgPushWebBets" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-md font-semibold transition-colors border border-indigo-700/50 shadow-xs flex items-center gap-1 text-xs cursor-pointer" title="Đẩy nội dung cược đang nhập trên Web sang Bot để cân giữ lại & chuyển">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Đẩy cược Web sang Bot
               </button>
-              <button type="button" id="btnTgViewKQXS" class="px-3.5 py-2 bg-teal-600 hover:bg-teal-500 active:bg-teal-700 text-white rounded-md font-semibold transition-colors border border-teal-700/50 shadow-xs flex items-center gap-1.5 text-sm cursor-pointer" title="Xem Kết Quả Xổ Số hôm nay">
-                <i class="fa-solid fa-trophy"></i> Xem KQXS
-              </button>
-              <button type="button" id="btnTgManualTransfer" class="px-3.5 py-2 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md font-semibold transition-colors border border-sky-700/50 shadow-xs flex items-center gap-1.5 text-sm cursor-pointer">
-                <i class="fa-solid fa-share-nodes"></i> Bắn cược thừa ngay
-              </button>
-              <button type="button" id="btnTgImportToWeb" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-md font-semibold transition-colors border border-emerald-700/50 shadow-xs flex items-center gap-1.5 text-sm cursor-pointer" title="Đưa toàn bộ cược hôm nay vào khung web để xem bảng">
+              <button type="button" id="btnTgImportToWeb" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-md font-semibold transition-colors border border-emerald-700/50 shadow-xs flex items-center gap-1 text-xs cursor-pointer" title="Đưa toàn bộ cược hôm nay vào khung web để tính toán">
                 <i class="fa-solid fa-file-import"></i> Nạp vào Web
               </button>
-              <button type="button" id="btnTgResetBoard" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white rounded-md font-semibold transition-colors border border-rose-700/50 shadow-xs flex items-center gap-1.5 text-sm cursor-pointer">
-                <i class="fa-solid fa-rotate-left"></i> Làm mới bảng
+              <button type="button" id="btnTgViewReport" class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white rounded-md font-semibold transition-colors border border-amber-700/50 shadow-xs flex items-center gap-1 text-xs cursor-pointer" title="Xem Báo Cáo Thầu hôm nay">
+                <i class="fa-solid fa-chart-pie"></i> Báo Cáo Thầu
               </button>
+              <button type="button" id="btnTgViewKQXS" class="px-2.5 py-1.5 bg-teal-600 hover:bg-teal-500 active:bg-teal-700 text-white rounded-md font-semibold transition-colors border border-teal-700/50 shadow-xs flex items-center gap-1 text-xs cursor-pointer" title="Xem Kết Quả Xổ Số hôm nay">
+                <i class="fa-solid fa-trophy"></i> Xem KQXS
+              </button>
+              <button type="button" id="btnTgManualTransfer" class="px-2.5 py-1.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-md font-semibold transition-colors border border-sky-700/50 shadow-xs flex items-center gap-1 text-xs cursor-pointer">
+                <i class="fa-solid fa-share-nodes"></i> Bắn thừa ngay
+              </button>
+              <button type="button" id="btnTgResetBoard" class="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white rounded-md font-semibold transition-colors border border-rose-700/50 shadow-xs flex items-center gap-1 text-xs cursor-pointer">
+                <i class="fa-solid fa-rotate-left"></i> Làm mới
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 Sub-tabs Windows 11 Fluent 2D -->
+          <div class="flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
+            <button type="button" id="btnTgSubTabClientBets" class="tg-sub-tab px-3 py-1.5 bg-sky-600 text-white rounded-md font-semibold text-xs sm:text-sm border border-sky-700 shadow-xs cursor-pointer flex items-center gap-1.5 transition-colors">
+              <i class="fa-solid fa-inbox"></i> 📥 Tin Gốc Khách (<span id="tgCountClientMsgs">0</span>)
+            </button>
+            <button type="button" id="btnTgSubTabRetained" class="tg-sub-tab px-3 py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-md font-semibold text-xs sm:text-sm border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1.5 transition-colors">
+              <i class="fa-solid fa-shield-halved"></i> 🛡️ Tin Giữ Lại
+            </button>
+            <button type="button" id="btnTgSubTabTransfers" class="tg-sub-tab px-3 py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-md font-semibold text-xs sm:text-sm border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1.5 transition-colors">
+              <i class="fa-solid fa-paper-plane"></i> 🛸 Tin Chuyển (<span id="tgCountTransfers">0</span>)
+            </button>
+            <button type="button" id="btnTgSubTabTotal" class="tg-sub-tab px-3 py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-md font-semibold text-xs sm:text-sm border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1.5 transition-colors">
+              <i class="fa-solid fa-calculator"></i> 📊 Tổng Bảng Nhận
+            </button>
+          </div>
+
+          <!-- View 1: Tin Gốc Khách Gửi -->
+          <div id="tgSubViewClientBets" class="space-y-2">
+            <div id="tgClientMessagesList" class="space-y-2 max-h-96 overflow-y-auto pr-1">
+              <p class="text-slate-400 italic p-3 text-center">Chưa có tin nhắn nào từ khách hôm nay.</p>
+            </div>
+          </div>
+
+          <!-- View 2: Tin Giữ Lại -->
+          <div id="tgSubViewRetained" class="hidden space-y-2">
+            <div class="flex items-center justify-between pb-1 flex-wrap gap-2">
+              <span class="text-xs font-semibold text-slate-500">Cược thực tế đang giữ lại (sau khi đã trừ phần bắn chuyển):</span>
+              <div class="flex gap-2">
+                <button type="button" id="btnCopyTgRetainedText" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 rounded text-xs border border-slate-300 dark:border-slate-600 flex items-center gap-1 cursor-pointer">
+                  <i class="fa-solid fa-copy"></i> Copy Tin Giữ
+                </button>
+                <button type="button" id="btnImportTgRetainedToWeb" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs border border-emerald-700 flex items-center gap-1 cursor-pointer">
+                  <i class="fa-solid fa-file-import"></i> Nạp Tin Giữ Vào Web
+                </button>
+              </div>
+            </div>
+            <div id="tgRetainedDisplayArea" class="bg-slate-50 dark:bg-dark-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800 font-mono text-xs sm:text-sm max-h-80 overflow-y-auto space-y-2">
+              <p class="text-slate-400 italic">Chưa có dữ liệu giữ lại.</p>
+            </div>
+          </div>
+
+          <!-- View 3: Tin Chuyển (Thầu Chuyển) -->
+          <div id="tgSubViewTransfers" class="hidden space-y-2">
+            <div id="tgTransfersList" class="space-y-2 max-h-96 overflow-y-auto pr-1">
+              <p class="text-slate-400 italic p-3 text-center">Chưa có bước chuyển nào được thực hiện.</p>
+            </div>
+          </div>
+
+          <!-- View 4: Tổng Bảng Cược Nhận -->
+          <div id="tgSubViewTotal" class="hidden space-y-2">
+            <div id="tgBoardDisplayArea" class="bg-slate-50 dark:bg-dark-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 font-mono text-sm max-h-80 overflow-y-auto space-y-2">
+              <p class="text-slate-400 italic">Chưa có dữ liệu cược nào được nhận hôm nay.</p>
             </div>
           </div>
 
@@ -7269,20 +7336,16 @@ function resetTable() {
             <pre id="tgReportTextContent" class="whitespace-pre-wrap font-mono text-sm bg-white dark:bg-dark-800 p-3 rounded-md border border-amber-200 dark:border-amber-900/60 text-slate-800 dark:text-slate-200 leading-relaxed"></pre>
           </div>
 
-          <div id="tgBoardDisplayArea" class="bg-slate-50 dark:bg-dark-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 font-mono text-sm max-h-80 overflow-y-auto space-y-2">
-            <p class="text-slate-400 italic">Chưa có dữ liệu cược nào được nhận hôm nay.</p>
-          </div>
-
           <!-- Lệnh Telegram Cheat Sheet -->
           <div class="p-3 bg-sky-50 dark:bg-sky-950/30 rounded-lg border border-sky-200 dark:border-sky-800 text-sm space-y-1.5">
             <span class="font-bold text-sky-800 dark:text-sky-300 block mb-1">💡 Lệnh điều khiển trực tiếp trên Telegram:</span>
-            <div class="grid grid-cols-2 gap-2 text-xs text-slate-700 dark:text-slate-300 font-mono">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-slate-700 dark:text-slate-300 font-mono">
               <div>• <b>/kqxs</b>: Xem KQXS hôm nay</div>
-              <div>• <b>/baocao</b>: Xem báo cáo Thầu / Giữ lại / Chuyển</div>
+              <div>• <b>/baocao</b>: Xem báo cáo Thầu / Giữ / Chuyển</div>
               <div>• <b>/bang</b>: Xem tổng cược hôm nay</div>
               <div>• <b>/chuyen</b>: Bắn cược thừa ngay</div>
+              <div>• <b>/chottien</b>: Chốt âm dương với khách</div>
               <div>• <b>/reset</b>: Xóa cược ngày mới</div>
-              <div>• <b>/id</b>: Xem Chat ID tài khoản</div>
             </div>
           </div>
         </div>
@@ -7544,18 +7607,60 @@ function resetTable() {
       } catch (e) {}
     }
 
+    let tgCachedBoardData = null;
+
+    function importSingleClientBetToWeb(betText) {
+      if (!betText) return;
+      const combinedInput = document.getElementById('combinedBetInput');
+      if (combinedInput) {
+        const cur = combinedInput.innerText.trim();
+        combinedInput.innerText = (cur ? cur + "\n" : "") + betText.trim();
+        calculateSum();
+        document.getElementById('modalTelegramBot')?.classList.add('hidden');
+        alert("Đã nạp tin nhắn cược này vào khung tính cược của Web!");
+      }
+    }
+
+    function getRetainedAsBetText(retained) {
+      if (!retained) return "";
+      const lines = [];
+      const de = retained.de || {};
+      const lo = retained.lo || {};
+      const bc = retained.bacang || {};
+      const xi = retained.xien || [];
+
+      if (Object.keys(de).length > 0) {
+        lines.push("Đề " + Object.entries(de).map(([k, v]) => `${k}x${v}`).join(', '));
+      }
+      if (Object.keys(lo).length > 0) {
+        lines.push("Lô " + Object.entries(lo).map(([k, v]) => `${k}x${v}`).join(', '));
+      }
+      if (Object.keys(bc).length > 0) {
+        lines.push("3C " + Object.entries(bc).map(([k, v]) => `${k}x${v}`).join(', '));
+      }
+      if (xi.length > 0) {
+        lines.push("Xiên " + xi.map(x => `${x.numbers.join('-')}x${x.amount}`).join(', '));
+      }
+      return lines.join("\n");
+    }
+
     async function fetchTgBoard() {
-      const display = document.getElementById('tgBoardDisplayArea');
       const stats = document.getElementById('tgBoardStatsText');
       const stepBadge = document.getElementById('tgBoardStepBadge');
-      if (!display) return;
+      const clientList = document.getElementById('tgClientMessagesList');
+      const retainedDisplay = document.getElementById('tgRetainedDisplayArea');
+      const transfersList = document.getElementById('tgTransfersList');
+      const totalDisplay = document.getElementById('tgBoardDisplayArea');
+      const countClients = document.getElementById('tgCountClientMsgs');
+      const countTransfers = document.getElementById('tgCountTransfers');
 
       try {
         const res = await fetch(TG_BOT_API + "/api/bot/board");
         if (!res.ok) return;
         const data = await res.json();
+        tgCachedBoardData = data;
 
-        if (stepBadge) stepBadge.textContent = `Đã chuyển: ${data.step_count} lần`;
+        if (stepBadge) stepBadge.textContent = `Đã chuyển: ${data.step_count || 0} lần`;
         
         const deCount = Object.keys(data.de_sums || {}).length;
         const loCount = Object.keys(data.lo_sums || {}).length;
@@ -7566,29 +7671,142 @@ function resetTable() {
           stats.textContent = `Đề: ${deCount} con | Lô: ${loCount} con | 3C: ${baCangCount} con | Xiên: ${xienCount} cặp`;
         }
 
-        if (deCount === 0 && loCount === 0 && baCangCount === 0 && xienCount === 0) {
-          display.innerHTML = '<p class="text-slate-400 italic">Chưa có dữ liệu cược nào được nhận hôm nay.</p>';
-          return;
+        // 1. Render Tin Gốc Khách Gửi
+        const rawMsgs = data.raw_messages || [];
+        if (countClients) countClients.textContent = rawMsgs.length;
+        if (clientList) {
+          if (rawMsgs.length === 0) {
+            clientList.innerHTML = '<p class="text-slate-400 italic p-3 text-center">Chưa có tin nhắn nào từ khách hôm nay.</p>';
+          } else {
+            clientList.innerHTML = rawMsgs.map((m, idx) => {
+              const u = m.username ? `@${m.username}` : '';
+              const sender = m.sender_name || m.chat_id || 'Khách';
+              const sum = m.summary || {};
+              const invs = m.invalid_items || [];
+              const badges = [];
+              if (sum.de_count > 0) badges.push(`<span class="px-1.5 py-0.5 bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 rounded text-[11px] font-semibold">Đề ${sum.de_count}con (${sum.de_sum}k)</span>`);
+              if (sum.lo_count > 0) badges.push(`<span class="px-1.5 py-0.5 bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 rounded text-[11px] font-semibold">Lô ${sum.lo_count}con (${sum.lo_sum}đ)</span>`);
+              if (sum.bacang_count > 0) badges.push(`<span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 rounded text-[11px] font-semibold">3C ${sum.bacang_count}con (${sum.bacang_sum}k)</span>`);
+              if (sum.xien_count > 0) badges.push(`<span class="px-1.5 py-0.5 bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 rounded text-[11px] font-semibold">Xiên ${sum.xien_count}cặp (${sum.xien_sum}k)</span>`);
+              if (invs.length > 0) badges.push(`<span class="px-1.5 py-0.5 bg-rose-600 text-white rounded text-[11px] font-semibold">Trả lại: ${invs.join(', ')}</span>`);
+
+              const rawEsc = (m.raw_text || '').replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+
+              return `
+                <div class="p-3 bg-white dark:bg-dark-800 rounded-md border border-slate-200 dark:border-slate-700 space-y-2 shadow-xs">
+                  <div class="flex items-center justify-between flex-wrap gap-1.5 text-xs">
+                    <div class="flex items-center gap-2">
+                      <span class="font-bold text-slate-800 dark:text-slate-200">${sender}</span>
+                      <span class="text-slate-400 font-mono">${u}</span>
+                      <span class="px-2 py-0.5 bg-slate-100 dark:bg-dark-700 text-slate-600 dark:text-slate-300 rounded font-semibold font-mono text-[11px]">${m.timestamp || ''}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      <button type="button" onclick="navigator.clipboard.writeText(\`${rawEsc}\`).then(()=>alert('Đã copy tin nhắn!'));" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 text-slate-700 dark:text-slate-200 rounded text-xs border border-slate-300 dark:border-slate-600 flex items-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-copy"></i> Copy
+                      </button>
+                      <button type="button" onclick="importSingleClientBetToWeb(\`${rawEsc}\`);" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs border border-emerald-700 flex items-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-file-import"></i> Nạp Web
+                      </button>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    ${badges.join(' ')}
+                  </div>
+                  <pre class="font-mono text-xs p-2 bg-slate-50 dark:bg-dark-900 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 whitespace-pre-wrap select-all leading-relaxed">${m.raw_text || ''}</pre>
+                </div>
+              `;
+            }).join('');
+          }
         }
 
-        let html = '<div class="space-y-2">';
-        if (deCount > 0) {
-          const deList = Object.entries(data.de_sums).map(([k, v]) => `${k}x${v}`).join(', ');
-          html += `<div><strong class="text-rose-600">🔴 Đề (${deCount} con):</strong> <span class="text-slate-700 dark:text-slate-300">${deList}</span></div>`;
+        // 2. Render Tin Giữ Lại
+        const ret = data.retained || {};
+        if (retainedDisplay) {
+          const deRet = ret.de || {};
+          const loRet = ret.lo || {};
+          const bcRet = ret.bacang || {};
+          const xiRet = ret.xien || [];
+          const hasRet = Object.keys(deRet).length > 0 || Object.keys(loRet).length > 0 || Object.keys(bcRet).length > 0 || xiRet.length > 0;
+
+          if (!hasRet) {
+            retainedDisplay.innerHTML = '<p class="text-slate-400 italic p-2">Chưa có dữ liệu giữ lại hôm nay.</p>';
+          } else {
+            let html = '<div class="space-y-2.5">';
+            if (Object.keys(deRet).length > 0) {
+              const deEntries = Object.entries(deRet).map(([k, v]) => `${k}x${v}`).join(', ');
+              html += `<div><strong class="text-rose-600">🔴 Đề Giữ Lại (${Object.keys(deRet).length} con):</strong> <div class="text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">${deEntries}</div></div>`;
+            }
+            if (Object.keys(loRet).length > 0) {
+              const loEntries = Object.entries(loRet).map(([k, v]) => `${k}x${v}`).join(', ');
+              html += `<div><strong class="text-sky-600">🔵 Lô Giữ Lại (${Object.keys(loRet).length} con):</strong> <div class="text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">${loEntries}</div></div>`;
+            }
+            if (Object.keys(bcRet).length > 0) {
+              const bcEntries = Object.entries(bcRet).map(([k, v]) => `${k}x${v}`).join(', ');
+              html += `<div><strong class="text-purple-600">🟣 3 Càng Giữ Lại (${Object.keys(bcRet).length} con):</strong> <div class="text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">${bcEntries}</div></div>`;
+            }
+            if (xiRet.length > 0) {
+              const xiEntries = xiRet.map(x => `${x.numbers.join('-')}x${x.amount}`).join(', ');
+              html += `<div><strong class="text-amber-600">🟡 Xiên Giữ Lại (${xiRet.length} cặp):</strong> <div class="text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">${xiEntries}</div></div>`;
+            }
+            html += '</div>';
+            retainedDisplay.innerHTML = html;
+          }
         }
-        if (loCount > 0) {
-          const loList = Object.entries(data.lo_sums).map(([k, v]) => `${k}x${v}`).join(', ');
-          html += `<div><strong class="text-sky-600">🔵 Lô (${loCount} con):</strong> <span class="text-slate-700 dark:text-slate-300">${loList}</span></div>`;
+
+        // 3. Render Tin Chuyển (Thầu Chuyển)
+        const hist = data.history || [];
+        if (countTransfers) countTransfers.textContent = hist.length;
+        if (transfersList) {
+          if (hist.length === 0) {
+            transfersList.innerHTML = '<p class="text-slate-400 italic p-3 text-center">Chưa có bước chuyển cược thừa nào được thực hiện.</p>';
+          } else {
+            transfersList.innerHTML = hist.map(step => {
+              const stepTxt = step.transfer_text || '';
+              const rawEsc = stepTxt.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+              return `
+                <div class="p-3 bg-white dark:bg-dark-800 rounded-md border border-slate-200 dark:border-slate-700 space-y-2 shadow-xs">
+                  <div class="flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2">
+                      <span class="px-2 py-0.5 bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300 font-bold rounded">Bước ${step.step}</span>
+                      <span class="text-slate-400 font-mono">${step.timestamp || ''}</span>
+                    </div>
+                    <button type="button" onclick="navigator.clipboard.writeText(\`${rawEsc}\`).then(()=>alert('Đã copy tin chuyển!'));" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 text-slate-700 dark:text-slate-200 rounded text-xs border border-slate-300 dark:border-slate-600 flex items-center gap-1 cursor-pointer">
+                      <i class="fa-solid fa-copy"></i> Copy Tin Chuyển
+                    </button>
+                  </div>
+                  <pre class="font-mono text-xs p-2.5 bg-slate-50 dark:bg-dark-900 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 whitespace-pre-wrap select-all leading-relaxed">${stepTxt}</pre>
+                </div>
+              `;
+            }).join('');
+          }
         }
-        if (baCangCount > 0) {
-          const bcList = Object.entries(data.bacang_sums).map(([k, v]) => `${k}x${v}`).join(', ');
-          html += `<div><strong class="text-purple-600">🟣 3 Càng (${baCangCount} con):</strong> <span class="text-slate-700 dark:text-slate-300">${bcList}</span></div>`;
+
+        // 4. Render Tổng Bảng Cược Nhận
+        if (totalDisplay) {
+          if (deCount === 0 && loCount === 0 && baCangCount === 0 && xienCount === 0) {
+            totalDisplay.innerHTML = '<p class="text-slate-400 italic p-3 text-center">Chưa có dữ liệu cược nào được nhận hôm nay.</p>';
+          } else {
+            let html = '<div class="space-y-2">';
+            if (deCount > 0) {
+              const deList = Object.entries(data.de_sums).map(([k, v]) => `${k}x${v}`).join(', ');
+              html += `<div><strong class="text-rose-600">🔴 Đề (${deCount} con):</strong> <div class="text-slate-700 dark:text-slate-300 mt-0.5 leading-relaxed">${deList}</div></div>`;
+            }
+            if (loCount > 0) {
+              const loList = Object.entries(data.lo_sums).map(([k, v]) => `${k}x${v}`).join(', ');
+              html += `<div><strong class="text-sky-600">🔵 Lô (${loCount} con):</strong> <div class="text-slate-700 dark:text-slate-300 mt-0.5 leading-relaxed">${loList}</div></div>`;
+            }
+            if (baCangCount > 0) {
+              const bcList = Object.entries(data.bacang_sums).map(([k, v]) => `${k}x${v}`).join(', ');
+              html += `<div><strong class="text-purple-600">🟣 3 Càng (${baCangCount} con):</strong> <div class="text-slate-700 dark:text-slate-300 mt-0.5 leading-relaxed">${bcList}</div></div>`;
+            }
+            html += '</div>';
+            totalDisplay.innerHTML = html;
+          }
         }
-        html += '</div>';
-        display.innerHTML = html;
 
       } catch (e) {}
     }
+
 
     // Unlock Telegram Modal
     async function submitTgModalUnlock() {
@@ -7899,6 +8117,160 @@ function resetTable() {
           alert("Đã sao chép thiết lập Mức Giữ Lại từ Web sang Bot. Hãy bấm 'Lưu Mức Giữ Lại'!");
         });
       }
+
+      // Điều hướng 4 sub-tab trong Bảng Cược
+      function switchTgBoardSubTab(tabName) {
+        const subTabs = {
+          'client': { btn: 'btnTgSubTabClientBets', view: 'tgSubViewClientBets' },
+          'retained': { btn: 'btnTgSubTabRetained', view: 'tgSubViewRetained' },
+          'transfers': { btn: 'btnTgSubTabTransfers', view: 'tgSubViewTransfers' },
+          'total': { btn: 'btnTgSubTabTotal', view: 'tgSubViewTotal' }
+        };
+
+        Object.entries(subTabs).forEach(([k, item]) => {
+          const btn = document.getElementById(item.btn);
+          const view = document.getElementById(item.view);
+          if (k === tabName) {
+            view?.classList.remove('hidden');
+            if (btn) {
+              btn.className = "tg-sub-tab px-3 py-1.5 bg-sky-600 text-white rounded-md font-semibold text-xs sm:text-sm border border-sky-700 shadow-xs cursor-pointer flex items-center gap-1.5 transition-colors";
+            }
+          } else {
+            view?.classList.add('hidden');
+            if (btn) {
+              btn.className = "tg-sub-tab px-3 py-1.5 bg-slate-100 dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-dark-700 rounded-md font-semibold text-xs sm:text-sm border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center gap-1.5 transition-colors";
+            }
+          }
+        });
+      }
+
+      document.getElementById('btnTgSubTabClientBets')?.addEventListener('click', () => switchTgBoardSubTab('client'));
+      document.getElementById('btnTgSubTabRetained')?.addEventListener('click', () => switchTgBoardSubTab('retained'));
+      document.getElementById('btnTgSubTabTransfers')?.addEventListener('click', () => switchTgBoardSubTab('transfers'));
+      document.getElementById('btnTgSubTabTotal')?.addEventListener('click', () => switchTgBoardSubTab('total'));
+
+      // Đẩy cược từ Web sang Bot
+      document.getElementById('btnTgPushWebBets')?.addEventListener('click', async () => {
+        const combinedInput = document.getElementById('combinedBetInput');
+        const text = getRawTextFromElement(combinedInput).trim();
+        if (!text) {
+          alert("Khung cược của Web đang trống! Hãy nhập hoặc dán nội dung cược trước khi đẩy sang Bot.");
+          return;
+        }
+
+        try {
+          const res = await fetch(TG_BOT_API + "/api/bot/sync_web_bets", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ bet_text: text })
+          });
+          const data = await res.json();
+          if (data.success) {
+            let msg = `✅ Đã đẩy thành công ${data.total_bets} cược từ Web sang Bot!`;
+            if (data.transferred) {
+              msg += `\n🚀 Đã tự động bắn cược thừa cho người nhận:\n${data.transfer_message}`;
+            } else if (data.excess_count > 0) {
+              msg += `\n⚖️ Có ${data.excess_count} con cược vượt hạn mức (chưa bắn do chưa cấu hình người nhận).`;
+            } else {
+              msg += `\n🛡️ Tất cả cược đều nằm trong hạn mức giữ lại an toàn!`;
+            }
+            alert(msg);
+            fetchTgBoard();
+          } else {
+            alert(data.error || "Lỗi khi đẩy cược sang Bot.");
+          }
+        } catch (e) {
+          alert("Không kết nối được Backend Bot.");
+        }
+      });
+
+      // Copy Tin Giữ Lại
+      document.getElementById('btnCopyTgRetainedText')?.addEventListener('click', () => {
+        if (!tgCachedBoardData || !tgCachedBoardData.retained) {
+          alert("Chưa có dữ liệu giữ lại.");
+          return;
+        }
+        const txt = getRetainedAsBetText(tgCachedBoardData.retained);
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => alert("Đã copy tin cược giữ lại vào Clipboard!"));
+        } else {
+          alert("Không có cược nào đang giữ lại.");
+        }
+      });
+
+      // Nạp Tin Giữ Lại vào Web
+      document.getElementById('btnImportTgRetainedToWeb')?.addEventListener('click', () => {
+        if (!tgCachedBoardData || !tgCachedBoardData.retained) {
+          alert("Chưa có dữ liệu giữ lại.");
+          return;
+        }
+        const txt = getRetainedAsBetText(tgCachedBoardData.retained);
+        if (txt) {
+          importSingleClientBetToWeb(txt);
+        } else {
+          alert("Không có cược nào đang giữ lại.");
+        }
+      });
+
+      // Lấy Bảng Giá từ Bot về Web
+      document.getElementById('btnPullPriceFromBot')?.addEventListener('click', async () => {
+        try {
+          const res = await fetch(TG_BOT_API + "/api/bot/config");
+          if (!res.ok) throw new Error();
+          const cfg = await res.json();
+          if (cfg.price_config && Object.keys(cfg.price_config).length > 0) {
+            window.priceConfigData = cfg.price_config;
+            localStorage.setItem(RATES_STORAGE_KEY, JSON.stringify(cfg.price_config));
+            loadRates();
+            alert("✅ Đã lấy Bảng Giá & Hoa Hồng từ Bot nạp vào Web thành công!");
+          } else {
+            alert("Bot chưa có cấu hình bảng giá riêng.");
+          }
+        } catch (e) {
+          alert("Không kết nối được Backend Bot.");
+        }
+      });
+
+      // Lấy Mức Giữ Lại từ Bot về Web
+      document.getElementById('btnPullRetainFromBot')?.addEventListener('click', () => {
+        const tgDe = document.getElementById('tgRetainDe')?.value || 20;
+        const tgLo = document.getElementById('tgRetainLo')?.value || 5;
+        const tg3c = document.getElementById('tgRetain3c')?.value || 0;
+        const tgX = document.getElementById('tgRetainX')?.value || 0;
+        const tgIsPercent = document.getElementById('tgRetainTypePercent')?.checked;
+        const tgUseBranch = document.getElementById('tgRetainUseBranch')?.checked;
+        const tgBranchDe = document.getElementById('tgBranchDe')?.value || 0;
+        const tgBranchLo = document.getElementById('tgBranchLo')?.value || 0;
+        const tgBranch3c = document.getElementById('tgBranch3c')?.value || 0;
+        const tgBranchX = document.getElementById('tgBranchX')?.value || 0;
+
+        const elDe = document.getElementById('retainDe');
+        const elLo = document.getElementById('retainLo');
+        const el3c = document.getElementById('retain3c');
+        const elX = document.getElementById('retainX');
+        if (elDe) elDe.value = tgDe;
+        if (elLo) elLo.value = tgLo;
+        if (el3c) el3c.value = tg3c;
+        if (elX) elX.value = tgX;
+
+        const radioPercent = document.querySelector('input[name="retainType"][value="percentage"]');
+        const radioMoney = document.querySelector('input[name="retainType"][value="money"]');
+        if (tgIsPercent && radioPercent) radioPercent.checked = true;
+        else if (radioMoney) radioMoney.checked = true;
+
+        const chkBranchWeb = document.getElementById('retainUseBranch');
+        if (chkBranchWeb) {
+          chkBranchWeb.checked = !!tgUseBranch;
+          document.getElementById('branchInputsContainer')?.classList.toggle('hidden', !tgUseBranch);
+          if (document.getElementById('branchDe')) document.getElementById('branchDe').value = tgBranchDe;
+          if (document.getElementById('branchLo')) document.getElementById('branchLo').value = tgBranchLo;
+          if (document.getElementById('branch3c')) document.getElementById('branch3c').value = tgBranch3c;
+          if (document.getElementById('branchX')) document.getElementById('branchX').value = tgBranchX;
+        }
+
+        saveAppState();
+        alert("✅ Đã áp dụng Mức Giữ Lại từ Bot ra giao diện Web thành công!");
+      });
 
       // Nút làm mới bảng cược
       document.getElementById('btnTgResetBoard')?.addEventListener('click', async () => {
