@@ -287,8 +287,9 @@ class BoardBalancer:
             for a in sorted_amts:
                 nums = groups[a]
                 if cat_key == 'xien':
-                    # Mỗi cặp xiên phân cách bằng dấu phẩy
-                    group_strings.append(f"{', '.join(nums)}x{a}")
+                    # Mỗi cặp xiên phải có 'x' tiền cược riêng (ví dụ: 10-01x20, 10-52x20)
+                    for n in nums:
+                        group_strings.append(f"{n}x{a}")
                 else:
                     nums.sort(key=lambda x: int(x) if x.isdigit() else x)
                     group_strings.append(f"{'.'.join(nums)}x{a}")
