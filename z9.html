@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="vi" class="scroll-smooth h-full">
 <head>
@@ -554,62 +555,62 @@
             </h2>
           </div>
 
-          <div id="reportCaptureArea" class="space-y-4 bg-white dark:bg-dark-800 p-1.5 rounded-lg">
+          <div id="reportCaptureArea" class="space-y-2.5 bg-white dark:bg-dark-800 p-1.5 rounded-lg">
             <!-- Tab Selector / Summary Figures Grid -->
-            <div id="baoCaoTabsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-3 text-center select-none">
+            <div id="baoCaoTabsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-2 text-center select-none">
               <!-- Tab Thầu -->
-              <div id="tabThau" class="cursor-pointer bg-excel-50/70 dark:bg-emerald-950/20 p-3 rounded-lg border-2 border-excel-800 dark:border-emerald-500 transition-all hover:scale-[1.01] active:scale-95 space-y-2 shadow-xs">
-                <div class="text-xs font-black text-excel-800 dark:text-emerald-400 uppercase tracking-wider">📊 Báo cáo Thầu</div>
-                <div class="grid grid-cols-3 gap-1 divide-x divide-slate-200 dark:divide-slate-700 text-[11px] font-mono">
+              <div id="tabThau" class="cursor-pointer bg-excel-50/70 dark:bg-emerald-950/20 py-2 px-2.5 rounded-lg border-2 border-excel-800 dark:border-emerald-500 transition-all hover:scale-[1.01] active:scale-95 space-y-1.5 shadow-xs">
+                <div class="text-[13px] font-black text-excel-800 dark:text-emerald-400 uppercase tracking-wider">📊 Báo cáo Thầu</div>
+                <div class="grid grid-cols-3 gap-1 divide-x divide-slate-200 dark:divide-slate-700 text-xs font-mono">
                   <div>
-                    <span class="text-slate-500 font-sans block text-[10px]">Vốn</span>
-                    <span id="thauVon" class="font-bold text-slate-800 dark:text-slate-200 text-xs">0</span>
+                    <span class="text-slate-500 font-sans block text-[11px] font-semibold">Vốn</span>
+                    <span id="thauVon" class="font-black text-slate-800 dark:text-slate-200 text-[13.5px]">0</span>
                   </div>
                   <div>
-                    <span class="text-slate-500 font-sans block text-[10px]">Trúng</span>
-                    <span id="thauTrung" class="font-bold text-emerald-600 dark:text-emerald-400 text-xs">0</span>
+                    <span class="text-slate-500 font-sans block text-[11px] font-semibold">Trúng</span>
+                    <span id="thauTrung" class="font-black text-emerald-600 dark:text-emerald-400 text-[13.5px]">0</span>
                   </div>
                   <div>
-                    <span id="thauNetLabel" class="text-slate-500 font-sans block text-[10px]">Thầu bù</span>
-                    <span id="thauNet" class="font-extrabold text-xs">0</span>
+                    <span id="thauNetLabel" class="text-slate-500 font-sans block text-[11px] font-semibold">Thầu bù</span>
+                    <span id="thauNet" class="font-black text-[13.5px]">0</span>
                   </div>
                 </div>
               </div>
               
               <!-- Tab Chuyển -->
-              <div id="tabChuyen" class="cursor-pointer bg-slate-50 dark:bg-dark-900 p-3 rounded-lg border-2 border-transparent transition-all hover:scale-[1.01] active:scale-95 space-y-2">
-                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">🔄 Báo cáo Chuyển</div>
-                <div class="grid grid-cols-3 gap-1 divide-x divide-slate-200 dark:divide-slate-700 text-[11px] font-mono">
+              <div id="tabChuyen" class="cursor-pointer bg-slate-50 dark:bg-dark-900 py-2 px-2.5 rounded-lg border-2 border-transparent transition-all hover:scale-[1.01] active:scale-95 space-y-1.5">
+                <div class="text-[13px] font-bold text-slate-500 uppercase tracking-wider">🔄 Báo cáo Chuyển</div>
+                <div class="grid grid-cols-3 gap-1 divide-x divide-slate-200 dark:divide-slate-700 text-xs font-mono">
                   <div>
-                    <span class="text-slate-500 font-sans block text-[10px]">Vốn</span>
-                    <span id="chuyenVon" class="font-bold text-slate-800 dark:text-slate-200 text-xs">0</span>
+                    <span class="text-slate-500 font-sans block text-[11px] font-semibold">Vốn</span>
+                    <span id="chuyenVon" class="font-black text-slate-800 dark:text-slate-200 text-[13.5px]">0</span>
                   </div>
                   <div>
-                    <span class="text-slate-500 font-sans block text-[10px]">Trúng</span>
-                    <span id="chuyenTrung" class="font-bold text-emerald-600 dark:text-emerald-400 text-xs">0</span>
+                    <span class="text-slate-500 font-sans block text-[11px] font-semibold">Trúng</span>
+                    <span id="chuyenTrung" class="font-black text-emerald-600 dark:text-emerald-400 text-[13.5px]">0</span>
                   </div>
                   <div>
-                    <span id="chuyenNetLabel" class="text-slate-500 font-sans block text-[10px]">Lời/Lỗ</span>
-                    <span id="chuyenNet" class="font-extrabold text-xs">0</span>
+                    <span id="chuyenNetLabel" class="text-slate-500 font-sans block text-[11px] font-semibold">Lời/Lỗ</span>
+                    <span id="chuyenNet" class="font-black text-[13.5px]">0</span>
                   </div>
                 </div>
               </div>
 
               <!-- Tab Giữ lại -->
-              <div id="tabGiulai" class="cursor-pointer bg-slate-50 dark:bg-dark-900 p-3 rounded-lg border-2 border-transparent transition-all hover:scale-[1.01] active:scale-95 space-y-2">
-                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">🔒 Giữ lại</div>
-                <div class="grid grid-cols-3 gap-1 divide-x divide-slate-200 dark:divide-slate-700 text-[11px] font-mono">
+              <div id="tabGiulai" class="cursor-pointer bg-slate-50 dark:bg-dark-900 py-2 px-2.5 rounded-lg border-2 border-transparent transition-all hover:scale-[1.01] active:scale-95 space-y-1.5">
+                <div class="text-[13px] font-bold text-slate-500 uppercase tracking-wider">🔒 Giữ lại</div>
+                <div class="grid grid-cols-3 gap-1 divide-x divide-slate-200 dark:divide-slate-700 text-xs font-mono">
                   <div>
-                    <span class="text-slate-500 font-sans block text-[10px]">Vốn</span>
-                    <span id="giulaiVon" class="font-bold text-slate-800 dark:text-slate-200 text-xs">0</span>
+                    <span class="text-slate-500 font-sans block text-[11px] font-semibold">Vốn</span>
+                    <span id="giulaiVon" class="font-black text-slate-800 dark:text-slate-200 text-[13.5px]">0</span>
                   </div>
                   <div>
-                    <span class="text-slate-500 font-sans block text-[10px]">Trúng</span>
-                    <span id="giulaiTrung" class="font-bold text-emerald-600 dark:text-emerald-400 text-xs">0</span>
+                    <span class="text-slate-500 font-sans block text-[11px] font-semibold">Trúng</span>
+                    <span id="giulaiTrung" class="font-black text-emerald-600 dark:text-emerald-400 text-[13.5px]">0</span>
                   </div>
                   <div>
-                    <span id="giulaiNetLabel" class="text-slate-500 font-sans block text-[10px]">Lời</span>
-                    <span id="giulaiNet" class="font-extrabold text-xs">0</span>
+                    <span id="giulaiNetLabel" class="text-slate-500 font-sans block text-[11px] font-semibold">Lời</span>
+                    <span id="giulaiNet" class="font-black text-[13.5px]">0</span>
                   </div>
                 </div>
               </div>
@@ -619,51 +620,51 @@
             <div class="overflow-x-auto border border-slate-300 dark:border-slate-700 rounded overflow-hidden">
               <table class="w-full text-xs text-left border-collapse excel-table font-sans">
                 <thead class="bg-excel-800 text-white dark:bg-dark-700 dark:text-slate-200">
-                  <tr class="text-[11px]">
-                    <th class="p-2 border border-slate-300 dark:border-slate-700 font-bold">Thể loại</th>
-                    <th class="p-2 border border-slate-300 dark:border-slate-700 text-center font-bold">Xác</th>
-                    <th class="p-2 border border-slate-300 dark:border-slate-700 text-right font-bold">Vốn</th>
-                    <th class="p-2 border border-slate-300 dark:border-slate-700 text-right font-bold">Trúng</th>
-                    <th class="p-2 border border-slate-300 dark:border-slate-700 text-right font-bold">Kết quả</th>
+                  <tr class="text-xs md:text-sm">
+                    <th class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 font-black">Thể loại</th>
+                    <th class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-center font-black">Xác</th>
+                    <th class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right font-black">Vốn</th>
+                    <th class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right font-black">Trúng</th>
+                    <th class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right font-black">Kết quả</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200 dark:divide-slate-700 font-mono text-[11px]">
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700 font-mono text-[13px] md:text-[13.5px] font-bold">
                   <tr class="hover:bg-slate-50 dark:hover:bg-dark-700/50">
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 font-bold font-sans">🔴 Đề</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-center" id="tblDeXac">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right" id="tblDeVon">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right text-emerald-600 dark:text-emerald-400 font-bold" id="tblDeTrung">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right font-bold" id="tblDeNet">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 font-black font-sans text-xs md:text-sm">🔴 Đề</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-center" id="tblDeXac">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right" id="tblDeVon">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right text-emerald-600 dark:text-emerald-400 font-black" id="tblDeTrung">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right font-black" id="tblDeNet">0</td>
                   </tr>
                   <tr class="hover:bg-slate-50 dark:hover:bg-dark-700/50">
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 font-bold font-sans">🔵 Lô</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-center" id="tblLoXac">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right" id="tblLoVon">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right text-emerald-600 dark:text-emerald-400 font-bold" id="tblLoTrung">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right font-bold" id="tblLoNet">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 font-black font-sans text-xs md:text-sm">🔵 Lô</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-center" id="tblLoXac">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right" id="tblLoVon">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right text-emerald-600 dark:text-emerald-400 font-black" id="tblLoTrung">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right font-black" id="tblLoNet">0</td>
                   </tr>
                   <tr class="hover:bg-slate-50 dark:hover:bg-dark-700/50">
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 font-bold font-sans">🟢 Xiên</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-center" id="tblXienXac">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right" id="tblXienVon">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right text-emerald-600 dark:text-emerald-400 font-bold" id="tblXienTrung">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right font-bold" id="tblXienNet">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 font-black font-sans text-xs md:text-sm">🟢 Xiên</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-center" id="tblXienXac">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right" id="tblXienVon">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right text-emerald-600 dark:text-emerald-400 font-black" id="tblXienTrung">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right font-black" id="tblXienNet">0</td>
                   </tr>
                   <tr class="hover:bg-slate-50 dark:hover:bg-dark-700/50">
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 font-bold font-sans">🟣 3 Càng</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-center" id="tbl3CXac">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right" id="tbl3CVon">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right text-emerald-600 dark:text-emerald-400 font-bold" id="tbl3CTrung">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right font-bold" id="tbl3CNet">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 font-black font-sans text-xs md:text-sm">🟣 3 Càng</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-center" id="tbl3CXac">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right" id="tbl3CVon">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right text-emerald-600 dark:text-emerald-400 font-black" id="tbl3CTrung">0</td>
+                    <td class="py-1.5 px-2 border border-slate-300 dark:border-slate-700 text-right font-black" id="tbl3CNet">0</td>
                   </tr>
 
                   <!-- Grand Total Row -->
-                  <tr class="bg-slate-100 dark:bg-dark-900 font-bold text-slate-800 dark:text-slate-100 border-t-2 border-slate-400 dark:border-slate-600">
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 font-sans uppercase">Tổng cộng</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-center">-</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right" id="tblTotalVon">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right text-emerald-600 dark:text-emerald-400" id="tblTotalTrung">0</td>
-                    <td class="p-2 border border-slate-300 dark:border-slate-700 text-right font-black text-sm" id="tblTotalNet">0</td>
+                  <tr class="bg-slate-100 dark:bg-dark-900 font-black text-slate-800 dark:text-slate-100 border-t-2 border-slate-400 dark:border-slate-600">
+                    <td class="py-2 px-2 border border-slate-300 dark:border-slate-700 font-sans uppercase text-xs md:text-sm">Tổng cộng</td>
+                    <td class="py-2 px-2 border border-slate-300 dark:border-slate-700 text-center">-</td>
+                    <td class="py-2 px-2 border border-slate-300 dark:border-slate-700 text-right" id="tblTotalVon">0</td>
+                    <td class="py-2 px-2 border border-slate-300 dark:border-slate-700 text-right text-emerald-600 dark:text-emerald-400" id="tblTotalTrung">0</td>
+                    <td class="py-2 px-2 border border-slate-300 dark:border-slate-700 text-right text-sm md:text-base font-black" id="tblTotalNet">0</td>
                   </tr>
                 </tbody>
               </table>
@@ -673,6 +674,9 @@
           <div class="flex gap-2 pt-1">
             <button type="button" id="btnCopyTextReport" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold transition-all flex-1 flex items-center justify-center gap-1.5 active:scale-95 shadow-xs" title="Copy tin nhắn báo cáo">
               <i class="fa-solid fa-copy"></i> Copy tin
+            </button>
+            <button type="button" id="btnCopyTabImageReport" class="px-3 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded text-xs font-bold transition-all flex-1 flex items-center justify-center gap-1.5 active:scale-95 shadow-xs" title="Copy ảnh bảng của Tab đang chọn để gửi Zalo">
+              <i class="fa-solid fa-table"></i> Copy Tab
             </button>
             <button type="button" id="btnCopyImageReport" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition-all flex-1 flex items-center justify-center gap-1.5 active:scale-95 shadow-xs" title="Copy ảnh báo cáo để gửi Zalo">
               <i class="fa-solid fa-image"></i> Copy Ảnh
@@ -1501,10 +1505,11 @@ function verifyGroupText(groupText, currentCat) {
     return parsedNums.length > 0;
   }
 
-  const tokenRegex = /(\s+|[.,;/\-\+=\*x]+|(?:dau\s*dit|đầu\s*đít|dau\s*duoi|đầu\s*đuôi|đau\s*đit|đau\s*đít|dd|đđ)\s*\d(?![0-9])|(?:kep\s+lech|kép\s+lệch)|(?:chẵn|chan|chăn)\s+(?:chẵn|chan|chăn)|(?:chẵn|chan|chăn)\s+(?:lẻ|le)|(?:lẻ|le)\s+(?:chẵn|chan|chăn)|(?:lẻ|le)\s+(?:lẻ|le)|(?:dau|đầu|đau|đàu|dit|đít|đit|duoi|đuôi|cham|chạm|tong|tổng|bo|bộ|he|hệ|d|đ|t)\s*\d{1,2}(?![0-9])|[a-zA-Z0-9'’‘ʼ＇`\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036f]+|.)/gi;
+  const tokenRegex = /(xienquay|xq|xienq|quay|q|xquay|xien|xiên|x[234]|\s+|[.,;/\-\+=\*x]+|(?:dau\s*dit|đầu\s*đít|dau\s*duoi|đầu\s*đuôi|đau\s*đit|đau\s*đít|dd|đđ)\s*\d(?![0-9])|(?:kep\s+lech|kép\s+lệch)|(?:chẵn|chan|chăn)\s+(?:chẵn|chan|chăn)|(?:chẵn|chan|chăn)\s+(?:lẻ|le)|(?:lẻ|le)\s+(?:chẵn|chan|chăn)|(?:lẻ|le)\s+(?:lẻ|le)|(?:dau|đầu|đau|đàu|dit|đít|đit|duoi|đuôi|cham|chạm|tong|tổng|bo|bộ|he|hệ|d|đ|t)\s*\d{1,2}(?![0-9])|[a-zA-Z0-9'’‘ʼ＇`\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036f]+|.)/gi;
   const tokens = numbersPart.match(tokenRegex) || [];
   let html = "";
   let validTokensCount = 0;
+  let recognizedCategoryCount = 0;
   let activeShorthandPrefix = "";
 
   for (let i = 0; i < tokens.length; i++) {
@@ -1527,6 +1532,7 @@ function verifyGroupText(groupText, currentCat) {
       else if (typeRegex.bacang.test(normTokenForCat)) newCat = 'bacang';
 
       if (newCat) {
+        recognizedCategoryCount++;
         activeCat = newCat;
         html += escapeHtml(t);
         activeShorthandPrefix = "";
@@ -1582,7 +1588,8 @@ function verifyGroupText(groupText, currentCat) {
     }
   }
 
-  if ((activeCat === 'xien' || activeCat === 'xienquay') && validTokensCount < 2 && !hasInvalid) {
+  const isPureCatGroup = (recognizedCategoryCount > 0 && validTokensCount === 0);
+  if ((activeCat === 'xien' || activeCat === 'xienquay') && validTokensCount < 2 && !hasInvalid && !isPureCatGroup) {
     return {
       html: `<span class="text-danger font-bold bg-red-100 dark:bg-red-950/20 px-1 rounded border border-red-300 dark:border-red-900/50">${escapeHtml(numbersPart)}</span>${escapeHtml(operatorPart)}`,
       newCategory: activeCat,
@@ -1602,7 +1609,7 @@ function formatLineWithHighlights(lineText, currentCategory) {
   let hasInvalid = false;
   let htmlResult = "";
   
-  const groupRegex = /(?:^|[\s,;.:\-]+)([a-wy-z0-9'’‘ʼ＇`.,\-\s\u00C0-\u024F\u1E00-\u1EFF]+?)(?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?[\.,;\-]*/gi;
+  const groupRegex = /(?:^|[\s,;.:\-]+)((?:xienquay|xq|xienq|quay|q|xquay|xien|xiên|[a-wy-z0-9'’‘ʼ＇`.,\-\s\u00C0-\u024F\u1E00-\u1EFF])+?)(?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?[\.,;\-]*/gi;
   
   let lastIndex = 0;
   let match;
@@ -1682,10 +1689,62 @@ function normalizeBetLine(line) {
   return normalized;
 }
 
+function expandMultiBets(text) {
+  const HSPACE = '[^\\S\\r\\n]';
+  const catChoices = 'lô|lo|l|đề|de|đê|đe|dê|dè|đè|đ|d|xienquay|xq|xienq|quay|xquay|xien|xiên|3cang|3càng|3c|bc';
+
+  const catMap = {
+    'lo': 'lo', 'lô': 'lo', 'l': 'lo',
+    'de': 'de', 'đề': 'de', 'đê': 'de', 'đe': 'de', 'dê': 'de', 'dè': 'de', 'đè': 'de', 'd': 'de', 'đ': 'de',
+    'xien': 'xien', 'xiên': 'xien',
+    'xienquay': 'xienquay', 'xq': 'xienquay', 'xienq': 'xienquay', 'quay': 'xienquay', 'xquay': 'xienquay',
+    '3cang': 'bacang', '3càng': 'bacang', '3c': 'bacang', 'bc': 'bacang'
+  };
+
+  const multiBetRegex = new RegExp(
+    '(?:^|[\\r\\n;,]|' + HSPACE + '+)' +
+    '(' + catChoices + ')' +
+    '(?:' + HSPACE + '+|[.:;\\-])' +
+    '([0-9.,\\-\\s_a-zA-Z\'’‘＇`]+?)' +
+    '\\s*(x|\\*|=|\\+|mc|mỗi\\s*con\\s*=?|moi\\s*con\\s*=?)' +
+    '\\s*(\\d+(?:\\.\\d+)?(?:k|d|n|đ|₫)?)\\.?' +
+    '((?:' + HSPACE + '*[,;.:\\-]?' + HSPACE + '*(?:' + catChoices + ')(?:' + HSPACE + '*(?:x|\\*|=|\\+|mc|mỗi\\s*con\\s*=?|moi\\s*con\\s*=?)\\s*|' + HSPACE + '+)\\d+(?:\\.\\d+)?(?:k|d|n|đ|₫)?)+)' +
+    '(?=[.,;:' + HSPACE + ']|$)',
+    'gim'
+  );
+
+  const subClauseRegex = new RegExp(
+    HSPACE + '*[,;.:\\-]?' + HSPACE + '*' +
+    '(' + catChoices + ')' +
+    '(?:' + HSPACE + '*(x|\\*|=|\\+|mc|mỗi\\s*con\\s*=?|moi\\s*con\\s*=?)\\s*|' + HSPACE + '+)' +
+    '(\\d+(?:\\.\\d+)?(?:k|d|n|đ|₫)?)',
+    'gi'
+  );
+
+  return text.replace(multiBetRegex, (match, cat1, nums, op1, amt1, rest) => {
+    const c1Lower = cat1.trim().toLowerCase();
+    const c1 = catMap[c1Lower] || c1Lower;
+    const lines = [c1 + ' ' + nums.trim() + op1.trim() + amt1.trim()];
+
+    let subMatch;
+    subClauseRegex.lastIndex = 0;
+    while ((subMatch = subClauseRegex.exec(rest)) !== null) {
+      const cKLower = subMatch[1].trim().toLowerCase();
+      const cK = catMap[cKLower] || cKLower;
+      const opK = (subMatch[2] && subMatch[2].trim()) ? subMatch[2].trim() : 'x';
+      const amtK = subMatch[3].trim();
+      lines.push(cK + ' ' + nums.trim() + opK + amtK);
+    }
+
+    return '\n' + lines.join('\n') + '\n';
+  });
+}
+
 function parseCombinedInput(inputString) {
   let processedInput = inputString.replace(/[’‘ʼ＇`]/g, "'");
   const keywordRegex = /(^|[\s,;.])(xienquay|xquay|xienq|3cang|3càng|3\s*càng|3\s*cang|quay|xien|xiên|xq|de|đề|đê|đe|dê|dè|đè|Dè|Đè|dề|Dề|lo|lô|3c|bc|càng|cang|d(?!\d(?!\d))|đ(?!\d(?!\d))|l|c|q|x)(\d)/gi;
   processedInput = processedInput.replace(keywordRegex, "$1$2 $3");
+  processedInput = expandMultiBets(processedInput);
   const sameLinePattern = /[\s,;.:\-]+(xienquay|xq|xienq|quay|q|xquay|lô\s*xiên|lo\s*xien|đề|de|đê|đe|dê|dè|đè|Dè|Đè|dề|Dề|lô|lo|l|xiên|xien|x2|x3|x4)(?=[\s.,;\-\d:]|$)|[\s,;.:\-]+(3càng|3cang|3\s*càng|3\s*cang|3c|bc|càng|cang)(?=[\s.,;\-\d:]|$)|[\s,;.:\-]+(d|đ|l|c)(?=[\s.,;\-\d:]|$)(?=\s+[a-z0-9'’‘＇`])/gi;
   processedInput = processedInput.replace(sameLinePattern, (match) => {
     return "\n" + match.replace(/^[\s,;.:\-]+/g, '').trim();
@@ -5566,80 +5625,58 @@ function setupEventListeners() {
         return Math.round(val || 0).toLocaleString('vi-VN');
       };
 
-      // Xử lý ngày hiển thị dạng D/M (ví dụ 7/9)
-      const rawDate = window.lastCalculatedReport ? window.lastCalculatedReport.date : (new Date()).toLocaleDateString('vi-VN');
-      let dayMonthText = "";
-      if (rawDate) {
-        if (rawDate.includes('-')) {
-          const parts = rawDate.split('-');
-          if (parts.length >= 3) {
-            dayMonthText = `${parseInt(parts[2], 10)}/${parseInt(parts[1], 10)}`;
-          }
-        } else if (rawDate.includes('/')) {
+      // Xử lý ngày hiển thị dạng "ngày DD/MM:"
+      let day = '';
+      let month = '';
+      const dateEl = document.getElementById("selectedDate");
+      if (dateEl) {
+        const rawDate = dateEl.innerText.trim();
+        if (rawDate) {
           const parts = rawDate.split('/');
           if (parts.length >= 2) {
-            dayMonthText = `${parseInt(parts[0], 10)}/${parseInt(parts[1], 10)}`;
+            day = parts[0].padStart(2, '0');
+            month = parts[1].padStart(2, '0');
           }
         }
       }
-      if (!dayMonthText) {
+      if (!day || !month) {
         const now = new Date();
-        dayMonthText = `${now.getDate()}/${now.getMonth() + 1}`;
+        day = String(now.getDate()).padStart(2, '0');
+        month = String(now.getMonth() + 1).padStart(2, '0');
       }
+      const dateHeader = `ngày ${day}/${month}:`;
 
       const activeTab = window.activeReportTab || 'thau';
       const curData = (activeTab === 'chuyen') ? data.chuyen : ((activeTab === 'giulai') ? data.giulai : data.thau);
 
-      let headerTitle = "Thầu";
-      if (activeTab === 'chuyen') headerTitle = "Chuyển";
-      else if (activeTab === 'giulai') headerTitle = "Giữ lại";
-
       const lines = [];
-      lines.push(`${headerTitle} - ${dayMonthText}`);
+      lines.push(dateHeader);
 
-      // Chỉ hiển thị thể loại có dữ liệu cược (Xác > 0)
+      // Định dạng tiếng Việt có dấu: Đề 5.770(60)= 278, Lô 280(20)= 4.532
       if (curData.deXac > 0) {
-        lines.push(`Đề: ${formatMoneyK(curData.deXac)} / ${formatMoneyK(curData.deWinXac)}`);
+        lines.push(`Đề ${formatMoneyK(curData.deXac)}(${formatMoneyK(curData.deWinXac || 0)})= ${formatMoneyK(Math.abs(curData.deNet || 0))}`);
       }
       if (curData.loXac > 0) {
-        lines.push(`Lô: ${formatMoneyK(curData.loXac)} / ${formatMoneyK(curData.loWinXac)}`);
-      }
-      if (curData.xienXac > 0) {
-        lines.push(`Xiên: ${formatMoneyK(curData.xienXac)} / ${formatMoneyK(curData.xienWinXac)}`);
+        lines.push(`Lô ${formatMoneyK(curData.loXac)}(${formatMoneyK(curData.loWinXac || 0)})= ${formatMoneyK(Math.abs(curData.loNet || 0))}`);
       }
       if (curData.baCangXac > 0) {
-        lines.push(`3c: ${formatMoneyK(curData.baCangXac)} / ${formatMoneyK(curData.baCangWinXac)}`);
+        lines.push(`3C ${formatMoneyK(curData.baCangXac)}(${formatMoneyK(curData.baCangWinXac || 0)})= ${formatMoneyK(Math.abs(curData.baCangNet || 0))}`);
+      }
+      if (curData.xienXac > 0) {
+        lines.push(`Xiên ${formatMoneyK(curData.xienXac)}(${formatMoneyK(curData.xienWinXac || 0)})= ${formatMoneyK(Math.abs(curData.xienNet || 0))}`);
       }
 
-      // Dòng kết quả tổng kết theo từng tab
+      // Dòng kết quả tổng kết theo từng tab (Khách bù/Thầu bù)
       let netLabel = "";
       const netVal = curData.totalNet || 0;
       const netValFormatted = formatMoneyK(Math.abs(netVal));
 
       if (activeTab === 'thau') {
-        if (netVal > 0) {
-          netLabel = "Khách thua";
-        } else if (netVal < 0) {
-          netLabel = "Thầu bù";
-        } else {
-          netLabel = "Hòa";
-        }
+        netLabel = (netVal >= 0) ? "Khách bù" : "Thầu bù";
       } else if (activeTab === 'chuyen') {
-        if (netVal > 0) {
-          netLabel = "Nộp";
-        } else if (netVal < 0) {
-          netLabel = "Lấy về";
-        } else {
-          netLabel = "Hòa";
-        }
+        netLabel = (netVal >= 0) ? "Nộp" : "Lấy về";
       } else { // giulai
-        if (netVal > 0) {
-          netLabel = "Lời";
-        } else if (netVal < 0) {
-          netLabel = "Lỗ";
-        } else {
-          netLabel = "Hòa";
-        }
+        netLabel = (netVal >= 0) ? "Lời" : "Lỗ";
       }
 
       lines.push(`${netLabel}: ${netValFormatted}`);
@@ -5651,6 +5688,230 @@ function setupEventListeners() {
         console.error("Lỗi copy báo cáo:", err);
         window.prompt("Copy báo cáo tại đây:", reportText);
       });
+    });
+  }
+
+  // Copy Tab báo cáo listener (Chụp riêng bảng của Tab đang chọn, co giãn chuẩn Mobile xem Zalo)
+  const btnCopyTabImageReport = document.getElementById("btnCopyTabImageReport");
+  if (btnCopyTabImageReport) {
+    btnCopyTabImageReport.addEventListener("click", async () => {
+      const data = window.lastReportData;
+      if (!data) {
+        alert("Vui lòng thực hiện tính toán báo cáo trước!");
+        return;
+      }
+
+      const origHtml = btnCopyTabImageReport.innerHTML;
+      btnCopyTabImageReport.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang chụp...';
+      btnCopyTabImageReport.disabled = true;
+
+      try {
+        if (typeof html2canvas === 'undefined') {
+          throw new Error("Thư viện html2canvas chưa sẵn sàng. Vui lòng kiểm tra kết nối mạng.");
+        }
+
+        const activeTab = window.activeReportTab || 'thau';
+        const curData = (activeTab === 'chuyen') ? data.chuyen : ((activeTab === 'giulai') ? data.giulai : data.thau);
+
+        let tabTitle = "BÁO CÁO THẦU";
+        let tabIcon = "📊";
+        let netLabel = "Thầu bù";
+        let themeColor = "#107c41"; // excel green
+        let headerBg = "#107c41";
+
+        if (activeTab === 'chuyen') {
+          tabTitle = "BÁO CÁO CHUYỂN";
+          tabIcon = "🔄";
+          netLabel = (curData.totalNet >= 0) ? "Lời" : "Lỗ";
+          themeColor = "#0284c7"; // sky blue
+          headerBg = "#0369a1";
+        } else if (activeTab === 'giulai') {
+          tabTitle = "BÁO CÁO GIỮ LẠI";
+          tabIcon = "🔒";
+          netLabel = (curData.totalNet >= 0) ? "Lời" : "Lỗ";
+          themeColor = "#d97706"; // amber
+          headerBg = "#b45309";
+        } else {
+          netLabel = (curData.totalNet >= 0) ? "Khách thua" : "Thầu bù";
+        }
+
+        // Lấy ngày hiển thị
+        let dateText = "";
+        const dateEl = document.getElementById("selectedDate");
+        if (dateEl && dateEl.innerText.trim()) {
+          dateText = dateEl.innerText.trim();
+        } else {
+          const now = new Date();
+          dateText = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+        }
+
+        const formatMoneyK = (val) => Math.round(val || 0).toLocaleString('vi-VN');
+
+        const netVal = curData.totalNet || 0;
+        let netColor = "#1e293b";
+        if (activeTab === 'thau') {
+          netColor = netVal >= 0 ? "#16a34a" : "#dc2626";
+        } else {
+          netColor = netVal >= 0 ? "#16a34a" : "#dc2626";
+        }
+
+        // Lấy text trúng thực tế từ bảng DOM hiện tại
+        const deTrungText = document.getElementById("tblDeTrung")?.textContent || formatMoneyK(curData.deTrung);
+        const loTrungText = document.getElementById("tblLoTrung")?.textContent || formatMoneyK(curData.loTrung);
+        const xienTrungText = document.getElementById("tblXienTrung")?.textContent || formatMoneyK(curData.xienTrung);
+        const baCangTrungText = document.getElementById("tbl3CTrung")?.textContent || formatMoneyK(curData.baCangTrung);
+        const totalTrungText = document.getElementById("tblTotalTrung")?.textContent || formatMoneyK(curData.totalTrung);
+
+        const deNetColor = (curData.deNet || 0) < 0 ? "#dc2626" : "#1e293b";
+        const loNetColor = (curData.loNet || 0) < 0 ? "#dc2626" : "#1e293b";
+        const xienNetColor = (curData.xienNet || 0) < 0 ? "#dc2626" : "#1e293b";
+        const baCangNetColor = (curData.baCangNet || 0) < 0 ? "#dc2626" : "#1e293b";
+        const totalNetColor = (curData.totalNet || 0) < 0 ? "#dc2626" : "#16a34a";
+
+        // Tạo container ẩn để render ảnh chuẩn mobile full viền, co dọc, chữ to rõ
+        const captureContainer = document.createElement('div');
+        captureContainer.style.position = 'fixed';
+        captureContainer.style.left = '-9999px';
+        captureContainer.style.top = '0';
+        captureContainer.style.width = '410px';
+        captureContainer.style.boxSizing = 'border-box';
+        captureContainer.style.fontFamily = "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif";
+        captureContainer.style.backgroundColor = '#ffffff';
+        captureContainer.style.color = '#1e293b';
+        captureContainer.style.border = `2px solid ${themeColor}`;
+        captureContainer.style.borderRadius = '8px';
+        captureContainer.style.overflow = 'hidden';
+        captureContainer.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.1)';
+
+        captureContainer.innerHTML = `
+          <!-- Header Banner -->
+          <div style="background: ${headerBg}; color: #ffffff; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid rgba(0,0,0,0.1);">
+            <div style="font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+              <span>${tabIcon}</span>
+              <span>${tabTitle}</span>
+            </div>
+            <div style="font-weight: 700; font-size: 13px; opacity: 0.95; font-family: monospace;">
+              ${dateText}
+            </div>
+          </div>
+
+          <!-- Summary Mini Cards -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; padding: 4px 6px; background: #f8fafc; border-bottom: 1px solid #cbd5e1; text-align: center;">
+            <div style="background: #ffffff; padding: 2px 2px; border-radius: 4px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 12px; color: #64748b; font-weight: 700; line-height: 1.2;">Vốn</div>
+              <div style="font-size: 16px; font-weight: 800; color: #1e293b; font-family: monospace; line-height: 1.2;">${formatMoneyK(curData.totalVon)}</div>
+            </div>
+            <div style="background: #ffffff; padding: 2px 2px; border-radius: 4px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 12px; color: #64748b; font-weight: 700; line-height: 1.2;">Trúng</div>
+              <div style="font-size: 16px; font-weight: 800; color: #16a34a; font-family: monospace; line-height: 1.2;">${formatMoneyK(curData.totalTrung)}</div>
+            </div>
+            <div style="background: #ffffff; padding: 2px 2px; border-radius: 4px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 12px; color: #64748b; font-weight: 700; line-height: 1.2;">${netLabel}</div>
+              <div style="font-size: 16px; font-weight: 800; color: ${netColor}; font-family: monospace; line-height: 1.2;">${formatMoneyK(Math.abs(curData.totalNet || 0))}</div>
+            </div>
+          </div>
+
+          <!-- Table Chi Tiết Full Viền Co Giãn Chuẩn Mobile -->
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; background: #ffffff;">
+            <thead>
+              <tr style="background: #1e293b; color: #ffffff; font-size: 12.5px; text-transform: uppercase;">
+                <th style="padding: 4px 6px; border: 1px solid #334155; width: 22%;">Thể loại</th>
+                <th style="padding: 4px 3px; border: 1px solid #334155; text-align: center; width: 15%;">Xác</th>
+                <th style="padding: 4px 4px; border: 1px solid #334155; text-align: right; width: 19%;">Vốn</th>
+                <th style="padding: 4px 4px; border: 1px solid #334155; text-align: right; width: 24%;">Trúng</th>
+                <th style="padding: 4px 6px; border: 1px solid #334155; text-align: right; width: 20%;">Kết quả</th>
+              </tr>
+            </thead>
+            <tbody style="font-family: monospace; font-size: 14px;">
+              <tr style="background: #ffffff; border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 3px 6px; font-weight: 700; font-family: sans-serif; border: 1px solid #e2e8f0; white-space: nowrap;">🔴 Đề</td>
+                <td style="padding: 3px 3px; text-align: center; border: 1px solid #e2e8f0;">${formatMoneyK(curData.deXac)}</td>
+                <td style="padding: 3px 4px; text-align: right; border: 1px solid #e2e8f0;">${formatMoneyK(curData.deVon)}</td>
+                <td style="padding: 3px 4px; text-align: right; color: #16a34a; font-weight: 700; border: 1px solid #e2e8f0;">${deTrungText}</td>
+                <td style="padding: 3px 6px; text-align: right; font-weight: 700; color: ${deNetColor}; border: 1px solid #e2e8f0;">${formatMoneyK(curData.deNet)}</td>
+              </tr>
+              <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 3px 6px; font-weight: 700; font-family: sans-serif; border: 1px solid #e2e8f0; white-space: nowrap;">🔵 Lô</td>
+                <td style="padding: 3px 3px; text-align: center; border: 1px solid #e2e8f0;">${formatMoneyK(curData.loXac)}</td>
+                <td style="padding: 3px 4px; text-align: right; border: 1px solid #e2e8f0;">${formatMoneyK(curData.loVon)}</td>
+                <td style="padding: 3px 4px; text-align: right; color: #16a34a; font-weight: 700; border: 1px solid #e2e8f0;">${loTrungText}</td>
+                <td style="padding: 3px 6px; text-align: right; font-weight: 700; color: ${loNetColor}; border: 1px solid #e2e8f0;">${formatMoneyK(curData.loNet)}</td>
+              </tr>
+              <tr style="background: #ffffff; border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 3px 6px; font-weight: 700; font-family: sans-serif; border: 1px solid #e2e8f0; white-space: nowrap;">🟢 Xiên</td>
+                <td style="padding: 3px 3px; text-align: center; border: 1px solid #e2e8f0;">${formatMoneyK(curData.xienXac)}</td>
+                <td style="padding: 3px 4px; text-align: right; border: 1px solid #e2e8f0;">${formatMoneyK(curData.xienVon)}</td>
+                <td style="padding: 3px 4px; text-align: right; color: #16a34a; font-weight: 700; border: 1px solid #e2e8f0;">${xienTrungText}</td>
+                <td style="padding: 3px 6px; text-align: right; font-weight: 700; color: ${xienNetColor}; border: 1px solid #e2e8f0;">${formatMoneyK(curData.xienNet)}</td>
+              </tr>
+              <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 3px 6px; font-weight: 700; font-family: sans-serif; border: 1px solid #e2e8f0; white-space: nowrap;">🟣 3 Càng</td>
+                <td style="padding: 3px 3px; text-align: center; border: 1px solid #e2e8f0;">${formatMoneyK(curData.baCangXac)}</td>
+                <td style="padding: 3px 4px; text-align: right; border: 1px solid #e2e8f0;">${formatMoneyK(curData.baCangVon)}</td>
+                <td style="padding: 3px 4px; text-align: right; color: #16a34a; font-weight: 700; border: 1px solid #e2e8f0;">${baCangTrungText}</td>
+                <td style="padding: 3px 6px; text-align: right; font-weight: 700; color: ${baCangNetColor}; border: 1px solid #e2e8f0;">${formatMoneyK(curData.baCangNet)}</td>
+              </tr>
+              <!-- Row Total -->
+              <tr style="background: #e2e8f0; font-weight: 800; border-top: 2px solid #94a3b8;">
+                <td style="padding: 4px 6px; font-family: sans-serif; text-transform: uppercase; border: 1px solid #cbd5e1; white-space: nowrap;">TỔNG CỘNG</td>
+                <td style="padding: 4px 3px; text-align: center; border: 1px solid #cbd5e1;">-</td>
+                <td style="padding: 4px 4px; text-align: right; border: 1px solid #cbd5e1;">${formatMoneyK(curData.totalVon)}</td>
+                <td style="padding: 4px 4px; text-align: right; color: #16a34a; border: 1px solid #cbd5e1;">${totalTrungText}</td>
+                <td style="padding: 4px 6px; text-align: right; font-size: 14.5px; color: ${totalNetColor}; border: 1px solid #cbd5e1;">${formatMoneyK(curData.totalNet)}</td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+
+        document.body.appendChild(captureContainer);
+
+        const canvas = await html2canvas(captureContainer, {
+          scale: 3, // Độ sắc nét cực cao xem trên Retina / mobile
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+
+        document.body.removeChild(captureContainer);
+
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            alert("Không tạo được ảnh từ Tab báo cáo!");
+            return;
+          }
+
+          let copied = false;
+          if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined') {
+            try {
+              const item = new ClipboardItem({ 'image/png': blob });
+              await navigator.clipboard.write([item]);
+              copied = true;
+              alert(`✅ Đã copy ảnh "${tabTitle}" vào Clipboard!\nBạn có thể dán (Ctrl+V) gửi ngay qua Zalo.`);
+            } catch (clipErr) {
+              console.warn("ClipboardItem write image error:", clipErr);
+            }
+          }
+
+          if (!copied) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${tabTitle.replace(/\\s+/g, '_')}_${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert(`✅ Đã tải ảnh "${tabTitle}" (.png) về máy do trình duyệt giới hạn quyền ghi ảnh vào clipboard.`);
+          }
+        }, 'image/png');
+
+      } catch (err) {
+        console.error("Lỗi chụp ảnh Tab báo cáo:", err);
+        alert("Lỗi khi chụp ảnh Tab: " + err.message);
+      } finally {
+        btnCopyTabImageReport.innerHTML = origHtml;
+        btnCopyTabImageReport.disabled = false;
+      }
     });
   }
 
@@ -5678,7 +5939,7 @@ function setupEventListeners() {
 
         const isDark = document.documentElement.classList.contains('dark');
         const canvas = await html2canvas(captureEl, {
-          scale: 2, // Tăng độ phân giải cho ảnh sắc nét
+          scale: 3, // Độ sắc nét Retina cực cao cho điện thoại
           useCORS: true,
           backgroundColor: isDark ? '#1e293b' : '#ffffff',
           logging: false
@@ -6762,6 +7023,46 @@ function resetTable() {
   const totalCol1 = document.getElementById('totalCol1');
   if (totalCol1) totalCol1.textContent = '0';
 }
+
+// Tự động xóa số 0 có sẵn khi click/focus vào ô nhập để gõ số mới
+function isNumericField(el) {
+  if (!el || el.tagName !== 'INPUT') return false;
+  if (el.type === 'password') return false;
+  return el.type === 'number' || 
+         el.classList.contains('auto-clear-zero') || 
+         el.id.startsWith('rate') ||
+         el.id.startsWith('retain') ||
+         el.id.startsWith('branch');
+}
+
+document.addEventListener('focusin', function(e) {
+  const el = e.target;
+  if (isNumericField(el)) {
+    if (el.value === '0' || el.value === 0) {
+      el.value = '';
+    } else {
+      setTimeout(() => { try { el.select(); } catch(err){} }, 10);
+    }
+  }
+});
+
+document.addEventListener('click', function(e) {
+  const el = e.target;
+  if (isNumericField(el)) {
+    if (el.value === '0' || el.value === 0) {
+      el.value = '';
+    }
+  }
+});
+
+document.addEventListener('focusout', function(e) {
+  const el = e.target;
+  if (isNumericField(el)) {
+    if (el.value === '') {
+      el.value = '0';
+    }
+  }
+});
 </script>
 
   <!-- Modal Cấu hình giá (Ported from thau_lode.html) -->
