@@ -1566,10 +1566,11 @@ function verifyGroupText(groupText, currentCat) {
     return parsedNums.length > 0;
   }
 
-  const tokenRegex = /(\s+|[.,;/\-\+=\*x]+|(?:dau\s*dit|đầu\s*đít|dau\s*duoi|đầu\s*đuôi|đau\s*đit|đau\s*đít|dd|đđ)\s*\d(?![0-9])|(?:kep\s+lech|kép\s+lệch)|(?:chẵn|chan|chăn)\s+(?:chẵn|chan|chăn)|(?:chẵn|chan|chăn)\s+(?:lẻ|le)|(?:lẻ|le)\s+(?:chẵn|chan|chăn)|(?:lẻ|le)\s+(?:lẻ|le)|(?:dau|đầu|đau|đàu|dit|đít|đit|duoi|đuôi|cham|chạm|tong|tổng|bo|bộ|he|hệ|d|đ|t)\s*\d{1,2}(?![0-9])|[a-zA-Z0-9'’‘ʼ＇`\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036f]+|.)/gi;
+  const tokenRegex = /(xienquay|xq|xienq|quay|q|xquay|xien|xiên|x[234]|\s+|[.,;/\-\+=\*x]+|(?:dau\s*dit|đầu\s*đít|dau\s*duoi|đầu\s*đuôi|đau\s*đit|đau\s*đít|dd|đđ)\s*\d(?![0-9])|(?:kep\s+lech|kép\s+lệch)|(?:chẵn|chan|chăn)\s+(?:chẵn|chan|chăn)|(?:chẵn|chan|chăn)\s+(?:lẻ|le)|(?:lẻ|le)\s+(?:chẵn|chan|chăn)|(?:lẻ|le)\s+(?:lẻ|le)|(?:dau|đầu|đau|đàu|dit|đít|đit|duoi|đuôi|cham|chạm|tong|tổng|bo|bộ|he|hệ|d|đ|t)\s*\d{1,2}(?![0-9])|[a-zA-Z0-9'’‘ʼ＇`\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036f]+|.)/gi;
   const tokens = numbersPart.match(tokenRegex) || [];
   let html = "";
   let validTokensCount = 0;
+  let recognizedCategoryCount = 0;
   let activeShorthandPrefix = "";
 
   for (let i = 0; i < tokens.length; i++) {
@@ -1592,6 +1593,7 @@ function verifyGroupText(groupText, currentCat) {
       else if (typeRegex.bacang.test(normTokenForCat)) newCat = 'bacang';
 
       if (newCat) {
+        recognizedCategoryCount++;
         activeCat = newCat;
         html += escapeHtml(t);
         activeShorthandPrefix = "";
@@ -1647,7 +1649,8 @@ function verifyGroupText(groupText, currentCat) {
     }
   }
 
-  if ((activeCat === 'xien' || activeCat === 'xienquay') && validTokensCount < 2 && !hasInvalid) {
+  const isPureCatGroup = (recognizedCategoryCount > 0 && validTokensCount === 0);
+  if ((activeCat === 'xien' || activeCat === 'xienquay') && validTokensCount < 2 && !hasInvalid && !isPureCatGroup) {
     return {
       html: `<span class="text-danger font-bold bg-red-100 dark:bg-red-950/20 px-1 rounded border border-red-300 dark:border-red-900/50">${escapeHtml(numbersPart)}</span>${escapeHtml(operatorPart)}`,
       newCategory: activeCat,
@@ -1667,7 +1670,7 @@ function formatLineWithHighlights(lineText, currentCategory) {
   let hasInvalid = false;
   let htmlResult = "";
   
-  const groupRegex = /(?:^|[\s,;.:\-]+)([a-wy-z0-9'’‘ʼ＇`.,\-\s\u00C0-\u024F\u1E00-\u1EFF]+?)(?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?[\.,;\-]*/gi;
+  const groupRegex = /(?:^|[\s,;.:\-]+)((?:xienquay|xq|xienq|quay|q|xquay|xien|xiên|[a-wy-z0-9'’‘ʼ＇`.,\-\s\u00C0-\u024F\u1E00-\u1EFF])+?)(?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?[\.,;\-]*/gi;
   
   let lastIndex = 0;
   let match;
@@ -1747,10 +1750,62 @@ function normalizeBetLine(line) {
   return normalized;
 }
 
+function expandMultiBets(text) {
+  const HSPACE = '[^\\S\\r\\n]';
+  const catChoices = 'lô|lo|l|đề|de|đê|đe|dê|dè|đè|đ|d|xienquay|xq|xienq|quay|xquay|xien|xiên|3cang|3càng|3c|bc';
+
+  const catMap = {
+    'lo': 'lo', 'lô': 'lo', 'l': 'lo',
+    'de': 'de', 'đề': 'de', 'đê': 'de', 'đe': 'de', 'dê': 'de', 'dè': 'de', 'đè': 'de', 'd': 'de', 'đ': 'de',
+    'xien': 'xien', 'xiên': 'xien',
+    'xienquay': 'xienquay', 'xq': 'xienquay', 'xienq': 'xienquay', 'quay': 'xienquay', 'xquay': 'xienquay',
+    '3cang': 'bacang', '3càng': 'bacang', '3c': 'bacang', 'bc': 'bacang'
+  };
+
+  const multiBetRegex = new RegExp(
+    '(?:^|[\\r\\n;,]|' + HSPACE + '+)' +
+    '(' + catChoices + ')' +
+    '(?:' + HSPACE + '+|[.:;\\-])' +
+    '([0-9.,\\-\\s_a-zA-Z\'’‘＇`]+?)' +
+    '\\s*(x|\\*|=|\\+|mc|mỗi\\s*con\\s*=?|moi\\s*con\\s*=?)' +
+    '\\s*(\\d+(?:\\.\\d+)?(?:k|d|n|đ|₫)?)\\.?' +
+    '((?:' + HSPACE + '*[,;.:\\-]?' + HSPACE + '*(?:' + catChoices + ')(?:' + HSPACE + '*(?:x|\\*|=|\\+|mc|mỗi\\s*con\\s*=?|moi\\s*con\\s*=?)\\s*|' + HSPACE + '+)\\d+(?:\\.\\d+)?(?:k|d|n|đ|₫)?)+)' +
+    '(?=[.,;:' + HSPACE + ']|$)',
+    'gim'
+  );
+
+  const subClauseRegex = new RegExp(
+    HSPACE + '*[,;.:\\-]?' + HSPACE + '*' +
+    '(' + catChoices + ')' +
+    '(?:' + HSPACE + '*(x|\\*|=|\\+|mc|mỗi\\s*con\\s*=?|moi\\s*con\\s*=?)\\s*|' + HSPACE + '+)' +
+    '(\\d+(?:\\.\\d+)?(?:k|d|n|đ|₫)?)',
+    'gi'
+  );
+
+  return text.replace(multiBetRegex, (match, cat1, nums, op1, amt1, rest) => {
+    const c1Lower = cat1.trim().toLowerCase();
+    const c1 = catMap[c1Lower] || c1Lower;
+    const lines = [c1 + ' ' + nums.trim() + op1.trim() + amt1.trim()];
+
+    let subMatch;
+    subClauseRegex.lastIndex = 0;
+    while ((subMatch = subClauseRegex.exec(rest)) !== null) {
+      const cKLower = subMatch[1].trim().toLowerCase();
+      const cK = catMap[cKLower] || cKLower;
+      const opK = (subMatch[2] && subMatch[2].trim()) ? subMatch[2].trim() : 'x';
+      const amtK = subMatch[3].trim();
+      lines.push(cK + ' ' + nums.trim() + opK + amtK);
+    }
+
+    return '\n' + lines.join('\n') + '\n';
+  });
+}
+
 function parseCombinedInput(inputString) {
   let processedInput = inputString.replace(/[’‘ʼ＇`]/g, "'");
   const keywordRegex = /(^|[\s,;.])(xienquay|xquay|xienq|3cang|3càng|3\s*càng|3\s*cang|quay|xien|xiên|xq|de|đề|đê|đe|dê|dè|đè|Dè|Đè|dề|Dề|lo|lô|3c|bc|càng|cang|d(?!\d(?!\d))|đ(?!\d(?!\d))|l|c|q|x)(\d)/gi;
   processedInput = processedInput.replace(keywordRegex, "$1$2 $3");
+  processedInput = expandMultiBets(processedInput);
   const sameLinePattern = /[\s,;.:\-]+(xienquay|xq|xienq|quay|q|xquay|lô\s*xiên|lo\s*xien|đề|de|đê|đe|dê|dè|đè|Dè|Đè|dề|Dề|lô|lo|l|xiên|xien|x2|x3|x4)(?=[\s.,;\-\d:]|$)|[\s,;.:\-]+(3càng|3cang|3\s*càng|3\s*cang|3c|bc|càng|cang)(?=[\s.,;\-\d:]|$)|[\s,;.:\-]+(d|đ|l|c)(?=[\s.,;\-\d:]|$)(?=\s+[a-z0-9'’‘＇`])/gi;
   processedInput = processedInput.replace(sameLinePattern, (match) => {
     return "\n" + match.replace(/^[\s,;.:\-]+/g, '').trim();
@@ -4833,12 +4888,13 @@ function saveRates() {
 
   // Tự động đồng bộ giá sang Telegram Bot backend (nếu có API)
   try {
-    const apiUrl = localStorage.getItem('tg_bot_api_url') || (typeof TG_BOT_API !== 'undefined' ? TG_BOT_API : "http://127.0.0.1:5005");
-    fetch(apiUrl + "/api/bot/config", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ price_config: window.priceConfigData })
-    }).catch(() => {});
+    if (typeof callBotApi === 'function') {
+      callBotApi("/api/bot/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ price_config: window.priceConfigData })
+      }).catch(() => {});
+    }
   } catch(e) {}
 }
 
@@ -5247,6 +5303,7 @@ function setupEventListeners() {
           combinedBetInput.innerText = "";
           combinedBetInput.innerHTML = "";
           localStorage.removeItem('z8_combined_bet');
+          localStorage.removeItem('z8_last_pushed_bet_text');
         }
         calculateSum();
         saveAppState();
@@ -7472,6 +7529,48 @@ function resetTable() {
     let tgLogsInterval = null;
     let tgStatusInterval = null;
 
+    function getBotApiCandidates() {
+      const candidates = [];
+      const host = window.location.hostname || 'localhost';
+      const sameHost = 'http://' + host + ':5005';
+      candidates.push(sameHost);
+      if (host !== '127.0.0.1') candidates.push('http://127.0.0.1:5005');
+      if (host !== 'localhost') candidates.push('http://localhost:5005');
+      const stored = localStorage.getItem('tg_bot_api_url');
+      if (stored && stored.trim() && !candidates.includes(stored.trim())) {
+        candidates.push(stored.trim());
+      }
+      return candidates;
+    }
+
+    async function callBotApi(endpoint, options = {}) {
+      const candidates = getBotApiCandidates();
+      let lastError = null;
+
+      for (const base of candidates) {
+        try {
+          const cleanBase = base.replace(/\/+$/, '');
+          const cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
+          const url = cleanBase + cleanEndpoint;
+          const controller = new AbortController();
+          const timeoutMs = (options && options.timeout) || 4000;
+          const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+          const fetchOpts = { ...options, signal: options.signal || controller.signal };
+          const res = await fetch(url, fetchOpts);
+          clearTimeout(timeoutId);
+          TG_BOT_API = cleanBase;
+          localStorage.setItem('tg_bot_api_url', cleanBase);
+          const inputApi = document.getElementById('tgInputApiUrl');
+          if (inputApi && !inputApi.value) inputApi.value = cleanBase;
+          return res;
+        } catch (err) {
+          lastError = err;
+        }
+      }
+      throw lastError || new Error("Không thể kết nối Backend Bot trên cổng 5005");
+    }
+    window.callBotApi = callBotApi;
+
     function useLocalBackend() {
       TG_BOT_API = "http://127.0.0.1:5005";
       localStorage.setItem('tg_bot_api_url', TG_BOT_API);
@@ -7526,7 +7625,7 @@ function resetTable() {
       const btnToggle = document.getElementById('btnToggleBotRun');
 
       try {
-        const res = await fetch(TG_BOT_API + "/api/bot/status");
+        const res = await callBotApi("/api/bot/status");
         if (!res.ok) throw new Error("Backend offline");
         const data = await res.json();
 
@@ -7559,7 +7658,7 @@ function resetTable() {
 
     async function loadTgBotConfig() {
       try {
-        const res = await fetch(TG_BOT_API + "/api/bot/config");
+        const res = await callBotApi("/api/bot/config");
         if (!res.ok) return;
         const cfg = await res.json();
 
@@ -7643,7 +7742,7 @@ function resetTable() {
       };
 
       try {
-        const res = await fetch(TG_BOT_API + "/api/bot/config", {
+        const res = await callBotApi("/api/bot/config", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -7662,7 +7761,7 @@ function resetTable() {
     document.getElementById('btnSyncPriceToBot')?.addEventListener('click', async () => {
       saveRates();
       try {
-        const res = await fetch(TG_BOT_API + "/api/bot/config", {
+        const res = await callBotApi("/api/bot/config", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ price_config: window.priceConfigData })
@@ -7681,7 +7780,7 @@ function resetTable() {
       const consoleEl = document.getElementById('tgLogsConsole');
       if (!consoleEl) return;
       try {
-        const res = await fetch(TG_BOT_API + "/api/bot/logs");
+        const res = await callBotApi("/api/bot/logs");
         if (!res.ok) return;
         const data = await res.json();
         const logs = data.logs || [];
@@ -7749,7 +7848,7 @@ function resetTable() {
       const countTransfers = document.getElementById('tgCountTransfers');
 
       try {
-        const res = await fetch(TG_BOT_API + "/api/bot/board");
+        const res = await callBotApi("/api/bot/board");
         if (!res.ok) return;
         const data = await res.json();
         tgCachedBoardData = data;
@@ -7914,7 +8013,7 @@ function resetTable() {
       }
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang mở...';
       try {
-        const res = await fetch(TG_BOT_API + "/api/bot/verify_password", {
+        const res = await callBotApi("/api/bot/verify_password", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ password: pwd })
@@ -8027,7 +8126,7 @@ function resetTable() {
         }
 
         try {
-          const res = await fetch(TG_BOT_API + "/api/bot/change_password", {
+          const res = await callBotApi("/api/bot/change_password", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ old_password: oldP.trim(), new_password: newP.trim() })
@@ -8057,7 +8156,7 @@ function resetTable() {
           const isRunning = btnToggle.innerText.includes("Dừng");
           const endpoint = isRunning ? "/api/bot/stop" : "/api/bot/start";
           try {
-            const res = await fetch(TG_BOT_API + endpoint, { method: "POST" });
+            const res = await callBotApi(endpoint, { method: "POST" });
             const data = await res.json();
             if (data.status === "error") {
               alert("Lỗi: " + data.message);
@@ -8075,7 +8174,7 @@ function resetTable() {
         btnCheckToken.addEventListener('click', async () => {
           await saveTgBotConfig();
           try {
-            const res = await fetch(TG_BOT_API + "/api/bot/start", { method: "POST" });
+            const res = await callBotApi("/api/bot/start", { method: "POST" });
             const data = await res.json();
             const infoText = document.getElementById('tgBotInfoText');
             if (data.status === "started" || data.status === "already_running") {
@@ -8103,7 +8202,7 @@ function resetTable() {
             return;
           }
           try {
-            const res = await fetch(TG_BOT_API + "/api/bot/test_message", {
+            const res = await callBotApi("/api/bot/test_message", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ recipient: rec })
@@ -8131,7 +8230,7 @@ function resetTable() {
             return;
           }
           try {
-            const res = await fetch(TG_BOT_API + "/api/bot/known_users");
+            const res = await callBotApi("/api/bot/known_users");
             const users = await res.json();
             const keys = Object.keys(users);
             if (keys.length === 0) {
@@ -8244,38 +8343,220 @@ function resetTable() {
       document.getElementById('btnTgSubTabTotal')?.addEventListener('click', () => switchTgBoardSubTab('total'));
 
       // --- CÁC HÀM ĐỒNG BỘ 1 CHẠM WEB ⇄ BOT THEO YÊU CẦU ---
-      // 1. Đẩy cược từ Web sang Bot (dùng chung cho cả 3 nút)
+      // 1. Đẩy cược từ Web sang Bot (Có cơ chế chống click spam, chống đẩy lặp & tự động lọc chỉ đẩy cược mới thêm)
+      let isPushingWebBets = false;
+
+      function getBetDiff(oldText, newText) {
+        const norm = (s) => {
+          if (!s) return "";
+          s = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+          const lines = [];
+          for (const line of s.split('\n')) {
+            const cleaned = line.trim().replace(/\s+/g, ' ');
+            if (cleaned) lines.push(cleaned);
+          }
+          return lines.join('\n');
+        };
+
+        const o = norm(oldText);
+        const n = norm(newText);
+
+        if (!n) return { diffText: "", isDiff: false, isFirst: false };
+        if (!o) return { diffText: n, isDiff: true, isFirst: true };
+        if (o === n) return { diffText: "", isDiff: false, isFirst: false };
+
+        // 1. So sánh tiền tố & hậu tố chung (Common Prefix & Suffix Diff)
+        // Bắt chính xác trường hợp gõ thêm cược vào cuối dòng hoặc giữa dòng (ví dụ thêm llx50 vào đuôi dòng cũ)
+        let p = 0;
+        const minLen = Math.min(o.length, n.length);
+        while (p < minLen && o[p] === n[p]) p++;
+
+        let s = 0;
+        while (s < (minLen - p) && o[o.length - 1 - s] === n[n.length - 1 - s]) s++;
+
+        const removed = s > 0 ? o.substring(p, o.length - s).trim() : o.substring(p).trim();
+        let added = s > 0 ? n.substring(p, n.length - s).trim() : n.substring(p).trim();
+
+        // Nếu là thêm thuần túy (không xóa / không sửa nội dung cũ đã đẩy)
+        if (!removed && added) {
+          // Kiểm tra xem phần mới thêm có cần kế thừa thể loại cược từ phía trước hay không
+          const prefixText = n.substring(0, p);
+          const firstWord = added.split(/\s+/)[0].toLowerCase();
+          const catKeywords = ['de', 'đề', 'lo', 'lô', '3c', '3cang', 'bacang', 'xien', 'xiên', 'xq', 'xienquay'];
+          const hasCat = catKeywords.some(k => firstWord.startsWith(k));
+
+          if (!hasCat) {
+            const matches = [...prefixText.matchAll(/\b(de|đề|lo|lô|3c|3cang|bacang|xien|xiên|xq|xienquay)\b/gi)];
+            if (matches.length > 0) {
+              const lastCat = matches[matches.length - 1][1];
+              added = lastCat + " " + added;
+            }
+          }
+          return { diffText: added, isDiff: true, isFirst: false };
+        }
+
+        // 2. Dự phòng: so sánh danh sách từng dòng độc lập
+        const oldLines = o.split('\n');
+        const newLines = n.split('\n');
+        const oldFreq = {};
+        for (const l of oldLines) {
+          const k = l.toLowerCase();
+          oldFreq[k] = (oldFreq[k] || 0) + 1;
+        }
+
+        const diffLines = [];
+        for (const l of newLines) {
+          const k = l.toLowerCase();
+          if (oldFreq[k] && oldFreq[k] > 0) {
+            oldFreq[k]--;
+          } else {
+            diffLines.push(l);
+          }
+        }
+
+        if (diffLines.length > 0) {
+          return { diffText: diffLines.join('\n'), isDiff: true, isFirst: false };
+        }
+
+        return { diffText: "", isDiff: false, isFirst: false };
+      }
+
       async function pushWebBetsToBot() {
+        if (isPushingWebBets) return;
+
         const combinedInput = document.getElementById('combinedBetInput');
-        const text = (typeof getRawTextFromElement === 'function' && combinedInput) ? getRawTextFromElement(combinedInput).trim() : (combinedInput?.innerText || "").trim();
-        if (!text) {
-          alert("Khung cược của Web đang trống! Hãy nhập hoặc dán nội dung cược trước khi đẩy sang Bot.");
+        const currentText = (typeof getRawTextFromElement === 'function' && combinedInput)
+          ? getRawTextFromElement(combinedInput).trim()
+          : (combinedInput?.innerText || "").trim();
+
+        if (!currentText) {
+          alert("⚠️ Khung cược của Web đang trống! Hãy nhập hoặc dán nội dung cược trước khi đẩy sang Bot.");
           return;
         }
 
+        // So sánh cược hiện tại với cược đã đẩy thành công trước đó
+        const lastPushed = localStorage.getItem('z8_last_pushed_bet_text') || "";
+        const { diffText, isDiff, isFirst } = getBetDiff(lastPushed, currentText);
+
+        // 1. Nếu không có cược mới nào được thêm:
+        if (!isDiff || !diffText) {
+          alert(
+            "⚠️ TOÀN BỘ CƯỢC TRONG KHUNG ĐÃ ĐƯỢC ĐẨY SANG BOT RỒI!\n" +
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+            "Không có cược mới nào được thêm vào so với lần đẩy trước.\n\n" +
+            "Hệ thống đã CHẶN KHÔNG ĐẨY LẠI để tránh cược bị cộng dồn nhân đôi và tự động bắn lặp tin thừa cho người nhận.\n\n" +
+            "👉 Hãy nhập thêm cược mới vào khung nếu bạn muốn đẩy tiếp."
+          );
+          return;
+        }
+
+        // Thông báo xác nhận chỉ hiển thị đúng nội dung cược cần đẩy
+        const confirmTitle = isFirst ? "Đẩy cược sang Bot:" : "Đẩy tiếp cược sang Bot:";
+        const confirmPush = confirm(
+          `${confirmTitle}\n\n${diffText}`
+        );
+        if (!confirmPush) return;
+        const textToSend = diffText;
+
+        // 3. Khóa nút bấm và hiển thị trạng thái đang xử lý (chống spam click)
+        isPushingWebBets = true;
+        const pushButtons = [
+          document.getElementById('btnTgPushWebBets'),
+          document.getElementById('btnTgPushWebBetsTop'),
+          document.getElementById('btnMainPushToBot')
+        ].filter(Boolean);
+
+        const origButtonHtmls = pushButtons.map(b => b.innerHTML);
+        pushButtons.forEach(b => {
+          b.disabled = true;
+          b.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang đẩy...';
+        });
+
         try {
-          const res = await fetch(TG_BOT_API + "/api/bot/sync_web_bets", {
+          const res = await callBotApi("/api/bot/sync_web_bets", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bet_text: text })
+            body: JSON.stringify({ bet_text: textToSend, force: true })
           });
           const data = await res.json();
+
+          if (data.is_duplicate) {
+            alert("⚠️ " + (data.error || "Nội dung cược này đã được nạp trước đó!"));
+            return;
+          }
+
           if (data.success) {
-            let msg = `✅ ĐÃ ĐẨY CƯỢC TỪ WEB SANG BOT THÀNH CÔNG (${data.total_bets} cược)!`;
-            if (data.transferred) {
-              msg += `\n\n🚀 Bot đã tự động bắn cược thừa cho người nhận:\n${data.transfer_message}`;
+            // Cập nhật mốc nội dung đã đẩy thành công (lưu toàn bộ currentText)
+            localStorage.setItem('z8_last_pushed_bet_text', currentText);
+
+            // Tự động copy phần nội dung cược thừa bắn cho người nhận
+            const transferText = (data.transfer_message || "").trim();
+
+            const copyToClipboard = (txt) => {
+              if (!txt) return;
+              try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                  navigator.clipboard.writeText(txt).catch(() => fallbackCopy(txt));
+                } else {
+                  fallbackCopy(txt);
+                }
+              } catch (e) {
+                fallbackCopy(txt);
+              }
+            };
+
+            const fallbackCopy = (txt) => {
+              try {
+                const tempEl = document.createElement("textarea");
+                tempEl.value = txt;
+                tempEl.style.position = "fixed";
+                tempEl.style.opacity = "0";
+                document.body.appendChild(tempEl);
+                tempEl.focus();
+                tempEl.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempEl);
+              } catch (e) {}
+            };
+
+            // Điền vào Tab Bot và copy ngay vào Clipboard
+            if (transferText) {
+              copyToClipboard(transferText);
+              const botTabInput = document.getElementById('botTabInput');
+              if (botTabInput) botTabInput.value = transferText;
+            }
+
+            let msg = `✅ ĐÃ ĐẨY CƯỢC TỪ WEB SANG BOT THÀNH CÔNG (${data.total_bets} cược mới)!`;
+            if (transferText) {
+              msg += `\n\n🚀 Bot đã tự động bắn cược thừa cho người nhận:\n${transferText}`;
+              msg += `\n\n📋 (Đã tự động copy nội dung cược thừa vào Clipboard!)`;
             } else if (data.excess_count > 0) {
-              msg += `\n\n⚖️ Có ${data.excess_count} con cược vượt mức giữ lại (chưa bắn do chưa cài Chat ID người nhận).`;
+              msg += `\n\n⚖️ Có ${data.excess_count} con cược vượt mức giữ lại.`;
             } else {
               msg += `\n\n🛡️ Toàn bộ cược đều nằm trong mức giữ lại an toàn của chủ bảng!`;
             }
+
             alert(msg);
+
+            // Đảm bảo sau khi bấm OK thì clipboard vẫn giữ nội dung
+            if (transferText) {
+              copyToClipboard(transferText);
+            }
+
             if (typeof fetchTgBoard === 'function') fetchTgBoard();
           } else {
-            alert(data.error || "Lỗi khi đẩy cược sang Bot.");
+            alert("❌ " + (data.error || "Lỗi khi đẩy cược sang Bot."));
           }
         } catch (e) {
           alert("Không kết nối được Backend Bot. Hãy đảm bảo Bot đang chạy trên cổng 5005!");
+        } finally {
+          setTimeout(() => {
+            pushButtons.forEach((b, i) => {
+              b.disabled = false;
+              b.innerHTML = origButtonHtmls[i];
+            });
+            isPushingWebBets = false;
+          }, 800);
         }
       }
 
@@ -8327,7 +8608,7 @@ function resetTable() {
         }
 
         try {
-          const res = await fetch(TG_BOT_API + "/api/bot/config", {
+          const res = await callBotApi("/api/bot/config", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -8348,7 +8629,7 @@ function resetTable() {
       // 3. Nút "Lấy cấu hình từ Bot về Web": Kéo bảng giá + mức giữ lại từ Bot về nạp vào Web
       async function pullAllBotToWeb() {
         try {
-          const res = await fetch(TG_BOT_API + "/api/bot/config");
+          const res = await callBotApi("/api/bot/config");
           if (!res.ok) throw new Error();
           const data = await res.json();
           const cfg = data.config || {};
@@ -8411,7 +8692,7 @@ function resetTable() {
       // 4. Nút "Lấy dữ liệu cược từ Bot về Web": Kéo toàn bộ cược hôm nay nạp vào khung tính của Web
       async function pullBetsFromBotToWeb() {
         try {
-          const res = await fetch(TG_BOT_API + "/api/bot/board");
+          const res = await callBotApi("/api/bot/board");
           if (!res.ok) throw new Error("Backend offline");
           const data = await res.json();
           const lines = [];
@@ -8495,7 +8776,7 @@ function resetTable() {
       document.getElementById('btnBotTabAuto')?.addEventListener('click', async () => {
         if (botTabStatusText) botTabStatusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-sky-500 mr-1"></i>Đang lấy dữ liệu từ Bot...';
         try {
-          const res = await fetch(TG_BOT_API + "/api/bot/board");
+          const res = await callBotApi("/api/bot/board");
           if (!res.ok) throw new Error("Mã phản hồi: " + res.status);
           const data = await res.json();
           let transferTexts = [];
@@ -8595,7 +8876,7 @@ function resetTable() {
       // Lấy Bảng Giá từ Bot về Web
       document.getElementById('btnPullPriceFromBot')?.addEventListener('click', async () => {
         try {
-          const res = await fetch(TG_BOT_API + "/api/bot/config");
+          const res = await callBotApi("/api/bot/config");
           if (!res.ok) throw new Error();
           const cfg = await res.json();
           if (cfg.price_config && Object.keys(cfg.price_config).length > 0) {
@@ -8655,14 +8936,16 @@ function resetTable() {
       // Nút làm mới bảng cược
       document.getElementById('btnTgResetBoard')?.addEventListener('click', async () => {
         if (confirm("Bạn có chắc chắn muốn làm mới (reset) bảng cược hôm nay của Bot về 0?")) {
-          await fetch(TG_BOT_API + "/api/bot/reset_board", { method: "POST" });
+          await callBotApi("/api/bot/reset_board", { method: "POST" });
+          localStorage.removeItem('z8_last_pushed_bet_text');
           fetchTgBoard();
+          alert("✅ Đã làm mới bảng cược Bot về 0 thành công!");
         }
       });
 
       // Nút bắn cược thừa thủ công
       document.getElementById('btnTgManualTransfer')?.addEventListener('click', async () => {
-        const res = await fetch(TG_BOT_API + "/api/bot/manual_transfer", { method: "POST" });
+        const res = await callBotApi("/api/bot/manual_transfer", { method: "POST" });
         const data = await res.json();
         if (data.success) {
           alert("Đã bắn cược thừa thành công!\n\n" + data.message);
@@ -8675,7 +8958,7 @@ function resetTable() {
       // Nút nạp cược từ Bot vào khung nhập của Web
       document.getElementById('btnTgImportToWeb')?.addEventListener('click', async () => {
         try {
-          const res = await fetch(TG_BOT_API + "/api/bot/board");
+          const res = await callBotApi("/api/bot/board");
           const data = await res.json();
           const lines = [];
           if (data.de_sums && Object.keys(data.de_sums).length > 0) {
@@ -8715,7 +8998,7 @@ function resetTable() {
         try {
           pre.textContent = "Đang tính toán báo cáo...";
           area.classList.remove('hidden');
-          const res = await fetch(TG_BOT_API + "/api/bot/report");
+          const res = await callBotApi("/api/bot/report");
           const data = await res.json();
           let fullText = "📋 BÁO CÁO THẦU:\n" + data.text_thau + "\n\n" +
                          "🛡️ BÁO CÁO GIỮ LẠI:\n" + data.text_giulai + "\n\n" +
@@ -8744,7 +9027,7 @@ function resetTable() {
         try {
           pre.textContent = "Đang tải KQXS Miền Bắc từ Minh Ngọc...";
           area.classList.remove('hidden');
-          const res = await fetch(TG_BOT_API + "/api/bot/kqxs");
+          const res = await callBotApi("/api/bot/kqxs");
           const kq = await res.json();
           if (kq.success) {
             let msg = `🎯 KẾT QUẢ XSMB - ${kq.date}\n` +
