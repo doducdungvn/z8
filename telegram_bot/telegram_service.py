@@ -260,24 +260,43 @@ class TelegramBotService:
                 })
         return all_msgs
 
-    def add_web_bets(self, bet_text: str) -> dict:
+    def add_web_bets(self, bet_text: str, force: bool = False) -> dict:
         """
         Nhận cược từ Web nạp sang Bot:
         Phân tích cú pháp, nạp vào bảng cân cược và bắn cược thừa nếu vượt hạn mức.
+        Có cơ chế chống đẩy trùng lặp nội dung.
         """
+        clean_text = bet_text.strip()
+        if not clean_text:
+            return {"success": False, "error": "Chưa có nội dung cược để nạp."}
+
+        import hashlib
+        text_hash = hashlib.md5(clean_text.encode("utf-8")).hexdigest()
+
+        if not force and hasattr(self, "last_web_bet_hash") and self.last_web_bet_hash == text_hash:
+            return {
+                "success": False,
+                "is_duplicate": True,
+                "error": "Nội dung cược này vừa được nạp vào Bot rồi (dữ liệu không có gì thay đổi). Bot đã chặn để tránh cược bị nhân đôi và bắn lặp tin!",
+                "total_bets": 0
+            }
+
         from bet_parser import parse_bet_message
-        parsed = parse_bet_message(bet_text)
+        parsed = parse_bet_message(clean_text)
         summary = parsed.get("summary", {})
         total_bets_count = summary.get("de_count", 0) + summary.get("lo_count", 0) + summary.get("bacang_count", 0) + summary.get("xien_count", 0)
         
         if total_bets_count == 0:
             return {"success": False, "error": "Nội dung không chứa cú pháp cược hợp lệ.", "parsed": parsed}
 
+        self.last_web_bet_hash = text_hash
+        self.last_web_bet_text = clean_text
+
         chat_id_str = "web_input"
         sender_label = "Chủ Bảng (Web)"
         msg_idx = self.client_msg_counters.get(chat_id_str, 0) + 1
         self.client_msg_counters[chat_id_str] = msg_idx
-        self.record_client_bet(chat_id_str, sender_label, "web_user", parsed, raw_text=bet_text, msg_index=msg_idx)
+        self.record_client_bet(chat_id_str, sender_label, "web_user", parsed, raw_text=clean_text, msg_index=msg_idx)
 
         excess = self.balancer.add_bets(parsed)
         excess_count = sum(len(v) for v in excess.values())
@@ -285,16 +304,17 @@ class TelegramBotService:
 
         transfer_msg = ""
         transferred = False
-        if self.config.get("auto_forward_excess", True) and excess_count > 0:
-            target_recipient = self.config.get("target_recipient", "").strip()
-            if target_recipient:
-                transfer_msg = self.balancer.format_transfer_message(excess, header_prefix="Thầu")
-                ok, err = self.send_telegram_message(target_recipient, transfer_msg, track_for_cleanup=True, tag="transfer")
-                if ok:
-                    self.balancer.commit_transfers(excess)
-                    self.stats["transfers_sent"] += 1
-                    transferred = True
-                    self.log(f"🛸 Đã tự động bắn cược thừa từ Web tới {target_recipient}:\n{transfer_msg}", "SUCCESS")
+        if excess_count > 0:
+            transfer_msg = self.balancer.format_transfer_message(excess, header_prefix="Thầu")
+            if self.config.get("auto_forward_excess", True):
+                target_recipient = self.config.get("target_recipient", "").strip()
+                if target_recipient:
+                    ok, err = self.send_telegram_message(target_recipient, transfer_msg, track_for_cleanup=True, tag="transfer")
+                    if ok:
+                        self.balancer.commit_transfers(excess)
+                        self.stats["transfers_sent"] += 1
+                        transferred = True
+                        self.log(f"🛸 Đã tự động bắn cược thừa từ Web tới {target_recipient}:\n{transfer_msg}", "SUCCESS")
 
         return {
             "success": True,

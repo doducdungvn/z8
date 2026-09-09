@@ -17,12 +17,23 @@ from lottery_engine import fetch_xsmb, calculate_board_accounting, format_accoun
 
 app = Flask(__name__)
 
-# Cho phép CORS cho frontend localhost/lk
+# Cho phép CORS cho frontend localhost/lk và LAN IP
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        res = app.make_default_options_response()
+        res.headers["Access-Control-Allow-Origin"] = "*"
+        res.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, PUT, DELETE"
+        res.headers["Access-Control-Allow-Headers"] = "*"
+        res.headers["Access-Control-Allow-Private-Network"] = "true"
+        return res
+
 @app.after_request
 def add_cors_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, PUT, DELETE"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Private-Network"] = "true"
     return response
 
 
@@ -200,10 +211,13 @@ def get_board():
 def sync_web_bets():
     data = request.json or {}
     bet_text = str(data.get("bet_text", "")).strip()
+    force = bool(data.get("force", False))
     if not bet_text:
         return jsonify({"success": False, "error": "Chưa có nội dung cược để đồng bộ."}), 400
 
-    res = bot_service.add_web_bets(bet_text)
+    res = bot_service.add_web_bets(bet_text, force=force)
+    if res.get("is_duplicate"):
+        return jsonify(res), 200
     status_code = 200 if res.get("success") else 400
     return jsonify(res), status_code
 
@@ -220,6 +234,8 @@ def reload_shorthands_route():
 @app.route("/api/bot/reset_board", methods=["POST"])
 def reset_board():
     bot_service.balancer.reset_board()
+    bot_service.last_web_bet_hash = None
+    bot_service.last_web_bet_text = ""
     bot_service.log("Đã làm mới (reset) bảng cược về 0.", "INFO")
     return jsonify({"success": True})
 

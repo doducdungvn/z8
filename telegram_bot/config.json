@@ -3,7 +3,7 @@
   "allowed_senders": [
     "*"
   ],
-  "target_recipient": "",
+  "target_recipient": "@lalalew",
   "auto_reply_client": true,
   "auto_forward_excess": true,
   "mode": "instant",

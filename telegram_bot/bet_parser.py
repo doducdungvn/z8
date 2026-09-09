@@ -287,6 +287,63 @@ def parse_numbers_from_bet_string(numbers_str: str, bet_type: str) -> list[str]:
                 numbers.append(seg)
     return numbers
 
+# Horizontal whitespace (spaces, tabs) but NOT newline
+HSPACE = r'[^\S\r\n]'
+
+CAT_MAP = {
+    'lo': 'lo', 'lô': 'lo', 'l': 'lo',
+    'de': 'de', 'đề': 'de', 'đê': 'de', 'đe': 'de', 'dê': 'de', 'dè': 'de', 'đè': 'de', 'd': 'de', 'đ': 'de',
+    'xien': 'xien', 'xiên': 'xien',
+    'xienquay': 'xienquay', 'xq': 'xienquay', 'xienq': 'xienquay', 'quay': 'xienquay', 'xquay': 'xienquay',
+    '3cang': 'bacang', '3càng': 'bacang', '3c': 'bacang', 'bc': 'bacang'
+}
+
+cat_choices = r'lô|lo|l|đề|de|đê|đe|dê|dè|đè|đ|d|xienquay|xq|xienq|quay|xquay|xien|xiên|3cang|3càng|3c|bc'
+
+multi_bet_regex = re.compile(
+    r'(?i)(?P<prefix>^|[\r\n;,]|' + HSPACE + r'+)'
+    r'(?P<cat1>' + cat_choices + r')'
+    r'(?:' + HSPACE + r'+|[.:;\-])'
+    r'(?P<nums>[0-9.,\-\s_a-zA-Z\'’‘＇`]+?)'
+    r'\s*(?P<op1>x|\*|=|\+|mc|mỗi\s*con\s*=?|moi\s*con\s*=?)\s*'
+    r'(?P<amt1>\d+(?:\.\d+)?(?:k|d|n|đ|₫)?)\.?'
+    r'(?P<rest>(?:' + HSPACE + r'*[,;.:\-]?' + HSPACE + r'*(?:' + cat_choices + r')(?:' + HSPACE + r'*(?:x|\*|=|\+|mc|mỗi\s*con\s*=?|moi\s*con\s*=?)\s*|' + HSPACE + r'+)\d+(?:\.\d+)?(?:k|d|n|đ|₫)?)+)'
+    r'(?=[.,;:' + HSPACE + r']|$)',
+    re.MULTILINE
+)
+
+sub_clause_regex = re.compile(
+    r'(?i)' + HSPACE + r'*[,;.:\-]?' + HSPACE + r'*'
+    r'(?P<cat>' + cat_choices + r')'
+    r'(?:' + HSPACE + r'*(?P<op>x|\*|=|\+|mc|mỗi\s*con\s*=?|moi\s*con\s*=?)\s*|' + HSPACE + r'+)'
+    r'(?P<amt>\d+(?:\.\d+)?(?:k|d|n|đ|₫)?)'
+)
+
+def expand_multi_bets(text: str) -> str:
+    def repl(m):
+        prefix = m.group('prefix')
+        cat1_raw = m.group('cat1').strip().lower()
+        nums = m.group('nums').strip()
+        op1 = m.group('op1').strip()
+        amt1 = m.group('amt1').strip()
+        rest = m.group('rest')
+
+        c1 = CAT_MAP.get(cat1_raw, cat1_raw)
+        lines = [f"{c1} {nums}{op1}{amt1}"]
+
+        for sub_m in sub_clause_regex.finditer(rest):
+            cat_k_raw = sub_m.group('cat').strip().lower()
+            op_k = sub_m.group('op')
+            op_str = op_k.strip() if op_k else 'x'
+            amt_k = sub_m.group('amt').strip()
+            c_k = CAT_MAP.get(cat_k_raw, cat_k_raw)
+            lines.append(f"{c_k} {nums}{op_str}{amt_k}")
+
+        p = '\n' if (prefix and ('\n' in prefix or '\r' in prefix)) else (' ' if prefix else '')
+        return f"{p}" + "\n".join(lines) + "\n"
+
+    return multi_bet_regex.sub(repl, text)
+
 def parse_combined_input(input_str: str):
     processed = input_str.replace("’", "'").replace("‘", "'").replace("ʼ", "'").replace("＇", "'").replace("`", "'")
     # Chuẩn hóa 3 càng trước để tránh bị tách số 3 thành dòng riêng
@@ -298,6 +355,9 @@ def parse_combined_input(input_str: str):
         re.I
     )
     processed = keyword_regex.sub(r'\1\2 \3', processed)
+
+    # 1.1 Mở rộng cú pháp cược đa thể loại cùng dãy số: vd l 101.52.23x10 dex50 xienx20
+    processed = expand_multi_bets(processed)
 
     # 2. Tách dòng nếu có danh mục mới trên cùng một dòng
     same_line_pattern = re.compile(
