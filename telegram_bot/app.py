@@ -112,6 +112,8 @@ def update_config():
         current["retain_config"] = data["retain_config"]
     if "price_config" in data:
         current["price_config"] = data["price_config"]
+    if "client_prices" in data:
+        current["client_prices"] = data["client_prices"]
     if "cleanup_after_hours" in data:
         try:
             h = float(data["cleanup_after_hours"])
@@ -236,8 +238,24 @@ def reset_board():
     bot_service.balancer.reset_board()
     bot_service.last_web_bet_hash = None
     bot_service.last_web_bet_text = ""
-    bot_service.log("Đã làm mới (reset) bảng cược về 0.", "INFO")
+    bot_service.client_bets = {}
+    bot_service.save_client_bets()
+    bot_service.client_msg_counters = {}
+    bot_service.log("Đã làm mới (reset) bảng cược và xóa toàn bộ tin nhắn gốc về 0.", "INFO")
     return jsonify({"success": True})
+
+
+@app.route("/api/bot/delete_message", methods=["POST"])
+def delete_message():
+    data = request.json or {}
+    chat_id = str(data.get("chat_id", "")).strip()
+    history_idx = data.get("history_idx")
+    if not chat_id or history_idx is None:
+        return jsonify({"success": False, "error": "Thiếu chat_id hoặc history_idx"}), 400
+    
+    ok = bot_service.delete_single_raw_message(chat_id, int(history_idx))
+    return jsonify({"success": ok})
+
 
 
 @app.route("/api/bot/manual_transfer", methods=["POST"])
@@ -304,15 +322,20 @@ def get_report():
     price_cfg = bot_service.config.get("price_config")
     acc = calculate_board_accounting(bot_service.balancer, kq, price_cfg)
 
-    # Chi tiết từng khách cược
+    # Chi tiết từng khách cược (áp dụng giá riêng từng người nếu có)
+    custom_client_prices = bot_service.config.get("client_prices", {})
     clients_summary = []
     for cid_str, cdata in bot_service.client_bets.items():
-        c_res = calculate_single_client_accounting(cdata, kq, price_cfg)
+        c_price_cfg = bot_service.get_client_price_config(cid_str, cdata.get("username"))
+        c_res = calculate_single_client_accounting(cdata, kq, c_price_cfg)
+        has_custom_price = (cid_str in custom_client_prices) or (cdata.get("username") and f"@{cdata.get('username')}" in custom_client_prices) or (cdata.get("username") in custom_client_prices)
         clients_summary.append({
             "chat_id": cid_str,
             "name": cdata.get("name"),
             "username": cdata.get("username"),
             "msg_count": cdata.get("msg_count", 0),
+            "has_custom_price": bool(has_custom_price),
+            "custom_price": c_price_cfg if has_custom_price else None,
             "accounting": c_res["accounting"],
             "report_text": c_res["report_text"],
             "last_settled": cdata.get("last_settled")
@@ -326,6 +349,42 @@ def get_report():
         "clients": clients_summary,
         "kqxs": kq
     })
+
+
+@app.route("/api/bot/client_prices", methods=["GET", "POST", "DELETE"])
+def manage_client_prices():
+    prices = bot_service.config.get("client_prices", {})
+    if request.method == "GET":
+        return jsonify({"success": True, "client_prices": prices})
+
+    data = request.json or {}
+    client_key = str(data.get("client_key") or data.get("chat_id") or data.get("username") or "").strip()
+    if not client_key:
+        return jsonify({"success": False, "error": "Chưa chỉ định ID hoặc Username khách cược"}), 400
+
+    if request.method == "DELETE" or data.get("action") == "delete":
+        if client_key in prices:
+            del prices[client_key]
+        alt_key = client_key.lstrip("@")
+        if alt_key in prices:
+            del prices[alt_key]
+        if f"@{alt_key}" in prices:
+            del prices[f"@{alt_key}"]
+        bot_service.config["client_prices"] = prices
+        bot_service.save_config()
+        bot_service.log(f"Đã xóa cấu hình giá riêng của khách {client_key}", "INFO")
+        return jsonify({"success": True, "client_prices": prices})
+
+    # POST: Update/Set custom price
+    rate_cfg = data.get("rates") or data.get("price_config") or {}
+    if not rate_cfg:
+        return jsonify({"success": False, "error": "Chưa có thông số bảng giá"}), 400
+
+    prices[client_key] = rate_cfg
+    bot_service.config["client_prices"] = prices
+    bot_service.save_config()
+    bot_service.log(f"Đã cập nhật bảng giá riêng cho khách {client_key}", "SUCCESS")
+    return jsonify({"success": True, "client_prices": prices})
 
 
 @app.route("/api/bot/client_bets", methods=["GET"])

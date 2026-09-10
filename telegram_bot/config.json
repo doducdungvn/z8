@@ -15,7 +15,7 @@
     "retain_x": 0,
     "retain_use_branch": true,
     "branch_de": 15,
-    "branch_lo": 5,
+    "branch_lo": 6,
     "branch_3c": 0,
     "branch_x": 0
   },
@@ -54,5 +54,6 @@
   "authenticated_admins": [
     999111222,
     "7715286942"
-  ]
+  ],
+  "client_prices": {}
 }

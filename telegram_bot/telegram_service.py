@@ -247,7 +247,7 @@ class TelegramBotService:
             name = cdata.get("name") or cid_str
             username = cdata.get("username") or ""
             history = cdata.get("history") or []
-            for item in history:
+            for h_idx, item in enumerate(history):
                 all_msgs.append({
                     "chat_id": cid_str,
                     "sender_name": name,
@@ -255,10 +255,23 @@ class TelegramBotService:
                     "timestamp": item.get("timestamp"),
                     "raw_text": item.get("raw_text"),
                     "msg_index": item.get("msg_index"),
+                    "history_idx": h_idx,
                     "summary": item.get("summary", {}),
                     "invalid_items": item.get("invalid_items", [])
                 })
         return all_msgs
+
+    def delete_single_raw_message(self, chat_id_str: str, history_idx: int) -> bool:
+        """Xóa 1 tin nhắn gốc cụ thể khỏi danh sách"""
+        if chat_id_str in self.client_bets:
+            hist = self.client_bets[chat_id_str].get("history", [])
+            if 0 <= history_idx < len(hist):
+                hist.pop(history_idx)
+                self.save_client_bets()
+                self.log(f"Đã xóa tin nhắn gốc #{history_idx + 1} của {chat_id_str}", "SUCCESS")
+                return True
+        return False
+
 
     def add_web_bets(self, bet_text: str, force: bool = False) -> dict:
         """
@@ -1543,10 +1556,32 @@ class TelegramBotService:
             else:
                 self.log(f"🛡️ Toàn bộ cược nằm trong định mức giữ lại, không có cược thừa cần chuyển.", "INFO")
 
+    def get_client_price_config(self, chat_id: str, username: str = None) -> dict:
+        """
+        Lấy cấu hình bảng giá riêng cho khách cược.
+        Nếu không có cấu hình riêng, trả về bảng giá Thầu mặc định.
+        """
+        custom_prices = self.config.get("client_prices", {})
+        cid_clean = str(chat_id).strip()
+        u_clean = str(username or "").strip().lstrip("@")
+
+        # 1. Tìm theo Chat ID
+        if cid_clean in custom_prices:
+            return custom_prices[cid_clean]
+        # 2. Tìm theo @username hoặc username
+        if u_clean:
+            if f"@{u_clean}" in custom_prices:
+                return custom_prices[f"@{u_clean}"]
+            if u_clean in custom_prices:
+                return custom_prices[u_clean]
+
+        # 3. Mặc định dùng bảng giá chung
+        return self.config.get("price_config", DEFAULT_PRICE_CONFIG)
+
     def settle_all(self, kqxs: dict, notify_clients: bool = True, notify_recipient: bool = True, notify_owner: bool = True, requested_by: str = None) -> dict:
         """
         Chốt tiền âm/dương tự động hoặc thủ công dựa trên KQXS.
-        - Gửi tin nhắn chốt tiền riêng cho từng khách cược đã đánh trong ngày.
+        - Gửi tin nhắn chốt tiền riêng cho từng khách cược đã đánh trong ngày (theo bảng giá riêng của khách nếu có).
         - Gửi tin nhắn chốt tiền bảng Chuyển cho người nhận cược thừa (thầu trên).
         - Gửi báo cáo tổng hợp (Thầu, Chuyển, Giữ lại) cho Chủ bảng (owner).
         """
@@ -1560,12 +1595,14 @@ class TelegramBotService:
         # 1. Gửi chốt tiền cho từng khách cược
         if notify_clients:
             for cid_str, cdata in list(self.client_bets.items()):
-                c_res = calculate_single_client_accounting(cdata, kqxs, price_cfg)
+                c_price_cfg = self.get_client_price_config(cid_str, cdata.get("username"))
+                c_res = calculate_single_client_accounting(cdata, kqxs, c_price_cfg)
                 c_acc = c_res["accounting"]
                 if c_acc.get("totalVon", 0) > 0:
                     c_msg = c_res["report_text"]
                     client_reports[cid_str] = {
                         "name": cdata.get("name"),
+                        "username": cdata.get("username"),
                         "accounting": c_acc,
                         "text": c_msg
                     }

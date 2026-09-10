@@ -1,194 +1,20 @@
 [
   {
-    "chat_id": "7715286942",
-    "message_id": 168,
-    "created_at": 1788966085.6160278,
-    "tag": "transfer"
+    "chat_id": "1023927138",
+    "message_id": 267,
+    "created_at": 1789065048.933713,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 268,
+    "created_at": 1789065049.8029938,
+    "tag": "receipt"
   },
   {
     "chat_id": "7715286942",
-    "message_id": 169,
-    "created_at": 1788966112.1947489,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 170,
-    "created_at": 1788966231.3960876,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 171,
-    "created_at": 1788966358.168085,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 172,
-    "created_at": 1788966359.2507699,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 173,
-    "created_at": 1788966468.1139328,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 174,
-    "created_at": 1788966549.0461986,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 175,
-    "created_at": 1788966903.1624942,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 176,
-    "created_at": 1788966949.6575446,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 177,
-    "created_at": 1788967040.32184,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 178,
-    "created_at": 1788968025.2263536,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 179,
-    "created_at": 1788968758.630592,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 180,
-    "created_at": 1788968780.8070202,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 181,
-    "created_at": 1788968795.3194196,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 182,
-    "created_at": 1788968956.1413584,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 183,
-    "created_at": 1788969244.012318,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 184,
-    "created_at": 1788969541.385368,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 185,
-    "created_at": 1788969552.7807589,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 186,
-    "created_at": 1788969578.4810846,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 187,
-    "created_at": 1788969679.460651,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 188,
-    "created_at": 1788969698.7806628,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 189,
-    "created_at": 1788969750.3326008,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 190,
-    "created_at": 1788969754.8172712,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 191,
-    "created_at": 1788969775.3111048,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 192,
-    "created_at": 1788969792.990745,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 193,
-    "created_at": 1788969801.3284056,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 194,
-    "created_at": 1788969804.2556555,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 195,
-    "created_at": 1788969874.0122576,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 196,
-    "created_at": 1788969887.8551319,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 197,
-    "created_at": 1788969894.5734215,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 198,
-    "created_at": 1788970007.7930965,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 199,
-    "created_at": 1788970011.4917316,
+    "message_id": 269,
+    "created_at": 1789065050.738951,
     "tag": "transfer"
   }
 ]
