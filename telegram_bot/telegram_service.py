@@ -652,7 +652,9 @@ class TelegramBotService:
             if target_rec in [sender_uid, sender_cid, sender_un]:
                 if self.pending_recipient_acks:
                     self.pending_recipient_acks = None
-                    self.log(f"✅ Người nhận cược thừa {sender_label} đã phản hồi lại tin cược. Đã hủy theo dõi cảnh báo 5 phút.", "INFO")
+                    self.log(f"✅ [Người nhận phản hồi] {sender_label} nhắn:\n{text}\n(Đã xác nhận & hủy cảnh báo 5 phút)", "SUCCESS")
+                else:
+                    self.log(f"📥 [Người nhận nhắn tin] {sender_label}:\n{text}", "INFO")
 
         # Xử lý các lệnh điều khiển hệ thống
         cmd = text.lower().strip()
@@ -1488,7 +1490,7 @@ class TelegramBotService:
         self.stats["messages_received"] += 1
         self.stats["last_active"] = datetime.now().strftime("%H:%M:%S")
 
-        self.log(f"📩 Nhận tin cược từ {sender_label}{group_title}:\n{text}")
+        self.log(f"📩 [Khách gửi cược] {sender_label}{group_title}:\n{text}")
 
         # 2. Phân tích cược
         user_msg_id = message.get("message_id")
@@ -1501,7 +1503,8 @@ class TelegramBotService:
                 unique_inv = list(dict.fromkeys(parsed['invalid_items']))
                 joined_inv = " ".join(unique_inv) if all(x.isdigit() for x in unique_inv) else ", ".join(unique_inv)
                 self.send_telegram_message(str(chat_id), f"Trả lại {joined_inv}", track_for_cleanup=True, tag="invalid_receipt")
-            self.log(f"Tin nhắn từ {sender_label}{group_title} không chứa cú pháp cược hợp lệ: '{text}'", "INFO")
+                self.log(f"📤 [Bot phản hồi Khách {sender_label}]: Trả lại {joined_inv}", "WARN")
+            self.log(f"💬 [Khách nhắn tin] {sender_label}{group_title}: '{text}' (không chứa cú pháp cược hợp lệ)", "INFO")
             return
 
         # Lưu vết tin nhắn cược của khách để tự động xóa sau 24h
@@ -1526,6 +1529,8 @@ class TelegramBotService:
                     self.send_telegram_message(chat_id_str, chunk, track_for_cleanup=True, tag="receipt")
             else:
                 self.send_telegram_message(chat_id_str, receipt_text, track_for_cleanup=True, tag="receipt")
+            receipt_plain = receipt_text.replace("<b>", "").replace("</b>", "").replace("<code>", "").replace("</code>", "")
+            self.log(f"📤 [Bot phản hồi Khách {sender_label}]:\n{receipt_plain}", "INFO")
 
         # 4. Cân bảng và tính phần cược thừa
         excess = self.balancer.add_bets(parsed)
