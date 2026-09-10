@@ -8584,17 +8584,7 @@ function resetTable() {
       let isPushingWebBets = false;
 
       function getBetDiff(oldText, newText) {
-        const norm = (s) => {
-          if (!s) return "";
-          s = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-          const lines = [];
-          for (const line of s.split('\n')) {
-            const cleaned = line.trim().replace(/\s+/g, ' ');
-            if (cleaned) lines.push(cleaned);
-          }
-          return lines.join('\n');
-        };
-
+        const norm = (s) => (s || "").trim();
         const o = norm(oldText);
         const n = norm(newText);
 
@@ -8602,61 +8592,92 @@ function resetTable() {
         if (!o) return { diffText: n, isDiff: true, isFirst: true };
         if (o === n) return { diffText: "", isDiff: false, isFirst: false };
 
-        // 1. So sánh tiền tố & hậu tố chung (Common Prefix & Suffix Diff)
-        // Bắt chính xác trường hợp gõ thêm cược vào cuối dòng hoặc giữa dòng (ví dụ thêm llx50 vào đuôi dòng cũ)
-        let p = 0;
-        const minLen = Math.min(o.length, n.length);
-        while (p < minLen && o[p] === n[p]) p++;
+        const getBetMap = (text) => {
+          const parsed = (typeof parseCombinedInput === 'function')
+            ? parseCombinedInput(text)
+            : { de: [], lo: [], bacang: [], xien2: [], xien3: [], xien4: [] };
+          
+          const res = { de: {}, lo: {}, bacang: {}, xien: {} };
+          (parsed.de || []).forEach(b => {
+            const num = (b.numbers[0] || "").toString().padStart(2, '0');
+            if (num) res.de[num] = (res.de[num] || 0) + (b.amount || 0);
+          });
+          (parsed.lo || []).forEach(b => {
+            const num = (b.numbers[0] || "").toString().padStart(2, '0');
+            if (num) res.lo[num] = (res.lo[num] || 0) + (b.amount || 0);
+          });
+          (parsed.bacang || []).forEach(b => {
+            const num = (b.numbers[0] || "").toString().padStart(3, '0');
+            if (num) res.bacang[num] = (res.bacang[num] || 0) + (b.amount || 0);
+          });
+          const allXien = [...(parsed.xien2 || []), ...(parsed.xien3 || []), ...(parsed.xien4 || [])];
+          allXien.forEach(b => {
+            const nums = (b.numbers || []).map(x => x.toString().padStart(2, '0')).sort();
+            const k = nums.join('-');
+            if (k) res.xien[k] = (res.xien[k] || 0) + (b.amount || 0);
+          });
+          return res;
+        };
 
-        let s = 0;
-        while (s < (minLen - p) && o[o.length - 1 - s] === n[n.length - 1 - s]) s++;
+        const oldMap = getBetMap(o);
+        const newMap = getBetMap(n);
 
-        const removed = s > 0 ? o.substring(p, o.length - s).trim() : o.substring(p).trim();
-        let added = s > 0 ? n.substring(p, n.length - s).trim() : n.substring(p).trim();
+        const diffMap = { de: {}, lo: {}, bacang: {}, xien: {} };
+        let hasDiff = false;
 
-        // Nếu là thêm thuần túy (không xóa / không sửa nội dung cũ đã đẩy)
-        if (!removed && added) {
-          // Kiểm tra xem phần mới thêm có cần kế thừa thể loại cược từ phía trước hay không
-          const prefixText = n.substring(0, p);
-          const firstWord = added.split(/\s+/)[0].toLowerCase();
-          const catKeywords = ['de', 'đề', 'lo', 'lô', '3c', '3cang', 'bacang', 'xien', 'xiên', 'xq', 'xienquay'];
-          const hasCat = catKeywords.some(k => firstWord.startsWith(k));
-
-          if (!hasCat) {
-            const matches = [...prefixText.matchAll(/\b(de|đề|lo|lô|3c|3cang|bacang|xien|xiên|xq|xienquay)\b/gi)];
-            if (matches.length > 0) {
-              const lastCat = matches[matches.length - 1][1];
-              added = lastCat + " " + added;
+        ['de', 'lo', 'bacang', 'xien'].forEach(cat => {
+          Object.entries(newMap[cat] || {}).forEach(([num, amt]) => {
+            const oldAmt = oldMap[cat]?.[num] || 0;
+            const diffAmt = amt - oldAmt;
+            if (diffAmt > 0.001) {
+              diffMap[cat][num] = diffAmt;
+              hasDiff = true;
             }
+          });
+        });
+
+        if (!hasDiff) {
+          return { diffText: "", isDiff: false, isFirst: false };
+        }
+
+        // Format diffMap into standard bet message
+        const categories = [
+          { key: 'de', name: 'Đề' },
+          { key: 'lo', name: 'Lô' },
+          { key: 'bacang', name: '3c' },
+          { key: 'xien', name: 'Xiên' }
+        ];
+
+        const lines = [];
+        categories.forEach(cat => {
+          const items = diffMap[cat.key];
+          if (items && Object.keys(items).length > 0) {
+            const groups = {};
+            Object.entries(items).forEach(([num, amt]) => {
+              const amtRounded = Math.round(amt * 10) / 10;
+              if (!groups[amtRounded]) groups[amtRounded] = [];
+              groups[amtRounded].push(num);
+            });
+
+            const sortedAmts = Object.keys(groups).map(Number).sort((a, b) => a - b);
+            const groupStrings = [];
+            sortedAmts.forEach(a => {
+              const nums = groups[a];
+              if (cat.key === 'xien') {
+                nums.forEach(n => groupStrings.push(`${n}x${a}`));
+              } else {
+                nums.sort((x, y) => x.localeCompare(y, undefined, { numeric: true }));
+                groupStrings.push(`${nums.join('.')}x${a}`);
+              }
+            });
+            lines.push(`${cat.name} ${groupStrings.join(', ')}`);
           }
-          return { diffText: added, isDiff: true, isFirst: false };
-        }
+        });
 
-        // 2. Dự phòng: so sánh danh sách từng dòng độc lập
-        const oldLines = o.split('\n');
-        const newLines = n.split('\n');
-        const oldFreq = {};
-        for (const l of oldLines) {
-          const k = l.toLowerCase();
-          oldFreq[k] = (oldFreq[k] || 0) + 1;
-        }
-
-        const diffLines = [];
-        for (const l of newLines) {
-          const k = l.toLowerCase();
-          if (oldFreq[k] && oldFreq[k] > 0) {
-            oldFreq[k]--;
-          } else {
-            diffLines.push(l);
-          }
-        }
-
-        if (diffLines.length > 0) {
-          return { diffText: diffLines.join('\n'), isDiff: true, isFirst: false };
-        }
-
-        return { diffText: "", isDiff: false, isFirst: false };
+        const diffText = lines.join('\n');
+        return { diffText: diffText, isDiff: true, isFirst: false };
       }
+      window.getBetDiff = getBetDiff;
 
       async function pushWebBetsToBot() {
         if (isPushingWebBets) return;
