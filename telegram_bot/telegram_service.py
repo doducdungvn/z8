@@ -4,7 +4,12 @@ import json
 import time
 import threading
 import requests
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+VN_TZ = timezone(timedelta(hours=7))
+
+def now_vn() -> datetime:
+    return datetime.now(VN_TZ)
 
 from bet_parser import parse_bet_message, format_ok_receipt
 from balancer import BoardBalancer
@@ -171,7 +176,7 @@ class TelegramBotService:
             "chat_id": chat_id,
             "username": username,
             "first_name": first_name,
-            "updated_at": datetime.now().strftime("%H:%M:%S %d/%m")
+            "updated_at": now_vn().strftime("%H:%M:%S %d/%m")
         }
         self.save_known_users()
 
@@ -212,7 +217,7 @@ class TelegramBotService:
 
         if raw_text:
             c["history"].append({
-                "timestamp": datetime.now().strftime("%H:%M:%S %d/%m"),
+                "timestamp": now_vn().strftime("%H:%M:%S %d/%m"),
                 "raw_text": raw_text,
                 "msg_index": msg_index,
                 "summary": parsed.get("summary", {}),
@@ -408,7 +413,7 @@ class TelegramBotService:
         if not os.path.exists(LOG_PATH):
             return
         try:
-            now = datetime.now()
+            now = now_vn()
             kept_lines = []
             with open(LOG_PATH, "r", encoding="utf-8", errors="ignore") as f:
                 lines = f.readlines()
@@ -421,8 +426,7 @@ class TelegramBotService:
                     try:
                         d, m = map(int, date_str.split('/'))
                         h, mi, s = map(int, time_str.split(':'))
-                        from datetime import timedelta
-                        entry_dt = datetime(now.year, m, d, h, mi, s)
+                        entry_dt = datetime(now.year, m, d, h, mi, s, tzinfo=VN_TZ)
                         if entry_dt > now + timedelta(days=1):
                             entry_dt = entry_dt.replace(year=now.year - 1)
                         age_sec = (now - entry_dt).total_seconds()
@@ -497,18 +501,28 @@ class TelegramBotService:
         if (cleaned_num.startswith("+84") and len(cleaned_num) >= 11) or (cleaned_num.startswith("0") and len(cleaned_num) >= 10):
             return "", "Telegram Bot KHÔNG THỂ gửi tin bằng Số điện thoại! Bạn cần lấy số Chat ID (ví dụ: 123456789) hoặc bảo người đó mở Bot bấm /start."
 
-        # Nếu là @username
+        # Nếu là @username hoặc tên hiển thị
         bot_uname = (self.stats.get("bot_info") or {}).get("username") or "bot"
         if raw.startswith("@") or not raw.lstrip("-").isdigit():
-            uname = raw.lstrip("@").lower()
+            uname = raw.lstrip("@").lower().strip()
             # Luôn nạp lại danh sách mới nhất từ known_users.json
             self.known_users = self.load_known_users()
-            # Tra trong known_users
+            # 1. Tra trong known_users theo username
             for uid, info in self.known_users.items():
-                if (info.get("username") or "").lower() == uname:
-                    return str(info.get("chat_id")), ""
+                if (info.get("username") or "").lower().strip() == uname:
+                    return str(info.get("chat_id") or uid), ""
+            # 2. Tra trong known_users theo first_name / display name
+            for uid, info in self.known_users.items():
+                if (info.get("first_name") or "").lower().strip() == uname:
+                    return str(info.get("chat_id") or uid), ""
+            # 3. Tra trong client_bets
+            for cid_str, cinfo in self.client_bets.items():
+                if (cinfo.get("username") or "").lower().strip() == uname:
+                    return str(cid_str), ""
+                if uname in (cinfo.get("name") or "").lower():
+                    return str(cid_str), ""
             # Chưa từng nhắn cho bot
-            return "", f"Người dùng @{uname} chưa từng mở chat hoặc bấm /start với @{bot_uname}. Hãy bảo @{uname} tìm @{bot_uname} trên Telegram và bấm /start trước, hoặc điền trực tiếp số Chat ID."
+            return "", f"Người dùng @{uname} chưa từng mở chat hoặc bấm /start với @{bot_uname}. Hãy bảo @{uname} tìm @{bot_uname} trên Telegram và bấm /start trước, hoặc bấm nút '👥 Người đã chat' để chọn nhanh số Chat ID."
 
         # Nếu là số nguyên (hoặc số âm với nhóm Telegram)
         if raw.lstrip("-").isdigit():
@@ -517,7 +531,7 @@ class TelegramBotService:
         return "", f"Không nhận diện được người nhận '{raw}'. Vui lòng nhập Chat ID dạng số hoặc @username hợp lệ."
 
     def log(self, message: str, level: str = "INFO"):
-        now_str = datetime.now().strftime("%H:%M:%S %d/%m")
+        now_str = now_vn().strftime("%H:%M:%S %d/%m")
         entry = {
             "timestamp": now_str,
             "level": level,
@@ -820,7 +834,7 @@ class TelegramBotService:
             target_date = parts[1].strip() if len(parts) >= 2 else None
             self.log(f"{sender_label} yêu cầu lấy KQXS {target_date or 'hôm nay'}", "INFO")
             kq = fetch_xsmb(target_date)
-            if not target_date or target_date == datetime.now().strftime("%d/%m/%Y"):
+            if not target_date or target_date == now_vn().strftime("%d/%m/%Y"):
                 self.cached_kqxs = kq
 
             msg = format_xsmb_message(kq)
