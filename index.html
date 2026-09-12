@@ -7316,8 +7316,8 @@ function resetTable() {
               </span>
             </div>
             <div class="flex items-center gap-1 flex-wrap">
-              <button type="button" id="btnTgPushWebBets" class="px-2 py-1 bg-indigo-700 hover:bg-indigo-600 text-white rounded-xs font-semibold border border-indigo-800 flex items-center gap-1 text-xs cursor-pointer" title="Đẩy nội dung cược đang nhập trên Web sang Bot để cân giữ lại & chuyển">
-                <i class="fa-solid fa-arrow-up-right-from-square"></i> Đẩy cược Web
+              <button type="button" id="btnTgPushWebBets" class="px-2 py-1 bg-indigo-700 hover:bg-indigo-600 text-white rounded-xs font-semibold border border-indigo-800 flex items-center gap-1 text-xs cursor-pointer" title="Lấy nội dung cược từ Web đưa sang Bot để cân giữ lại & chuyển">
+                <i class="fa-solid fa-arrow-down-to-bracket"></i> Lấy từ Web
               </button>
               <button type="button" id="btnTgImportToWeb" class="px-2 py-1 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xs font-semibold border border-emerald-800 flex items-center gap-1 text-xs cursor-pointer" title="Đưa toàn bộ cược hôm nay vào khung web để tính toán">
                 <i class="fa-solid fa-file-import"></i> Nạp vào Web
@@ -8442,27 +8442,69 @@ function resetTable() {
           }
         }
 
-        // SubView 4: Total Board (Tổng Bảng Cược)
+        // SubView 4: Total Board (Tổng Bảng Cược) - có highlight trúng + số nháy lô
         const totalDisplay = document.getElementById('tgBoardDisplayArea');
         if (totalDisplay) {
           if (deKeys.length === 0 && loKeys.length === 0 && bcKeys.length === 0 && xCount === 0) {
             totalDisplay.innerHTML = '<p class="text-slate-400 italic">Chưa có dữ liệu cược nào được nhận hôm nay.</p>';
           } else {
-            let html = '<div class="space-y-2.5">';
+            // Lấy KQXS đã cache (nếu có) để highlight trúng
+            const kqxs = window.tgCachedKQXS || null;
+            const winDe = kqxs ? (kqxs.special_last2 || '') : '';
+            const winBc = kqxs ? (kqxs.special_last3 || '') : '';
+            const winLo = kqxs ? (kqxs.all_last2 || []) : [];
+            // Đếm số nháy lô trúng
+            const loHitCount = {};
+            for (const num of winLo) {
+              loHitCount[num] = (loHitCount[num] || 0) + 1;
+            }
+
+            let html = '<div class="space-y-3">';
             if (deKeys.length > 0) {
-              const list = Object.entries(b.de_sums).map(([k, v]) => `<span class="font-bold text-rose-600 dark:text-rose-400">${k}</span>x${v}`).join(', ');
-              html += `<div><b class="text-rose-600 dark:text-rose-400">🔴 Đề (${deKeys.length} con):</b> <div class="mt-0.5 text-slate-700 dark:text-slate-300 leading-relaxed">${list}</div></div>`;
+              const items = Object.entries(b.de_sums).map(([k, v]) => {
+                const isWin = kqxs && k === winDe;
+                const cls = isWin
+                  ? 'inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/40 border border-red-400 dark:border-red-700 rounded px-1.5 text-red-700 dark:text-red-300 font-bold'
+                  : 'inline-flex items-center gap-1';
+                const badge = isWin ? '<span class="text-[10px] font-bold text-red-600 dark:text-red-400">●trúng</span>' : '';
+                return `<span class="${cls}"><b>${k}</b>(${v}) ${badge}</span>`;
+              }).join(' ');
+              html += `<div><b class="text-rose-600 dark:text-rose-400">🔴 Đề (${deKeys.length} con)${kqxs ? '' : ''}:</b><div class="mt-1 leading-loose">${items}</div></div>`;
             }
             if (loKeys.length > 0) {
-              const list = Object.entries(b.lo_sums).map(([k, v]) => `<span class="font-bold text-sky-600 dark:text-sky-400">${k}</span>x${v}đ`).join(', ');
-              html += `<div><b class="text-sky-600 dark:text-sky-400">🔵 Lô (${loKeys.length} con):</b> <div class="mt-0.5 text-slate-700 dark:text-slate-300 leading-relaxed">${list}</div></div>`;
+              const items = Object.entries(b.lo_sums).map(([k, v]) => {
+                const hitCount = loHitCount[k] || 0;
+                const isWin = kqxs && hitCount >= 1;
+                const cls = isWin
+                  ? 'inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/40 border border-red-400 dark:border-red-700 rounded px-1.5 text-red-700 dark:text-red-300 font-bold'
+                  : 'inline-flex items-center gap-1';
+                const badge = isWin
+                  ? `<span class="text-[10px] font-bold text-red-600 dark:text-red-400">●trúng${hitCount >= 2 ? ' ' + hitCount + 'nháy' : ''}</span>`
+                  : '';
+                return `<span class="${cls}"><b>${k}</b>(${v}đ) ${badge}</span>`;
+              }).join(' ');
+              html += `<div><b class="text-sky-600 dark:text-sky-400">🔵 Lô (${loKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
             }
             if (bcKeys.length > 0) {
-              const list = Object.entries(b.bacang_sums).map(([k, v]) => `<span class="font-bold text-purple-600 dark:text-purple-400">${k}</span>x${v}`).join(', ');
-              html += `<div><b class="text-purple-600 dark:text-purple-400">🟣 3 Càng (${bcKeys.length} con):</b> <div class="mt-0.5 text-slate-700 dark:text-slate-300 leading-relaxed">${list}</div></div>`;
+              const items = Object.entries(b.bacang_sums).map(([k, v]) => {
+                const isWin = kqxs && k === winBc;
+                const cls = isWin
+                  ? 'inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/40 border border-red-400 dark:border-red-700 rounded px-1.5 text-red-700 dark:text-red-300 font-bold'
+                  : 'inline-flex items-center gap-1';
+                const badge = isWin ? '<span class="text-[10px] font-bold text-red-600 dark:text-red-400">●trúng</span>' : '';
+                return `<span class="${cls}"><b>${k}</b>(${v}) ${badge}</span>`;
+              }).join(' ');
+              html += `<div><b class="text-purple-600 dark:text-purple-400">🟣 3 Càng (${bcKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
             }
             if (xCount > 0) {
-              html += `<div><b class="text-emerald-600 dark:text-emerald-400">🟢 Xiên (${xCount} cặp cược)</b></div>`;
+              const xien = (b.retained && b.retained.xien) ? b.retained.xien : [];
+              const xItems = xien.length > 0
+                ? xien.map(x => `<span class="inline-flex items-center gap-1"><b>${x.numbers ? x.numbers.join('-') : ''}</b>(${x.amount}đ)</span>`).join(' ')
+                : `<span class="text-slate-500">${xCount} cặp</span>`;
+              html += `<div><b class="text-emerald-600 dark:text-emerald-400">🟢 Xiên (${xCount} cặp):</b><div class="mt-1 leading-loose">${xItems}</div></div>`;
+            }
+            if (!kqxs) {
+              html += '<div class="text-[11px] text-slate-400 italic border-t border-slate-200 dark:border-slate-700 pt-2 mt-1">Chưa có KQXS – bấm nút KQXS để tải về và tự động highlight số trúng.</div>';
             }
             html += '</div>';
             totalDisplay.innerHTML = html;
@@ -9295,7 +9337,37 @@ function resetTable() {
       document.getElementById('btnMainPushToBot')?.addEventListener('click', pushWebBetsToBot);
       document.getElementById('btnPullBetsFromBotTop')?.addEventListener('click', pullBetsFromBotToWeb);
       document.getElementById('btnMainPullFromBot')?.addEventListener('click', pullBetsFromBotToWeb);
-      document.getElementById('btnTgImportToWeb')?.addEventListener('click', pullBetsFromBotToWeb);
+      document.getElementById('btnTgImportToWeb')?.addEventListener('click', async () => {
+        try {
+          const res = await callBotApi("/api/bot/board");
+          if (!res.ok) throw new Error("Backend offline");
+          const data = await res.json();
+          const rawMsgs = data.raw_messages || [];
+
+          if (rawMsgs.length === 0) {
+            alert("Bot chưa có tin gốc nào hôm nay để nạp về Web.");
+            return;
+          }
+
+          const lines = rawMsgs.map(m => (m.text || m.raw_text || '').trim()).filter(Boolean);
+          if (lines.length === 0) {
+            alert("Bot có tin nhắn nhưng nội dung trống.");
+            return;
+          }
+
+          const combinedInput = document.getElementById('combinedBetInput');
+          if (combinedInput) {
+            const curText = (typeof getRawTextFromElement === 'function') ? getRawTextFromElement(combinedInput).trim() : combinedInput.innerText.trim();
+            const newText = (curText ? curText + "\n\n" : "") + lines.join("\n\n");
+            combinedInput.innerText = newText;
+            if (typeof calculateSum === 'function') calculateSum();
+            document.getElementById('modalTelegramBot')?.classList.add('hidden');
+            alert(`✅ ĐÃ NẠP ${rawMsgs.length} TIN GỐC VÀO WEB!\nMỗi tin được nạp nguyên bản để tính toán đúng theo từng khách.`);
+          }
+        } catch (err) {
+          alert("Không kết nối được Backend Bot. Hãy đảm bảo Bot đang chạy trên cổng 5005!");
+        }
+      });
 
       // TAB BOT: NÚT AUTO VÀ NÚT COPY
       const botTabInput = document.getElementById('botTabInput');
@@ -9537,8 +9609,10 @@ function resetTable() {
         if (!cfm) return;
 
         try {
-          if (titleEl) titleEl.textContent = "🎯 KẾT QUẢ CHỐT TIỀN TỰ ĐỘNG HÔM NAY";
-          pre.textContent = "⏳ Đang kết nối lấy KQXS và tính toán chốt tiền cho tất cả khách...";
+          if (titleEl) titleEl.textContent = "🎯 TIN NHẮN CHỐT TIỀN TỪNG KHÁCH HÔM NAY";
+          pre.style.fontFamily = 'inherit';
+          pre.style.whiteSpace = 'normal';
+          pre.innerHTML = '<p class="text-slate-500 italic text-xs">⏳ Đang kết nối lấy KQXS và tính toán chốt tiền cho tất cả khách...</p>';
           area.classList.remove('hidden');
 
           const res = await callBotApi("/api/bot/settle_now", {
@@ -9554,14 +9628,55 @@ function resetTable() {
           }
 
           if (data && data.success) {
-            let fullText = `✅ ĐÃ CHỐT TIỀN THÀNH CÔNG CHO ${data.settled_clients_count || 0} KHÁCH CƯỢC!\n\n` +
-                           `📋 TỔNG KẾT TÀI CHÍNH:\n` +
-                           (data.summary_text || "Đã gửi tin chốt tiền tới các bên.") + `\n\n` +
-                           `🎯 KẾT QUẢ XSMB (${data.kqxs_date || ''}):\n` +
-                           `Giải Đặc Biệt: ${data.kqxs_special || 'Chưa có'}`;
-            pre.textContent = fullText;
+            // Hiển thị từng tin chốt tiền per client
+            const clientMsgs = data.client_messages || data.client_texts || [];
+            let cardsHtml = '';
+
+            if (clientMsgs.length > 0) {
+              cardsHtml = clientMsgs.map((c, idx) => {
+                const name = c.name || c.client_name || `Khách ${idx + 1}`;
+                const chatId = c.chat_id || c.sender || '';
+                const msgText = (c.text || c.message || '').trim();
+                const netVal = c.net !== undefined ? c.net : null;
+                const netColor = netVal === null ? 'slate' : (netVal >= 0 ? 'emerald' : 'rose');
+                const netBadge = netVal !== null
+                  ? `<span class="px-1.5 py-0.5 rounded text-[11px] font-bold bg-${netColor}-100 dark:bg-${netColor}-900/40 text-${netColor}-700 dark:text-${netColor}-300 border border-${netColor}-300 dark:border-${netColor}-700">${netVal >= 0 ? '↑ Khách thua ' + netVal.toLocaleString('vi-VN') : '↓ Thầu bù ' + Math.abs(netVal).toLocaleString('vi-VN')}</span>`
+                  : '';
+                return `<div class="rounded-xs border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <div class="flex items-center justify-between gap-2 flex-wrap bg-slate-50 dark:bg-dark-800 px-3 py-1.5 border-b border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="font-bold text-xs text-slate-800 dark:text-slate-200">👤 ${name}</span>
+                      ${chatId ? `<span class="font-mono text-[11px] text-slate-400">(${chatId})</span>` : ''}
+                    </div>
+                    ${netBadge}
+                  </div>
+                  <pre class="whitespace-pre-wrap font-mono text-[11px] text-slate-700 dark:text-slate-300 p-2.5 bg-white dark:bg-dark-900 leading-relaxed">${msgText || '(Không có tin nhắn)'}</pre>
+                </div>`;
+              }).join('');
+            } else if (data.summary_text) {
+              // Fallback: hiển thị summary text nếu bot không trả về per-client
+              cardsHtml = `<div class="p-3 bg-white dark:bg-dark-900 rounded-xs border border-slate-200 dark:border-slate-700">
+                <pre class="whitespace-pre-wrap font-mono text-xs text-slate-700 dark:text-slate-300 leading-relaxed">${data.summary_text}</pre>
+              </div>`;
+            }
+
+            const headerHtml = `<div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-200 dark:border-slate-700 mb-2">
+              <span class="font-bold text-emerald-700 dark:text-emerald-400 text-xs">✅ Đã chốt tiền thành công cho ${data.settled_clients_count || clientMsgs.length || 0} khách cược</span>
+              <span class="text-[11px] text-slate-500">KQXS: ${data.kqxs_date || ''} | ĐB: ${data.kqxs_special || 'N/A'}</span>
+            </div>`;
+
+            pre.innerHTML = `<div class="space-y-2">${headerHtml}${cardsHtml}</div>`;
+
+            // Lưu plain text để copy
+            const plain = (clientMsgs.length > 0
+              ? clientMsgs.map(c => `👤 ${c.name || 'Khách'}:\n${c.text || c.message || ''}`)
+              : [data.summary_text || '']).join('\n\n─────────────────────\n\n');
+            pre.dataset.plainText = plain;
+
             alert(`✅ ĐÃ CHỐT TIỀN TỰ ĐỘNG THÀNH CÔNG!\nĐã gửi tin nhắn chốt tiền tới ${data.settled_clients_count || 0} khách cược.`);
           } else {
+            pre.style.fontFamily = 'monospace';
+            pre.style.whiteSpace = 'pre-wrap';
             pre.textContent = "❌ Không thể chốt tiền: " + (data?.error || data?.message || "Lỗi không xác định");
             alert("❌ Không thể chốt tiền: " + (data?.error || data?.message || "Kiểm tra lại KQXS"));
           }
@@ -9583,10 +9698,102 @@ function resetTable() {
           area.classList.remove('hidden');
           const res = await callBotApi("/api/bot/report");
           const data = await res.json();
-          let fullText = "📋 BÁO CÁO THẦU:\n" + (data.text_thau || '') + "\n\n" +
-                         "🛡️ BÁO CÁO GIỮ LẠI:\n" + (data.text_giulai || '') + "\n\n" +
-                         "🛸 BÁO CÁO CHUYỂN:\n" + (data.text_chuyen || '');
-          pre.textContent = fullText;
+
+          // Hàm parse từng dòng báo cáo text thành HTML đẹp
+          function parseReportBlock(rawText, blockLabel, netLabel, netColor) {
+            if (!rawText || !rawText.trim()) return '';
+            const lines = rawText.trim().split('\n').filter(l => l.trim());
+            let html = '';
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed) continue;
+              // Dòng ngày: "ngày 12/09:" hoặc "Ngày 12/09"
+              if (/^ng[àa]y\s+\d/i.test(trimmed)) {
+                html += `<div class="font-bold text-slate-800 dark:text-slate-100 mt-2 first:mt-0 border-b border-slate-200 dark:border-slate-700 pb-0.5">${trimmed}</div>`;
+              }
+              // Dòng Đề
+              else if (/^[ĐD]ề\s+/i.test(trimmed)) {
+                const parts = trimmed.split('=');
+                const left = parts[0].trim();
+                const right = parts[1] ? parts[1].trim() : '';
+                const rightNum = parseFloat(right.replace(/[^0-9\-\.]/g, ''));
+                const rightColor = rightNum < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400';
+                html += `<div class="flex justify-between"><span class="text-slate-700 dark:text-slate-300">🔴 ${left}</span><span class="font-bold ${rightColor}">${right}</span></div>`;
+              }
+              // Dòng Lô
+              else if (/^L[ôo]\s+/i.test(trimmed)) {
+                const parts = trimmed.split('=');
+                const left = parts[0].trim();
+                const right = parts[1] ? parts[1].trim() : '';
+                const rightNum = parseFloat(right.replace(/[^0-9\-\.]/g, ''));
+                const rightColor = rightNum < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400';
+                html += `<div class="flex justify-between"><span class="text-slate-700 dark:text-slate-300">🔵 ${left}</span><span class="font-bold ${rightColor}">${right}</span></div>`;
+              }
+              // Dòng 3C / Ba Càng
+              else if (/^3[Cc]\s+/i.test(trimmed) || /^Ba\s+[Cc]àng/i.test(trimmed)) {
+                const parts = trimmed.split('=');
+                const left = parts[0].trim();
+                const right = parts[1] ? parts[1].trim() : '';
+                const rightNum = parseFloat(right.replace(/[^0-9\-\.]/g, ''));
+                const rightColor = rightNum < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400';
+                html += `<div class="flex justify-between"><span class="text-slate-700 dark:text-slate-300">🟣 ${left}</span><span class="font-bold ${rightColor}">${right}</span></div>`;
+              }
+              // Dòng tổng kết: Lãi/Lời/Nộp/Lỗ
+              else if (/^(L[ãa]i|L[ờo]i|N[ộo]p|L[ỗo]|Lỗ|Nộp|Lời|Lãi)\s*:/i.test(trimmed)) {
+                const parts = trimmed.split(':');
+                const label = parts[0].trim();
+                const val = parts[1] ? parts[1].trim() : '';
+                const valNum = parseFloat(val.replace(/[^0-9\-\.]/g, ''));
+                const valColor = valNum < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400';
+                html += `<div class="flex justify-between font-bold border-t border-slate-200 dark:border-slate-700 pt-0.5 mt-0.5"><span class="${valColor}">${label}:</span><span class="${valColor}">${val}</span></div>`;
+              }
+              // Các dòng khác
+              else {
+                html += `<div class="text-slate-600 dark:text-slate-400 text-[11px]">${trimmed}</div>`;
+              }
+            }
+            return html ? `<div class="space-y-1">${html}</div>` : '';
+          }
+
+          const thauHtml = parseReportBlock(data.text_thau, 'Tổng thầu', 'Lãi', 'emerald');
+          const chuyenHtml = parseReportBlock(data.text_chuyen, 'Chuyển', 'Nộp', 'sky');
+          const giulaiHtml = parseReportBlock(data.text_giulai, 'Giữ lại', 'Lời', 'amber');
+
+          let fullHtml = '';
+          if (thauHtml) {
+            fullHtml += `<div class="rounded-xs border border-emerald-200 dark:border-emerald-800 overflow-hidden">
+              <div class="bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 font-bold text-emerald-800 dark:text-emerald-300 text-xs border-b border-emerald-200 dark:border-emerald-800">📊 Tổng thầu</div>
+              <div class="p-2.5 text-xs space-y-0.5">${thauHtml}</div>
+            </div>`;
+          }
+          if (chuyenHtml) {
+            fullHtml += `<div class="rounded-xs border border-sky-200 dark:border-sky-800 overflow-hidden">
+              <div class="bg-sky-50 dark:bg-sky-950/40 px-3 py-1.5 font-bold text-sky-800 dark:text-sky-300 text-xs border-b border-sky-200 dark:border-sky-800">🛸 Chuyển</div>
+              <div class="p-2.5 text-xs space-y-0.5">${chuyenHtml}</div>
+            </div>`;
+          }
+          if (giulaiHtml) {
+            fullHtml += `<div class="rounded-xs border border-amber-200 dark:border-amber-800 overflow-hidden">
+              <div class="bg-amber-50 dark:bg-amber-950/40 px-3 py-1.5 font-bold text-amber-800 dark:text-amber-300 text-xs border-b border-amber-200 dark:border-amber-800">🛡️ Giữ lại</div>
+              <div class="p-2.5 text-xs space-y-0.5">${giulaiHtml}</div>
+            </div>`;
+          }
+
+          if (!fullHtml) {
+            pre.textContent = "Không tải được báo cáo từ Bot.";
+          } else {
+            pre.style.fontFamily = 'inherit';
+            pre.style.whiteSpace = 'normal';
+            pre.innerHTML = `<div class="space-y-2">${fullHtml}</div>`;
+          }
+
+          // Lưu text thuần để Copy Tin hoạt động đúng
+          const plainText =
+            "📊 Tổng thầu:\n" + (data.text_thau || '(trống)') + "\n\n" +
+            "🛸 Chuyển:\n" + (data.text_chuyen || '(trống)') + "\n\n" +
+            "🛡️ Giữ lại:\n" + (data.text_giulai || '(trống)');
+          pre.dataset.plainText = plainText;
+
         } catch (e) {
           pre.textContent = "Không tải được báo cáo từ Bot.";
         }
@@ -9595,10 +9802,13 @@ function resetTable() {
       // Nút Copy Tin Báo Cáo
       document.getElementById('btnCopyTgReportText')?.addEventListener('click', () => {
         const pre = document.getElementById('tgReportTextContent');
-        if (pre && pre.textContent) {
-          navigator.clipboard.writeText(pre.textContent).then(() => {
-            alert("Đã copy tin báo cáo vào bộ nhớ tạm (Clipboard)!");
-          });
+        if (pre) {
+          const text = pre.dataset.plainText || pre.textContent || '';
+          if (text) {
+            navigator.clipboard.writeText(text).then(() => {
+              alert("Đã copy báo cáo vào bộ nhớ tạm (Clipboard)!");
+            });
+          }
         }
       });
 
@@ -9622,6 +9832,13 @@ function resetTable() {
                       `🔵 Lô 2 số (${kq.prizes.length} giải):\n` +
                       kq.all_last2.join(' - ');
             pre.textContent = msg;
+            // Cache KQXS để Tổng Bảng có thể highlight số trúng
+            window.tgCachedKQXS = kq;
+            // Tự động refresh Tổng Bảng nếu đang mở tab đó
+            const activeTotal = document.getElementById('tgSubViewTotal');
+            if (activeTotal && !activeTotal.classList.contains('hidden')) {
+              fetchTgBoard();
+            }
           } else {
             pre.textContent = "Chưa có KQXS: " + (kq.error || "Lỗi tải kết quả");
           }
