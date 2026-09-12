@@ -205,7 +205,13 @@ def get_board():
         "retained": retained,
         "raw_messages": raw_messages,
         "pending_transfers": pending,
-        "pending_text": pending_text
+        "pending_text": pending_text,
+        "transfers": {
+            "de": b.cumulative_de_transfers,
+            "lo": b.cumulative_lo_transfers,
+            "bacang": b.cumulative_bacang_transfers,
+            "xien": b.cumulative_xien_transfers
+        }
     })
 
 
