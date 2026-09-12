@@ -53,7 +53,6 @@
   "cleanup_after_hours": 24.0,
   "admin_password": "1986",
   "authenticated_admins": [
-    999111222,
     "7715286942"
   ],
   "client_prices": {}
