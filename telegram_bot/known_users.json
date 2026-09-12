@@ -1,38 +1,10 @@
 {
-  "5354756442": {
-    "user_id": "5354756442",
-    "chat_id": 5354756442,
-    "username": "testuser",
-    "first_name": "TestUser",
-    "updated_at": "02:14:39 08/09"
-  },
   "1023927138": {
     "user_id": "1023927138",
     "chat_id": 1023927138,
     "username": "Zeng86",
     "first_name": "Zeng",
     "updated_at": "02:01:43 11/09"
-  },
-  "999888777": {
-    "user_id": "999888777",
-    "chat_id": 999888777,
-    "username": "test_user",
-    "first_name": "Test",
-    "updated_at": "13:01:03 08/09"
-  },
-  "999111222": {
-    "user_id": "999111222",
-    "chat_id": 999111222,
-    "username": "boss",
-    "first_name": "Boss",
-    "updated_at": "13:37:09 08/09"
-  },
-  "12345678": {
-    "user_id": "12345678",
-    "chat_id": 12345678,
-    "username": "client1",
-    "first_name": "Khach",
-    "updated_at": "13:12:51 08/09"
   },
   "7715286942": {
     "user_id": "7715286942",

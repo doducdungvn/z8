@@ -511,6 +511,9 @@ class TelegramBotService:
             for uid, info in self.known_users.items():
                 if (info.get("username") or "").lower().strip() == uname:
                     return str(info.get("chat_id") or uid), ""
+                aliases = [str(a).lower().lstrip("@").strip() for a in info.get("aliases", [])]
+                if uname in aliases:
+                    return str(info.get("chat_id") or uid), ""
             # 2. Tra trong known_users theo first_name / display name
             for uid, info in self.known_users.items():
                 if (info.get("first_name") or "").lower().strip() == uname:
@@ -664,7 +667,8 @@ class TelegramBotService:
             sender_uid = str(user_id).strip()
             sender_cid = str(chat_id).strip()
             sender_un = (username or "").lower().lstrip("@")
-            if target_rec in [sender_uid, sender_cid, sender_un]:
+            target_cid, _ = self.resolve_recipient(target_rec)
+            if target_rec in [sender_uid, sender_cid, sender_un] or (target_cid and target_cid in [sender_uid, sender_cid]):
                 is_recipient_sender = True
                 if self.pending_recipient_acks:
                     self.pending_recipient_acks = None

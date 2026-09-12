@@ -196,6 +196,22 @@ def clear_logs():
     return jsonify({"success": True, "message": "Đã xóa toàn bộ nhật ký"})
 
 
+@app.route("/api/bot/history_logs", methods=["GET"])
+def get_history_logs():
+    date_str = request.args.get("date", "").strip()
+    log_path = os.path.join(os.path.dirname(__file__), "bot_activity.log")
+    if not os.path.exists(log_path):
+        return jsonify({"logs": []})
+    try:
+        with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
+            lines = [l.strip() for l in f.readlines() if l.strip()]
+        if date_str:
+            lines = [l for l in lines if date_str in l]
+        return jsonify({"logs": lines[-300:]})
+    except Exception as e:
+        return jsonify({"logs": [], "error": str(e)})
+
+
 @app.route("/api/bot/board", methods=["GET"])
 def get_board():
     b = bot_service.balancer
