@@ -5670,18 +5670,24 @@ function setupEventListeners() {
       const lines = [];
       lines.push(dateHeader);
 
-      // Định dạng tiếng Việt có dấu: Đề 5.770(60)= 278, Lô 280(20)= 4.532
+      const formatNetK = (val) => {
+        const n = Math.round(val || 0);
+        const formatted = Math.abs(n).toLocaleString('vi-VN');
+        return n < 0 ? `-${formatted}` : formatted;
+      };
+
+      // Định dạng tiếng Việt có dấu: Đề 5.770(60)= 278, Lô 280(20)= -4.532
       if (curData.deXac > 0) {
-        lines.push(`Đề ${formatMoneyK(curData.deXac)}(${formatMoneyK(curData.deWinXac || 0)})= ${formatMoneyK(Math.abs(curData.deNet || 0))}`);
+        lines.push(`Đề ${formatMoneyK(curData.deXac)}(${formatMoneyK(curData.deWinXac || 0)})= ${formatNetK(curData.deNet || 0)}`);
       }
       if (curData.loXac > 0) {
-        lines.push(`Lô ${formatMoneyK(curData.loXac)}(${formatMoneyK(curData.loWinXac || 0)})= ${formatMoneyK(Math.abs(curData.loNet || 0))}`);
+        lines.push(`Lô ${formatMoneyK(curData.loXac)}(${formatMoneyK(curData.loWinXac || 0)})= ${formatNetK(curData.loNet || 0)}`);
       }
       if (curData.baCangXac > 0) {
-        lines.push(`3C ${formatMoneyK(curData.baCangXac)}(${formatMoneyK(curData.baCangWinXac || 0)})= ${formatMoneyK(Math.abs(curData.baCangNet || 0))}`);
+        lines.push(`3C ${formatMoneyK(curData.baCangXac)}(${formatMoneyK(curData.baCangWinXac || 0)})= ${formatNetK(curData.baCangNet || 0)}`);
       }
       if (curData.xienXac > 0) {
-        lines.push(`Xiên ${formatMoneyK(curData.xienXac)}(${formatMoneyK(curData.xienWinXac || 0)})= ${formatMoneyK(Math.abs(curData.xienNet || 0))}`);
+        lines.push(`Xiên ${formatMoneyK(curData.xienXac)}(${formatMoneyK(curData.xienWinXac || 0)})= ${formatNetK(curData.xienNet || 0)}`);
       }
 
       // Dòng kết quả tổng kết theo từng tab (Khách bù/Thầu bù)
@@ -7641,7 +7647,7 @@ function resetTable() {
                 <span>Gom bảng (Chỉ chuyển khi bấm nút)</span>
               </label>
             </div>
-            <div class="pt-2 border-t border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div class="pt-2 border-t border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" id="tgCheckAutoReply" checked class="form-checkbox text-sky-600 rounded-xs">
                 <span>Tự động nhắn xác nhận cho khách</span>
@@ -7649,6 +7655,10 @@ function resetTable() {
               <label class="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" id="tgCheckAutoForward" checked class="form-checkbox text-sky-600 rounded-xs">
                 <span>Tự động bắn cược thừa cho người nhận</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="tgCheckRecipientAck" checked class="form-checkbox text-sky-600 rounded-xs">
+                <span title="Trong vòng 3 phút người nhận chưa phản hồi sẽ báo cho Chủ Bot">Check phản hồi (3 phút)</span>
               </label>
             </div>
           </div>
@@ -8172,6 +8182,9 @@ function resetTable() {
 
         document.getElementById('tgCheckAutoReply').checked = !!cfg.auto_reply_client;
         document.getElementById('tgCheckAutoForward').checked = !!cfg.auto_forward_excess;
+        if (document.getElementById('tgCheckRecipientAck')) {
+          document.getElementById('tgCheckRecipientAck').checked = (cfg.check_recipient_ack !== false);
+        }
 
         // Cleanup hours
         let cleanupH = 24;
@@ -8230,6 +8243,7 @@ function resetTable() {
         mode: document.getElementById('tgModeBatch').checked ? "batch" : "instant",
         auto_reply_client: document.getElementById('tgCheckAutoReply').checked,
         auto_forward_excess: document.getElementById('tgCheckAutoForward').checked,
+        check_recipient_ack: document.getElementById('tgCheckRecipientAck') ? document.getElementById('tgCheckRecipientAck').checked : true,
         cleanup_after_hours: cleanupHours,
         client_prices: window.tgCustomClientPrices || {},
         price_config: window.priceConfigData || JSON.parse(localStorage.getItem(RATES_STORAGE_KEY) || "{}"),
