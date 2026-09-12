@@ -9847,7 +9847,15 @@ function resetTable() {
 
           if (data && data.success) {
             // Hiển thị từng tin chốt tiền per client
-            const clientMsgs = data.client_messages || data.client_texts || [];
+            let clientMsgs = data.client_messages || data.client_texts || [];
+            if ((!clientMsgs || clientMsgs.length === 0) && data.client_reports && typeof data.client_reports === 'object') {
+              clientMsgs = Object.entries(data.client_reports).map(([cid, rep]) => ({
+                chat_id: cid,
+                name: rep.name || (rep.username ? `@${rep.username}` : `Khách (${cid})`),
+                text: rep.text || rep.message || '',
+                net: (rep.accounting && rep.accounting.totalNet !== undefined) ? rep.accounting.totalNet : ((rep.accounting && rep.accounting.netKhach !== undefined) ? rep.accounting.netKhach : null)
+              }));
+            }
             let cardsHtml = '';
 
             if (clientMsgs.length > 0) {
@@ -9860,7 +9868,7 @@ function resetTable() {
                 const netBadge = netVal !== null
                   ? `<span class="px-1.5 py-0.5 rounded text-[11px] font-bold bg-${netColor}-100 dark:bg-${netColor}-900/40 text-${netColor}-700 dark:text-${netColor}-300 border border-${netColor}-300 dark:border-${netColor}-700">${netVal >= 0 ? '↑ Khách thua ' + netVal.toLocaleString('vi-VN') : '↓ Thầu bù ' + Math.abs(netVal).toLocaleString('vi-VN')}</span>`
                   : '';
-                return `<div class="rounded-xs border border-slate-200 dark:border-slate-700 overflow-hidden">
+                return `<div class="rounded-xs border border-slate-200 dark:border-slate-700 overflow-hidden mb-2">
                   <div class="flex items-center justify-between gap-2 flex-wrap bg-slate-50 dark:bg-dark-800 px-3 py-1.5 border-b border-slate-200 dark:border-slate-700">
                     <div class="flex items-center gap-1.5 flex-wrap">
                       <span class="font-bold text-xs text-slate-800 dark:text-slate-200">👤 ${name}</span>
@@ -9871,16 +9879,24 @@ function resetTable() {
                   <pre class="whitespace-pre-wrap font-mono text-[11px] text-slate-700 dark:text-slate-300 p-2.5 bg-white dark:bg-dark-900 leading-relaxed">${msgText || '(Không có tin nhắn)'}</pre>
                 </div>`;
               }).join('');
-            } else if (data.summary_text) {
+            } else if (data.summary_text || data.full_summary) {
               // Fallback: hiển thị summary text nếu bot không trả về per-client
               cardsHtml = `<div class="p-3 bg-white dark:bg-dark-900 rounded-xs border border-slate-200 dark:border-slate-700">
-                <pre class="whitespace-pre-wrap font-mono text-xs text-slate-700 dark:text-slate-300 leading-relaxed">${data.summary_text}</pre>
+                <pre class="whitespace-pre-wrap font-mono text-xs text-slate-700 dark:text-slate-300 leading-relaxed">${data.summary_text || data.full_summary}</pre>
               </div>`;
             }
 
+            const kqDate = data.kqxs_date || dispDate;
+            const kqDb = data.kqxs_special || data.special_prize || 'Chưa mở';
+            const isDifferentDate = (kqDate && kqDate !== dispDate);
+            const dateNote = isDifferentDate ? `<span class="text-amber-600 font-semibold italic text-[11px] block sm:inline ml-1">(KQXS ${kqDate} - Ngày ${dispDate} chưa mở thưởng)</span>` : '';
+
             const headerHtml = `<div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-200 dark:border-slate-700 mb-2">
               <span class="font-bold text-emerald-700 dark:text-emerald-400 text-xs">✅ Đã chốt tiền thành công cho ${data.settled_clients_count || clientMsgs.length || 0} khách cược (Ngày ${dispDate})</span>
-              <span class="text-[11px] text-slate-500">KQXS: ${data.kqxs_date || dispDate} | ĐB: ${data.kqxs_special || 'N/A'}</span>
+              <div class="text-[11px] text-slate-500 text-right">
+                <span>KQXS: <b class="text-slate-700 dark:text-slate-300">${kqDate}</b> | ĐB: <b class="text-rose-600 font-bold">${kqDb}</b></span>
+                ${dateNote}
+              </div>
             </div>`;
 
             pre.innerHTML = `<div class="space-y-2">${headerHtml}${cardsHtml}</div>`;
