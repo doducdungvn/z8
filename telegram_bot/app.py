@@ -106,6 +106,8 @@ def update_config():
         current["auto_reply_client"] = bool(data["auto_reply_client"])
     if "auto_forward_excess" in data:
         current["auto_forward_excess"] = bool(data["auto_forward_excess"])
+    if "check_recipient_ack" in data:
+        current["check_recipient_ack"] = bool(data["check_recipient_ack"])
     if "mode" in data:
         current["mode"] = data["mode"]
     if "retain_config" in data:
@@ -186,6 +188,12 @@ def get_logs():
     return jsonify({
         "logs": bot_service.logs[-100:]  # 100 log mới nhất
     })
+
+
+@app.route("/api/bot/clear_logs", methods=["POST"])
+def clear_logs():
+    bot_service.logs.clear()
+    return jsonify({"success": True, "message": "Đã xóa toàn bộ nhật ký"})
 
 
 @app.route("/api/bot/board", methods=["GET"])

@@ -1,56 +1,8 @@
 [
   {
     "chat_id": "1023927138",
-    "message_id": 267,
-    "created_at": 1789065048.933713,
-    "tag": "incoming_bet"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 268,
-    "created_at": 1789065049.8029938,
-    "tag": "receipt"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 269,
-    "created_at": 1789065050.738951,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 276,
-    "created_at": 1789066830.6551867,
-    "tag": "incoming_bet"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 277,
-    "created_at": 1789066831.5388079,
-    "tag": "receipt"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 280,
-    "created_at": 1789066842.6231806,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 281,
-    "created_at": 1789066903.0865624,
-    "tag": "incoming_bet"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 282,
-    "created_at": 1789066903.9889605,
-    "tag": "receipt"
-  },
-  {
-    "chat_id": "7715286942",
-    "message_id": 283,
-    "created_at": 1789066904.911219,
-    "tag": "transfer"
+    "message_id": 353,
+    "created_at": 1789234168.3317754,
+    "tag": "client_settlement"
   }
 ]

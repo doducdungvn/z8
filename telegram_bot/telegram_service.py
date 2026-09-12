@@ -659,21 +659,34 @@ class TelegramBotService:
 
         # Kiểm tra nếu người gửi là Người nhận cược thừa (target_recipient) đang được theo dõi phản hồi
         target_rec = str(self.config.get("target_recipient", "")).strip().lstrip("@").lower()
+        is_recipient_sender = False
         if target_rec:
             sender_uid = str(user_id).strip()
             sender_cid = str(chat_id).strip()
             sender_un = (username or "").lower().lstrip("@")
             if target_rec in [sender_uid, sender_cid, sender_un]:
+                is_recipient_sender = True
                 if self.pending_recipient_acks:
                     self.pending_recipient_acks = None
-                    self.log(f"✅ [Người nhận phản hồi] {sender_label} nhắn:\n{text}\n(Đã xác nhận & hủy cảnh báo 5 phút)", "SUCCESS")
+                    self.log(f"Chủ thầu {sender_label}: {text} (đã phản hồi)", "SUCCESS")
                 else:
-                    self.log(f"📥 [Người nhận nhắn tin] {sender_label}:\n{text}", "INFO")
+                    self.log(f"Chủ thầu {sender_label}: {text}", "INFO")
+
+                # Forward tin nhắn của Chủ thầu cho Chủ Bot
+                owner_cid = self.config.get("owner_chat_id")
+                if owner_cid and str(chat_id) != str(owner_cid):
+                    self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
 
         # Xử lý các lệnh điều khiển hệ thống
         cmd = text.lower().strip()
         parts = text.split()
         cmd_root = parts[0].lower() if parts else ""
+
+        # Nếu người gửi là Chủ thầu và không phải gõ lệnh quản trị, dừng lại tại đây (không coi là cược của khách)
+        if is_recipient_sender:
+            admin_cmds = ["/mk", "mk", "/pass", "pass", "/login", "login", "/matkhau", "matkhau", "/help", "help", "/menu", "/status", "status"]
+            if not any(cmd_root.startswith(c) for c in admin_cmds):
+                return
 
         message_id = message.get("message_id")
         user_is_admin = self.is_admin(chat_id, username)
@@ -1440,6 +1453,8 @@ class TelegramBotService:
                     "recipient": target_recipient,
                     "alerted": False
                 }
+                summary_txt = " ; ".join(transfer_msg.strip().splitlines())
+                self.log(f"Gửi chủ thầu {target_recipient}: {summary_txt}", "INFO")
                 note = "" if self.config.get("auto_forward_excess", True) else "\n<i>(Lưu ý: Tự động cân chuyển đang TẮT. Gõ <code>/chuyen bat</code> để bật tự động).</i>"
                 self.send_telegram_message(str(chat_id), f"🚀 Đã bắn {excess_count} con cược thừa sang {target_recipient} thành công!{note}")
             else:
@@ -1504,8 +1519,6 @@ class TelegramBotService:
         self.stats["messages_received"] += 1
         self.stats["last_active"] = datetime.now().strftime("%H:%M:%S")
 
-        self.log(f"📩 [Khách gửi cược] {sender_label}{group_title}:\n{text}")
-
         # 2. Phân tích cược
         user_msg_id = message.get("message_id")
         parsed = parse_bet_message(text)
@@ -1517,8 +1530,14 @@ class TelegramBotService:
                 unique_inv = list(dict.fromkeys(parsed['invalid_items']))
                 joined_inv = " ".join(unique_inv) if all(x.isdigit() for x in unique_inv) else ", ".join(unique_inv)
                 self.send_telegram_message(str(chat_id), f"Trả lại {joined_inv}", track_for_cleanup=True, tag="invalid_receipt")
-                self.log(f"📤 [Bot phản hồi Khách {sender_label}]: Trả lại {joined_inv}", "WARN")
-            self.log(f"💬 [Khách nhắn tin] {sender_label}{group_title}: '{text}' (không chứa cú pháp cược hợp lệ)", "INFO")
+                self.log(f"Khách {sender_label}: {text} (trả lại {joined_inv})", "WARN")
+            else:
+                self.log(f"Khách {sender_label}: {text}", "INFO")
+
+            # Forward tin nhắn không phải cược sang cho Chủ Bot
+            owner_cid = self.config.get("owner_chat_id")
+            if owner_cid and str(chat_id) != str(owner_cid):
+                self.send_telegram_message(str(owner_cid), f"📩 Khách {sender_label}: {text}")
             return
 
         # Lưu vết tin nhắn cược của khách để tự động xóa sau 24h
@@ -1543,14 +1562,13 @@ class TelegramBotService:
                     self.send_telegram_message(chat_id_str, chunk, track_for_cleanup=True, tag="receipt")
             else:
                 self.send_telegram_message(chat_id_str, receipt_text, track_for_cleanup=True, tag="receipt")
-            receipt_plain = receipt_text.replace("<b>", "").replace("</b>", "").replace("<code>", "").replace("</code>", "")
-            self.log(f"📤 [Bot phản hồi Khách {sender_label}]:\n{receipt_plain}", "INFO")
+            self.log(f"Khách {sender_label}: {text} (đã nhắn lại Ok tin {msg_idx})", "INFO")
+        else:
+            self.log(f"Khách {sender_label}: {text}", "INFO")
 
         # 4. Cân bảng và tính phần cược thừa
         excess = self.balancer.add_bets(parsed)
         excess_count = sum(len(v) for v in excess.values())
-
-        self.log(f"⚖️ Cân bảng sau tin {sender_label}: Vượt mức giữ lại {excess_count} con cược.")
 
         # 5. Nếu có cược thừa và bật chế độ tự động bắn (instant)
         if self.config.get("auto_forward_excess", True) and self.config.get("mode", "instant") == "instant":
@@ -1567,7 +1585,8 @@ class TelegramBotService:
                             "recipient": target_recipient,
                             "alerted": False
                         }
-                        self.log(f"🚀 Đã tự động bắn cược thừa tới {target_recipient}:\n{transfer_msg}", "SUCCESS")
+                        transfer_summary = " ; ".join(transfer_msg.strip().splitlines())
+                        self.log(f"Gửi chủ thầu {target_recipient}: {transfer_summary}", "INFO")
                     else:
                         self.log(f"❌ Thất bại khi gửi cược thừa tới {target_recipient}: {err}", "ERROR")
                 else:
@@ -1726,24 +1745,15 @@ class TelegramBotService:
                 except Exception as ex:
                     pass
 
-                # Tự động kiểm tra timeout 5 phút người nhận cược thừa chưa phản hồi
-                if self.pending_recipient_acks and not self.pending_recipient_acks.get("alerted"):
-                    if time.time() - self.pending_recipient_acks["timestamp"] >= 300:
+                # Tự động kiểm tra timeout 3 phút người nhận cược thừa chưa phản hồi (nếu bật Check phản hồi)
+                if self.config.get("check_recipient_ack", True) and self.pending_recipient_acks and not self.pending_recipient_acks.get("alerted"):
+                    if time.time() - self.pending_recipient_acks["timestamp"] >= 180:
                         self.pending_recipient_acks["alerted"] = True
                         rec_name = self.pending_recipient_acks.get("recipient", "")
-                        alert_msg = (
-                            f"⚠️ <b>CẢNH BÁO: NGƯỜI NHẬN CHƯA PHẢN HỒI!</b>\n"
-                            f"━━━━━━━━━━━━━━━━━━\n"
-                            f"Bot đã bắn cược thừa tới <b>{rec_name}</b> hơn 5 phút trước nhưng người nhận <b>CHƯA OK hoặc chưa nhắn tin lại</b>!\n"
-                            f"👉 Vui lòng liên hệ với người nhận để kiểm tra và xác nhận kịp thời."
-                        )
                         owner_cid = self.config.get("owner_chat_id")
                         if owner_cid:
-                            self.send_telegram_message(str(owner_cid), alert_msg)
-                        for adm in self.config.get("authenticated_admins", []):
-                            if str(adm) != str(owner_cid):
-                                self.send_telegram_message(str(adm), alert_msg)
-                        self.log(f"⚠️ Đã gửi cảnh báo timeout không thấy người nhận {rec_name} Ok tới chủ bảng", "WARN")
+                            self.send_telegram_message(str(owner_cid), "Chủ thầu chưa Ok lại")
+                        self.log(f"Chủ thầu {rec_name} chưa Ok lại sau 3 phút", "WARN")
 
                 url = f"https://api.telegram.org/bot{token}/getUpdates"
                 params = {
@@ -1761,8 +1771,15 @@ class TelegramBotService:
                             self.handle_incoming_message(message)
                 else:
                     err = data.get("description", "")
-                    self.log(f"Lỗi getUpdates: {err}", "WARN")
-                    time.sleep(3)
+                    if "Conflict" in err:
+                        now_c = time.time()
+                        if now_c - getattr(self, "_last_conflict_log_ts", 0) > 60:
+                            self._last_conflict_log_ts = now_c
+                            self.log("Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.", "WARN")
+                        time.sleep(10)
+                    else:
+                        self.log(f"Lỗi getUpdates: {err}", "WARN")
+                        time.sleep(3)
 
             except requests.exceptions.Timeout:
                 # Timeout bình thường của Long Polling

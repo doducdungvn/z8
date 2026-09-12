@@ -6,6 +6,7 @@
   "target_recipient": "@lalalew",
   "auto_reply_client": true,
   "auto_forward_excess": true,
+  "check_recipient_ack": true,
   "mode": "instant",
   "retain_config": {
     "retain_type": "percentage",

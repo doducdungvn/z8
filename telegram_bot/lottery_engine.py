@@ -549,25 +549,30 @@ def format_accounting_report(report_data: dict, tab: str = "thau") -> str:
     def fmt_num(val):
         return f"{round(val):,}".replace(",", ".")
 
+    def fmt_net(val):
+        n = round(val)
+        formatted = f"{abs(n):,}".replace(",", ".")
+        return f"-{formatted}" if n < 0 else formatted
+
     if data.get("deXac", 0) > 0:
         win_xac = data.get("deWinXac", 0)
-        net_abs = abs(data.get("deNet", 0))
-        lines.append(f"Đề {fmt_num(data['deXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
+        net_val = data.get("deNet", 0)
+        lines.append(f"Đề {fmt_num(data['deXac'])}({fmt_num(win_xac)})= {fmt_net(net_val)}")
 
     if data.get("loXac", 0) > 0:
         win_xac = data.get("loWinXac", 0)
-        net_abs = abs(data.get("loNet", 0))
-        lines.append(f"Lô {fmt_num(data['loXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
+        net_val = data.get("loNet", 0)
+        lines.append(f"Lô {fmt_num(data['loXac'])}({fmt_num(win_xac)})= {fmt_net(net_val)}")
 
     if data.get("baCangXac", 0) > 0:
         win_xac = data.get("baCangWinXac", 0)
-        net_abs = abs(data.get("baCangNet", 0))
-        lines.append(f"3C {fmt_num(data['baCangXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
+        net_val = data.get("baCangNet", 0)
+        lines.append(f"3C {fmt_num(data['baCangXac'])}({fmt_num(win_xac)})= {fmt_net(net_val)}")
 
     if data.get("xienXac", 0) > 0:
         win_xac = data.get("xienWinXac", 0)
-        net_abs = abs(data.get("xienNet", 0))
-        lines.append(f"Xiên {fmt_num(data['xienXac'])}({fmt_num(win_xac)})= {fmt_num(net_abs)}")
+        net_val = data.get("xienNet", 0)
+        lines.append(f"Xiên {fmt_num(data['xienXac'])}({fmt_num(win_xac)})= {fmt_net(net_val)}")
 
     net_val = data.get("totalNet", 0)
     net_val_abs = fmt_num(abs(net_val))
