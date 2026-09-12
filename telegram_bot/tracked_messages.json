@@ -4,5 +4,65 @@
     "message_id": 353,
     "created_at": 1789234168.3317754,
     "tag": "client_settlement"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 361,
+    "created_at": 1789243035.4751623,
+    "tag": "invalid_receipt"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 365,
+    "created_at": 1789245345.2854965,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 368,
+    "created_at": 1789245356.2207446,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "8836005980",
+    "message_id": 369,
+    "created_at": 1789245357.1271694,
+    "tag": "transfer"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 370,
+    "created_at": 1789245467.7222474,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 371,
+    "created_at": 1789245468.586731,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "8836005980",
+    "message_id": 372,
+    "created_at": 1789245469.4587457,
+    "tag": "transfer"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 374,
+    "created_at": 1789245646.4157476,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 375,
+    "created_at": 1789245647.3364465,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "8836005980",
+    "message_id": 378,
+    "created_at": 1789245659.4828866,
+    "tag": "transfer"
   }
 ]
