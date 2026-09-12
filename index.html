@@ -7300,12 +7300,18 @@ function resetTable() {
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Nhật ký giao dịch thời gian thực (Auto 3s):</span>
             </span>
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-1 flex-wrap">
+              <button type="button" id="btnViewYesterdayLogs" class="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-900/60 rounded-xs text-sky-700 dark:text-sky-300 font-semibold transition-colors text-xs cursor-pointer border border-sky-300 dark:border-sky-700 flex items-center gap-1" title="Xem nhật ký hôm qua (12/09) từ file log">
+                <i class="fa-solid fa-calendar-day"></i> Log hôm qua
+              </button>
+              <button type="button" id="btnViewAllFileLogs" class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 rounded-xs text-purple-700 dark:text-purple-300 font-semibold transition-colors text-xs cursor-pointer border border-purple-300 dark:border-purple-700 flex items-center gap-1" title="Xem toàn bộ file log lưu trên máy">
+                <i class="fa-solid fa-file-lines"></i> Toàn bộ file log
+              </button>
               <button type="button" id="btnClearTgLogs" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 rounded-xs text-rose-700 dark:text-rose-300 font-semibold transition-colors text-xs cursor-pointer border border-rose-300 dark:border-rose-700 flex items-center gap-1" title="Xóa toàn bộ log hiện tại">
                 <i class="fa-solid fa-trash-can"></i> Xóa log
               </button>
               <button type="button" id="btnRefreshTgLogs" class="px-2.5 py-1 bg-white hover:bg-slate-100 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs text-slate-700 dark:text-slate-200 font-semibold transition-colors text-xs cursor-pointer border border-slate-300 dark:border-slate-600 flex items-center gap-1">
-                <i class="fa-solid fa-rotate"></i> Làm mới
+                <i class="fa-solid fa-rotate"></i> Live (Làm mới)
               </button>
             </div>
           </div>
@@ -8853,6 +8859,62 @@ function resetTable() {
       if (window.location.hash === '#bot') {
         showBotManagementPage();
       }
+
+      // Nút Xem log ngày hôm qua
+      document.getElementById('btnViewYesterdayLogs')?.addEventListener('click', async () => {
+        const consoleEl = document.getElementById('tgLogsConsole');
+        if (consoleEl) consoleEl.innerHTML = '<p class="text-sky-400 italic">Đang tải nhật ký ngày hôm qua (12/09) từ file log...</p>';
+        try {
+          const res = await callBotApi("/api/bot/history_logs?date=12/09");
+          if (!res.ok) return;
+          const data = await res.json();
+          const logs = data.logs || [];
+          if (logs.length === 0) {
+            if (consoleEl) consoleEl.innerHTML = '<p class="text-slate-400 italic">Không tìm thấy bản ghi log nào của ngày 12/09 trong file bot_activity.log.</p>';
+            return;
+          }
+          if (consoleEl) {
+            consoleEl.innerHTML = `<div class="text-amber-400 font-bold mb-2 pb-1 border-b border-slate-700">📜 NHẬT KÝ LỊCH SỬ NGÀY HÔM QUA (12/09) TRÍCH TỪ FILE:</div>` + logs.map(line => {
+              let color = "text-slate-200";
+              if (line.includes("[SUCCESS]")) color = "text-emerald-400 font-semibold";
+              if (line.includes("[WARN]")) color = "text-amber-300 font-semibold";
+              if (line.includes("[ERROR]")) color = "text-rose-400 font-bold";
+              return `<div class="${color} py-0.5 leading-relaxed break-words text-sm sm:text-base">${line.replace(/\\n/g, '<br>')}</div>`;
+            }).join('');
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+          }
+        } catch (e) {
+          if (consoleEl) consoleEl.innerHTML = '<p class="text-rose-400">Lỗi khi tải file log lịch sử: ' + e.message + '</p>';
+        }
+      });
+
+      // Nút Xem toàn bộ file log
+      document.getElementById('btnViewAllFileLogs')?.addEventListener('click', async () => {
+        const consoleEl = document.getElementById('tgLogsConsole');
+        if (consoleEl) consoleEl.innerHTML = '<p class="text-purple-400 italic">Đang đọc toàn bộ file log bot_activity.log...</p>';
+        try {
+          const res = await callBotApi("/api/bot/history_logs");
+          if (!res.ok) return;
+          const data = await res.json();
+          const logs = data.logs || [];
+          if (logs.length === 0) {
+            if (consoleEl) consoleEl.innerHTML = '<p class="text-slate-400 italic">File bot_activity.log hiện tại đang trống.</p>';
+            return;
+          }
+          if (consoleEl) {
+            consoleEl.innerHTML = `<div class="text-purple-400 font-bold mb-2 pb-1 border-b border-slate-700">📜 TOÀN BỘ NHẬT KÝ TỪ FILE (300 DÒNG GẦN NHẤT):</div>` + logs.map(line => {
+              let color = "text-slate-200";
+              if (line.includes("[SUCCESS]")) color = "text-emerald-400 font-semibold";
+              if (line.includes("[WARN]")) color = "text-amber-300 font-semibold";
+              if (line.includes("[ERROR]")) color = "text-rose-400 font-bold";
+              return `<div class="${color} py-0.5 leading-relaxed break-words text-sm sm:text-base">${line.replace(/\\n/g, '<br>')}</div>`;
+            }).join('');
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+          }
+        } catch (e) {
+          if (consoleEl) consoleEl.innerHTML = '<p class="text-rose-400">Lỗi khi đọc file log: ' + e.message + '</p>';
+        }
+      });
 
       // Nút Làm mới log
       document.getElementById('btnRefreshTgLogs')?.addEventListener('click', () => {
