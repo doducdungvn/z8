@@ -8393,34 +8393,149 @@ function resetTable() {
           }
         }
 
+        // Kiểm tra KQXS để đọ thưởng và tính toán âm/dương
+        const kqxs = window.tgCachedKQXS || null;
+        const winDe = kqxs ? (kqxs.special_last2 || '') : '';
+        const winBc = kqxs ? (kqxs.special_last3 || '') : '';
+        const winLo = kqxs ? (kqxs.all_last2 || []) : [];
+        const loHitCount = {};
+        for (const num of winLo) {
+          loHitCount[num] = (loHitCount[num] || 0) + 1;
+        }
+
+        // Tự động kéo báo cáo tài chính từ Bot nếu có KQXS mà chưa có dữ liệu accounting
+        if (kqxs && !window.tgCachedReportData) {
+          try {
+            const selDate = (typeof getTgSelectedDate === 'function') ? getTgSelectedDate() : '';
+            const repRes = await callBotApi(`/api/bot/report?date=${encodeURIComponent(selDate)}`);
+            if (repRes.ok) {
+              window.tgCachedReportData = await repRes.json();
+            }
+          } catch (_) {}
+        }
+        const accReport = window.tgCachedReportData?.accounting || null;
+
+        // Hàm hiển thị danh sách số kèm đọ thưởng (Áp dụng đồng nhất cho Giữ Lại, Tin Chuyển, Tổng Bảng)
+        function renderNumberListWithHits(numbersObj, isLo = false, isBc = false) {
+          const entries = Object.entries(numbersObj || {});
+          if (entries.length === 0) return '';
+          return entries.map(([k, v]) => {
+            let isWin = false;
+            let hitCount = 0;
+            if (kqxs) {
+              if (isLo) {
+                hitCount = loHitCount[k] || 0;
+                isWin = hitCount >= 1;
+              } else if (isBc) {
+                isWin = k === winBc;
+              } else {
+                isWin = k === winDe;
+              }
+            }
+            const cls = isWin
+              ? 'inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/40 border border-red-400 dark:border-red-700 rounded px-1.5 text-red-700 dark:text-red-300 font-bold'
+              : 'inline-flex items-center gap-1';
+            const badge = isWin
+              ? `<span class="text-[10px] font-bold text-red-600 dark:text-red-400">●trúng${hitCount >= 2 ? ' ' + hitCount + 'nháy' : ''}</span>`
+              : '';
+            return `<span class="${cls}"><b>${k}</b>(${v}${isLo ? 'đ' : ''}) ${badge}</span>`;
+          }).join(' ');
+        }
+
+        // Hàm hiển thị thẻ tổng kết tài chính âm / dương
+        function renderAccountingCard(accData, title, typeLabel) {
+          if (!accData || !kqxs) return '';
+          const fmt = (num) => Math.round(num || 0).toLocaleString('vi-VN');
+          const net = accData.totalNet || 0;
+          const isPos = net >= 0;
+          const netColor = isPos ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
+          const borderTheme = isPos ? 'border-emerald-300 dark:border-emerald-700/60' : 'border-rose-300 dark:border-rose-700/60';
+          const bgTheme = isPos ? 'bg-emerald-50/70 dark:bg-emerald-950/20' : 'bg-rose-50/70 dark:bg-rose-950/20';
+
+          let label = '';
+          if (typeLabel === 'giulai') label = isPos ? 'Lời' : 'Lỗ';
+          else if (typeLabel === 'chuyen') label = isPos ? 'Nộp' : 'Lấy về';
+          else label = isPos ? 'Lãi' : 'Thầu bù';
+
+          let itemsHtml = [];
+          if (accData.deXac > 0) {
+            const dNet = accData.deNet || 0;
+            const dColor = dNet >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
+            itemsHtml.push(`<div>🔴 <b>Đề</b>: ${fmt(accData.deXac)} (${fmt(accData.deWinXac)}) = <span class="font-bold ${dColor}">${dNet >= 0 ? '+' : ''}${fmt(dNet)}</span></div>`);
+          }
+          if (accData.loXac > 0) {
+            const lNet = accData.loNet || 0;
+            const lColor = lNet >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
+            itemsHtml.push(`<div>🔵 <b>Lô</b>: ${fmt(accData.loXac)}đ (${fmt(accData.loWinXac)}đ) = <span class="font-bold ${lColor}">${lNet >= 0 ? '+' : ''}${fmt(lNet)}</span></div>`);
+          }
+          if (accData.baCangXac > 0) {
+            const bNet = accData.baCangNet || 0;
+            const bColor = bNet >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
+            itemsHtml.push(`<div>🟣 <b>3 Càng</b>: ${fmt(accData.baCangXac)} (${fmt(accData.baCangWinXac)}) = <span class="font-bold ${bColor}">${bNet >= 0 ? '+' : ''}${fmt(bNet)}</span></div>`);
+          }
+          if (accData.xienXac > 0) {
+            const xNet = accData.xienNet || 0;
+            const xColor = xNet >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
+            itemsHtml.push(`<div>🟢 <b>Xiên</b>: ${fmt(accData.xienXac)} (${fmt(accData.xienWinXac)}) = <span class="font-bold ${xColor}">${xNet >= 0 ? '+' : ''}${fmt(xNet)}</span></div>`);
+          }
+
+          return `
+            <div class="p-2.5 rounded-xs ${bgTheme} border ${borderTheme} text-xs space-y-1.5 mb-2.5">
+              <div class="flex items-center justify-between font-bold pb-1 border-b border-slate-200 dark:border-slate-700">
+                <span class="text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                  <i class="fa-solid fa-calculator text-amber-600"></i> ${title}
+                </span>
+                <span class="font-mono text-xs ${netColor} font-black">
+                  ${label}: ${isPos ? '+' : ''}${fmt(net)}
+                </span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 pt-0.5 font-mono text-slate-700 dark:text-slate-300">
+                ${itemsHtml.length > 0 ? itemsHtml.join('') : '<div class="text-slate-400 italic">Không có cược phát sinh</div>'}
+              </div>
+            </div>
+          `;
+        }
+
         // SubView 2: Retained (Giữ lại)
         const retainedDisplay = document.getElementById('tgRetainedDisplayArea');
         if (retainedDisplay) {
           const ret = b.retained || {};
-          const retDe = Object.keys(ret.de || {});
-          const retLo = Object.keys(ret.lo || {});
-          const retBc = Object.keys(ret.bacang || {});
+          const retDe = ret.de || {};
+          const retLo = ret.lo || {};
+          const retBc = ret.bacang || {};
           const retX = ret.xien || [];
+          const retDeKeys = Object.keys(retDe);
+          const retLoKeys = Object.keys(retLo);
+          const retBcKeys = Object.keys(retBc);
 
-          if (retDe.length === 0 && retLo.length === 0 && retBc.length === 0 && retX.length === 0) {
+          if (retDeKeys.length === 0 && retLoKeys.length === 0 && retBcKeys.length === 0 && retX.length === 0) {
             retainedDisplay.innerHTML = '<p class="text-slate-400 italic">Chưa có dữ liệu giữ lại.</p>';
           } else {
-            let html = '<div class="space-y-2">';
-            if (retDe.length > 0) {
-              const list = Object.entries(ret.de).map(([k, v]) => `<span class="font-bold text-rose-600 dark:text-rose-400">${k}</span>x${v}`).join(', ');
-              html += `<div><b class="text-rose-600 dark:text-rose-400">🔴 Đề (${retDe.length} con):</b> ${list}</div>`;
+            let html = '<div class="space-y-3">';
+            // 1. Thẻ tổng kết tài chính Âm / Dương khi có KQXS
+            if (accReport?.giulai) {
+              html += renderAccountingCard(accReport.giulai, 'TỔNG KẾT TÀI CHÍNH GIỮ LẠI', 'giulai');
             }
-            if (retLo.length > 0) {
-              const list = Object.entries(ret.lo).map(([k, v]) => `<span class="font-bold text-sky-600 dark:text-sky-400">${k}</span>x${v}đ`).join(', ');
-              html += `<div><b class="text-sky-600 dark:text-sky-400">🔵 Lô (${retLo.length} con):</b> ${list}</div>`;
+
+            // 2. Danh sách số giữ lại - CƠ CHẾ ĐỌ THƯỞNG NHƯ TỔNG BẢNG
+            if (retDeKeys.length > 0) {
+              const items = renderNumberListWithHits(retDe, false, false);
+              html += `<div><b class="text-rose-600 dark:text-rose-400">🔴 Đề (${retDeKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
             }
-            if (retBc.length > 0) {
-              const list = Object.entries(ret.bacang).map(([k, v]) => `<span class="font-bold text-purple-600 dark:text-purple-400">${k}</span>x${v}`).join(', ');
-              html += `<div><b class="text-purple-600 dark:text-purple-400">🟣 3 Càng (${retBc.length} con):</b> ${list}</div>`;
+            if (retLoKeys.length > 0) {
+              const items = renderNumberListWithHits(retLo, true, false);
+              html += `<div><b class="text-sky-600 dark:text-sky-400">🔵 Lô (${retLoKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+            }
+            if (retBcKeys.length > 0) {
+              const items = renderNumberListWithHits(retBc, false, true);
+              html += `<div><b class="text-purple-600 dark:text-purple-400">🟣 3 Càng (${retBcKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
             }
             if (retX.length > 0) {
-              const list = retX.map(x => `<span class="font-bold text-emerald-600 dark:text-emerald-400">${x.numbers.join('-')}</span>x${x.amount}`).join(', ');
-              html += `<div><b class="text-emerald-600 dark:text-emerald-400">🟢 Xiên (${retX.length} cặp):</b> ${list}</div>`;
+              const xItems = retX.map(x => `<span class="inline-flex items-center gap-1"><b>${x.numbers ? x.numbers.join('-') : ''}</b>(${x.amount}đ)</span>`).join(' ');
+              html += `<div><b class="text-emerald-600 dark:text-emerald-400">🟢 Xiên (${retX.length} cặp):</b><div class="mt-1 leading-loose">${xItems}</div></div>`;
+            }
+            if (!kqxs) {
+              html += '<div class="text-[11px] text-slate-400 italic border-t border-slate-200 dark:border-slate-700 pt-2 mt-1">Chưa có KQXS – bấm nút KQXS để tải về và tự động tính âm/dương & highlight số trúng.</div>';
             }
             html += '</div>';
             retainedDisplay.innerHTML = html;
@@ -8433,76 +8548,107 @@ function resetTable() {
         if (countTransfers) countTransfers.textContent = histList.length;
         const transfersContainer = document.getElementById('tgTransfersList');
         if (transfersContainer) {
-          if (histList.length === 0) {
+          // Tính gộp các số đã chuyển từ b.transfers hoặc history
+          const cumDe = (b.transfers && b.transfers.de) ? Object.assign({}, b.transfers.de) : {};
+          const cumLo = (b.transfers && b.transfers.lo) ? Object.assign({}, b.transfers.lo) : {};
+          const cumBc = (b.transfers && b.transfers.bacang) ? Object.assign({}, b.transfers.bacang) : {};
+
+          // Fallback gộp từ history nếu transfers rỗng
+          if (Object.keys(cumDe).length === 0 && Object.keys(cumLo).length === 0 && Object.keys(cumBc).length === 0) {
+            for (const h of histList) {
+              if (h.transferred) {
+                for (const [k, v] of Object.entries(h.transferred.de || {})) cumDe[k] = (cumDe[k] || 0) + v;
+                for (const [k, v] of Object.entries(h.transferred.lo || {})) cumLo[k] = (cumLo[k] || 0) + v;
+                for (const [k, v] of Object.entries(h.transferred.bacang || {})) cumBc[k] = (cumBc[k] || 0) + v;
+              }
+            }
+          }
+          const cumDeKeys = Object.keys(cumDe);
+          const cumLoKeys = Object.keys(cumLo);
+          const cumBcKeys = Object.keys(cumBc);
+          const hasTransfers = cumDeKeys.length > 0 || cumLoKeys.length > 0 || cumBcKeys.length > 0 || histList.length > 0;
+
+          if (!hasTransfers && histList.length === 0) {
             transfersContainer.innerHTML = '<p class="text-slate-400 italic p-3 text-center text-xs">Chưa có bước chuyển nào được thực hiện.</p>';
           } else {
-            transfersContainer.innerHTML = histList.map((h, idx) => {
+            let topBlocks = '';
+
+            // 1. Thẻ tổng kết tài chính Âm / Dương khi có KQXS
+            if (accReport?.chuyen) {
+              topBlocks += renderAccountingCard(accReport.chuyen, 'TỔNG KẾT TÀI CHÍNH TIN CHUYỂN', 'chuyen');
+            }
+
+            // 2. KHUNG CÁC SỐ GỘP CỦA TẤT CẢ TIN CHUYỂN (CƠ CHẾ ĐỌ THƯỞNG NHƯ TỔNG BẢNG)
+            if (cumDeKeys.length > 0 || cumLoKeys.length > 0 || cumBcKeys.length > 0) {
+              let summaryNumbersHtml = '<div class="space-y-2.5">';
+              if (cumDeKeys.length > 0) {
+                const items = renderNumberListWithHits(cumDe, false, false);
+                summaryNumbersHtml += `<div><b class="text-rose-600 dark:text-rose-400">🔴 Đề chuyển (${cumDeKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+              }
+              if (cumLoKeys.length > 0) {
+                const items = renderNumberListWithHits(cumLo, true, false);
+                summaryNumbersHtml += `<div><b class="text-sky-600 dark:text-sky-400">🔵 Lô chuyển (${cumLoKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+              }
+              if (cumBcKeys.length > 0) {
+                const items = renderNumberListWithHits(cumBc, false, true);
+                summaryNumbersHtml += `<div><b class="text-purple-600 dark:text-purple-400">🟣 3 Càng chuyển (${cumBcKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+              }
+              summaryNumbersHtml += '</div>';
+
+              topBlocks += `
+                <div class="p-2.5 bg-[#f0f9ff] dark:bg-sky-950/30 rounded-xs border border-sky-300 dark:border-sky-800 space-y-2 mb-2">
+                  <div class="flex items-center justify-between pb-1 border-b border-sky-200 dark:border-sky-800/60">
+                    <span class="font-bold text-xs text-sky-900 dark:text-sky-200 flex items-center gap-1.5">
+                      <i class="fa-solid fa-layer-group text-sky-600"></i> 🛸 TỔNG HỢP CÁC SỐ ĐÃ CHUYỂN (${histList.length} lần chuyển)
+                    </span>
+                    ${kqxs ? '<span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">● Đã đọ KQXS</span>' : '<span class="text-[11px] text-slate-400 italic">Chưa có KQXS</span>'}
+                  </div>
+                  ${summaryNumbersHtml}
+                </div>
+              `;
+            }
+
+            // 3. Danh sách từng lần chuyển
+            const historyCards = histList.map((h, idx) => {
               const isManual = h.is_manual ? ' (Bắn thủ công)' : '';
               return `
                 <div class="p-2.5 bg-white dark:bg-dark-900 rounded-xs border border-slate-300 dark:border-slate-700 space-y-1.5 text-xs">
                   <div class="flex items-center justify-between flex-wrap gap-1 pb-1 border-b border-slate-200 dark:border-slate-700">
                     <span class="font-bold text-slate-800 dark:text-slate-200">🚀 Lần chuyển #${h.step || (idx + 1)}${isManual}</span>
-                    <span class="text-[11px] text-slate-500 font-mono">${h.time || ''}</span>
+                    <span class="text-[11px] text-slate-500 font-mono">${h.time || h.timestamp || ''}</span>
                   </div>
                   <pre class="whitespace-pre-wrap font-mono text-[11px] sm:text-xs text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-dark-800 p-2 rounded-xs border border-sky-200 dark:border-sky-900/40 leading-relaxed">${h.transfer_text || ''}</pre>
                 </div>
               `;
             }).join('');
+
+            transfersContainer.innerHTML = topBlocks + historyCards;
           }
         }
 
-        // SubView 4: Total Board (Tổng Bảng Cược) - có highlight trúng + số nháy lô
+        // SubView 4: Total Board (Tổng Bảng Cược) - có đọ thưởng & tính toán tài chính
         const totalDisplay = document.getElementById('tgBoardDisplayArea');
         if (totalDisplay) {
           if (deKeys.length === 0 && loKeys.length === 0 && bcKeys.length === 0 && xCount === 0) {
             totalDisplay.innerHTML = '<p class="text-slate-400 italic">Chưa có dữ liệu cược nào được nhận hôm nay.</p>';
           } else {
-            // Lấy KQXS đã cache (nếu có) để highlight trúng
-            const kqxs = window.tgCachedKQXS || null;
-            const winDe = kqxs ? (kqxs.special_last2 || '') : '';
-            const winBc = kqxs ? (kqxs.special_last3 || '') : '';
-            const winLo = kqxs ? (kqxs.all_last2 || []) : [];
-            // Đếm số nháy lô trúng
-            const loHitCount = {};
-            for (const num of winLo) {
-              loHitCount[num] = (loHitCount[num] || 0) + 1;
+            let html = '<div class="space-y-3">';
+            // 1. Thẻ tổng kết tài chính Âm / Dương khi có KQXS
+            if (accReport?.thau) {
+              html += renderAccountingCard(accReport.thau, 'TỔNG KẾT TÀI CHÍNH TỔNG BẢNG (THẦU)', 'thau');
             }
 
-            let html = '<div class="space-y-3">';
+            // 2. Danh sách số nhận cược - có đọ thưởng
             if (deKeys.length > 0) {
-              const items = Object.entries(b.de_sums).map(([k, v]) => {
-                const isWin = kqxs && k === winDe;
-                const cls = isWin
-                  ? 'inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/40 border border-red-400 dark:border-red-700 rounded px-1.5 text-red-700 dark:text-red-300 font-bold'
-                  : 'inline-flex items-center gap-1';
-                const badge = isWin ? '<span class="text-[10px] font-bold text-red-600 dark:text-red-400">●trúng</span>' : '';
-                return `<span class="${cls}"><b>${k}</b>(${v}) ${badge}</span>`;
-              }).join(' ');
-              html += `<div><b class="text-rose-600 dark:text-rose-400">🔴 Đề (${deKeys.length} con)${kqxs ? '' : ''}:</b><div class="mt-1 leading-loose">${items}</div></div>`;
+              const items = renderNumberListWithHits(b.de_sums, false, false);
+              html += `<div><b class="text-rose-600 dark:text-rose-400">🔴 Đề (${deKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
             }
             if (loKeys.length > 0) {
-              const items = Object.entries(b.lo_sums).map(([k, v]) => {
-                const hitCount = loHitCount[k] || 0;
-                const isWin = kqxs && hitCount >= 1;
-                const cls = isWin
-                  ? 'inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/40 border border-red-400 dark:border-red-700 rounded px-1.5 text-red-700 dark:text-red-300 font-bold'
-                  : 'inline-flex items-center gap-1';
-                const badge = isWin
-                  ? `<span class="text-[10px] font-bold text-red-600 dark:text-red-400">●trúng${hitCount >= 2 ? ' ' + hitCount + 'nháy' : ''}</span>`
-                  : '';
-                return `<span class="${cls}"><b>${k}</b>(${v}đ) ${badge}</span>`;
-              }).join(' ');
+              const items = renderNumberListWithHits(b.lo_sums, true, false);
               html += `<div><b class="text-sky-600 dark:text-sky-400">🔵 Lô (${loKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
             }
             if (bcKeys.length > 0) {
-              const items = Object.entries(b.bacang_sums).map(([k, v]) => {
-                const isWin = kqxs && k === winBc;
-                const cls = isWin
-                  ? 'inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/40 border border-red-400 dark:border-red-700 rounded px-1.5 text-red-700 dark:text-red-300 font-bold'
-                  : 'inline-flex items-center gap-1';
-                const badge = isWin ? '<span class="text-[10px] font-bold text-red-600 dark:text-red-400">●trúng</span>' : '';
-                return `<span class="${cls}"><b>${k}</b>(${v}) ${badge}</span>`;
-              }).join(' ');
+              const items = renderNumberListWithHits(b.bacang_sums, false, true);
               html += `<div><b class="text-purple-600 dark:text-purple-400">🟣 3 Càng (${bcKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
             }
             if (xCount > 0) {
@@ -8513,7 +8659,7 @@ function resetTable() {
               html += `<div><b class="text-emerald-600 dark:text-emerald-400">🟢 Xiên (${xCount} cặp):</b><div class="mt-1 leading-loose">${xItems}</div></div>`;
             }
             if (!kqxs) {
-              html += '<div class="text-[11px] text-slate-400 italic border-t border-slate-200 dark:border-slate-700 pt-2 mt-1">Chưa có KQXS – bấm nút KQXS để tải về và tự động highlight số trúng.</div>';
+              html += '<div class="text-[11px] text-slate-400 italic border-t border-slate-200 dark:border-slate-700 pt-2 mt-1">Chưa có KQXS – bấm nút KQXS để tải về và tự động tính âm/dương & highlight số trúng.</div>';
             }
             html += '</div>';
             totalDisplay.innerHTML = html;
@@ -8945,6 +9091,11 @@ function resetTable() {
             }
           }
         });
+
+        // Nếu có KQXS và chuyển sang Giữ Lại / Tin Chuyển / Tổng Bảng, refresh để đọ thưởng & tính toán
+        if (window.tgCachedKQXS && (tabName === 'retained' || tabName === 'transfers' || tabName === 'total')) {
+          fetchTgBoard();
+        }
       }
 
       document.getElementById('btnTgSubTabClientBets')?.addEventListener('click', () => switchTgBoardSubTab('client'));
@@ -9831,13 +9982,18 @@ function resetTable() {
                       `🔵 Lô 2 số (${kq.prizes.length} giải):\n` +
                       kq.all_last2.join(' - ');
             pre.textContent = msg;
-            // Cache KQXS để Tổng Bảng có thể highlight số trúng
+            // Cache KQXS để đọ thưởng
             window.tgCachedKQXS = kq;
-            // Tự động refresh Tổng Bảng nếu đang mở tab đó
-            const activeTotal = document.getElementById('tgSubViewTotal');
-            if (activeTotal && !activeTotal.classList.contains('hidden')) {
-              fetchTgBoard();
-            }
+            // Tải báo cáo tài chính mới cho ngày này để tính toán âm/dương ở cả 3 tab
+            window.tgCachedReportData = null;
+            try {
+              const rRes = await callBotApi(`/api/bot/report?date=${encodeURIComponent(selDate)}`);
+              if (rRes.ok) {
+                window.tgCachedReportData = await rRes.json();
+              }
+            } catch (_) {}
+            // Tự động refresh Bảng cược để highlight số trúng & hiện bảng âm/dương ở tất cả các tab
+            fetchTgBoard();
           } else {
             pre.textContent = `Chưa có KQXS ngày ${dispDate}: ` + (kq.error || "Lỗi tải kết quả");
           }
