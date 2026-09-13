@@ -4,6 +4,7 @@ import json
 import time
 import threading
 import requests
+import re
 from datetime import datetime, timezone, timedelta
 
 VN_TZ = timezone(timedelta(hours=7))
@@ -38,6 +39,7 @@ class TelegramBotService:
         self.tracked_messages = self.load_tracked_messages()
         self.client_bets = self.load_client_bets()
         self.pending_recipient_acks = None  # Theo dõi phản hồi của người nhận cược thừa (timeout 5p)
+        self.pending_client_receipts = []  # Danh sách tin xác nhận khách cược đang chờ chủ thầu Ok
         self.last_cleanup_ts = 0
         self.last_bet_timestamp = None
         self.balancer = BoardBalancer(self.config.get("retain_config", {}))
@@ -79,6 +81,10 @@ class TelegramBotService:
                         cfg["admin_password"] = "123456"
                     if "authenticated_admins" not in cfg:
                         cfg["authenticated_admins"] = []
+                    if "forward_contractor_to_owner" not in cfg:
+                        cfg["forward_contractor_to_owner"] = False
+                    if "forward_client_to_owner" not in cfg:
+                        cfg["forward_client_to_owner"] = False
                     # Đọc bổ sung từ biến môi trường (nếu có, tiện cho Cloud hosting)
                     if os.environ.get("TELEGRAM_BOT_TOKEN") and not cfg.get("bot_token"):
                         cfg["bot_token"] = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -100,6 +106,8 @@ class TelegramBotService:
             "owner_chat_id": "",          # Chat ID của chủ bảng (nhận báo cáo & lệnh admin)
             "auto_reply_client": True,    # Tự động báo nhận cược cho khách
             "auto_forward_excess": True,  # Tự động bắn cược thừa cho người nhận
+            "forward_contractor_to_owner": False, # Chuyển tiếp tin nhắn chủ thầu cho chủ bot
+            "forward_client_to_owner": False,     # Chuyển tiếp tin nhắn khách cược cho chủ bot
             "auto_fetch_kqxs_daily": True,# Tự động lấy KQXS lúc 18h30
             "mode": "instant",            # "instant" hoặc "batch"
             "retain_config": BoardBalancer.default_config(),
@@ -655,7 +663,7 @@ class TelegramBotService:
         # Lưu người dùng vào known_users
         self.record_user(from_user, chat_id)
 
-        sender_label = f"{first_name} (@{username})" if username else f"{first_name} (ID: {user_id})"
+        sender_label = f"(@{username})" if username else (f"({first_name})" if first_name else f"({user_id})")
 
         # Kiểm tra nếu người gửi là Người nhận cược thừa (target_recipient) đang được theo dõi phản hồi
         target_rec = str(self.config.get("target_recipient", "")).strip().lstrip("@").lower()
@@ -669,14 +677,72 @@ class TelegramBotService:
                 is_recipient_sender = True
                 if self.pending_recipient_acks:
                     self.pending_recipient_acks = None
-                    self.log(f"Chủ thầu {sender_label}: {text} (đã phản hồi)", "SUCCESS")
-                else:
-                    self.log(f"Chủ thầu {sender_label}: {text}", "INFO")
 
-                # Forward tin nhắn của Chủ thầu cho Chủ Bot
                 owner_cid = self.config.get("owner_chat_id")
-                if owner_cid and str(chat_id) != str(owner_cid):
-                    self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
+                forward_contractor_all = self.config.get("forward_contractor_to_owner", False)
+
+                # Phân tích nội dung tin nhắn của Chủ thầu:
+                text_clean = text.strip()
+                text_lower = text_clean.lower()
+
+                # 1. Kiểm tra từ khóa từ chối / trả lại: "trả", "trả lại", "không nhận", "ko nhận"...
+                reject_phrases = ["trả lại", "tra lai", "không nhận", "khong nhan", "ko nhận", "ko nhan", "k nhận", "k nhan", "từ chối", "tu choi", "hủy", "huy"]
+                has_rejection = any(p in text_lower for p in reject_phrases) or bool(re.search(r"(?:\b|^)(trả|tra)(?:\b|$|\s|[0-9])", text_lower))
+
+                # 2. Kiểm tra có chữ Ok, ok, OK ở đầu tin
+                has_ok_start = bool(re.match(r"^\s*(ok|ок)\b", text_clean, re.IGNORECASE))
+
+                if has_rejection:
+                    # TRƯỜNG HỢP 1: CHỦ THẦU TỪ CHỐI / TRẢ LẠI
+                    # Bắt buộc forward tin nhắn này cho Chủ Bot cho dù KHÔNG chọn chức năng forward tất cả!
+                    self.log(f"⚠️ Chủ thầu {sender_label} TỪ CHỐI/TRẢ LẠI: '{text}' -> Bot KHÔNG gửi Ok cho khách!", "WARN")
+                    if owner_cid and str(chat_id) != str(owner_cid):
+                        reject_alert = (
+                            f"🚨 <b>CẢNH BÁO: CHỦ THẦU TỪ CHỐI / TRẢ LẠI TIN CƯỢC!</b>\n"
+                            f"━━━━━━━━━━━━━━━━━━\n"
+                            f"📩 Chủ thầu {sender_label}: <i>{text}</i>\n"
+                            f"👉 <b>Bot KHÔNG gửi Ok cho khách cược!</b>"
+                        )
+                        self.send_telegram_message(str(owner_cid), reject_alert)
+
+                    # Cảnh báo chi tiết từng tin cược của khách đang bị treo cho Chủ bot xử lý
+                    if hasattr(self, "pending_client_receipts") and self.pending_client_receipts:
+                        for pending in list(self.pending_client_receipts):
+                            s_label = pending.get("sender_label", "")
+                            orig_text = pending.get("text", "")
+                            m_idx = pending.get("msg_idx", "")
+                            if owner_cid and str(chat_id) != str(owner_cid):
+                                self.send_telegram_message(str(owner_cid), f"⚠️ Tin #{m_idx} của {s_label} ('{orig_text}') chưa được thầu nhận do bị trả lại.")
+                        self.pending_client_receipts.clear()
+
+                elif has_ok_start:
+                    # TRƯỜNG HỢP 2: CHỦ THẦU CÓ OK Ở ĐẦU TIN -> ĐÃ NHẬN
+                    self.log(f"Chủ thầu {sender_label}: {text} (đã xác nhận Ok)", "SUCCESS")
+                    if forward_contractor_all and owner_cid and str(chat_id) != str(owner_cid):
+                        self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
+
+                    # Giải phóng hàng đợi: Nhắn Ok tin X cho các khách đang chờ
+                    if hasattr(self, "pending_client_receipts") and self.pending_client_receipts:
+                        for pending in list(self.pending_client_receipts):
+                            cid = pending["chat_id"]
+                            r_text = pending["receipt_text"]
+                            s_label = pending.get("sender_label", cid)
+                            orig_text = pending.get("text", "")
+                            m_idx = pending.get("msg_idx", "")
+                            if len(r_text) > 3800:
+                                chunks = [r_text[i:i+3800] for i in range(0, len(r_text), 3800)]
+                                for chunk in chunks:
+                                    self.send_telegram_message(cid, chunk, track_for_cleanup=True, tag="receipt")
+                            else:
+                                self.send_telegram_message(cid, r_text, track_for_cleanup=True, tag="receipt")
+                            self.log(f"Khách {s_label}: {orig_text} (Chủ thầu đã Ok -> Đã nhắn lại Ok tin {m_idx})", "SUCCESS")
+                        self.pending_client_receipts.clear()
+
+                else:
+                    # TRƯỜNG HỢP 3: CHỦ THẦU NHẮN TIN KHÁC (chưa có Ok ở đầu tin)
+                    self.log(f"Chủ thầu {sender_label}: {text} (chưa có Ok ở đầu tin -> tiếp tục đợi Ok)", "INFO")
+                    if forward_contractor_all and owner_cid and str(chat_id) != str(owner_cid):
+                        self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
 
         # Xử lý các lệnh điều khiển hệ thống
         cmd = text.lower().strip()
@@ -1535,10 +1601,11 @@ class TelegramBotService:
             else:
                 self.log(f"Khách {sender_label}: {text}", "INFO")
 
-            # Forward tin nhắn không phải cược sang cho Chủ Bot
-            owner_cid = self.config.get("owner_chat_id")
-            if owner_cid and str(chat_id) != str(owner_cid):
-                self.send_telegram_message(str(owner_cid), f"📩 Khách {sender_label}: {text}")
+            # Forward tin nhắn không phải cược sang cho Chủ Bot (nếu bật tùy chọn)
+            if self.config.get("forward_client_to_owner", False):
+                owner_cid = self.config.get("owner_chat_id")
+                if owner_cid and str(chat_id) != str(owner_cid):
+                    self.send_telegram_message(str(owner_cid), f"📩 Khách {sender_label}: {text}")
             return
 
         # Lưu vết tin nhắn cược của khách để tự động xóa sau 24h
@@ -1554,24 +1621,18 @@ class TelegramBotService:
         # Ghi nhận cược theo từng khách để chốt tiền âm/dương khi có KQXS
         self.record_client_bet(chat_id_str, sender_label, username, parsed, raw_text=text, msg_index=msg_idx)
 
-        # 3. Phản hồi xác nhận chi tiết cho khách (nếu bật)
-        if self.config.get("auto_reply_client", True):
-            receipt_text = format_ok_receipt(parsed, msg_idx)
-            if len(receipt_text) > 3800:
-                chunks = [receipt_text[i:i+3800] for i in range(0, len(receipt_text), 3800)]
-                for chunk in chunks:
-                    self.send_telegram_message(chat_id_str, chunk, track_for_cleanup=True, tag="receipt")
-            else:
-                self.send_telegram_message(chat_id_str, receipt_text, track_for_cleanup=True, tag="receipt")
-            self.log(f"Khách {sender_label}: {text} (đã nhắn lại Ok tin {msg_idx})", "INFO")
-        else:
-            self.log(f"Khách {sender_label}: {text}", "INFO")
+        # Forward tin nhắn cược của khách sang cho Chủ Bot (nếu bật tùy chọn)
+        if self.config.get("forward_client_to_owner", False):
+            owner_cid = self.config.get("owner_chat_id")
+            if owner_cid and str(chat_id) != str(owner_cid):
+                self.send_telegram_message(str(owner_cid), f"📩 Khách {sender_label} (tin #{msg_idx}): {text}")
 
-        # 4. Cân bảng và tính phần cược thừa
+        # 3. Cân bảng và tính phần cược thừa
         excess = self.balancer.add_bets(parsed)
         excess_count = sum(len(v) for v in excess.values())
+        has_forwarded_excess = False
 
-        # 5. Nếu có cược thừa và bật chế độ tự động bắn (instant)
+        # 4. Nếu có cược thừa và bật chế độ tự động bắn (instant)
         if self.config.get("auto_forward_excess", True) and self.config.get("mode", "instant") == "instant":
             if excess_count > 0:
                 target_recipient = self.config.get("target_recipient", "").strip()
@@ -1586,6 +1647,7 @@ class TelegramBotService:
                             "recipient": target_recipient,
                             "alerted": False
                         }
+                        has_forwarded_excess = True
                         transfer_summary = " ; ".join(transfer_msg.strip().splitlines())
                         self.log(f"Gửi chủ thầu {target_recipient}: {transfer_summary}", "INFO")
                     else:
@@ -1594,6 +1656,32 @@ class TelegramBotService:
                     self.log("⚠️ Có cược thừa nhưng chưa thiết lập người nhận (target_recipient)!", "WARN")
             else:
                 self.log(f"🛡️ Toàn bộ cược nằm trong định mức giữ lại, không có cược thừa cần chuyển.", "INFO")
+
+        # 5. Phản hồi xác nhận cho khách (nếu bật):
+        # - Nếu cược thừa ĐÃ CHUYỂN cho Chủ thầu: Bot chờ Chủ thầu Ok thì mới nhắn Ok lại cho khách!
+        # - Nếu KHÔNG CÓ cược thừa (giữ lại 100%): Nhắn Ok tin X cho khách ngay lập tức.
+        if self.config.get("auto_reply_client", True):
+            receipt_text = format_ok_receipt(parsed, msg_idx)
+            if has_forwarded_excess:
+                self.pending_client_receipts.append({
+                    "chat_id": chat_id_str,
+                    "receipt_text": receipt_text,
+                    "msg_idx": msg_idx,
+                    "sender_label": sender_label,
+                    "text": text,
+                    "created_at": time.time()
+                })
+                self.log(f"Khách {sender_label}: {text} (Đã chuyển thầu {target_recipient}, chờ thầu Ok mới nhắn khách...)", "INFO")
+            else:
+                if len(receipt_text) > 3800:
+                    chunks = [receipt_text[i:i+3800] for i in range(0, len(receipt_text), 3800)]
+                    for chunk in chunks:
+                        self.send_telegram_message(chat_id_str, chunk, track_for_cleanup=True, tag="receipt")
+                else:
+                    self.send_telegram_message(chat_id_str, receipt_text, track_for_cleanup=True, tag="receipt")
+                self.log(f"Khách {sender_label}: {text} (Giữ lại 100% -> Đã nhắn lại Ok tin {msg_idx})", "INFO")
+        else:
+            self.log(f"Khách {sender_label}: {text}", "INFO")
 
     def get_client_price_config(self, chat_id: str, username: str = None) -> dict:
         """
@@ -1631,20 +1719,20 @@ class TelegramBotService:
         settled_clients = 0
         client_reports = {}
 
-        # 1. Gửi chốt tiền cho từng khách cược
-        if notify_clients:
-            for cid_str, cdata in list(self.client_bets.items()):
-                c_price_cfg = self.get_client_price_config(cid_str, cdata.get("username"))
-                c_res = calculate_single_client_accounting(cdata, kqxs, c_price_cfg)
-                c_acc = c_res["accounting"]
-                if c_acc.get("totalVon", 0) > 0:
-                    c_msg = c_res["report_text"]
-                    client_reports[cid_str] = {
-                        "name": cdata.get("name"),
-                        "username": cdata.get("username"),
-                        "accounting": c_acc,
-                        "text": c_msg
-                    }
+        # 1. Tính toán và gửi chốt tiền cho từng khách cược
+        for cid_str, cdata in list(self.client_bets.items()):
+            c_price_cfg = self.get_client_price_config(cid_str, cdata.get("username"))
+            c_res = calculate_single_client_accounting(cdata, kqxs, c_price_cfg)
+            c_acc = c_res["accounting"]
+            if c_acc.get("totalVon", 0) > 0:
+                c_msg = c_res["report_text"]
+                client_reports[cid_str] = {
+                    "name": cdata.get("name"),
+                    "username": cdata.get("username"),
+                    "accounting": c_acc,
+                    "text": c_msg
+                }
+                if notify_clients:
                     ok, err = self.send_telegram_message(cid_str, c_msg, track_for_cleanup=True, tag="client_settlement")
                     if ok:
                         settled_clients += 1
@@ -1652,6 +1740,9 @@ class TelegramBotService:
                         self.log(f"🎯 Đã gửi chốt tiền tới khách {cdata.get('name')} ({cid_str}):\n{c_msg}", "SUCCESS")
                     else:
                         self.log(f"❌ Lỗi gửi chốt tiền tới khách {cid_str}: {err}", "WARN")
+                else:
+                    settled_clients += 1
+        if notify_clients:
             self.save_client_bets()
 
         # 2. Gửi chốt tiền cho Người nhận cược thừa (target_recipient)
@@ -1688,12 +1779,46 @@ class TelegramBotService:
             self.send_telegram_message(str(owner_chat_id), full_summary, track_for_cleanup=True, tag="daily_report")
             self.log(f"Đã gửi báo cáo tổng kết ngày {date_str} tới chủ bảng ({owner_chat_id})", "SUCCESS")
 
+        client_messages = []
+        for cid_str, rep in client_reports.items():
+            acc_c = rep.get("accounting", {})
+            net_val = acc_c.get("totalNet", 0)
+            client_messages.append({
+                "chat_id": cid_str,
+                "sender": cid_str,
+                "name": rep.get("name") or (f"@{rep.get('username')}" if rep.get("username") else f"Khách {cid_str}"),
+                "client_name": rep.get("name"),
+                "username": rep.get("username"),
+                "text": rep.get("text"),
+                "message": rep.get("text"),
+                "net": net_val,
+                "accounting": acc_c
+            })
+
+        db_prize = str(kqxs.get("special_prize") or "").strip()
+        db_de = str(kqxs.get("special_last2") or "").strip()
+        db_c3 = str(kqxs.get("special_last3") or "").strip()
+        if not db_de and len(db_prize) >= 2:
+            db_de = db_prize[-2:]
+        if not db_c3 and len(db_prize) >= 3:
+            db_c3 = db_prize[-3:]
+
+        db_display = f"{db_prize} (Đề: {db_de})" if db_prize and db_de else (db_prize or db_de or "N/A")
+
         return {
             "success": True,
             "date": date_str,
+            "kqxs_date": kqxs.get("date") or date_str,
+            "kqxs_special": db_display,
+            "special_prize": db_prize,
+            "special_last2": db_de,
+            "special_last3": db_c3,
             "accounting": acc,
-            "settled_clients_count": settled_clients,
+            "settled_clients_count": settled_clients or len(client_messages),
             "client_reports": client_reports,
+            "client_messages": client_messages,
+            "client_texts": client_messages,
+            "summary_text": full_summary,
             "thau_report": thau_rep,
             "chuyen_report": chuyen_rep,
             "giulai_report": giulai_rep,

@@ -13,7 +13,12 @@ from flask import Flask, request, jsonify
 sys.path.append(os.path.dirname(__file__))
 
 from telegram_service import bot_service
-from lottery_engine import fetch_xsmb, calculate_board_accounting, format_accounting_report
+from lottery_engine import (
+    fetch_xsmb,
+    calculate_board_accounting,
+    calculate_single_client_accounting,
+    format_accounting_report
+)
 
 app = Flask(__name__)
 
@@ -108,6 +113,10 @@ def update_config():
         current["auto_forward_excess"] = bool(data["auto_forward_excess"])
     if "check_recipient_ack" in data:
         current["check_recipient_ack"] = bool(data["check_recipient_ack"])
+    if "forward_contractor_to_owner" in data:
+        current["forward_contractor_to_owner"] = bool(data["forward_contractor_to_owner"])
+    if "forward_client_to_owner" in data:
+        current["forward_client_to_owner"] = bool(data["forward_client_to_owner"])
     if "mode" in data:
         current["mode"] = data["mode"]
     if "retain_config" in data:
@@ -327,7 +336,9 @@ def manage_cleanup():
 
 @app.route("/api/bot/kqxs", methods=["GET", "POST"])
 def get_kqxs():
-    date_arg = request.args.get("date") or (request.json or {}).get("date") if request.is_json else None
+    date_arg = request.args.get("date")
+    if not date_arg and request.is_json and request.json:
+        date_arg = request.json.get("date")
     force = request.args.get("force") == "true" or request.method == "POST"
 
     if date_arg:

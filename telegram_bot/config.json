@@ -1,9 +1,9 @@
 {
   "bot_token": "8936175757:AAE-kwAitGfoskr4uGmXNppFw900szGEzFY",
   "allowed_senders": [
-    "*"
+    "@Zeng86"
   ],
-  "target_recipient": "@congty368",
+  "target_recipient": "7715286942",
   "auto_reply_client": true,
   "auto_forward_excess": true,
   "check_recipient_ack": true,
@@ -48,12 +48,14 @@
       "rate3CApMa": 5
     }
   },
-  "owner_chat_id": "",
+  "owner_chat_id": "@Zeng86",
   "cleanup_after_seconds": 86400,
   "cleanup_after_hours": 24.0,
   "admin_password": "1986",
   "authenticated_admins": [
     "7715286942"
   ],
-  "client_prices": {}
+  "client_prices": {},
+  "forward_contractor_to_owner": true,
+  "forward_client_to_owner": true
 }
