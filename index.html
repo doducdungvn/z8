@@ -7300,7 +7300,11 @@ function resetTable() {
               <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Nhật ký giao dịch thời gian thực (Auto 3s):</span>
             </span>
-            <div class="flex items-center gap-1 flex-wrap">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <label class="flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300 select-none cursor-pointer px-2 py-0.5 bg-slate-100 dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-600" title="Tự động cuộn xuống dòng mới nhất khi có tin mới (Bỏ tích nếu muốn cuộn lên trên đọc lại lịch sử cũ)">
+                <input type="checkbox" id="tgChkAutoScrollLogs" checked class="form-checkbox text-sky-600 rounded-xs">
+                <span class="text-[11px] font-semibold">Tự cuộn cuối</span>
+              </label>
               <button type="button" id="btnViewYesterdayLogs" class="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/40 dark:hover:bg-sky-900/60 rounded-xs text-sky-700 dark:text-sky-300 font-semibold transition-colors text-xs cursor-pointer border border-sky-300 dark:border-sky-700 flex items-center gap-1" title="Xem nhật ký hôm qua (12/09) từ file log">
                 <i class="fa-solid fa-calendar-day"></i> Log hôm qua
               </button>
@@ -7666,6 +7670,23 @@ function resetTable() {
                 <input type="checkbox" id="tgCheckRecipientAck" checked class="form-checkbox text-sky-600 rounded-xs">
                 <span title="Trong vòng 3 phút người nhận chưa phản hồi sẽ báo cho Chủ Bot">Check phản hồi (3 phút)</span>
               </label>
+            </div>
+
+            <!-- Khung nổi bật: Tùy chọn Forward tin nhắn cho Chủ Bot -->
+            <div class="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-700 bg-amber-50/70 dark:bg-amber-950/20 p-2 rounded-xs border border-amber-200 dark:border-amber-800/50">
+              <span class="block font-bold text-amber-800 dark:text-amber-300 text-[11px] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <i class="fa-solid fa-share text-amber-600"></i> Tùy chọn Forward (Chuyển tiếp tin nhắn về Telegram Chủ Bot):
+              </span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <label class="flex items-center gap-2 cursor-pointer font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-dark-800 p-1.5 rounded-xs border border-amber-300 dark:border-amber-700/60" title="Chuyển tiếp tất cả tin nhắn từ Chủ thầu sang Telegram của Chủ Bot">
+                  <input type="checkbox" id="tgCheckForwardContractor" class="form-checkbox text-amber-600 rounded-xs">
+                  <span>📩 Forward tin nhắn Chủ thầu cho Chủ Bot</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-dark-800 p-1.5 rounded-xs border border-amber-300 dark:border-amber-700/60" title="Chuyển tiếp tất cả tin nhắn từ Khách cược sang Telegram của Chủ Bot">
+                  <input type="checkbox" id="tgCheckForwardClient" class="form-checkbox text-amber-600 rounded-xs">
+                  <span>📩 Forward tin nhắn Khách cược cho Chủ Bot</span>
+                </label>
+              </div>
             </div>
           </div>
 
@@ -8191,6 +8212,12 @@ function resetTable() {
         if (document.getElementById('tgCheckRecipientAck')) {
           document.getElementById('tgCheckRecipientAck').checked = (cfg.check_recipient_ack !== false);
         }
+        if (document.getElementById('tgCheckForwardContractor')) {
+          document.getElementById('tgCheckForwardContractor').checked = !!cfg.forward_contractor_to_owner;
+        }
+        if (document.getElementById('tgCheckForwardClient')) {
+          document.getElementById('tgCheckForwardClient').checked = !!cfg.forward_client_to_owner;
+        }
 
         // Cleanup hours
         let cleanupH = 24;
@@ -8250,6 +8277,8 @@ function resetTable() {
         auto_reply_client: document.getElementById('tgCheckAutoReply').checked,
         auto_forward_excess: document.getElementById('tgCheckAutoForward').checked,
         check_recipient_ack: document.getElementById('tgCheckRecipientAck') ? document.getElementById('tgCheckRecipientAck').checked : true,
+        forward_contractor_to_owner: document.getElementById('tgCheckForwardContractor')?.checked || false,
+        forward_client_to_owner: document.getElementById('tgCheckForwardClient')?.checked || false,
         cleanup_after_hours: cleanupHours,
         client_prices: window.tgCustomClientPrices || {},
         price_config: window.priceConfigData || JSON.parse(localStorage.getItem(RATES_STORAGE_KEY) || "{}"),
@@ -8317,6 +8346,10 @@ function resetTable() {
           return;
         }
 
+        // Kiểm tra xem người dùng có đang ở gần đáy không (cách đáy <= 80px)
+        const isNearBottom = (consoleEl.scrollHeight - consoleEl.scrollTop - consoleEl.clientHeight) < 80;
+        const autoScrollChecked = document.getElementById('tgChkAutoScrollLogs')?.checked ?? true;
+
         consoleEl.innerHTML = logs.map(l => {
           let color = "text-slate-200";
           if (l.level === "SUCCESS") color = "text-emerald-400 font-semibold";
@@ -8324,9 +8357,19 @@ function resetTable() {
           if (l.level === "ERROR") color = "text-rose-400 font-bold";
           return `<div class="${color} py-0.5 leading-relaxed break-words text-sm sm:text-base"><span class="text-slate-400 font-normal">[${l.timestamp}]</span> <span class="font-bold">[${l.level}]</span> ${l.message.replace(/\\n/g, '<br>')}</div>`;
         }).join('');
-        consoleEl.scrollTop = consoleEl.scrollHeight;
+
+        // CHỈ CUỘN NẾU BẬT "TỰ CUỘN CUỐI" VÀ NGƯỜI DÙNG ĐANG Ở SÁT ĐÁY (không đang cuộn lên xem lịch sử)
+        if (autoScrollChecked && isNearBottom) {
+          consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
       } catch (e) {}
     }
+
+    document.getElementById('btnRefreshTgLogs')?.addEventListener('click', async () => {
+      await fetchTgLogs();
+      const consoleEl = document.getElementById('tgLogsConsole');
+      if (consoleEl) consoleEl.scrollTop = consoleEl.scrollHeight;
+    });
 
     let tgCachedBoardData = null;
 
@@ -9976,13 +10019,14 @@ function resetTable() {
                 const rightColor = rightNum < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400';
                 html += `<div class="flex justify-between"><span class="text-slate-700 dark:text-slate-300">🟣 ${left}</span><span class="font-bold ${rightColor}">${right}</span></div>`;
               }
-              // Dòng tổng kết: Lãi/Lời/Nộp/Lỗ
-              else if (/^(L[ãa]i|L[ờo]i|N[ộo]p|L[ỗo]|Lỗ|Nộp|Lời|Lãi)\s*:/i.test(trimmed)) {
+              // Dòng tổng kết: Khách bù / Thầu bù / Nộp / Lấy về / Lời / Lỗ / Lãi
+              else if (/^(Kh[áa]ch\s+b[ùu]|Th[ầa]u\s+b[ùu]|N[ộo]p|L[ấa]y\s+v[ềe]|L[ãa]i|L[ờo]i|L[ỗo])\s*:/i.test(trimmed)) {
                 const parts = trimmed.split(':');
                 const label = parts[0].trim();
                 const val = parts[1] ? parts[1].trim() : '';
                 const valNum = parseFloat(val.replace(/[^0-9\-\.]/g, ''));
-                const valColor = valNum < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400';
+                const isLoss = /^(Th[ầa]u\s+b[ùu]|L[ấa]y\s+v[ềe]|L[ỗo])/i.test(label) || valNum < 0;
+                const valColor = isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400';
                 html += `<div class="flex justify-between font-bold border-t border-slate-200 dark:border-slate-700 pt-0.5 mt-0.5"><span class="${valColor}">${label}:</span><span class="${valColor}">${val}</span></div>`;
               }
               // Các dòng khác
@@ -10018,7 +10062,10 @@ function resetTable() {
           }
 
           if (!fullHtml) {
-            pre.textContent = `Không tải được báo cáo ngày ${dispDate} từ Bot.`;
+            pre.innerHTML = `
+              <div class="p-4 text-center rounded-xs border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-dark-800 text-slate-500 dark:text-slate-400 text-xs">
+                📭 Chưa có phát sinh cược trong ngày <b>${dispDate}</b>.
+              </div>`;
           } else {
             pre.style.fontFamily = 'inherit';
             pre.style.whiteSpace = 'normal';
@@ -10033,7 +10080,7 @@ function resetTable() {
           pre.dataset.plainText = plainText;
 
         } catch (e) {
-          pre.textContent = "Không tải được báo cáo từ Bot.";
+          pre.textContent = "Không tải được báo cáo từ Bot: " + (e.message || e);
         }
       });
 
