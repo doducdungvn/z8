@@ -42,16 +42,23 @@ def add_cors_headers(response):
     return response
 
 
-# Tự động kích hoạt bot polling khi khởi chạy nếu đã cấu hình token
-if bot_service.config.get("bot_token") and not bot_service.is_running:
-    bot_service.start()
+# Chỉ tự động kích hoạt bot khi có biến môi trường AUTO_START_BOT=true (ví dụ trên Cloud server).
+# Trên localhost mặc định KHÔNG tự ý bật bot để tránh xung đột getUpdates và gửi nhầm tin.
+if os.environ.get("AUTO_START_BOT", "").lower() in ["true", "1"]:
+    if bot_service.config.get("bot_token") and not bot_service.is_running:
+        bot_service.start()
 
 
 @app.route("/api/bot/status", methods=["GET"])
 def get_status():
+    b_mode = bot_service.config.get("bot_mode", "auto")
+    pending_cnt = len([b for b in getattr(bot_service, "pending_bets", []) if b.get("status") == "pending"])
     return jsonify({
         "running": bot_service.is_running,
         "is_running": bot_service.is_running,
+        "bot_mode": b_mode,
+        "is_active": (b_mode == "auto"),
+        "pending_count": pending_cnt,
         "stats": bot_service.stats,
         "step_count": bot_service.balancer.step_count,
         "has_token": bool(bot_service.config.get("bot_token")),
@@ -117,6 +124,10 @@ def update_config():
         current["forward_contractor_to_owner"] = bool(data["forward_contractor_to_owner"])
     if "forward_client_to_owner" in data:
         current["forward_client_to_owner"] = bool(data["forward_client_to_owner"])
+    if "bet_filter_enabled" in data:
+        current["bet_filter_enabled"] = bool(data["bet_filter_enabled"])
+    if "bet_filter_keywords" in data:
+        current["bet_filter_keywords"] = str(data["bet_filter_keywords"]).strip()
     if "mode" in data:
         current["mode"] = data["mode"]
     if "retain_config" in data:
@@ -167,6 +178,63 @@ def start_bot():
 def stop_bot():
     res = bot_service.stop()
     return jsonify(res)
+
+
+@app.route("/api/bot/stop_polling", methods=["POST"])
+def stop_polling_route():
+    res = bot_service.stop_polling()
+    return jsonify(res)
+
+
+@app.route("/api/bot/toggle_mode", methods=["POST"])
+def toggle_mode_route():
+    cur = bot_service.config.get("bot_mode", "auto")
+    new_mode = "manual" if cur == "auto" else "auto"
+    if new_mode == "auto":
+        res = bot_service.start()
+    else:
+        res = bot_service.stop()
+    return jsonify(res)
+
+
+@app.route("/api/bot/pending_bets", methods=["GET"])
+def get_pending_bets_route():
+    pb = getattr(bot_service, "pending_bets", [])
+    return jsonify({
+        "success": True,
+        "pending_bets": pb,
+        "pending_count": len([b for b in pb if b.get("status") == "pending"])
+    })
+
+
+@app.route("/api/bot/approve_bet", methods=["POST"])
+def approve_bet_route():
+    data = request.json or {}
+    pid = data.get("pending_id")
+    if pid is None:
+        return jsonify({"success": False, "error": "Thiếu mã tin cược pending_id"}), 400
+    res = bot_service.approve_pending_bet(int(pid))
+    status_code = 200 if res.get("success") else 400
+    return jsonify(res), status_code
+
+
+@app.route("/api/bot/approve_all_bets", methods=["POST"])
+def approve_all_bets_route():
+    res = bot_service.approve_all_pending_bets()
+    return jsonify(res)
+
+
+@app.route("/api/bot/reject_bet", methods=["POST"])
+def reject_bet_route():
+    data = request.json or {}
+    pid = data.get("pending_id")
+    notify = bool(data.get("notify_client", False))
+    reason = str(data.get("reason", "")).strip()
+    if pid is None:
+        return jsonify({"success": False, "error": "Thiếu mã tin cược pending_id"}), 400
+    res = bot_service.reject_pending_bet(int(pid), notify_client=notify, reason=reason)
+    status_code = 200 if res.get("success") else 400
+    return jsonify(res), status_code
 
 
 @app.route("/api/bot/test_message", methods=["POST"])
@@ -289,11 +357,33 @@ def delete_message():
     data = request.json or {}
     chat_id = str(data.get("chat_id", "")).strip()
     history_idx = data.get("history_idx")
-    if not chat_id or history_idx is None:
-        return jsonify({"success": False, "error": "Thiếu chat_id hoặc history_idx"}), 400
+    pending_id = data.get("pending_id")
+    if pending_id is None and (not chat_id or history_idx is None):
+        return jsonify({"success": False, "error": "Thiếu chat_id/history_idx hoặc pending_id"}), 400
     
-    ok = bot_service.delete_single_raw_message(chat_id, int(history_idx))
+    ok = bot_service.delete_single_raw_message(chat_id, int(history_idx) if history_idx is not None else None, pending_id=pending_id)
     return jsonify({"success": ok})
+
+
+@app.route("/api/bot/void_message", methods=["POST"])
+def void_message():
+    """Bỏ qua (hủy) hoặc khôi phục tin nhắn cược của khách hoặc tin chuyển của chủ thầu"""
+    data = request.json or {}
+    msg_type = data.get("type", "client")
+    if msg_type == "client":
+        chat_id = str(data.get("chat_id", "")).strip()
+        history_idx = data.get("history_idx")
+        if not chat_id or history_idx is None:
+            return jsonify({"success": False, "error": "Thiếu chat_id hoặc history_idx"}), 400
+        res = bot_service.toggle_client_message_void(chat_id, int(history_idx))
+        return jsonify(res)
+    elif msg_type == "transfer":
+        step_idx = data.get("step_idx")
+        if step_idx is None:
+            return jsonify({"success": False, "error": "Thiếu step_idx"}), 400
+        res = bot_service.toggle_transfer_void(int(step_idx))
+        return jsonify(res)
+    return jsonify({"success": False, "error": "Loại tin nhắn không hợp lệ"}), 400
 
 
 

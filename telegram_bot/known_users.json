@@ -4,14 +4,14 @@
     "chat_id": 1023927138,
     "username": "Zeng86",
     "first_name": "Zeng",
-    "updated_at": "01:46:43 14/09"
+    "updated_at": "00:21:34 15/09"
   },
   "7715286942": {
     "user_id": "7715286942",
     "chat_id": 7715286942,
     "username": "lalalew",
     "first_name": "Lala",
-    "updated_at": "01:59:33 14/09"
+    "updated_at": "00:23:24 15/09"
   },
   "8836005980": {
     "user_id": "8836005980",
@@ -30,9 +30,9 @@
   "999888": {
     "user_id": "999888",
     "chat_id": 999888,
-    "username": "khacha",
-    "first_name": "KhachA",
-    "updated_at": "01:14:27 14/09"
+    "username": "Zeng86",
+    "first_name": "Zeng",
+    "updated_at": "22:58:43 14/09"
   },
   "111222333": {
     "user_id": "111222333",
@@ -47,5 +47,19 @@
     "username": "khach1",
     "first_name": "Khach1",
     "updated_at": "01:34:30 14/09"
+  },
+  "999999": {
+    "user_id": "999999",
+    "chat_id": 999999,
+    "username": "testclient",
+    "first_name": "Khách Test",
+    "updated_at": "22:48:09 14/09"
+  },
+  "123456": {
+    "user_id": "123456",
+    "chat_id": 123456,
+    "username": "Zeng86",
+    "first_name": "Zeng",
+    "updated_at": "22:49:53 14/09"
   }
 }

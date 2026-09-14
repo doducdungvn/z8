@@ -191,8 +191,46 @@ class BoardBalancer:
                 "step": self.step_count,
                 "timestamp": datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
                 "transferred": transfers,
-                "transfer_text": transfer_text
+                "transfer_text": transfer_text,
+                "voided": False
             })
+
+    def recalculate_cumulative_transfers(self):
+        """
+        Tính toán lại các giá trị cược đã chuyển lũy kế dựa trên các lần chuyển CHƯA BỊ BỎ QUA.
+        """
+        self.cumulative_de_transfers = {}
+        self.cumulative_lo_transfers = {}
+        self.cumulative_bacang_transfers = {}
+        self.cumulative_xien_transfers = {}
+
+        for h in self.transfer_history:
+            if h.get("voided", False):
+                continue
+            transfers = h.get("transferred", {})
+            for num, amt in transfers.get('de', {}).items():
+                self.cumulative_de_transfers[num] = self.cumulative_de_transfers.get(num, 0.0) + amt
+            for num, amt in transfers.get('lo', {}).items():
+                self.cumulative_lo_transfers[num] = self.cumulative_lo_transfers.get(num, 0.0) + amt
+            for num, amt in transfers.get('bacang', {}).items():
+                self.cumulative_bacang_transfers[num] = self.cumulative_bacang_transfers.get(num, 0.0) + amt
+            for key_str, amt in transfers.get('xien', {}).items():
+                for idx, bet in enumerate(self.xien_bets):
+                    if "-".join(bet.get('numbers', [])) == key_str:
+                        self.cumulative_xien_transfers[idx] = self.cumulative_xien_transfers.get(idx, 0.0) + amt
+                        break
+
+    def toggle_transfer_void(self, step_idx: int) -> bool:
+        """
+        Bật/tắt trạng thái bỏ qua (voided) của một lần chuyển cược cho chủ thầu.
+        Khi bỏ qua: không tính các con trong lần chuyển này vào nợ thầu và hoàn trả lại bảng giữ lại.
+        """
+        if 0 <= step_idx < len(self.transfer_history):
+            h = self.transfer_history[step_idx]
+            h["voided"] = not h.get("voided", False)
+            self.recalculate_cumulative_transfers()
+            return h["voided"]
+        return False
 
     def get_retained_bets(self) -> dict:
         """

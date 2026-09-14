@@ -1,137 +1,5 @@
 [
   {
-    "chat_id": "1023927138",
-    "message_id": 361,
-    "created_at": 1789243035.4751623,
-    "tag": "invalid_receipt"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 365,
-    "created_at": 1789245345.2854965,
-    "tag": "incoming_bet"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 368,
-    "created_at": 1789245356.2207446,
-    "tag": "receipt"
-  },
-  {
-    "chat_id": "8836005980",
-    "message_id": 369,
-    "created_at": 1789245357.1271694,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 370,
-    "created_at": 1789245467.7222474,
-    "tag": "incoming_bet"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 371,
-    "created_at": 1789245468.586731,
-    "tag": "receipt"
-  },
-  {
-    "chat_id": "8836005980",
-    "message_id": 372,
-    "created_at": 1789245469.4587457,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 374,
-    "created_at": 1789245646.4157476,
-    "tag": "incoming_bet"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 375,
-    "created_at": 1789245647.3364465,
-    "tag": "receipt"
-  },
-  {
-    "chat_id": "8836005980",
-    "message_id": 378,
-    "created_at": 1789245659.4828866,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 389,
-    "created_at": 1789246889.171052,
-    "tag": "incoming_bet"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 390,
-    "created_at": 1789246890.0232801,
-    "tag": "receipt"
-  },
-  {
-    "chat_id": "8836005980",
-    "message_id": 391,
-    "created_at": 1789246890.915734,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 392,
-    "created_at": 1789246937.3864632,
-    "tag": "incoming_bet"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 393,
-    "created_at": 1789246938.2627938,
-    "tag": "receipt"
-  },
-  {
-    "chat_id": "8836005980",
-    "message_id": 394,
-    "created_at": 1789246939.2398884,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 402,
-    "created_at": 1789247300.5256639,
-    "tag": "incoming_bet"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 403,
-    "created_at": 1789247301.4040637,
-    "tag": "receipt"
-  },
-  {
-    "chat_id": "8836005980",
-    "message_id": 404,
-    "created_at": 1789247302.3392591,
-    "tag": "transfer"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 408,
-    "created_at": 1789247457.777676,
-    "tag": "incoming_bet"
-  },
-  {
-    "chat_id": "1023927138",
-    "message_id": 409,
-    "created_at": 1789247458.6434467,
-    "tag": "receipt"
-  },
-  {
-    "chat_id": "8836005980",
-    "message_id": 411,
-    "created_at": 1789247459.5452645,
-    "tag": "transfer"
-  },
-  {
     "chat_id": "999888",
     "message_id": 101,
     "created_at": 1789323246.0523121,
@@ -183,6 +51,48 @@
     "chat_id": "1023927138",
     "message_id": 506,
     "created_at": 1789325973.342179,
+    "tag": "receipt"
+  },
+  {
+    "chat_id": "8836005980",
+    "message_id": 508,
+    "created_at": 1789368101.7418725,
+    "tag": "transfer"
+  },
+  {
+    "chat_id": "123456",
+    "message_id": 9991,
+    "created_at": 1789400929.9144332,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "999888",
+    "message_id": 1001,
+    "created_at": 1789401523.521136,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "999888",
+    "message_id": 1002,
+    "created_at": 1789401523.5258014,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 544,
+    "created_at": 1789406495.4939113,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "7715286942",
+    "message_id": 547,
+    "created_at": 1789406497.3587682,
+    "tag": "transfer"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 550,
+    "created_at": 1789406606.8003037,
     "tag": "receipt"
   }
 ]

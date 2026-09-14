@@ -502,23 +502,26 @@ def parse_combined_input(input_str: str):
 
 def parse_bet_message(raw_text: str) -> dict:
     res = parse_combined_input(raw_text)
-    
-    sum_de = sum(x['amount'] for x in res['de'])
-    sum_lo = sum(x['amount'] for x in res['lo'])
-    sum_3c = sum(x['amount'] for x in res['bacang'])
-    sum_x2 = sum(x['amount'] for x in res['xien2'])
-    sum_x3 = sum(x['amount'] for x in res['xien3'])
-    sum_x4 = sum(x['amount'] for x in res['xien4'])
-    sum_xien = sum_x2 + sum_x3 + sum_x4
+    update_parsed_summary(res)
+    return res
 
+
+def update_parsed_summary(res: dict) -> dict:
+    sum_de = sum(b.get('amount', 0) for b in res.get('de', []))
+    sum_lo = sum(b.get('amount', 0) for b in res.get('lo', []))
+    sum_3c = sum(b.get('amount', 0) for b in res.get('bacang', []))
+    sum_x2 = sum(x.get('amount', 0) for x in res.get('xien2', []))
+    sum_x3 = sum(x.get('amount', 0) for x in res.get('xien3', []))
+    sum_x4 = sum(x.get('amount', 0) for x in res.get('xien4', []))
+    sum_xien = sum_x2 + sum_x3 + sum_x4
     res['summary'] = {
-        'de_count': len(res['de']),
+        'de_count': len(res.get('de', [])),
         'de_sum': sum_de,
-        'lo_count': len(res['lo']),
+        'lo_count': len(res.get('lo', [])),
         'lo_sum': sum_lo,
-        'bacang_count': len(res['bacang']),
+        'bacang_count': len(res.get('bacang', [])),
         'bacang_sum': sum_3c,
-        'xien_count': len(res['xien2']) + len(res['xien3']) + len(res['xien4']),
+        'xien_count': len(res.get('xien2', [])) + len(res.get('xien3', [])) + len(res.get('xien4', [])),
         'xien_sum': sum_xien,
     }
     return res
@@ -613,5 +616,211 @@ def format_ok_receipt_detailed(parsed: dict, msg_index: int = 1) -> str:
         lines.append(f"Trả lại {joined_inv}")
 
     return "\n".join(lines)
+
+
+def expand_filter_numbers(filter_str: str) -> tuple[set[str], set[str]]:
+    """
+    Mở rộng chuỗi từ khóa lọc thành tập hợp các con số bị cấm nhận.
+    Hỗ trợ từ khóa trong nhaptat.txt (kép, sát kép, kép lệch, t0..t9, cham0..cham9,
+    đầu, đuôi, chẵn lẻ...) hoặc các con số cụ thể (00, 11, 23...).
+    Trả về: (banned_2d, banned_3d)
+    """
+    banned_2d = set()
+    banned_3d = set()
+    if not filter_str:
+        return banned_2d, banned_3d
+
+    items = re.split(r'[,;\n]+', filter_str)
+    for item in items:
+        item = item.strip()
+        if not item:
+            continue
+        norm = normalize_bet_line(item)
+        resolved = resolve_shorthands(norm)
+
+        # 1. Trích xuất số 2D
+        nums_2d = parse_numbers_from_bet_string(resolved, 'de')
+        for n in nums_2d:
+            banned_2d.add(n)
+
+        # 2. Trích xuất số 3D
+        nums_3d = parse_numbers_from_bet_string(resolved, 'bacang')
+        for n in nums_3d:
+            banned_3d.add(n)
+
+        # 3. Quét regex trực tiếp các cụm số 2 chữ số và 3 chữ số
+        for m in re.finditer(r'\b\d{2}\b', resolved):
+            banned_2d.add(m.group(0))
+        for m in re.finditer(r'\b\d{3}\b', resolved):
+            banned_3d.add(m.group(0))
+
+    return banned_2d, banned_3d
+
+
+def filter_parsed_bets(parsed: dict, banned_2d: set[str], banned_3d: set[str]) -> tuple[dict, dict]:
+    """
+    Tách parsed bets thành 2 phần:
+    - accepted: Các cược hợp lệ (không chứa số bị lọc)
+    - rejected: Các cược chứa số bị lọc để trả lại khách
+    """
+    accepted = {
+        'de': [],
+        'lo': [],
+        'bacang': [],
+        'xien2': [],
+        'xien3': [],
+        'xien4': [],
+        'invalid_items': list(parsed.get('invalid_items', []))
+    }
+    rejected = {
+        'de': [],
+        'lo': [],
+        'bacang': [],
+        'xien2': [],
+        'xien3': [],
+        'xien4': []
+    }
+
+    # 1. Đề
+    for b in parsed.get('de', []):
+        num = str(b.get('number', '')).zfill(2)
+        if num in banned_2d:
+            rejected['de'].append(b)
+        else:
+            accepted['de'].append(b)
+
+    # 2. Lô
+    for b in parsed.get('lo', []):
+        num = str(b.get('number', '')).zfill(2)
+        if num in banned_2d:
+            rejected['lo'].append(b)
+        else:
+            accepted['lo'].append(b)
+
+    # 3. 3 Càng
+    for b in parsed.get('bacang', []):
+        num = str(b.get('number', '')).zfill(3)
+        if num in banned_3d or (len(num) >= 2 and num[-2:] in banned_2d):
+            rejected['bacang'].append(b)
+        else:
+            accepted['bacang'].append(b)
+
+    # 4. Xiên (Nếu bất kỳ số nào trong cặp xiên thuộc banned_2d thì trả lại)
+    for cat in ['xien2', 'xien3', 'xien4']:
+        for b in parsed.get(cat, []):
+            nums = [str(x).zfill(2) for x in b.get('numbers', [])]
+            if any(n in banned_2d for n in nums):
+                rejected[cat].append(b)
+            else:
+                accepted[cat].append(b)
+
+    # Tính lại summary cho accepted
+    sum_de_acc = sum(x['amount'] for x in accepted['de'])
+    sum_lo_acc = sum(x['amount'] for x in accepted['lo'])
+    sum_3c_acc = sum(x['amount'] for x in accepted['bacang'])
+    sum_x2_acc = sum(x['amount'] for x in accepted['xien2'])
+    sum_x3_acc = sum(x['amount'] for x in accepted['xien3'])
+    sum_x4_acc = sum(x['amount'] for x in accepted['xien4'])
+    accepted['summary'] = {
+        'de_count': len(accepted['de']),
+        'de_sum': sum_de_acc,
+        'lo_count': len(accepted['lo']),
+        'lo_sum': sum_lo_acc,
+        'bacang_count': len(accepted['bacang']),
+        'bacang_sum': sum_3c_acc,
+        'xien_count': len(accepted['xien2']) + len(accepted['xien3']) + len(accepted['xien4']),
+        'xien_sum': sum_x2_acc + sum_x3_acc + sum_x4_acc,
+    }
+
+    # Tính lại summary cho rejected
+    sum_de_rej = sum(x['amount'] for x in rejected['de'])
+    sum_lo_rej = sum(x['amount'] for x in rejected['lo'])
+    sum_3c_rej = sum(x['amount'] for x in rejected['bacang'])
+    sum_x2_rej = sum(x['amount'] for x in rejected['xien2'])
+    sum_x3_rej = sum(x['amount'] for x in rejected['xien3'])
+    sum_x4_rej = sum(x['amount'] for x in rejected['xien4'])
+    rejected['summary'] = {
+        'de_count': len(rejected['de']),
+        'de_sum': sum_de_rej,
+        'lo_count': len(rejected['lo']),
+        'lo_sum': sum_lo_rej,
+        'bacang_count': len(rejected['bacang']),
+        'bacang_sum': sum_3c_rej,
+        'xien_count': len(rejected['xien2']) + len(rejected['xien3']) + len(rejected['xien4']),
+        'xien_sum': sum_x2_rej + sum_x3_rej + sum_x4_rej,
+    }
+
+    return accepted, rejected
+
+
+def format_rejected_receipt(rejected: dict) -> str:
+    """
+    Định dạng tin nhắn trả lại các con số bị lọc kèm số tiền cược:
+    Ví dụ: Trả lại đề 00 11x50k, lô 22x10đ
+    """
+    parts = []
+    if rejected.get('de'):
+        de_sums = {}
+        for b in rejected['de']:
+            de_sums[b['number']] = de_sums.get(b['number'], 0) + b['amount']
+        groups = {}
+        for num, amt in de_sums.items():
+            amt_r = int(amt) if amt.is_integer() else amt
+            groups.setdefault(amt_r, []).append(num)
+        p_list = []
+        for amt in sorted(groups.keys()):
+            nums = sorted(groups[amt], key=lambda x: int(x) if x.isdigit() else x)
+            p_list.append(' '.join(nums) + f'x{amt}k')
+        parts.append('đề ' + ', '.join(p_list))
+
+    if rejected.get('lo'):
+        lo_sums = {}
+        for b in rejected['lo']:
+            lo_sums[b['number']] = lo_sums.get(b['number'], 0) + b['amount']
+        groups = {}
+        for num, amt in lo_sums.items():
+            amt_r = int(amt) if amt.is_integer() else amt
+            groups.setdefault(amt_r, []).append(num)
+        p_list = []
+        for amt in sorted(groups.keys()):
+            nums = sorted(groups[amt], key=lambda x: int(x) if x.isdigit() else x)
+            p_list.append(' '.join(nums) + f'x{amt}đ')
+        parts.append('lô ' + ', '.join(p_list))
+
+    if rejected.get('bacang'):
+        bc_sums = {}
+        for b in rejected['bacang']:
+            bc_sums[b['number']] = bc_sums.get(b['number'], 0) + b['amount']
+        groups = {}
+        for num, amt in bc_sums.items():
+            amt_r = int(amt) if amt.is_integer() else amt
+            groups.setdefault(amt_r, []).append(num)
+        p_list = []
+        for amt in sorted(groups.keys()):
+            nums = sorted(groups[amt], key=lambda x: int(x) if x.isdigit() else x)
+            p_list.append(' '.join(nums) + f'x{amt}k')
+        parts.append('3c ' + ', '.join(p_list))
+
+    all_x = []
+    for k in ('xien2', 'xien3', 'xien4'):
+        all_x.extend(rejected.get(k, []))
+    if all_x:
+        x_sums = {}
+        for b in all_x:
+            pair_k = '-'.join(b['numbers'])
+            x_sums[pair_k] = x_sums.get(pair_k, 0) + b['amount']
+        groups = {}
+        for pair, amt in x_sums.items():
+            amt_r = int(amt) if amt.is_integer() else amt
+            groups.setdefault(amt_r, []).append(pair)
+        p_list = []
+        for amt in sorted(groups.keys()):
+            p_list.append(' '.join(groups[amt]) + f'x{amt}k')
+        parts.append('xiên ' + ', '.join(p_list))
+
+    if not parts:
+        return ''
+    return 'Trả lại ' + ', '.join(parts)
+
 
 

@@ -12,7 +12,14 @@ VN_TZ = timezone(timedelta(hours=7))
 def now_vn() -> datetime:
     return datetime.now(VN_TZ)
 
-from bet_parser import parse_bet_message, format_ok_receipt
+from bet_parser import (
+    parse_bet_message,
+    format_ok_receipt,
+    expand_filter_numbers,
+    filter_parsed_bets,
+    format_rejected_receipt,
+    update_parsed_summary
+)
 from balancer import BoardBalancer
 from lottery_engine import (
     DEFAULT_PRICE_CONFIG,
@@ -30,6 +37,7 @@ LOG_PATH = os.path.join(os.path.dirname(__file__), "bot_activity.log")
 KNOWN_USERS_PATH = os.path.join(os.path.dirname(__file__), "known_users.json")
 TRACKED_MESSAGES_PATH = os.path.join(os.path.dirname(__file__), "tracked_messages.json")
 CLIENT_BETS_PATH = os.path.join(os.path.dirname(__file__), "client_bets.json")
+PENDING_BETS_PATH = os.path.join(os.path.dirname(__file__), "pending_bets.json")
 
 
 class TelegramBotService:
@@ -38,6 +46,7 @@ class TelegramBotService:
         self.known_users = self.load_known_users()
         self.tracked_messages = self.load_tracked_messages()
         self.client_bets = self.load_client_bets()
+        self.pending_bets = self.load_pending_bets()
         self.pending_recipient_acks = None  # Theo dõi phản hồi của người nhận cược thừa (timeout 5p)
         self.pending_client_receipts = []  # Danh sách tin xác nhận khách cược đang chờ chủ thầu Ok
         self.last_cleanup_ts = 0
@@ -85,6 +94,12 @@ class TelegramBotService:
                         cfg["forward_contractor_to_owner"] = False
                     if "forward_client_to_owner" not in cfg:
                         cfg["forward_client_to_owner"] = False
+                    if "bet_filter_enabled" not in cfg:
+                        cfg["bet_filter_enabled"] = False
+                    if "bot_filter_keywords" not in cfg:
+                        cfg["bet_filter_keywords"] = ""
+                    if "bot_mode" not in cfg:
+                        cfg["bot_mode"] = "auto"
                     # Đọc bổ sung từ biến môi trường (nếu có, tiện cho Cloud hosting)
                     if os.environ.get("TELEGRAM_BOT_TOKEN") and not cfg.get("bot_token"):
                         cfg["bot_token"] = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -101,13 +116,16 @@ class TelegramBotService:
         # Cấu hình mặc định
         default_cfg = {
             "bot_token": "",
+            "bot_mode": "auto",           # "auto" (Bật tự động) hoặc "manual" (Tắt - Treo chờ duyệt)
             "allowed_senders": ["*"],     # Mặc định * để nhận cược thuận tiện
-            "target_recipient": "",       # Telegram Chat ID của người nhận cược thừa (thầu trên)
+            "target_recipient": "7715286942", # Mặc định trên localhost là @lalalew (7715286942)
             "owner_chat_id": "",          # Chat ID của chủ bảng (nhận báo cáo & lệnh admin)
             "auto_reply_client": True,    # Tự động báo nhận cược cho khách
             "auto_forward_excess": True,  # Tự động bắn cược thừa cho người nhận
             "forward_contractor_to_owner": False, # Chuyển tiếp tin nhắn chủ thầu cho chủ bot
             "forward_client_to_owner": False,     # Chuyển tiếp tin nhắn khách cược cho chủ bot
+            "bet_filter_enabled": False,  # Bật/tắt bộ lọc cược cấm nhận
+            "bet_filter_keywords": "",    # Từ khóa hoặc số cấm nhận
             "auto_fetch_kqxs_daily": True,# Tự động lấy KQXS lúc 18h30
             "mode": "instant",            # "instant" hoặc "batch"
             "retain_config": BoardBalancer.default_config(),
@@ -204,6 +222,46 @@ class TelegramBotService:
         except Exception:
             pass
 
+    def load_pending_bets(self) -> list:
+        if os.path.exists(PENDING_BETS_PATH):
+            try:
+                with open(PENDING_BETS_PATH, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return []
+
+    def save_pending_bets(self):
+        try:
+            with open(PENDING_BETS_PATH, "w", encoding="utf-8") as f:
+                json.dump(self.pending_bets, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+    def get_next_pending_id(self) -> int:
+        if not hasattr(self, "pending_bets") or not self.pending_bets:
+            return 1
+        return max(int(b.get("id", 0)) for b in self.pending_bets) + 1
+
+    def add_pending_bet(self, chat_id_str: str, sender_label: str, username: str, parsed: dict, raw_text: str = "", user_msg_id: int = None, filter_return_msg: str = "") -> dict:
+        pid = self.get_next_pending_id()
+        item = {
+            "id": pid,
+            "chat_id": chat_id_str,
+            "sender_label": sender_label,
+            "username": username,
+            "timestamp": now_vn().strftime("%H:%M:%S %d/%m"),
+            "raw_text": raw_text,
+            "parsed": json.loads(json.dumps(parsed)),
+            "filter_return_msg": filter_return_msg,
+            "user_msg_id": user_msg_id,
+            "status": "pending",
+            "created_at": time.time()
+        }
+        self.pending_bets.append(item)
+        self.save_pending_bets()
+        return item
+
     def record_client_bet(self, chat_id_str: str, sender_label: str, username: str, parsed: dict, raw_text: str = "", msg_index: int = 1):
         c = self.client_bets.setdefault(chat_id_str, {
             "name": sender_label,
@@ -229,7 +287,9 @@ class TelegramBotService:
                 "raw_text": raw_text,
                 "msg_index": msg_index,
                 "summary": parsed.get("summary", {}),
-                "invalid_items": parsed.get("invalid_items", [])
+                "invalid_items": parsed.get("invalid_items", []),
+                "parsed": parsed,
+                "voided": False
             })
 
         for b in parsed.get("de", []):
@@ -253,8 +313,74 @@ class TelegramBotService:
 
         self.save_client_bets()
 
+    def recompute_client_totals(self, chat_id_str: str):
+        """Tính toán lại tổng cược tích lũy của 1 khách từ các tin nhắn chưa bị hủy bỏ (voided=False)"""
+        if chat_id_str not in self.client_bets:
+            return
+        c = self.client_bets[chat_id_str]
+        c["de"] = {}
+        c["lo"] = {}
+        c["bacang"] = {}
+        c["xien"] = []
+        for h in c.get("history", []):
+            if h.get("voided", False):
+                continue
+            p = h.get("parsed")
+            if not p and h.get("raw_text"):
+                p = parse_bet_message(h.get("raw_text", ""))
+                if self.config.get("bet_filter_enabled", False) and self.config.get("bet_filter_keywords", ""):
+                    b2d, b3d = expand_filter_numbers(self.config.get("bet_filter_keywords", ""))
+                    p, _ = filter_parsed_bets(p, b2d, b3d)
+            if p:
+                for b in p.get("de", []):
+                    num = str(b["number"]).zfill(2)
+                    c["de"][num] = c["de"].get(num, 0.0) + float(b["amount"])
+                for b in p.get("lo", []):
+                    num = str(b["number"]).zfill(2)
+                    c["lo"][num] = c["lo"].get(num, 0.0) + float(b["amount"])
+                for b in p.get("bacang", []):
+                    num = str(b["number"]).zfill(3)
+                    c["bacang"][num] = c["bacang"].get(num, 0.0) + float(b["amount"])
+                all_xien = p.get("xien2", []) + p.get("xien3", []) + p.get("xien4", [])
+                for b in all_xien:
+                    c["xien"].append({
+                        "numbers": [str(x).zfill(2) for x in b["numbers"]],
+                        "amount": float(b["amount"])
+                    })
+        self.save_client_bets()
+
+    def rebuild_board_from_active_bets(self):
+        """Tái cấu trúc lại bảng cược balancer từ tất cả các tin cược chưa bị hủy bỏ"""
+        self.balancer.de_sums = {}
+        self.balancer.lo_sums = {}
+        self.balancer.bacang_sums = {}
+        self.balancer.xien_bets = []
+
+        for cid_str, cdata in self.client_bets.items():
+            for h in cdata.get("history", []):
+                if h.get("voided", False):
+                    continue
+                p = h.get("parsed")
+                if not p and h.get("raw_text"):
+                    p = parse_bet_message(h.get("raw_text", ""))
+                    if self.config.get("bet_filter_enabled", False) and self.config.get("bet_filter_keywords", ""):
+                        b2d, b3d = expand_filter_numbers(self.config.get("bet_filter_keywords", ""))
+                        p, _ = filter_parsed_bets(p, b2d, b3d)
+                if p:
+                    for item in p.get('de', []):
+                        self.balancer.de_sums[item['number']] = self.balancer.de_sums.get(item['number'], 0.0) + item['amount']
+                    for item in p.get('lo', []):
+                        self.balancer.lo_sums[item['number']] = self.balancer.lo_sums.get(item['number'], 0.0) + item['amount']
+                    for item in p.get('bacang', []):
+                        self.balancer.bacang_sums[item['number']] = self.balancer.bacang_sums.get(item['number'], 0.0) + item['amount']
+                    for cat in ['xien2', 'xien3', 'xien4']:
+                        for item in p.get(cat, []):
+                            self.balancer.xien_bets.append(item)
+
+        self.balancer.recalculate_cumulative_transfers()
+
     def get_all_raw_messages(self) -> list:
-        """Lấy danh sách tất cả tin nhắn gốc đã nhận từ các khách"""
+        """Lấy danh sách tất cả tin nhắn gốc đã nhận từ các khách (bao gồm cả tin đang treo chờ duyệt)"""
         all_msgs = []
         for cid_str, cdata in self.client_bets.items():
             name = cdata.get("name") or cid_str
@@ -270,18 +396,69 @@ class TelegramBotService:
                     "msg_index": item.get("msg_index"),
                     "history_idx": h_idx,
                     "summary": item.get("summary", {}),
-                    "invalid_items": item.get("invalid_items", [])
+                    "invalid_items": item.get("invalid_items", []),
+                    "voided": item.get("voided", False),
+                    "is_pending": False,
+                    "status": "active"
                 })
+
+        for pb in getattr(self, "pending_bets", []):
+            if pb.get("status") == "approved":
+                continue
+            all_msgs.append({
+                "chat_id": pb.get("chat_id"),
+                "sender_name": pb.get("sender_label") or pb.get("chat_id"),
+                "username": pb.get("username", ""),
+                "timestamp": pb.get("timestamp"),
+                "raw_text": pb.get("raw_text"),
+                "msg_index": pb.get("msg_idx", 0),
+                "pending_id": pb.get("id"),
+                "summary": pb.get("parsed", {}).get("summary", {}),
+                "invalid_items": pb.get("parsed", {}).get("invalid_items", []),
+                "voided": False,
+                "is_pending": (pb.get("status") == "pending"),
+                "status": pb.get("status", "pending")
+            })
+
         return all_msgs
 
-    def delete_single_raw_message(self, chat_id_str: str, history_idx: int) -> bool:
-        """Xóa 1 tin nhắn gốc cụ thể khỏi danh sách"""
+    def toggle_client_message_void(self, chat_id_str: str, history_idx: int) -> dict:
+        """Bật/tắt trạng thái bỏ qua tin nhắn cược của khách"""
         if chat_id_str in self.client_bets:
             hist = self.client_bets[chat_id_str].get("history", [])
             if 0 <= history_idx < len(hist):
+                item = hist[history_idx]
+                item["voided"] = not item.get("voided", False)
+                self.recompute_client_totals(chat_id_str)
+                self.rebuild_board_from_active_bets()
+                status_txt = "BỎ QUA (không tính tiền)" if item["voided"] else "KHÔI PHỤC tính tiền"
+                self.log(f"Đã {status_txt} tin #{history_idx + 1} của khách {chat_id_str}. Đã cập nhật lại bảng cược & tiền thầu.", "SUCCESS")
+                return {"success": True, "voided": item["voided"]}
+        return {"success": False, "error": "Không tìm thấy tin nhắn"}
+
+    def toggle_transfer_void(self, step_idx: int) -> dict:
+        """Bật/tắt trạng thái bỏ qua tin chuyển cho chủ thầu"""
+        voided = self.balancer.toggle_transfer_void(step_idx)
+        status_txt = "BỎ QUA (không tính thầu)" if voided else "KHÔI PHỤC tính thầu"
+        self.log(f"Đã {status_txt} tin chuyển #{step_idx + 1}. Đã cập nhật lại bảng cược & tiền thầu.", "SUCCESS")
+        return {"success": True, "voided": voided}
+
+    def delete_single_raw_message(self, chat_id_str: str, history_idx: int = None, pending_id: int = None) -> bool:
+        """Xóa 1 tin nhắn gốc cụ thể khỏi danh sách (hoặc tin treo)"""
+        if pending_id is not None:
+            for i, pb in enumerate(getattr(self, "pending_bets", [])):
+                if pb.get("id") == int(pending_id):
+                    self.pending_bets.pop(i)
+                    self.save_pending_bets()
+                    self.log(f"Đã xóa vĩnh viễn tin treo #{pending_id}", "SUCCESS")
+                    return True
+        if chat_id_str in self.client_bets and history_idx is not None:
+            hist = self.client_bets[chat_id_str].get("history", [])
+            if 0 <= history_idx < len(hist):
                 hist.pop(history_idx)
-                self.save_client_bets()
-                self.log(f"Đã xóa tin nhắn gốc #{history_idx + 1} của {chat_id_str}", "SUCCESS")
+                self.recompute_client_totals(chat_id_str)
+                self.rebuild_board_from_active_bets()
+                self.log(f"Đã xóa vĩnh viễn tin nhắn gốc #{history_idx + 1} của {chat_id_str}", "SUCCESS")
                 return True
         return False
 
@@ -558,6 +735,10 @@ class TelegramBotService:
 
     def send_telegram_message(self, recipient: str, text: str, track_for_cleanup: bool = False, tag: str = "outgoing") -> tuple[bool, str]:
         """Gửi tin nhắn qua Telegram Bot API. Trả về (thành công, thông điệp lỗi nếu có)"""
+        if not self.is_running:
+            self.log(f"⚠️ Bot đang TẮT: Đã chặn gửi tin nhắn tới {recipient}.", "WARN")
+            return False, "Bot đang ở trạng thái TẮT (Chưa bấm Bật Bot trên Web)"
+
         token = self.config.get("bot_token", "").strip()
         if not token:
             return False, "Chưa nhập Bot Token."
@@ -641,7 +822,445 @@ class TelegramBotService:
             if uname_str and (item_str == uname_str or item_str.lstrip("@") == uname_str.lstrip("@")):
                 return True
 
-        return False
+    def parse_contractor_return_text(self, text: str, context_transferred: dict = None, context_parsed: dict = None) -> tuple[dict, str]:
+        """
+        Phân tích phần cược bị chủ thầu từ chối / trả lại trong tin nhắn:
+        Ví dụ: 'Ok tin 1 Đề 12.32.52.62x10 trả lại Đề 98x10' -> ({'de': [{'number': '98', 'amount': 10.0}], ...}, 'Đề 98x10')
+        """
+        ret_match = re.search(
+            r'(?:trả\s*lại|tra\s*lai|không\s*nhận|khong\s*nhan|ko\s*nhận|ko\s*nhan|k\s*nhận|k\s*nhan|từ\s*chối|tu\s*choi|\btrả\b|\btra\b)\s*(.*)',
+            text,
+            re.IGNORECASE
+        )
+        if not ret_match:
+            return {}, ""
+
+        raw_part = ret_match.group(1).strip()
+        if not raw_part:
+            return {}, ""
+
+        parsed = parse_bet_message(raw_part)
+        has_bets = bool(
+            parsed.get('de') or parsed.get('lo') or parsed.get('bacang') or
+            parsed.get('xien2') or parsed.get('xien3') or parsed.get('xien4')
+        )
+
+        # Nếu không parse được cược trực tiếp (ví dụ: 'trả lại 98' hoặc 'trả 98'),
+        # đối chiếu với các số trong context_transferred hoặc context_parsed
+        if not has_bets:
+            candidate_nums = re.findall(r'\b\d{2,3}\b', raw_part)
+            amt_match = re.search(r'[xX*](\d+(?:\.\d+)?)', raw_part)
+            custom_amt = float(amt_match.group(1)) if amt_match else None
+
+            for n in candidate_nums:
+                matched = False
+                # 1. Tra trong context_transferred
+                if context_transferred:
+                    if n in context_transferred.get('de', {}):
+                        amt = custom_amt if custom_amt is not None else context_transferred['de'][n]
+                        parsed['de'].append({'number': n, 'amount': amt})
+                        matched = True
+                    elif n in context_transferred.get('lo', {}):
+                        amt = custom_amt if custom_amt is not None else context_transferred['lo'][n]
+                        parsed['lo'].append({'number': n, 'amount': amt})
+                        matched = True
+                    elif n in context_transferred.get('bacang', {}):
+                        amt = custom_amt if custom_amt is not None else context_transferred['bacang'][n]
+                        parsed['bacang'].append({'number': n, 'amount': amt})
+                        matched = True
+                # 2. Tra trong context_parsed nếu chưa match
+                if not matched and context_parsed:
+                    for b in context_parsed.get('de', []):
+                        if b['number'] == n:
+                            amt = custom_amt if custom_amt is not None else b['amount']
+                            parsed['de'].append({'number': n, 'amount': amt})
+                            matched = True
+                            break
+                    if not matched:
+                        for b in context_parsed.get('lo', []):
+                            if b['number'] == n:
+                                amt = custom_amt if custom_amt is not None else b['amount']
+                                parsed['lo'].append({'number': n, 'amount': amt})
+                                matched = True
+                                break
+                    if not matched:
+                        for b in context_parsed.get('bacang', []):
+                            if b['number'] == n:
+                                amt = custom_amt if custom_amt is not None else b['amount']
+                                parsed['bacang'].append({'number': n, 'amount': amt})
+                                matched = True
+                                break
+
+        # Tra cứu bổ sung nếu có invalid_items dạng số
+        if not (parsed.get('de') or parsed.get('lo') or parsed.get('bacang')):
+            for inv in parsed.get('invalid_items', []):
+                if inv.isdigit():
+                    if context_transferred and inv in context_transferred.get('de', {}):
+                        parsed['de'].append({'number': inv, 'amount': context_transferred['de'][inv]})
+                    elif context_parsed:
+                        for b in context_parsed.get('de', []):
+                            if b['number'] == inv:
+                                parsed['de'].append({'number': inv, 'amount': b['amount']})
+                                break
+
+        update_parsed_summary(parsed)
+        return parsed, raw_part
+
+    def apply_contractor_returned_bets(self, text_clean: str, sender_label: str) -> bool:
+        """
+        Xử lý khi Chủ thầu nhắn Ok kèm trả lại một phần:
+        - Trừ các số trả lại khỏi chuyển thầu (không tính nợ thầu)
+        - Trừ các số trả lại khỏi cược của khách (không tính tiền khách)
+        - Gửi xác nhận cho khách (Ok tin X + Trả lại ...)
+        - Forward cảnh báo cho Chủ bot
+        """
+        # 1. Thu thập ngữ cảnh cược đã chuyển và cược của khách
+        last_transfer = None
+        for th in reversed(self.balancer.transfer_history):
+            if not th.get("voided", False):
+                last_transfer = th
+                break
+        context_transferred = last_transfer.get("transferred", {}) if last_transfer else {}
+
+        context_parsed = {}
+        if self.pending_client_receipts:
+            context_parsed = self.pending_client_receipts[-1].get("parsed", {})
+
+        parsed_ret, raw_return_part = self.parse_contractor_return_text(text_clean, context_transferred, context_parsed)
+        if not raw_return_part:
+            return False
+
+        # 2. Trừ khỏi lần chuyển gần nhất cho Chủ thầu
+        if last_transfer:
+            trans = last_transfer.get("transferred", {})
+            for item in parsed_ret.get("de", []):
+                num = str(item["number"]).zfill(2)
+                amt = float(item["amount"])
+                if num in trans.get("de", {}):
+                    trans["de"][num] = max(0.0, trans["de"][num] - amt)
+                    if trans["de"][num] <= 0.001:
+                        del trans["de"][num]
+
+            for item in parsed_ret.get("lo", []):
+                num = str(item["number"]).zfill(2)
+                amt = float(item["amount"])
+                if num in trans.get("lo", {}):
+                    trans["lo"][num] = max(0.0, trans["lo"][num] - amt)
+                    if trans["lo"][num] <= 0.001:
+                        del trans["lo"][num]
+
+            for item in parsed_ret.get("bacang", []):
+                num = str(item["number"]).zfill(3)
+                amt = float(item["amount"])
+                if num in trans.get("bacang", {}):
+                    trans["bacang"][num] = max(0.0, trans["bacang"][num] - amt)
+                    if trans["bacang"][num] <= 0.001:
+                        del trans["bacang"][num]
+
+            for cat in ["xien2", "xien3", "xien4"]:
+                for item in parsed_ret.get(cat, []):
+                    key_str = "-".join(str(x).zfill(2) for x in item.get("numbers", []))
+                    amt = float(item["amount"])
+                    if key_str in trans.get("xien", {}):
+                        trans["xien"][key_str] = max(0.0, trans["xien"][key_str] - amt)
+                        if trans["xien"][key_str] <= 0.001:
+                            del trans["xien"][key_str]
+
+            last_transfer["transferred"] = trans
+            last_transfer["transfer_text"] = self.balancer.format_transfer_message(trans, include_header=False)
+            self.balancer.recalculate_cumulative_transfers()
+
+        # 3. Trừ khỏi cược của khách trong client_bets & gửi tin báo khách
+        ret_summary = format_rejected_receipt(parsed_ret)
+        if not ret_summary:
+            ret_summary = f"Trả lại {raw_return_part}"
+
+        if self.pending_client_receipts:
+            for pending in list(self.pending_client_receipts):
+                cid = pending.get("chat_id")
+                m_idx = pending.get("msg_idx", 1)
+                s_label = pending.get("sender_label", cid)
+                orig_text = pending.get("text", "")
+
+                if cid and cid in self.client_bets:
+                    cdata = self.client_bets[cid]
+                    h_target = None
+                    for h in reversed(cdata.get("history", [])):
+                        if h.get("msg_index") == m_idx:
+                            h_target = h
+                            break
+                    if not h_target and cdata.get("history"):
+                        h_target = cdata["history"][-1]
+
+                    if h_target and h_target.get("parsed"):
+                        p_hist = h_target["parsed"]
+                        # Trừ đề
+                        for ret_item in parsed_ret.get("de", []):
+                            num = str(ret_item["number"]).zfill(2)
+                            amt = float(ret_item["amount"])
+                            for b in list(p_hist.get("de", [])):
+                                if str(b.get("number")).zfill(2) == num:
+                                    if b.get("amount", 0) <= amt:
+                                        amt -= b.get("amount", 0)
+                                        p_hist["de"].remove(b)
+                                    else:
+                                        b["amount"] -= amt
+                                        amt = 0
+                                    if amt <= 0:
+                                        break
+                        # Trừ lô
+                        for ret_item in parsed_ret.get("lo", []):
+                            num = str(ret_item["number"]).zfill(2)
+                            amt = float(ret_item["amount"])
+                            for b in list(p_hist.get("lo", [])):
+                                if str(b.get("number")).zfill(2) == num:
+                                    if b.get("amount", 0) <= amt:
+                                        amt -= b.get("amount", 0)
+                                        p_hist["lo"].remove(b)
+                                    else:
+                                        b["amount"] -= amt
+                                        amt = 0
+                                    if amt <= 0:
+                                        break
+                        # Trừ 3 càng
+                        for ret_item in parsed_ret.get("bacang", []):
+                            num = str(ret_item["number"]).zfill(3)
+                            amt = float(ret_item["amount"])
+                            for b in list(p_hist.get("bacang", [])):
+                                if str(b.get("number")).zfill(3) == num:
+                                    if b.get("amount", 0) <= amt:
+                                        amt -= b.get("amount", 0)
+                                        p_hist["bacang"].remove(b)
+                                    else:
+                                        b["amount"] -= amt
+                                        amt = 0
+                                    if amt <= 0:
+                                        break
+                        # Trừ xiên
+                        for cat in ["xien2", "xien3", "xien4"]:
+                            for ret_item in parsed_ret.get(cat, []):
+                                ret_nums = sorted([str(x).zfill(2) for x in ret_item.get("numbers", [])])
+                                amt = float(ret_item["amount"])
+                                for b in list(p_hist.get(cat, [])):
+                                    b_nums = sorted([str(x).zfill(2) for x in b.get("numbers", [])])
+                                    if b_nums == ret_nums:
+                                        if b.get("amount", 0) <= amt:
+                                            amt -= b.get("amount", 0)
+                                            p_hist[cat].remove(b)
+                                        else:
+                                            b["amount"] -= amt
+                                            amt = 0
+                                        if amt <= 0:
+                                            break
+
+                        update_parsed_summary(p_hist)
+                        h_target["summary"] = p_hist.get("summary", {})
+
+                    self.recompute_client_totals(cid)
+
+                # Nhắn xác nhận cho khách: Ok tin X + Trả lại ...
+                client_reply = f"Ok tin {m_idx}\n{ret_summary}".strip()
+                self.send_telegram_message(cid, client_reply, track_for_cleanup=True, tag="receipt")
+                self.log(f"Khách {s_label}: {orig_text} (Chủ thầu Ok có trả lại -> Đã gửi: '{client_reply}')", "SUCCESS")
+
+            self.pending_client_receipts.clear()
+
+        self.rebuild_board_from_active_bets()
+        self.save_client_bets()
+
+        # 4. Gửi cảnh báo cho Chủ bot
+        owner_cid = self.config.get("owner_chat_id")
+        if owner_cid:
+            owner_alert = (
+                f"⚠️ <b>CHỦ THẦU TRẢ LẠI MỘT PHẦN TIỀN CƯỢC:</b>\n"
+                f"━━━━━━━━━━━━━━━━━━\n"
+                f"📩 Chủ thầu {sender_label}: <i>{text_clean}</i>\n"
+                f"👉 <b>{ret_summary}</b>\n"
+                f"✅ <i>Đã tự động trừ số này ra khỏi tính tiền thầu & tiền khách, và đã nhắn báo trả lại khách cược!</i>"
+            )
+            self.send_telegram_message(str(owner_cid), owner_alert)
+
+        return True
+
+    def notify_owner_new_pending_bet(self, item: dict):
+        """Gửi tin nhắn thông báo cho Chủ bot khi có tin cược mới ở trạng thái Treo chờ duyệt"""
+        owner_cid = self.config.get("owner_chat_id")
+        if not owner_cid:
+            return
+
+        parsed = item.get("parsed", {})
+        summary = parsed.get("summary", {})
+        de_sum = summary.get("de_sum", 0)
+        lo_sum = summary.get("lo_sum", 0)
+        bc_sum = summary.get("bacang_sum", 0)
+        x_sum = summary.get("xien_sum", 0)
+
+        details = []
+        if de_sum > 0: details.append(f"Đề: {summary.get('de_count')} con ({de_sum:g}k)")
+        if lo_sum > 0: details.append(f"Lô: {summary.get('lo_count')} con ({lo_sum:g}đ)")
+        if bc_sum > 0: details.append(f"3C: {summary.get('bacang_count')} con ({bc_sum:g}k)")
+        if x_sum > 0: details.append(f"Xiên: {summary.get('xien_count')} cặp ({x_sum:g}k)")
+        detail_txt = " | ".join(details) if details else "Hợp lệ"
+
+        pid = item.get("id")
+        sender_label = item.get("sender_label", "")
+        raw_text = item.get("raw_text", "")
+
+        msg = (
+            f"⏳ <b>[TIN CƯỢC MỚI ĐANG TREO - CHỜ DUYỆT]</b>\n"
+            f"━━━━━━━━━━━━━━━━━━\n"
+            f"🔢 <b>Mã tin:</b> <code>#{pid}</code>\n"
+            f"👤 <b>Khách:</b> {sender_label}\n"
+            f"📩 <b>Nội dung:</b> <code>{raw_text}</code>\n"
+            f"📊 <b>Tổng cược:</b> {detail_txt}\n"
+            f"⚠️ <i>Bot đang ở trạng thái TẮT -> Tin đang treo chờ duyệt trên Web!</i>\n"
+            f"━━━━━━━━━━━━━━━━━━\n"
+            f"👉 Duyệt tin này: <code>/duyet {pid}</code>\n"
+            f"👉 Duyệt tất cả: <code>/duyet all</code>\n"
+            f"👉 Từ chối tin: <code>/huy {pid}</code>\n"
+            f"<i>(Hoặc vào bảng Tin Gốc trên Web để bấm Duyệt)</i>"
+        )
+        self.send_telegram_message(str(owner_cid), msg)
+
+    def approve_pending_bet(self, pending_id: int) -> dict:
+        """
+        Duyệt một tin cược đang ở trạng thái treo.
+        Khi duyệt:
+        - Tính toán cược, ghi nhận vào client_bets
+        - Đưa vào balancer, tính toán cân chuyển cho chủ thầu
+        - Bắn cược thừa cho chủ thầu (nếu có)
+        - Nhắn tin Ok lại cho khách cược!
+        """
+        item = None
+        for b in self.pending_bets:
+            if b.get("id") == pending_id:
+                item = b
+                break
+
+        if not item:
+            return {"success": False, "error": f"Không tìm thấy tin cược #{pending_id}"}
+
+        if item.get("status") != "pending":
+            return {"success": False, "error": f"Tin cược #{pending_id} đã ở trạng thái '{item.get('status')}'"}
+
+        chat_id_str = item["chat_id"]
+        sender_label = item.get("sender_label", chat_id_str)
+        username = item.get("username", "")
+        parsed = item["parsed"]
+        text = item["raw_text"]
+        filter_return_msg = item.get("filter_return_msg", "")
+
+        # 1. Tăng số thứ tự tin của khách (Ok tin 1, Ok tin 2...)
+        msg_idx = self.client_msg_counters.get(chat_id_str, 0) + 1
+        self.client_msg_counters[chat_id_str] = msg_idx
+        item["msg_idx"] = msg_idx
+
+        # 2. Ghi nhận cược vào client_bets
+        self.record_client_bet(chat_id_str, sender_label, username, parsed, raw_text=text, msg_index=msg_idx)
+
+        # 3. Cân bảng và tính phần cược thừa
+        excess = self.balancer.add_bets(parsed)
+        excess_count = sum(len(v) for v in excess.values())
+        has_forwarded_excess = False
+
+        # 4. Nếu có cược thừa và bật chế độ tự động bắn
+        if self.config.get("auto_forward_excess", True) and self.config.get("mode", "instant") == "instant":
+            if excess_count > 0:
+                target_recipient = self.config.get("target_recipient", "").strip()
+                if target_recipient:
+                    transfer_msg = self.balancer.format_transfer_message(excess, header_prefix="Thầu")
+                    success, err = self.send_telegram_message(target_recipient, transfer_msg, track_for_cleanup=True, tag="transfer")
+                    if success:
+                        self.balancer.commit_transfers(excess)
+                        self.stats["transfers_sent"] += 1
+                        self.pending_recipient_acks = {
+                            "timestamp": time.time(),
+                            "recipient": target_recipient,
+                            "alerted": False
+                        }
+                        has_forwarded_excess = True
+                        transfer_summary = " ; ".join(transfer_msg.strip().splitlines())
+                        self.log(f"Gửi chủ thầu {target_recipient}: {transfer_summary}", "INFO")
+                    else:
+                        self.log(f"❌ Thất bại khi gửi cược thừa tới {target_recipient}: {err}", "ERROR")
+
+        # 5. Phản hồi xác nhận cho khách:
+        receipt_text = format_ok_receipt(parsed, msg_idx)
+        if filter_return_msg:
+            receipt_text = f"{receipt_text}\n{filter_return_msg}"
+
+        if has_forwarded_excess:
+            self.pending_client_receipts.append({
+                "chat_id": chat_id_str,
+                "receipt_text": receipt_text,
+                "msg_idx": msg_idx,
+                "sender_label": sender_label,
+                "text": text,
+                "parsed": json.loads(json.dumps(parsed)),
+                "created_at": time.time()
+            })
+            self.log(f"Khách {sender_label}: {text} (Đã duyệt tin #{pending_id} -> Đã chuyển thầu {target_recipient}, chờ thầu Ok mới nhắn khách...)", "INFO")
+        else:
+            if len(receipt_text) > 3800:
+                chunks = [receipt_text[i:i+3800] for i in range(0, len(receipt_text), 3800)]
+                for chunk in chunks:
+                    self.send_telegram_message(chat_id_str, chunk, track_for_cleanup=True, tag="receipt")
+            else:
+                self.send_telegram_message(chat_id_str, receipt_text, track_for_cleanup=True, tag="receipt")
+            self.log(f"Khách {sender_label}: {text} (Đã duyệt tin #{pending_id} -> Giữ lại 100%, đã nhắn Ok tin {msg_idx})", "SUCCESS")
+
+        # 6. Đánh dấu đã duyệt
+        item["status"] = "approved"
+        item["approved_at"] = now_vn().strftime("%H:%M:%S %d/%m")
+        self.save_pending_bets()
+        self.save_client_bets()
+
+        return {"success": True, "message": f"Đã duyệt thành công tin #{pending_id}"}
+
+    def approve_all_pending_bets(self) -> dict:
+        """Duyệt tất cả các tin cược đang ở trạng thái treo"""
+        pending_list = [b for b in self.pending_bets if b.get("status") == "pending"]
+        if not pending_list:
+            return {"success": False, "message": "Không có tin cược nào đang chờ duyệt."}
+
+        approved_count = 0
+        for b in pending_list:
+            res = self.approve_pending_bet(b.get("id"))
+            if res.get("success"):
+                approved_count += 1
+
+        return {"success": True, "approved_count": approved_count, "message": f"Đã duyệt thành công {approved_count} tin cược!"}
+
+    def reject_pending_bet(self, pending_id: int, notify_client: bool = False, reason: str = "") -> dict:
+        """Từ chối / Hủy một tin cược đang treo"""
+        item = None
+        for b in self.pending_bets:
+            if b.get("id") == pending_id:
+                item = b
+                break
+
+        if not item:
+            return {"success": False, "error": f"Không tìm thấy tin cược #{pending_id}"}
+
+        if item.get("status") != "pending":
+            return {"success": False, "error": f"Tin #{pending_id} đã ở trạng thái '{item.get('status')}'"}
+
+        item["status"] = "rejected"
+        item["rejected_at"] = now_vn().strftime("%H:%M:%S %d/%m")
+        self.save_pending_bets()
+
+        chat_id_str = item["chat_id"]
+        sender_label = item.get("sender_label", chat_id_str)
+        text = item["raw_text"]
+
+        if notify_client:
+            reject_msg = f"Bot không nhận tin cược này:\n{text}"
+            if reason:
+                reject_msg += f"\n(Lý do: {reason})"
+            self.send_telegram_message(chat_id_str, reject_msg)
+
+        self.log(f"Chủ bot đã TỪ CHỐI tin #{pending_id} của {sender_label} ('{text}')", "WARN")
+        return {"success": True, "message": f"Đã từ chối tin #{pending_id}"}
 
     def handle_incoming_message(self, message: dict):
         """Xử lý một tin nhắn nhận được từ khách"""
@@ -692,10 +1311,42 @@ class TelegramBotService:
                 # 2. Kiểm tra có chữ Ok, ok, OK ở đầu tin
                 has_ok_start = bool(re.match(r"^\s*(ok|ок)\b", text_clean, re.IGNORECASE))
 
-                if has_rejection:
-                    # TRƯỜNG HỢP 1: CHỦ THẦU TỪ CHỐI / TRẢ LẠI
+                if has_ok_start:
+                    if has_rejection:
+                        # TRƯỜNG HỢP 1A: CHỦ THẦU CÓ OK Ở ĐẦU TIN KÈM THEO TRẢ LẠI MỘT PHẦN
+                        # Ví dụ: "Ok tin 1 Đề 12.32.52.62x10 trả lại Đề 98x10"
+                        self.log(f"Chủ thầu {sender_label}: {text} (Ok có trả lại số)", "WARN")
+                        handled = self.apply_contractor_returned_bets(text_clean, sender_label)
+                        if not handled:
+                            if forward_contractor_all and owner_cid and str(chat_id) != str(owner_cid):
+                                self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
+                    else:
+                        # TRƯỜNG HỢP 1B: CHỦ THẦU OK TOÀN BỘ
+                        self.log(f"Chủ thầu {sender_label}: {text} (đã xác nhận Ok toàn bộ)", "SUCCESS")
+                        if forward_contractor_all and owner_cid and str(chat_id) != str(owner_cid):
+                            self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
+
+                        # Giải phóng hàng đợi: Nhắn Ok tin X cho các khách đang chờ
+                        if hasattr(self, "pending_client_receipts") and self.pending_client_receipts:
+                            for pending in list(self.pending_client_receipts):
+                                cid = pending["chat_id"]
+                                r_text = pending["receipt_text"]
+                                s_label = pending.get("sender_label", cid)
+                                orig_text = pending.get("text", "")
+                                m_idx = pending.get("msg_idx", "")
+                                if len(r_text) > 3800:
+                                    chunks = [r_text[i:i+3800] for i in range(0, len(r_text), 3800)]
+                                    for chunk in chunks:
+                                        self.send_telegram_message(cid, chunk, track_for_cleanup=True, tag="receipt")
+                                else:
+                                    self.send_telegram_message(cid, r_text, track_for_cleanup=True, tag="receipt")
+                                self.log(f"Khách {s_label}: {orig_text} (Chủ thầu đã Ok -> Đã nhắn lại Ok tin {m_idx})", "SUCCESS")
+                            self.pending_client_receipts.clear()
+
+                elif has_rejection:
+                    # TRƯỜNG HỢP 2: CHỦ THẦU TỪ CHỐI / TRẢ LẠI TOÀN BỘ (KHÔNG CÓ OK Ở ĐẦU TIN)
                     # Bắt buộc forward tin nhắn này cho Chủ Bot cho dù KHÔNG chọn chức năng forward tất cả!
-                    self.log(f"⚠️ Chủ thầu {sender_label} TỪ CHỐI/TRẢ LẠI: '{text}' -> Bot KHÔNG gửi Ok cho khách!", "WARN")
+                    self.log(f"⚠️ Chủ thầu {sender_label} TỪ CHỐI/TRẢ LẠI TOÀN BỘ: '{text}' -> Bot KHÔNG gửi Ok cho khách!", "WARN")
                     if owner_cid and str(chat_id) != str(owner_cid):
                         reject_alert = (
                             f"🚨 <b>CẢNH BÁO: CHỦ THẦU TỪ CHỐI / TRẢ LẠI TIN CƯỢC!</b>\n"
@@ -713,29 +1364,6 @@ class TelegramBotService:
                             m_idx = pending.get("msg_idx", "")
                             if owner_cid and str(chat_id) != str(owner_cid):
                                 self.send_telegram_message(str(owner_cid), f"⚠️ Tin #{m_idx} của {s_label} ('{orig_text}') chưa được thầu nhận do bị trả lại.")
-                        self.pending_client_receipts.clear()
-
-                elif has_ok_start:
-                    # TRƯỜNG HỢP 2: CHỦ THẦU CÓ OK Ở ĐẦU TIN -> ĐÃ NHẬN
-                    self.log(f"Chủ thầu {sender_label}: {text} (đã xác nhận Ok)", "SUCCESS")
-                    if forward_contractor_all and owner_cid and str(chat_id) != str(owner_cid):
-                        self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
-
-                    # Giải phóng hàng đợi: Nhắn Ok tin X cho các khách đang chờ
-                    if hasattr(self, "pending_client_receipts") and self.pending_client_receipts:
-                        for pending in list(self.pending_client_receipts):
-                            cid = pending["chat_id"]
-                            r_text = pending["receipt_text"]
-                            s_label = pending.get("sender_label", cid)
-                            orig_text = pending.get("text", "")
-                            m_idx = pending.get("msg_idx", "")
-                            if len(r_text) > 3800:
-                                chunks = [r_text[i:i+3800] for i in range(0, len(r_text), 3800)]
-                                for chunk in chunks:
-                                    self.send_telegram_message(cid, chunk, track_for_cleanup=True, tag="receipt")
-                            else:
-                                self.send_telegram_message(cid, r_text, track_for_cleanup=True, tag="receipt")
-                            self.log(f"Khách {s_label}: {orig_text} (Chủ thầu đã Ok -> Đã nhắn lại Ok tin {m_idx})", "SUCCESS")
                         self.pending_client_receipts.clear()
 
                 else:
@@ -839,6 +1467,81 @@ class TelegramBotService:
                 return
             cur_owner = self.config.get("owner_chat_id") or "Chưa cài đặt"
             self.send_telegram_message(str(chat_id), f"👑 <b>Chủ Bot hiện tại:</b> <code>{cur_owner}</code>\n\n👉 Cài đặt Chủ Bot: <code>/chubot &lt;chat_id_hoặc_@username&gt;</code>\n👉 Xóa: <code>/chubot xoa</code>\n<i>(Khi đã là Chủ Bot, nhắn tin lệnh điều khiển sẽ tự động nhận diện không cần gõ /mk)</i>")
+            return
+
+        # B3. Duyệt tin cược đang treo: /duyet <id> hoặc /duyet all
+        if cmd_root in ["/duyet", "duyet"] or cmd_root.startswith("/duyet@"):
+            if not user_is_admin:
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            if len(parts) < 2:
+                self.send_telegram_message(str(chat_id), "👉 Vui lòng nhập mã tin cần duyệt:\nVí dụ: <code>/duyet 1</code> hoặc <code>/duyet all</code> để duyệt tất cả.")
+                return
+            target_arg = parts[1].strip().lower()
+            if target_arg in ["all", "het", "tatca"]:
+                res = self.approve_all_pending_bets()
+                self.send_telegram_message(str(chat_id), res.get("message", "Đã xử lý duyệt tất cả!"))
+            elif target_arg.isdigit():
+                res = self.approve_pending_bet(int(target_arg))
+                if res.get("success"):
+                    self.send_telegram_message(str(chat_id), f"✅ Đã duyệt thành công tin #{target_arg}!")
+                else:
+                    self.send_telegram_message(str(chat_id), f"❌ {res.get('error', 'Lỗi không xác định')}")
+            else:
+                self.send_telegram_message(str(chat_id), "❌ Mã tin không hợp lệ. Vui lòng nhập số (ví dụ: <code>/duyet 1</code>).")
+            return
+
+        # B4. Hủy / Từ chối tin cược đang treo: /huy <id>
+        if cmd_root in ["/huy", "huy"] or cmd_root.startswith("/huy@"):
+            if not user_is_admin:
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            if len(parts) < 2 or not parts[1].strip().isdigit():
+                self.send_telegram_message(str(chat_id), "👉 Vui lòng nhập mã tin cần từ chối: <code>/huy 1</code>")
+                return
+            pid = int(parts[1].strip())
+            res = self.reject_pending_bet(pid)
+            if res.get("success"):
+                self.send_telegram_message(str(chat_id), f"❌ Đã từ chối tin #{pid}!")
+            else:
+                self.send_telegram_message(str(chat_id), f"❌ {res.get('error', 'Lỗi không xác định')}")
+            return
+
+        # B5. Xem danh sách tin cược đang treo: /treo
+        if cmd_root in ["/treo", "treo", "/pending", "pending"] or cmd_root.startswith("/treo@"):
+            if not user_is_admin:
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            pending_list = [b for b in self.pending_bets if b.get("status") == "pending"]
+            if not pending_list:
+                self.send_telegram_message(str(chat_id), "🟢 Hiện tại không có tin cược nào đang treo chờ duyệt.")
+                return
+            lines = [f"⏳ <b>DANH SÁCH TIN ĐANG TREO CHỜ DUYỆT ({len(pending_list)} tin):</b>\n━━━━━━━━━━━━━━━━━━"]
+            for b in pending_list:
+                lines.append(f"• <b>#{b.get('id')}</b> - {b.get('sender_label')}: <code>{b.get('raw_text')}</code>")
+            lines.append("\n👉 Nhắn <code>/duyet &lt;mã&gt;</code> hoặc <code>/duyet all</code> để duyệt.")
+            self.send_telegram_message(str(chat_id), "\n".join(lines))
+            return
+
+        # B6. Bật / Tắt chế độ tự động của Bot: /bat, /tat
+        if cmd_root in ["/bat", "bat"] or cmd_root.startswith("/bat@"):
+            if not user_is_admin:
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            self.config["bot_mode"] = "auto"
+            self.save_config()
+            self.log("Chủ bot đã BẬT Bot (Chế độ tự động)", "SUCCESS")
+            self.send_telegram_message(str(chat_id), "🟢 <b>ĐÃ BẬT BOT (TỰ ĐỘNG)</b>\nBot sẽ tự động nhận cược, cân chuyển và Ok lại cho khách!")
+            return
+
+        if cmd_root in ["/tat", "tat"] or cmd_root.startswith("/tat@"):
+            if not user_is_admin:
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            self.config["bot_mode"] = "manual"
+            self.save_config()
+            self.log("Chủ bot đã TẮT Bot (Chế độ Treo chờ duyệt)", "WARN")
+            self.send_telegram_message(str(chat_id), "🟡 <b>ĐÃ TẮT BOT (CHẾ ĐỘ TREO CHỜ DUYỆT)</b>\nBot vẫn quản lý tin nhắn nhưng không tự ý Ok khách. Mọi tin cược sẽ ở trạng thái Treo chờ bạn duyệt!")
             return
 
         # C. Đăng xuất (/logout, /dangxuat)
@@ -1608,13 +2311,68 @@ class TelegramBotService:
                     self.send_telegram_message(str(owner_cid), f"📩 Khách {sender_label}: {text}")
             return
 
+        filter_return_msg = ""
+        # 2b. Kiểm tra Bộ Lọc cược cấm nhận / trả lại khách
+        if self.config.get("bet_filter_enabled", False) and self.config.get("bet_filter_keywords", "").strip():
+            b2d, b3d = expand_filter_numbers(self.config.get("bet_filter_keywords", ""))
+            if b2d or b3d:
+                accepted, rejected = filter_parsed_bets(parsed, b2d, b3d)
+                rej_summary = rejected.get("summary", {})
+                rej_count = rej_summary.get("de_count", 0) + rej_summary.get("lo_count", 0) + rej_summary.get("bacang_count", 0) + rej_summary.get("xien_count", 0)
+
+                if rej_count > 0:
+                    filter_return_msg = format_rejected_receipt(rejected)
+                    owner_cid = self.config.get("owner_chat_id")
+
+                    acc_summary = accepted.get("summary", {})
+                    acc_count = acc_summary.get("de_count", 0) + acc_summary.get("lo_count", 0) + acc_summary.get("bacang_count", 0) + acc_summary.get("xien_count", 0)
+
+                    # Trường hợp 1: Tất cả các con cược đều bị lọc cấm nhận -> Trả lại toàn bộ ngay lập tức
+                    if acc_count == 0:
+                        self.send_telegram_message(str(chat_id), filter_return_msg, track_for_cleanup=True, tag="rejected_receipt")
+                        self.log(f"Khách {sender_label}: {text} (Bộ lọc: Đã trả lại {filter_return_msg})", "WARN")
+                        # Luôn forward thông báo trả lại về cho Chủ Bot
+                        if owner_cid and str(chat_id) != str(owner_cid):
+                            self.send_telegram_message(str(owner_cid), f"⚠️ [BỘ LỌC CƯỢC] Đã trả lại Khách {sender_label}:\n{filter_return_msg}\n(Tin gốc: {text})")
+                        return
+
+                    # Trường hợp 2: Có 1 phần bị lọc, các số còn lại hợp lệ
+                    # Forward ngay cảnh báo các số bị lọc cho Chủ bot biết
+                    if owner_cid and str(chat_id) != str(owner_cid):
+                        self.send_telegram_message(str(owner_cid), f"⚠️ [BỘ LỌC CƯỢC] Khách {sender_label} có số bị lọc trả lại:\n{filter_return_msg}\n(Tin gốc: {text})")
+                    self.log(f"Khách {sender_label}: {text} (Bộ lọc: Lọc ra {filter_return_msg})", "INFO")
+                    parsed = accepted
+                    summary = acc_summary
+                    total_bets_count = acc_count
+
         # Lưu vết tin nhắn cược của khách để tự động xóa sau 24h
         if user_msg_id and chat_id:
             self.track_message(chat_id, user_msg_id, tag="incoming_bet")
             self.last_bet_timestamp = time.time()
 
-        # Tăng số thứ tự tin của khách (Ok tin 1, Ok tin 2...)
+        # KIỂM TRA TRẠNG THÁI BẬT/TẮT BOT:
+        # Nếu bot đang TẮT (bot_mode == "manual"):
+        # - Vẫn quản lý tin nhắn và lưu vào danh sách chờ duyệt để Chủ bot xem
+        # - KHÔNG gửi Ok cho khách
+        # - KHÔNG tự ý tính cược hay cân chuyển ngay
+        # - Báo tin đến Chủ bot để xem và duyệt tin
         chat_id_str = str(chat_id)
+        is_bot_auto = (self.config.get("bot_mode", "auto") == "auto")
+        if not is_bot_auto:
+            pending_item = self.add_pending_bet(
+                chat_id_str=chat_id_str,
+                sender_label=sender_label,
+                username=username,
+                parsed=parsed,
+                raw_text=text,
+                user_msg_id=user_msg_id,
+                filter_return_msg=filter_return_msg
+            )
+            self.log(f"Khách {sender_label}: {text} (⚠️ Bot đang TẮT -> Tin #{pending_item['id']} ở trạng thái TREO chờ duyệt)", "WARN")
+            self.notify_owner_new_pending_bet(pending_item)
+            return
+
+        # Tăng số thứ tự tin của khách (Ok tin 1, Ok tin 2...)
         msg_idx = self.client_msg_counters.get(chat_id_str, 0) + 1
         self.client_msg_counters[chat_id_str] = msg_idx
 
@@ -1662,6 +2420,8 @@ class TelegramBotService:
         # - Nếu KHÔNG CÓ cược thừa (giữ lại 100%): Nhắn Ok tin X cho khách ngay lập tức.
         if self.config.get("auto_reply_client", True):
             receipt_text = format_ok_receipt(parsed, msg_idx)
+            if filter_return_msg:
+                receipt_text = f"{receipt_text}\n{filter_return_msg}"
             if has_forwarded_excess:
                 self.pending_client_receipts.append({
                     "chat_id": chat_id_str,
@@ -1669,6 +2429,7 @@ class TelegramBotService:
                     "msg_idx": msg_idx,
                     "sender_label": sender_label,
                     "text": text,
+                    "parsed": json.loads(json.dumps(parsed)),
                     "created_at": time.time()
                 })
                 self.log(f"Khách {sender_label}: {text} (Đã chuyển thầu {target_recipient}, chờ thầu Ok mới nhắn khách...)", "INFO")
@@ -1917,31 +2678,58 @@ class TelegramBotService:
         self.log("Bot Telegram đã dừng lắng nghe.")
 
     def start(self) -> dict:
-        """Bật bot chạy ngầm"""
-        if self.is_running:
-            return {"status": "already_running"}
+        """Bật bot chạy chế độ tự động (auto)"""
+        self.config["bot_mode"] = "auto"
+        self.save_config()
+        self.log("Bot đã BẬT (Chế độ Tự Động): Tự động nhận cược, cân chuyển và Ok lại cho khách.", "SUCCESS")
 
-        check = self.check_bot_token()
-        if not check.get("valid"):
-            return {"status": "error", "message": check.get("error")}
+        if not self.is_running:
+            check = self.check_bot_token()
+            if not check.get("valid"):
+                return {"status": "error", "message": check.get("error")}
+            self.is_running = True
+            self.polling_thread = threading.Thread(target=self.poll_updates, daemon=True)
+            self.polling_thread.start()
+            return {"status": "started", "bot_mode": "auto", "running": True, "info": check.get("info")}
 
-        self.is_running = True
-        self.polling_thread = threading.Thread(target=self.poll_updates, daemon=True)
-        self.polling_thread.start()
-        return {"status": "started", "info": check.get("info")}
+        return {"status": "started", "bot_mode": "auto", "running": True}
 
-    def stop(self):
-        """Dừng bot"""
+    def stop(self) -> dict:
+        """
+        Chuyển sang trạng thái TẮT (Treo chờ duyệt):
+        - Bot vẫn duy trì nhận tin nhắn để quản lý và hiển thị cho Chủ xem
+        - KHÔNG tự động Ok lại cho khách
+        - Các tin cược sẽ ở trạng thái Treo và báo tin về cho Chủ bot
+        """
+        self.config["bot_mode"] = "manual"
+        self.save_config()
+        self.log("Bot đã TẮT (Chế độ Treo chờ duyệt): Vẫn quản lý tin nhắn nhưng không Ok khách, chờ Chủ bot duyệt.", "WARN")
+
+        # Đảm bảo luồng lắng nghe tin nhắn vẫn chạy để nhận tin nhắn của khách và chủ thầu
+        if not self.is_running and self.config.get("bot_token"):
+            check = self.check_bot_token()
+            if check.get("valid"):
+                self.is_running = True
+                self.polling_thread = threading.Thread(target=self.poll_updates, daemon=True)
+                self.polling_thread.start()
+
+        return {"status": "stopped", "bot_mode": "manual", "running": self.is_running}
+
+    def stop_polling(self) -> dict:
+        """Ngắt kết nối hoàn toàn khỏi Telegram (dừng luồng polling)"""
         self.is_running = False
         if self.polling_thread and self.polling_thread.is_alive():
             self.polling_thread.join(timeout=2)
-        return {"status": "stopped"}
+        self.log("Đã ngắt kết nối hoàn toàn khỏi Telegram Bot API.", "INFO")
+        return {"status": "offline", "running": False}
 
 
 # Singleton instance
 bot_service = TelegramBotService()
-if bot_service.config.get("bot_token"):
-    try:
-        bot_service.start()
-    except Exception:
-        pass
+# Chỉ tự động khởi chạy bot nếu có cờ AUTO_START_BOT=true (ví dụ chạy trên Render / Docker)
+if os.environ.get("AUTO_START_BOT", "").lower() in ["true", "1"]:
+    if bot_service.config.get("bot_token"):
+        try:
+            bot_service.start()
+        except Exception:
+            pass
