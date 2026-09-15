@@ -7184,33 +7184,41 @@ function resetTable() {
   <div id="pageTelegramBotView" class="hidden flex-1 flex flex-col min-h-screen bg-slate-100 dark:bg-dark-900 text-slate-800 dark:text-slate-200">
     
     <!-- Top Header of Bot Dedicated Page -->
-    <header class="bg-[#1e293b] border-b border-slate-700 text-white px-3 sm:px-4 py-2 flex items-center justify-between gap-2 z-30 sticky top-0">
-      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+    <header class="bg-[#1e293b] border-b border-slate-700 text-white px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 z-30 sticky top-0">
+      <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
         <!-- Nút Quay lại Trang Chủ Phẳng -->
-        <button type="button" onclick="showMainCalculatorView()" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-white rounded-xs text-xs font-semibold border border-slate-600 flex items-center gap-1.5 cursor-pointer shrink-0" title="Quay lại bảng tính cược">
+        <button type="button" onclick="showMainCalculatorView()" class="px-2 sm:px-2.5 py-1 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-white rounded-xs text-xs font-semibold border border-slate-600 flex items-center gap-1 cursor-pointer shrink-0" title="Quay lại bảng tính cược">
           <i class="fa-solid fa-arrow-left text-xs"></i>
-          <span>Quay lại Trang Chủ</span>
+          <span class="hidden sm:inline">Quay lại Trang Chủ</span>
+          <span class="sm:hidden">Trang Chủ</span>
         </button>
 
-        <div class="flex items-center gap-2 min-w-0">
-          <i class="fa-brands fa-telegram text-sky-400 text-base"></i>
-          <h2 class="text-xs sm:text-sm font-bold text-white tracking-wide truncate uppercase">Quản Trị Telegram Bot</h2>
-          <div id="tgModalStatusBadge" class="flex items-center gap-1.5 px-2 py-0.5 rounded-xs text-[11px] font-mono font-bold uppercase bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
-            <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-            <span>Đang kiểm tra...</span>
-          </div>
+        <div class="flex items-center gap-1.5 min-w-0">
+          <i class="fa-brands fa-telegram text-sky-400 text-base shrink-0"></i>
+          <h2 class="text-xs sm:text-sm font-bold text-white tracking-wide truncate uppercase">
+            <span class="hidden sm:inline">Quản Trị Telegram Bot</span>
+            <span class="sm:hidden">Bot Telegram</span>
+          </h2>
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5 shrink-0">
-        <button id="btnToggleBotRun" type="button" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white rounded-xs text-xs font-semibold border border-emerald-800 flex items-center gap-1 cursor-pointer">
-          <i class="fa-solid fa-play text-[10px]"></i>
-          <span id="lblToggleBotRun">Bật Bot</span>
-        </button>
-        <button id="btnLockTgModal" type="button" onclick="lockTgModal()" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-slate-200 border border-slate-600 rounded-xs text-xs font-semibold flex items-center gap-1 cursor-pointer" title="Khóa cài đặt ngay">
-          <i class="fa-solid fa-lock text-[10px]"></i>
-          <span>Khóa</span>
-        </button>
+      <div class="flex items-center gap-1.5 shrink-0 ml-auto">
+        <div id="tgModalStatusBadge" class="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-xs text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+          <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-slate-400 shrink-0"></span>
+          <span>Đang kiểm tra...</span>
+        </div>
+
+        <!-- Các nút thao tác chỉ hiện khi ĐÃ MỞ KHÓA -->
+        <div id="tgHeaderAdminControls" class="flex items-center gap-1 sm:gap-1.5 hidden">
+          <button id="btnToggleBotRun" type="button" class="px-2 sm:px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white rounded-xs text-xs font-semibold border border-emerald-800 flex items-center gap-1 cursor-pointer shrink-0">
+            <i class="fa-solid fa-play text-[10px]"></i>
+            <span id="lblToggleBotRun">Bật Bot</span>
+          </button>
+          <button id="btnLockTgModal" type="button" onclick="lockTgModal()" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-slate-200 border border-slate-600 rounded-xs text-xs font-semibold flex items-center gap-1 cursor-pointer shrink-0" title="Khóa cài đặt ngay">
+            <i class="fa-solid fa-lock text-[10px]"></i>
+            <span class="hidden sm:inline">Khóa</span>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -7237,35 +7245,68 @@ function resetTable() {
         <button type="button" onclick="showMainCalculatorView()" class="w-full py-2 bg-slate-200 dark:bg-dark-700 hover:bg-slate-300 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-300 rounded-xs text-xs font-bold flex items-center justify-center gap-2 cursor-pointer border border-slate-300 dark:border-slate-600">
           <i class="fa-solid fa-arrow-left"></i> Quay Lại Trang Chủ
         </button>
-        <!-- Khung Cấu Hình Máy Chủ Backend Ngay Màn Hình Khóa -->
-        <div class="pt-3 mt-2 border-t border-slate-200 dark:border-dark-700 text-left space-y-2">
-          <div class="flex items-center justify-between text-xs">
-            <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <i class="fa-solid fa-cloud text-sky-600"></i> Máy Chủ Backend:
-            </span>
-            <span id="tgLockBackendStatusBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded-xs bg-slate-100 dark:bg-dark-800 text-slate-500 border border-slate-300 dark:border-slate-700">
-              <i class="fa-solid fa-circle-notch fa-spin text-sky-500 mr-1"></i>Đang kiểm tra...
-            </span>
-          </div>
-
-          <div class="flex gap-1.5">
-            <input type="text" id="tgLockInputApiUrl" placeholder="https://z8-jv1z.onrender.com" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-xs px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-dark-800 font-mono text-slate-800 dark:text-slate-200 focus:border-sky-500 focus:outline-none">
-            <button type="button" onclick="applyTgLockApiUrl()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white rounded-xs text-xs font-bold flex items-center gap-1 cursor-pointer border border-slate-900 shadow-2xs">
-              <i class="fa-solid fa-link"></i> Lưu
+        <!-- Trạng Thái Máy Chủ Backend (Khóa bảo vệ bằng mật khẩu khi sửa) -->
+        <div class="pt-3 mt-2 border-t border-slate-200 dark:border-dark-700 text-left">
+          <div class="flex items-center justify-between gap-1 text-xs">
+            <div class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 min-w-0">
+              <i class="fa-solid fa-cloud text-sky-600 shrink-0"></i>
+              <span class="font-bold text-slate-700 dark:text-slate-300 shrink-0">Máy Chủ:</span>
+              <span id="tgLockBackendStatusBadge" class="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-xs bg-slate-100 dark:bg-dark-800 text-slate-500 border border-slate-300 dark:border-slate-700 truncate">
+                <i class="fa-solid fa-circle-notch fa-spin text-sky-500 mr-1"></i>Đang kiểm tra...
+              </span>
+            </div>
+            <button type="button" id="btnToggleServerAuthPrompt" onclick="openServerAuthPrompt()" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-dark-800 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 rounded-xs text-[11px] font-bold border border-slate-300 dark:border-slate-600 flex items-center gap-1 cursor-pointer shrink-0" title="Nhập mật khẩu để sửa địa chỉ máy chủ">
+              <i class="fa-solid fa-lock text-[10px] text-amber-500"></i> Sửa địa chỉ
             </button>
           </div>
 
-          <!-- Nút chọn nhanh máy chủ -->
-          <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
-            <button type="button" onclick="setQuickTgBackend('cloud')" class="px-2 py-1 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 dark:hover:bg-sky-900 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-700 rounded-xs text-[11px] font-bold flex items-center gap-1 cursor-pointer shadow-2xs">
-              <i class="fa-solid fa-cloud text-sky-600"></i> Render Cloud
-            </button>
-            <button type="button" onclick="setQuickTgBackend('local')" class="px-2 py-1 bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-xs text-[11px] font-semibold flex items-center gap-1 cursor-pointer shadow-2xs">
-              <i class="fa-solid fa-laptop text-slate-500"></i> Cục bộ (5005)
-            </button>
-            <button id="btnTgQuickLanLock" type="button" onclick="setQuickTgBackend('lan')" class="px-2 py-1 bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-xs text-[11px] font-semibold flex items-center gap-1 cursor-pointer shadow-2xs hidden">
-              <i class="fa-solid fa-network-wired text-slate-500"></i> Mạng LAN
-            </button>
+          <!-- Khung 1: Nhập mật khẩu quản trị để mở sửa địa chỉ (Mặc định ẩn) -->
+          <div id="tgServerAuthPromptBox" class="hidden mt-2 p-2.5 bg-slate-50 dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+              <span class="flex items-center gap-1.5 text-[11px]">
+                <i class="fa-solid fa-key text-amber-500"></i> Nhập mật khẩu để sửa địa chỉ:
+              </span>
+              <button type="button" onclick="closeServerAuthPrompt()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-1 cursor-pointer">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div class="flex gap-1.5">
+              <input type="password" id="tgServerAuthPassword" placeholder="••••••••" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-xs px-2.5 py-1 text-xs bg-white dark:bg-dark-900 font-mono text-center font-bold focus:border-sky-500 focus:outline-none">
+              <button type="button" onclick="submitServerAuthPassword()" class="px-3 py-1 bg-sky-700 hover:bg-sky-600 text-white rounded-xs text-xs font-bold flex items-center gap-1 cursor-pointer">
+                Xác nhận
+              </button>
+            </div>
+            <p id="tgServerAuthError" class="text-[11px] text-rose-500 font-semibold hidden text-center"></p>
+          </div>
+
+          <!-- Khung 2: Nhập & Sửa địa chỉ máy chủ (Chỉ hiện khi đã xác nhận đúng mật khẩu) -->
+          <div id="tgServerConfigUnlockedBox" class="hidden mt-2 p-2.5 bg-sky-50/60 dark:bg-dark-800/80 rounded-xs border border-sky-200 dark:border-sky-800 space-y-2">
+            <div class="flex items-center justify-between text-[11px] font-bold text-sky-900 dark:text-sky-300">
+              <span><i class="fa-solid fa-pen-to-square mr-1"></i>Thay đổi địa chỉ Backend:</span>
+              <button type="button" onclick="closeServerConfigUnlocked()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-1 cursor-pointer" title="Đóng & Khóa lại">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div class="flex gap-1.5">
+              <input type="text" id="tgLockInputApiUrl" placeholder="https://z8-jv1z.onrender.com" class="flex-1 border border-slate-300 dark:border-slate-600 rounded-xs px-2.5 py-1.5 text-xs bg-white dark:bg-dark-900 font-mono text-slate-800 dark:text-slate-200 focus:border-sky-500 focus:outline-none">
+              <button type="button" onclick="applyTgLockApiUrl()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xs text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs">
+                <i class="fa-solid fa-link"></i> Lưu
+              </button>
+            </div>
+
+            <!-- Nút chọn nhanh máy chủ -->
+            <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+              <button type="button" onclick="setQuickTgBackend('cloud')" class="px-2 py-1 bg-sky-100 dark:bg-sky-950/60 hover:bg-sky-200 text-sky-800 dark:text-sky-300 border border-sky-300 dark:border-sky-700 rounded-xs text-[11px] font-bold flex items-center gap-1 cursor-pointer shadow-2xs">
+                <i class="fa-solid fa-cloud text-sky-600"></i> Render Cloud
+              </button>
+              <button type="button" onclick="setQuickTgBackend('local')" class="px-2 py-1 bg-white dark:bg-dark-900 hover:bg-slate-100 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-xs text-[11px] font-semibold flex items-center gap-1 cursor-pointer shadow-2xs">
+                <i class="fa-solid fa-laptop text-slate-500"></i> Cục bộ (5005)
+              </button>
+              <button id="btnTgQuickLanLock" type="button" onclick="setQuickTgBackend('lan')" class="px-2 py-1 bg-white dark:bg-dark-900 hover:bg-slate-100 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-xs text-[11px] font-semibold flex items-center gap-1 cursor-pointer shadow-2xs hidden">
+                <i class="fa-solid fa-network-wired text-slate-500"></i> Mạng LAN
+              </button>
+            </div>
           </div>
         </div>
       </form>
@@ -8336,6 +8377,92 @@ function resetTable() {
     }
     window.saveTgApiUrl = saveTgApiUrl;
 
+    function openServerAuthPrompt() {
+      const authBox = document.getElementById('tgServerAuthPromptBox');
+      const unlockedBox = document.getElementById('tgServerConfigUnlockedBox');
+      if (unlockedBox && !unlockedBox.classList.contains('hidden')) {
+        document.getElementById('tgLockInputApiUrl')?.focus();
+        return;
+      }
+      if (authBox) {
+        authBox.classList.remove('hidden');
+        const inp = document.getElementById('tgServerAuthPassword');
+        if (inp) {
+          inp.value = '';
+          inp.focus();
+        }
+        document.getElementById('tgServerAuthError')?.classList.add('hidden');
+      }
+    }
+    window.openServerAuthPrompt = openServerAuthPrompt;
+
+    function closeServerAuthPrompt() {
+      const authBox = document.getElementById('tgServerAuthPromptBox');
+      if (authBox) authBox.classList.add('hidden');
+      const err = document.getElementById('tgServerAuthError');
+      if (err) err.classList.add('hidden');
+    }
+    window.closeServerAuthPrompt = closeServerAuthPrompt;
+
+    function closeServerConfigUnlocked() {
+      document.getElementById('tgServerConfigUnlockedBox')?.classList.add('hidden');
+    }
+    window.closeServerConfigUnlocked = closeServerConfigUnlocked;
+
+    async function submitServerAuthPassword() {
+      const pwd = document.getElementById('tgServerAuthPassword')?.value?.trim();
+      const errEl = document.getElementById('tgServerAuthError');
+      if (!pwd) {
+        if (errEl) {
+          errEl.textContent = "Vui lòng nhập mật khẩu quản trị!";
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+
+      let isVerified = false;
+      // 1. Thử xác thực với Backend API
+      try {
+        const res = await callBotApi("/api/bot/verify_password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: pwd }),
+          timeout: 4000
+        });
+        const data = await res.json();
+        if (data && data.success) isVerified = true;
+      } catch (_) {}
+
+      // 2. Dự phòng: Mật khẩu chuẩn "1986" của hệ thống hoặc cache
+      if (!isVerified) {
+        if (pwd === "1986" || pwd === localStorage.getItem('tg_admin_password_cache')) {
+          isVerified = true;
+        }
+      }
+
+      if (isVerified) {
+        localStorage.setItem('tg_admin_password_cache', pwd);
+        closeServerAuthPrompt();
+        const unlockedBox = document.getElementById('tgServerConfigUnlockedBox');
+        if (unlockedBox) {
+          unlockedBox.classList.remove('hidden');
+          const inp = document.getElementById('tgLockInputApiUrl');
+          if (inp) {
+            inp.value = TG_BOT_API || CLOUD_DEFAULT_API;
+            inp.focus();
+            inp.select();
+          }
+        }
+      } else {
+        if (errEl) {
+          errEl.textContent = "Mật khẩu không chính xác!";
+          errEl.classList.remove('hidden');
+          document.getElementById('tgServerAuthPassword')?.select();
+        }
+      }
+    }
+    window.submitServerAuthPassword = submitServerAuthPassword;
+
     function toggleTgQuickSync() {
       const box = document.getElementById('tgQuickSyncButtons');
       const icon = document.getElementById('iconToggleQuickSync');
@@ -8484,34 +8611,34 @@ function resetTable() {
         }
 
         const isCloud = (TG_BOT_API || '').includes('onrender.com');
-        const srvLabel = isCloud ? 'RENDER CLOUD' : 'CỤC BỘ';
+        const srvLabel = isCloud ? 'CLOUD' : 'LOCAL';
 
         if (botMode === "auto" && isRunning) {
           if (badge) {
-            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>ĐANG BẬT (${srvLabel})</span>`;
-            badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-xs text-[11px] font-mono font-bold uppercase bg-emerald-900/60 text-emerald-300 border border-emerald-600 shrink-0";
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span><span>BẬT (${srvLabel})</span>`;
+            badge.className = "flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-xs text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-emerald-900/60 text-emerald-300 border border-emerald-600 shrink-0";
           }
           if (btnToggle) {
-            btnToggle.className = "px-3 py-1.5 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white rounded-xs text-xs font-bold border border-amber-700 flex items-center gap-1.5 cursor-pointer shadow-xs transition";
-            btnToggle.innerHTML = `<i class="fa-solid fa-pause text-xs"></i><span id="lblToggleBotRun">Tắt Bot (Treo tin)</span>`;
+            btnToggle.className = "px-2 sm:px-2.5 py-1 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white rounded-xs text-xs font-bold border border-amber-700 flex items-center gap-1 cursor-pointer shadow-xs transition shrink-0";
+            btnToggle.innerHTML = `<i class="fa-solid fa-pause text-[10px]"></i><span id="lblToggleBotRun"><span class="hidden sm:inline">Tắt Bot (Treo tin)</span><span class="sm:hidden">Tắt Bot</span></span>`;
           }
         } else {
           if (badge) {
-            const pendingTxt = pendingCount > 0 ? ` (${pendingCount} TIN TREO)` : '';
-            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span><span>ĐANG TẮT - TREO TIN${pendingTxt} (${srvLabel})</span>`;
-            badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-xs text-[11px] font-mono font-bold uppercase bg-amber-900/60 text-amber-300 border border-amber-600 shrink-0";
+            const pendingTxt = pendingCount > 0 ? ` (${pendingCount})` : '';
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span><span>TẮT${pendingTxt} (${srvLabel})</span>`;
+            badge.className = "flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-xs text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-amber-900/60 text-amber-300 border border-amber-600 shrink-0";
           }
           if (btnToggle) {
-            btnToggle.className = "px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xs text-xs font-bold border border-emerald-700 flex items-center gap-1.5 cursor-pointer shadow-xs transition";
-            btnToggle.innerHTML = `<i class="fa-solid fa-play text-xs"></i><span id="lblToggleBotRun">Bật Bot (Tự động)</span>`;
+            btnToggle.className = "px-2 sm:px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xs text-xs font-bold border border-emerald-700 flex items-center gap-1 cursor-pointer shadow-xs transition shrink-0";
+            btnToggle.innerHTML = `<i class="fa-solid fa-play text-[10px]"></i><span id="lblToggleBotRun"><span class="hidden sm:inline">Bật Bot (Tự động)</span><span class="sm:hidden">Bật Bot</span></span>`;
           }
         }
       } catch (err) {
         if (badge) {
           const isCloud = (TG_BOT_API || '').includes('onrender.com');
-          const srvLabel = isCloud ? 'RENDER' : 'CỤC BỘ';
-          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span><span>CHƯA KẾT NỐI (${srvLabel})</span>`;
-          badge.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-xs text-[11px] font-mono font-bold uppercase bg-rose-950 text-rose-400 border border-rose-800 shrink-0";
+          const srvLabel = isCloud ? 'CLOUD' : 'LOCAL';
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span><span>MẤT KẾT NỐI (${srvLabel})</span>`;
+          badge.className = "flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-xs text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-rose-950 text-rose-400 border border-rose-800 shrink-0";
         }
       }
     }
@@ -9696,6 +9823,9 @@ function resetTable() {
           sessionStorage.setItem('tg_admin_unlocked', 'true');
           document.getElementById('tgModalLockScreen')?.classList.add('hidden');
           document.getElementById('tgModalBodyContainer')?.classList.remove('hidden');
+          document.getElementById('tgHeaderAdminControls')?.classList.remove('hidden');
+          closeServerAuthPrompt();
+          closeServerConfigUnlocked();
           errEl.classList.add('hidden');
           loadTgBotConfig();
           checkTgBotStatus();
@@ -9706,7 +9836,7 @@ function resetTable() {
           document.getElementById('tgModalUnlockPassword')?.select();
         }
       } catch (e) {
-        errEl.innerHTML = `Không thể kết nối Backend tại: <b class="font-mono text-slate-800 dark:text-slate-100">${TG_BOT_API}</b>.<br><span class="font-normal text-slate-600 dark:text-slate-400">Nếu bạn chạy bot trên Render Cloud, hãy bấm nút <b>Render Cloud</b> bên dưới rồi thử lại.</span>`;
+        errEl.innerHTML = `Không thể kết nối Backend tại: <b class="font-mono text-slate-800 dark:text-slate-100">${TG_BOT_API}</b>.<br><span class="font-normal text-slate-600 dark:text-slate-400">Nếu bạn cần đổi địa chỉ máy chủ, bấm nút <b>Sửa địa chỉ</b> bên dưới.</span>`;
         errEl.classList.remove('hidden');
         testTgLockBackendConnection(TG_BOT_API);
       } finally {
@@ -9718,6 +9848,9 @@ function resetTable() {
       sessionStorage.removeItem('tg_admin_unlocked');
       document.getElementById('tgModalLockScreen')?.classList.remove('hidden');
       document.getElementById('tgModalBodyContainer')?.classList.add('hidden');
+      document.getElementById('tgHeaderAdminControls')?.classList.add('hidden');
+      closeServerAuthPrompt();
+      closeServerConfigUnlocked();
       const inp = document.getElementById('tgModalUnlockPassword');
       if (inp) {
         inp.value = '';
@@ -9762,15 +9895,22 @@ function resetTable() {
       const isUnlocked = sessionStorage.getItem('tg_admin_unlocked') === 'true';
       const lockEl = document.getElementById('tgModalLockScreen');
       const bodyEl = document.getElementById('tgModalBodyContainer');
+      const adminControls = document.getElementById('tgHeaderAdminControls');
       if (isUnlocked) {
         lockEl?.classList.add('hidden');
         bodyEl?.classList.remove('hidden');
+        adminControls?.classList.remove('hidden');
+        closeServerAuthPrompt();
+        closeServerConfigUnlocked();
         loadTgBotConfig();
         checkTgBotStatus();
         switchTgTab('inbox');
       } else {
         lockEl?.classList.remove('hidden');
         bodyEl?.classList.add('hidden');
+        adminControls?.classList.add('hidden');
+        closeServerAuthPrompt();
+        closeServerConfigUnlocked();
         testTgLockBackendConnection(TG_BOT_API);
         setTimeout(() => document.getElementById('tgModalUnlockPassword')?.focus(), 150);
       }
