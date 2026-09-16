@@ -539,7 +539,9 @@ def settle_now():
         notify_recipient=send_tg,
         notify_owner=send_tg
     )
+    bot_service._reset_after_settle(kq.get('date', ''))
     return jsonify(res)
+
 
 
 if __name__ == "__main__":

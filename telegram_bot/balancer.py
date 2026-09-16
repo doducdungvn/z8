@@ -159,9 +159,9 @@ class BoardBalancer:
 
         return new_transfers
 
-    def commit_transfers(self, transfers: dict):
+    def commit_transfers(self, transfers: dict, client_chat_id: str = "", client_msg_idx: int = None, client_history_idx: int = None):
         """
-        Đánh dấu đã chuyển đi phần cược thừa (ghi nhận lũy kế)
+        Đánh dấu đã chuyển đi phần cược thừa (ghi nhận lũy kế) và gắn liên kết với tin cược của khách.
         """
         has_transfer = False
         for num, amt in transfers.get('de', {}).items():
@@ -192,8 +192,142 @@ class BoardBalancer:
                 "timestamp": datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
                 "transferred": transfers,
                 "transfer_text": transfer_text,
-                "voided": False
+                "voided": False,
+                "client_chat_id": str(client_chat_id) if client_chat_id else "",
+                "client_msg_idx": client_msg_idx,
+                "client_history_idx": client_history_idx
             })
+
+    def void_transfers_for_client_bet(self, client_chat_id: str, client_history_idx: int = None, client_msg_idx: int = None, voided: bool = True) -> int:
+        """
+        Tự động bật/tắt bỏ qua (void) các lần chuyển thầu liên quan đến tin cược của khách.
+        Đảm bảo nguyên tắc: Khách bỏ qua tin nào -> cược chuyển thầu của tin đó tự động hủy theo.
+        """
+        affected = 0
+        cid_str = str(client_chat_id or "").strip()
+        for h in self.transfer_history:
+            h_cid = str(h.get("client_chat_id", "")).strip()
+            h_idx = h.get("client_history_idx")
+            m_idx = h.get("client_msg_idx")
+
+            match = False
+            if cid_str and h_cid == cid_str:
+                if client_history_idx is not None and h_idx == client_history_idx:
+                    match = True
+                elif client_msg_idx is not None and m_idx == client_msg_idx:
+                    match = True
+
+            if match:
+                h["voided"] = voided
+                affected += 1
+
+        if affected > 0:
+            self.recalculate_cumulative_transfers()
+        return affected
+
+    def delete_transfers_for_client_bet(self, client_chat_id: str, client_history_idx: int = None, client_msg_idx: int = None) -> int:
+        """
+        Xóa vĩnh viễn các lần chuyển thầu liên quan đến tin cược của khách bị xóa.
+        """
+        cid_str = str(client_chat_id or "").strip()
+        new_hist = []
+        deleted = 0
+        for h in self.transfer_history:
+            h_cid = str(h.get("client_chat_id", "")).strip()
+            h_idx = h.get("client_history_idx")
+            m_idx = h.get("client_msg_idx")
+
+            match = False
+            if cid_str and h_cid == cid_str:
+                if client_history_idx is not None and h_idx == client_history_idx:
+                    match = True
+                elif client_msg_idx is not None and m_idx == client_msg_idx:
+                    match = True
+
+            if match:
+                deleted += 1
+            else:
+                new_hist.append(h)
+
+        if deleted > 0:
+            self.transfer_history = new_hist
+            self.recalculate_cumulative_transfers()
+        return deleted
+
+    def _format_grouped_numbers(self, items: dict) -> str:
+        """Gom nhóm các con số có cùng số tiền: ví dụ 12.34x20, 56x50"""
+        groups = {}
+        for num, amt in items.items():
+            amt_rounded = int(amt) if isinstance(amt, (int, float)) and float(amt).is_integer() else amt
+            groups.setdefault(amt_rounded, []).append(str(num))
+        sorted_amts = sorted(groups.keys(), key=lambda x: float(x))
+        group_strings = []
+        for a in sorted_amts:
+            nums = sorted(groups[a], key=lambda x: int(x) if x.isdigit() else x)
+            group_strings.append(f"{'.'.join(nums)}x{a}")
+        return ", ".join(group_strings)
+
+    def calculate_retained_from_single_bet(self, parsed: dict, excess: dict) -> str:
+        """
+        Tính toán và định dạng chuỗi các con số giữ lại để ôm từ 1 tin cược của khách (sau khi trừ cược thừa).
+        """
+        excess_de = excess.get('de', {}) if excess else {}
+        excess_lo = excess.get('lo', {}) if excess else {}
+        excess_bc = excess.get('bacang', {}) if excess else {}
+        excess_xien = excess.get('xien', {}) if excess else {}
+
+        lines = []
+
+        # Đề
+        de_items = {}
+        for b in parsed.get('de', []):
+            num = str(b['number']).zfill(2)
+            amt = float(b['amount'])
+            ex_amt = float(excess_de.get(num, 0.0))
+            held = amt - ex_amt
+            if held > 0:
+                de_items[num] = de_items.get(num, 0.0) + held
+        if de_items:
+            lines.append(f"Đề {self._format_grouped_numbers(de_items)}")
+
+        # Lô
+        lo_items = {}
+        for b in parsed.get('lo', []):
+            num = str(b['number']).zfill(2)
+            amt = float(b['amount'])
+            ex_amt = float(excess_lo.get(num, 0.0))
+            held = amt - ex_amt
+            if held > 0:
+                lo_items[num] = lo_items.get(num, 0.0) + held
+        if lo_items:
+            lines.append(f"Lô {self._format_grouped_numbers(lo_items)}")
+
+        # 3C
+        bc_items = {}
+        for b in parsed.get('bacang', []):
+            num = str(b['number']).zfill(3)
+            amt = float(b['amount'])
+            ex_amt = float(excess_bc.get(num, 0.0))
+            held = amt - ex_amt
+            if held > 0:
+                bc_items[num] = bc_items.get(num, 0.0) + held
+        if bc_items:
+            lines.append(f"3c {self._format_grouped_numbers(bc_items)}")
+
+        # Xiên
+        all_xien = parsed.get('xien2', []) + parsed.get('xien3', []) + parsed.get('xien4', [])
+        xien_items = {}
+        for b in all_xien:
+            key_str = "-".join(str(x).zfill(2) for x in b.get('numbers', []))
+            amt = float(b.get('amount', 0))
+            ex_amt = float(excess_xien.get(key_str, 0.0))
+            held = amt - ex_amt
+            if held > 0:
+                xien_items[key_str] = xien_items.get(key_str, 0.0) + held
+        if xien_items:
+            lines.append(f"Xiên {', '.join(f'{k}x{int(v) if v.is_integer() else v}' for k, v in xien_items.items())}")
+
+        return "\n".join(lines) if lines else "Không ôm (Chuyển 100%)"
 
     def recalculate_cumulative_transfers(self):
         """

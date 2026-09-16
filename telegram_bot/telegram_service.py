@@ -262,7 +262,7 @@ class TelegramBotService:
         self.save_pending_bets()
         return item
 
-    def record_client_bet(self, chat_id_str: str, sender_label: str, username: str, parsed: dict, raw_text: str = "", msg_index: int = 1):
+    def record_client_bet(self, chat_id_str: str, sender_label: str, username: str, parsed: dict, raw_text: str = "", msg_index: int = 1, transfer_text: str = "", retain_text: str = ""):
         c = self.client_bets.setdefault(chat_id_str, {
             "name": sender_label,
             "username": username,
@@ -289,8 +289,11 @@ class TelegramBotService:
                 "summary": parsed.get("summary", {}),
                 "invalid_items": parsed.get("invalid_items", []),
                 "parsed": parsed,
-                "voided": False
+                "voided": False,
+                "transfer_text": transfer_text,  # Nội dung cân chuyển sang thầu (nếu có)
+                "retain_text": retain_text        # Tóm tắt phần giữ lại
             })
+
 
         for b in parsed.get("de", []):
             num = str(b["number"]).zfill(2)
@@ -312,6 +315,16 @@ class TelegramBotService:
             })
 
         self.save_client_bets()
+
+    def update_last_bet_transfer(self, chat_id_str: str, transfer_text: str = "", retain_text: str = ""):
+        """Cập nhật thông tin cân chuyển/giữ lại vào item lịch sử cuối cùng của khách.
+        Được gọi SAU khi đã tính toán excess, để lưu vào Hộp Thư hiển thị cho admin xem."""
+        if chat_id_str in self.client_bets:
+            hist = self.client_bets[chat_id_str].get("history", [])
+            if hist:
+                hist[-1]["transfer_text"] = transfer_text
+                hist[-1]["retain_text"] = retain_text
+                self.save_client_bets()
 
     def recompute_client_totals(self, chat_id_str: str):
         """Tính toán lại tổng cược tích lũy của 1 khách từ các tin nhắn chưa bị hủy bỏ (voided=False)"""
@@ -398,6 +411,8 @@ class TelegramBotService:
                     "summary": item.get("summary", {}),
                     "invalid_items": item.get("invalid_items", []),
                     "voided": item.get("voided", False),
+                    "transfer_text": item.get("transfer_text", ""),
+                    "retained_text": item.get("retained_text") or item.get("retain_text", ""),
                     "is_pending": False,
                     "status": "active"
                 })
@@ -416,6 +431,8 @@ class TelegramBotService:
                 "summary": pb.get("parsed", {}).get("summary", {}),
                 "invalid_items": pb.get("parsed", {}).get("invalid_items", []),
                 "voided": False,
+                "transfer_text": pb.get("transfer_text", ""),
+                "retained_text": pb.get("retained_text") or pb.get("retain_text", ""),
                 "is_pending": (pb.get("status") == "pending"),
                 "status": pb.get("status", "pending")
             })
@@ -423,17 +440,36 @@ class TelegramBotService:
         return all_msgs
 
     def toggle_client_message_void(self, chat_id_str: str, history_idx: int) -> dict:
-        """Bật/tắt trạng thái bỏ qua tin nhắn cược của khách"""
+        """Bật/tắt trạng thái bỏ qua tin nhắn cược của khách, đồng thời tự động hủy/khôi phục cược chuyển thầu tương ứng"""
         if chat_id_str in self.client_bets:
             hist = self.client_bets[chat_id_str].get("history", [])
             if 0 <= history_idx < len(hist):
                 item = hist[history_idx]
                 item["voided"] = not item.get("voided", False)
+                is_voided = item["voided"]
+
+                # 1. Tự động hủy đồng bộ các bước chuyển thầu sinh ra từ tin cược này
+                m_idx = item.get("msg_index")
+                affected_transfers = self.balancer.void_transfers_for_client_bet(
+                    client_chat_id=chat_id_str,
+                    client_history_idx=history_idx,
+                    client_msg_idx=m_idx,
+                    voided=is_voided
+                )
+
+                # 2. Tính lại tiền cược của khách và nạp lại bảng Balancer
                 self.recompute_client_totals(chat_id_str)
                 self.rebuild_board_from_active_bets()
-                status_txt = "BỎ QUA (không tính tiền)" if item["voided"] else "KHÔI PHỤC tính tiền"
-                self.log(f"Đã {status_txt} tin #{history_idx + 1} của khách {chat_id_str}. Đã cập nhật lại bảng cược & tiền thầu.", "SUCCESS")
-                return {"success": True, "voided": item["voided"]}
+
+                # 3. Đồng bộ lại số thứ tự tin hợp lệ của khách
+                # Nếu tin bị bỏ qua, số tin hợp lệ lùi lại để tin tiếp theo khách gửi sẽ nhận đúng số thứ tự
+                valid_count = len([h for h in hist if not h.get("voided", False)])
+                self.client_msg_counters[chat_id_str] = valid_count
+
+                status_txt = "BỎ QUA (không tính tiền)" if is_voided else "KHÔI PHỤC tính tiền"
+                tf_note = f" (Đã tự động hủy {affected_transfers} bước chuyển thầu tương ứng)" if (is_voided and affected_transfers > 0) else ""
+                self.log(f"Đã {status_txt} tin #{history_idx + 1} của khách {chat_id_str}{tf_note}. Đã cập nhật lại bảng cược & tiền thầu.", "SUCCESS")
+                return {"success": True, "voided": is_voided, "affected_transfers": affected_transfers}
         return {"success": False, "error": "Không tìm thấy tin nhắn"}
 
     def toggle_transfer_void(self, step_idx: int) -> dict:
@@ -444,10 +480,15 @@ class TelegramBotService:
         return {"success": True, "voided": voided}
 
     def delete_single_raw_message(self, chat_id_str: str, history_idx: int = None, pending_id: int = None) -> bool:
-        """Xóa 1 tin nhắn gốc cụ thể khỏi danh sách (hoặc tin treo)"""
+        """Xóa 1 tin nhắn gốc cụ thể khỏi danh sách (hoặc tin treo) và xóa đồng bộ cược chuyển thầu"""
         if pending_id is not None:
             for i, pb in enumerate(getattr(self, "pending_bets", [])):
                 if pb.get("id") == int(pending_id):
+                    m_idx = pb.get("msg_idx")
+                    self.balancer.delete_transfers_for_client_bet(
+                        client_chat_id=pb.get("chat_id"),
+                        client_msg_idx=m_idx
+                    )
                     self.pending_bets.pop(i)
                     self.save_pending_bets()
                     self.log(f"Đã xóa vĩnh viễn tin treo #{pending_id}", "SUCCESS")
@@ -455,9 +496,18 @@ class TelegramBotService:
         if chat_id_str in self.client_bets and history_idx is not None:
             hist = self.client_bets[chat_id_str].get("history", [])
             if 0 <= history_idx < len(hist):
+                item = hist[history_idx]
+                m_idx = item.get("msg_index")
+                self.balancer.delete_transfers_for_client_bet(
+                    client_chat_id=chat_id_str,
+                    client_history_idx=history_idx,
+                    client_msg_idx=m_idx
+                )
                 hist.pop(history_idx)
                 self.recompute_client_totals(chat_id_str)
                 self.rebuild_board_from_active_bets()
+                valid_count = len([h for h in hist if not h.get("voided", False)])
+                self.client_msg_counters[chat_id_str] = valid_count
                 self.log(f"Đã xóa vĩnh viễn tin nhắn gốc #{history_idx + 1} của {chat_id_str}", "SUCCESS")
                 return True
         return False
@@ -1157,6 +1207,7 @@ class TelegramBotService:
 
         # 2. Ghi nhận cược vào client_bets
         self.record_client_bet(chat_id_str, sender_label, username, parsed, raw_text=text, msg_index=msg_idx)
+        hist_idx = len(self.client_bets[chat_id_str].get("history", [])) - 1
 
         # 3. Cân bảng và tính phần cược thừa
         excess = self.balancer.add_bets(parsed)
@@ -1171,7 +1222,12 @@ class TelegramBotService:
                     transfer_msg = self.balancer.format_transfer_message(excess, header_prefix="Thầu")
                     success, err = self.send_telegram_message(target_recipient, transfer_msg, track_for_cleanup=True, tag="transfer")
                     if success:
-                        self.balancer.commit_transfers(excess)
+                        self.balancer.commit_transfers(
+                            excess,
+                            client_chat_id=chat_id_str,
+                            client_msg_idx=msg_idx,
+                            client_history_idx=hist_idx
+                        )
                         self.stats["transfers_sent"] += 1
                         self.pending_recipient_acks = {
                             "timestamp": time.time(),
@@ -1183,6 +1239,13 @@ class TelegramBotService:
                         self.log(f"Gửi chủ thầu {target_recipient}: {transfer_summary}", "INFO")
                     else:
                         self.log(f"❌ Thất bại khi gửi cược thừa tới {target_recipient}: {err}", "ERROR")
+
+        # Lưu nội dung cân chuyển và giữ lại vào chi tiết tin khách
+        single_transfer_txt = self.balancer.format_transfer_message(excess, include_header=False) if excess_count > 0 else ""
+        single_retained_txt = self.balancer.calculate_retained_from_single_bet(parsed, excess)
+        self.update_last_bet_transfer(chat_id_str, transfer_text=single_transfer_txt, retain_text=single_retained_txt)
+        item["transfer_text"] = single_transfer_txt
+        item["retained_text"] = single_retained_txt
 
         # 5. Phản hồi xác nhận cho khách:
         receipt_text = format_ok_receipt(parsed, msg_idx)
@@ -1253,6 +1316,21 @@ class TelegramBotService:
         sender_label = item.get("sender_label", chat_id_str)
         text = item["raw_text"]
 
+        # Tăng counter ngay cả khi reject để giữ đúng thứ tự tin (Ok tin 1, Ok tin 2, ...)
+        # Nếu không tăng, tin tiếp theo của cùng khách sẽ bị đánh sai số thứ tự
+        self.client_msg_counters[chat_id_str] = self.client_msg_counters.get(chat_id_str, 0) + 1
+        item["msg_idx"] = self.client_msg_counters[chat_id_str]
+
+        # Xóa các receipt đang chờ thầu OK cho khách này khỏi hàng đợi
+        # (tránh trường hợp tin cũ được gửi nhầm cho khách khi thầu OK sau đó)
+        before_count = len(self.pending_client_receipts)
+        self.pending_client_receipts = [
+            r for r in self.pending_client_receipts
+            if r.get("chat_id") != chat_id_str
+        ]
+        if len(self.pending_client_receipts) < before_count:
+            self.log(f"🗑️ Đã xóa {before_count - len(self.pending_client_receipts)} receipt đang chờ thầu của {sender_label} do tin #{pending_id} bị từ chối.", "WARN")
+
         if notify_client:
             reject_msg = f"Bot không nhận tin cược này:\n{text}"
             if reason:
@@ -1261,6 +1339,7 @@ class TelegramBotService:
 
         self.log(f"Chủ bot đã TỪ CHỐI tin #{pending_id} của {sender_label} ('{text}')", "WARN")
         return {"success": True, "message": f"Đã từ chối tin #{pending_id}"}
+
 
     def handle_incoming_message(self, message: dict):
         """Xử lý một tin nhắn nhận được từ khách"""
@@ -1689,8 +1768,10 @@ class TelegramBotService:
                 return
 
             res = self.settle_all(kq, notify_clients=True, notify_recipient=True, notify_owner=True, requested_by=str(chat_id))
-            self.send_telegram_message(str(chat_id), f"✅ <b>ĐÃ HOÀN TẤT CHỐT TIỀN NGÀY {kq.get('date')}!</b>\n👉 Đã gửi tin nhắn âm/dương tới <b>{res['settled_clients_count']}</b> khách cược và người nhận cược thừa.")
+            self._reset_after_settle(kq.get('date', ''))
+            self.send_telegram_message(str(chat_id), f"✅ <b>ĐÃ HOÀN TẤT CHỐT TIỀN NGÀY {kq.get('date')}!</b>\n👉 Đã gửi tin nhắn âm/dương tới <b>{res['settled_clients_count']}</b> khách cược và người nhận cược thừa.\n🔄 Bảng cược đã được reset sang ngày mới.")
             return
+
 
         # H. /bang hoặc /canbang (Yêu cầu mật khẩu)
         if cmd in ["/bang", "bảng", "bang", "/canbang", "cân bảng", "can bang"] or cmd.startswith("/bang@"):
@@ -2378,6 +2459,7 @@ class TelegramBotService:
 
         # Ghi nhận cược theo từng khách để chốt tiền âm/dương khi có KQXS
         self.record_client_bet(chat_id_str, sender_label, username, parsed, raw_text=text, msg_index=msg_idx)
+        hist_idx = len(self.client_bets[chat_id_str].get("history", [])) - 1
 
         # Forward tin nhắn cược của khách sang cho Chủ Bot (nếu bật tùy chọn)
         if self.config.get("forward_client_to_owner", False):
@@ -2398,7 +2480,12 @@ class TelegramBotService:
                     transfer_msg = self.balancer.format_transfer_message(excess, header_prefix="Thầu")
                     success, err = self.send_telegram_message(target_recipient, transfer_msg, track_for_cleanup=True, tag="transfer")
                     if success:
-                        self.balancer.commit_transfers(excess)
+                        self.balancer.commit_transfers(
+                            excess,
+                            client_chat_id=chat_id_str,
+                            client_msg_idx=msg_idx,
+                            client_history_idx=hist_idx
+                        )
                         self.stats["transfers_sent"] += 1
                         self.pending_recipient_acks = {
                             "timestamp": time.time(),
@@ -2414,6 +2501,11 @@ class TelegramBotService:
                     self.log("⚠️ Có cược thừa nhưng chưa thiết lập người nhận (target_recipient)!", "WARN")
             else:
                 self.log(f"🛡️ Toàn bộ cược nằm trong định mức giữ lại, không có cược thừa cần chuyển.", "INFO")
+
+        # Lưu nội dung cân chuyển và giữ lại vào chi tiết tin khách
+        single_transfer_txt = self.balancer.format_transfer_message(excess, include_header=False) if excess_count > 0 else ""
+        single_retained_txt = self.balancer.calculate_retained_from_single_bet(parsed, excess)
+        self.update_last_bet_transfer(chat_id_str, transfer_text=single_transfer_txt, retain_text=single_retained_txt)
 
         # 5. Phản hồi xác nhận cho khách (nếu bật):
         # - Nếu cược thừa ĐÃ CHUYỂN cho Chủ thầu: Bot chờ Chủ thầu Ok thì mới nhắn Ok lại cho khách!
@@ -2586,6 +2678,24 @@ class TelegramBotService:
             "full_summary": full_summary
         }
 
+    def _reset_after_settle(self, date_str: str):
+        """Reset toàn bộ bảng cược sang ngày mới sau khi đã chốt tiền xong.
+        Được gọi sau settle_all() để tránh bot tính lại dữ liệu cũ sang ngày hôm sau.
+        """
+        today_str = now_vn().strftime("%Y-%m-%d")
+        self.last_daily_report_date = today_str  # Ngăn check_daily_schedule() chốt lại
+        self.balancer.reset_board()
+        self.client_bets = {}
+        self.save_client_bets()
+        self.client_msg_counters = {}
+        self.pending_bets = []
+        self.save_pending_bets()
+        self.pending_client_receipts = []
+        self.last_web_bet_hash = None
+        self.last_web_bet_text = ""
+        self.last_bet_timestamp = None
+        self.log(f"🔄 Đã tự động reset bảng cược sang ngày mới sau khi chốt tiền {date_str}.", "INFO")
+
     def check_daily_schedule(self):
         """Kiểm tra thời gian và tự động cào KQXS lúc 18h30 - 18h48"""
         if not self.config.get("auto_fetch_kqxs_daily", True):
@@ -2609,6 +2719,7 @@ class TelegramBotService:
                     self.last_daily_report_date = today_str
                     self.log(f"🎯 Đã có đầy đủ KQXS 27 giải ngày {kq.get('date')}! Tự động chốt tiền với khách cược & người nhận...", "SUCCESS")
                     self.settle_all(kq, notify_clients=True, notify_recipient=True, notify_owner=True)
+                    self._reset_after_settle(kq.get('date', today_str))
 
     def poll_updates(self):
         """Vòng lặp Long Polling nhận tin nhắn liên tục"""

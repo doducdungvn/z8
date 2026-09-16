@@ -61,5 +61,5 @@
   "forward_client_to_owner": true,
   "bet_filter_enabled": true,
   "bet_filter_keywords": "",
-  "bot_mode": "manual"
+  "bot_mode": "auto"
 }
