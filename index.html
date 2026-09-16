@@ -7318,10 +7318,10 @@ function resetTable() {
       <!-- Executive KPI Dashboard Cards (4 Thẻ Chỉ Số Thông Minh) -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 select-none">
         <!-- KPI 1: Tin Cược & Tin Treo -->
-        <div class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all hover:border-sky-500">
+        <div onclick="clickTgKpiCard('messages')" title="👉 Bấm để xem chi tiết Hộp Thư Tin Cược Gốc & Tin Treo Chờ Duyệt" class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all duration-150 hover:border-sky-500 hover:shadow-md hover:-translate-y-0.5 cursor-pointer select-none group">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tin Nhận &amp; Tin Treo</span>
-            <div class="w-7 h-7 rounded-xs bg-sky-100 dark:bg-sky-950/60 text-sky-600 flex items-center justify-center text-xs">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-sky-600 transition-colors">Tin Nhận &amp; Tin Treo</span>
+            <div class="w-7 h-7 rounded-xs bg-sky-100 dark:bg-sky-950/60 text-sky-600 flex items-center justify-center text-xs group-hover:bg-sky-600 group-hover:text-white transition-all">
               <i class="fa-solid fa-inbox"></i>
             </div>
           </div>
@@ -7333,16 +7333,17 @@ function resetTable() {
             <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
             <span>Chờ duyệt: <b id="kpiTgPendingCount">0</b> tin treo</span>
           </div>
-          <div id="kpiTgNoPendingText" class="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-            <i class="fa-solid fa-check-double text-[10px] mr-0.5"></i> Không có tin treo
+          <div id="kpiTgNoPendingText" class="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center justify-between">
+            <span><i class="fa-solid fa-check-double text-[10px] mr-0.5"></i> Không có tin treo</span>
+            <span class="text-[10px] text-sky-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Xem tin 👉</span>
           </div>
         </div>
 
         <!-- KPI 2: Tổng Doanh Số Nhận -->
-        <div class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all hover:border-emerald-500">
+        <div onclick="clickTgKpiCard('total_bets')" title="👉 Bấm để xem chi tiết Bảng Cược Khách Đánh (Cột 1: Tổng Bảng)" class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all duration-150 hover:border-emerald-500 hover:shadow-md hover:-translate-y-0.5 cursor-pointer select-none group">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Doanh Số Khách Đánh</span>
-            <div class="w-7 h-7 rounded-xs bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center text-xs">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 transition-colors">Doanh Số Khách Đánh</span>
+            <div class="w-7 h-7 rounded-xs bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center text-xs group-hover:bg-emerald-600 group-hover:text-white transition-all">
               <i class="fa-solid fa-coins"></i>
             </div>
           </div>
@@ -7350,16 +7351,16 @@ function resetTable() {
             <span id="kpiTgTotalBets" class="text-xl sm:text-2xl font-black font-mono text-emerald-700 dark:text-emerald-400">0</span>
             <span class="text-xs text-slate-500 font-semibold">k / đ</span>
           </div>
-          <div id="kpiTgBreakdownText" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
-            Đ: 0 con | L: 0 con | 3C: 0 con | X: 0
+          <div id="kpiTgBreakdownText" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate flex items-center justify-between">
+            <span>Đ: 0 con | L: 0 con | 3C: 0 con | X: 0</span>
           </div>
         </div>
 
         <!-- KPI 3: Giữ Lại & Bắn Thầu -->
-        <div class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all hover:border-indigo-500">
+        <div onclick="clickTgKpiCard('retained_transfers')" title="👉 Bấm để xem chi tiết Mức Giữ Lại (Ôm) & Cược Thừa Đã Bắn Thầu (Cột 2 & Cột 3)" class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all duration-150 hover:border-indigo-500 hover:shadow-md hover:-translate-y-0.5 cursor-pointer select-none group">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Giữ Lại ⇄ Bắn Thầu</span>
-            <div class="w-7 h-7 rounded-xs bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center text-xs">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 transition-colors">Giữ Lại ⇄ Bắn Thầu</span>
+            <div class="w-7 h-7 rounded-xs bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center text-xs group-hover:bg-indigo-600 group-hover:text-white transition-all">
               <i class="fa-solid fa-paper-plane"></i>
             </div>
           </div>
@@ -7373,24 +7374,26 @@ function resetTable() {
               <span id="kpiTgTransfersAmount" class="font-bold font-mono text-indigo-600 dark:text-indigo-400 text-sm">0 lần</span>
             </div>
           </div>
-          <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+          <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 truncate flex items-center justify-between">
             <span id="kpiTgTransfersSteps">Chưa chuyển cược thừa</span>
+            <span class="text-[10px] text-indigo-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Xem bảng 👉</span>
           </div>
         </div>
 
         <!-- KPI 4: KQXS & Lãi/Lỗ Tạm Tính -->
-        <div class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all hover:border-amber-500">
+        <div onclick="clickTgKpiCard('kqxs_accounting')" title="👉 Bấm để xem Báo Cáo Tài Chính Lãi/Lỗ & Kết Quả Xổ Số Hôm Nay" class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all duration-150 hover:border-amber-500 hover:shadow-md hover:-translate-y-0.5 cursor-pointer select-none group">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">KQXS &amp; Lãi/Lỗ Tạm Tính</span>
-            <div class="w-7 h-7 rounded-xs bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center text-xs">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-amber-600 transition-colors">KQXS &amp; Lãi/Lỗ Tạm Tính</span>
+            <div class="w-7 h-7 rounded-xs bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center text-xs group-hover:bg-amber-600 group-hover:text-white transition-all">
               <i class="fa-solid fa-trophy"></i>
             </div>
           </div>
           <div class="mt-1 flex items-baseline gap-2">
             <span id="kpiTgNetProfit" class="text-xl sm:text-2xl font-black font-mono text-slate-700 dark:text-slate-300">--</span>
           </div>
-          <div id="kpiTgKqxsStatus" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
-            Chưa có KQXS hôm nay
+          <div id="kpiTgKqxsStatus" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate flex items-center justify-between">
+            <span>Chưa có KQXS hôm nay</span>
+            <span class="text-[10px] text-amber-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Báo Cáo 👉</span>
           </div>
         </div>
       </div>
@@ -8633,6 +8636,15 @@ function resetTable() {
             btnToggle.innerHTML = `<i class="fa-solid fa-play text-[10px]"></i><span id="lblToggleBotRun"><span class="hidden sm:inline">Bật Bot (Tự động)</span><span class="sm:hidden">Bật Bot</span></span>`;
           }
         }
+
+        // Tự động làm mới dữ liệu Hộp Thư nếu đang xem tab Hộp Thư (và không gõ tìm kiếm)
+        const inboxTab = document.getElementById('tgTabContentInbox');
+        const isInboxActive = inboxTab && !inboxTab.classList.contains('hidden');
+        const searchInp = document.getElementById('tgInboxSearchInput');
+        const isSearching = searchInp && (document.activeElement === searchInp || searchInp.value.trim() !== '');
+        if (isInboxActive && !isSearching && sessionStorage.getItem('tg_admin_unlocked') === 'true') {
+          fetchTgBoard();
+        }
       } catch (err) {
         if (badge) {
           const isCloud = (TG_BOT_API || '').includes('onrender.com');
@@ -8642,6 +8654,43 @@ function resetTable() {
         }
       }
     }
+
+    function clickTgKpiCard(type) {
+      if (type === 'messages') {
+        // Ô 1: Tin Nhận & Tin Treo -> Mở Hộp Thư Tin Cược Gốc
+        switchTgTab('inbox');
+        setTimeout(() => {
+          const pendingArea = document.getElementById('tgPendingBetsArea');
+          const isPendingVisible = pendingArea && !pendingArea.classList.contains('hidden');
+          const target = isPendingVisible ? pendingArea : document.getElementById('tgClientMessagesList');
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      } else if (type === 'total_bets') {
+        // Ô 2: Doanh Số Khách Đánh -> Mở Bảng Cược (Cột 1: Khách Đánh Tổng Bảng)
+        switchTgTab('board');
+        switchTgBoardViewMode('panorama');
+        setTimeout(() => {
+          const col1 = document.getElementById('tgColTotalArea');
+          if (col1) col1.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      } else if (type === 'retained_transfers') {
+        // Ô 3: Giữ Lại ⇄ Bắn Thầu -> Mở Bảng Cược (Cột 2 & Cột 3: Giữ Lại & Cược Thừa Đã Bắn)
+        switchTgTab('board');
+        switchTgBoardViewMode('panorama');
+        setTimeout(() => {
+          const col2 = document.getElementById('tgColRetArea') || document.getElementById('tgColTransArea');
+          if (col2) col2.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      } else if (type === 'kqxs_accounting') {
+        // Ô 4: KQXS & Lãi/Lỗ Tạm Tính -> Mở Báo Cáo Tài Chính & Tra cứu KQXS Hôm Nay
+        switchTgTab('board');
+        setTimeout(() => {
+          const btnRep = document.getElementById('btnTgViewReport');
+          if (btnRep) btnRep.click();
+        }, 100);
+      }
+    }
+    window.clickTgKpiCard = clickTgKpiCard;
 
     window.tgCustomClientPrices = {};
 
@@ -9150,7 +9199,93 @@ function resetTable() {
                 </button>
               </div>
             </div>
-            <pre class="whitespace-pre-wrap font-mono text-[11px] sm:text-xs p-2 rounded-xs border ${preStyle} leading-relaxed">${displayContent || '<i class="text-slate-400 italic font-sans">(Tin trống / cược không chứa cú pháp hợp lệ)</i>'}</pre>
+            <div class="space-y-1.5 pt-1">
+              <div>
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1 mb-0.5">
+                  <i class="fa-solid fa-file-lines text-slate-400"></i> 1. Tin cược gốc của khách:
+                </div>
+                <pre class="whitespace-pre-wrap font-mono text-[11px] sm:text-xs p-2 rounded-xs border ${preStyle} leading-relaxed">${displayContent || '<i class="text-slate-400 italic font-sans">(Tin trống / cược không chứa cú pháp hợp lệ)</i>'}</pre>
+              </div>
+
+              <!-- Cân chuyển & Giữ lại ôm -->
+              ${(() => {
+                let tfBadge = '';
+                let tfBoxClass = '';
+                let tfTextStyle = '';
+                let tfNote = '';
+
+                if (isVoided) {
+                  tfBadge = '<span class="text-[10px] px-1.5 py-0.5 bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 rounded font-bold border border-rose-300 dark:border-rose-800">🚫 ĐÃ HỦY CHUYỂN</span>';
+                  tfBoxClass = 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800/80';
+                  tfTextStyle = 'line-through opacity-50 text-slate-400 dark:text-slate-500 font-normal';
+                  if (m.transfer_text) {
+                    tfNote = '<div class="mt-1 text-[10px] text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1"><i class="fa-solid fa-ban"></i> Đã tự động hủy cược này bên bảng thầu (không tính nợ thầu)</div>';
+                  }
+                } else if (isRejected) {
+                  tfBadge = '<span class="text-[10px] px-1.5 py-0.5 bg-slate-200 dark:bg-dark-700 text-slate-600 dark:text-slate-400 rounded font-bold border border-slate-300">❌ ĐÃ TỪ CHỐI</span>';
+                  tfBoxClass = 'bg-slate-50 dark:bg-dark-900 border-slate-300 dark:border-slate-700 opacity-60';
+                  tfTextStyle = 'line-through text-slate-400 dark:text-slate-500 font-normal';
+                } else if (m.transfer_text) {
+                  tfBadge = '<span class="text-[10px] px-1.5 py-0.2 bg-sky-200/60 dark:bg-sky-900 text-sky-800 dark:text-sky-200 rounded font-semibold">Đã bắn</span>';
+                  tfBoxClass = 'bg-sky-50/60 dark:bg-sky-950/20 border-sky-200 dark:border-sky-800';
+                  tfTextStyle = 'text-sky-800 dark:text-sky-200 font-semibold';
+                } else {
+                  tfBadge = '<span class="text-[10px] text-slate-400 font-normal">Không bắn</span>';
+                  tfBoxClass = 'bg-slate-50 dark:bg-dark-800/60 border-slate-200 dark:border-slate-700';
+                  tfTextStyle = 'text-slate-500 font-normal';
+                }
+
+                let retBadge = '';
+                let retBoxClass = '';
+                let retTextStyle = '';
+                let retNote = '';
+
+                if (isVoided) {
+                  retBadge = '<span class="text-[10px] px-1.5 py-0.5 bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 rounded font-bold border border-rose-300 dark:border-rose-800">🚫 ĐÃ HỦY ÔM</span>';
+                  retBoxClass = 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800/80';
+                  retTextStyle = 'line-through opacity-50 text-slate-400 dark:text-slate-500 font-normal';
+                  if (m.retained_text) {
+                    retNote = '<div class="mt-1 text-[10px] text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1"><i class="fa-solid fa-ban"></i> Đã hủy không ôm các con số này</div>';
+                  }
+                } else if (isRejected) {
+                  retBadge = '<span class="text-[10px] px-1.5 py-0.5 bg-slate-200 dark:bg-dark-700 text-slate-600 dark:text-slate-400 rounded font-bold border border-slate-300">❌ ĐÃ TỪ CHỐI</span>';
+                  retBoxClass = 'bg-slate-50 dark:bg-dark-900 border-slate-300 dark:border-slate-700 opacity-60';
+                  retTextStyle = 'line-through text-slate-400 dark:text-slate-500 font-normal';
+                } else if (m.retained_text) {
+                  retBadge = '<span class="text-[10px] px-1.5 py-0.2 bg-emerald-200/60 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 rounded font-semibold">Thực ôm</span>';
+                  retBoxClass = 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800';
+                  retTextStyle = 'text-emerald-800 dark:text-emerald-200 font-semibold';
+                } else {
+                  retBadge = '<span class="text-[10px] text-slate-400 font-normal">Không ôm</span>';
+                  retBoxClass = 'bg-slate-50 dark:bg-dark-800/60 border-slate-200 dark:border-slate-700';
+                  retTextStyle = 'text-slate-500 font-normal';
+                }
+
+                return `
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5 pt-0.5">
+                    <!-- Cột 1: Cân chuyển thầu -->
+                    <div class="p-2 rounded-xs border ${tfBoxClass} transition-colors">
+                      <div class="flex items-center justify-between text-[11px] font-bold pb-1 border-b border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200">
+                        <span class="flex items-center gap-1"><i class="fa-solid fa-paper-plane ${isVoided ? 'text-rose-500' : 'text-sky-500'}"></i> 2. Cân chuyển (Thầu trên)</span>
+                        ${tfBadge}
+                      </div>
+                      <pre class="whitespace-pre-wrap font-mono text-[11px] mt-1 ${tfTextStyle} leading-relaxed">${m.transfer_text ? m.transfer_text : '<span class="text-slate-400 italic font-sans font-normal">(Không có cược thừa cần chuyển)</span>'}</pre>
+                      ${tfNote}
+                    </div>
+
+                    <!-- Cột 2: Giữ lại ôm -->
+                    <div class="p-2 rounded-xs border ${retBoxClass} transition-colors">
+                      <div class="flex items-center justify-between text-[11px] font-bold pb-1 border-b border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200">
+                        <span class="flex items-center gap-1"><i class="fa-solid fa-shield-halved ${isVoided ? 'text-rose-500' : 'text-emerald-500'}"></i> 3. Giữ lại (Thực ôm)</span>
+                        ${retBadge}
+                      </div>
+                      <pre class="whitespace-pre-wrap font-mono text-[11px] mt-1 ${retTextStyle} leading-relaxed">${m.retained_text ? m.retained_text : '<span class="text-slate-400 italic font-sans font-normal">(Không ôm / Chuyển 100%)</span>'}</pre>
+                      ${retNote}
+                    </div>
+                  </div>
+                `;
+              })()}
+            </div>
           </div>
         `;
       }).join('');
