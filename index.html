@@ -9367,9 +9367,12 @@ function resetTable() {
     }
     window.loadTgClientsCrm = loadTgClientsCrm;
 
-    async function fetchTgBoard() {
+    async function fetchTgBoard(customDate = null) {
       try {
-        const res = await callBotApi("/api/bot/board");
+        const actionDateInp = document.getElementById('tgActionDate');
+        const selDate = customDate || (actionDateInp && actionDateInp.value ? actionDateInp.value : '');
+        const url = selDate ? `/api/bot/board?date=${encodeURIComponent(selDate)}` : "/api/bot/board";
+        const res = await callBotApi(url);
         if (!res.ok) return;
         const b = await res.json();
         tgCachedBoardData = b;
@@ -11041,6 +11044,14 @@ function resetTable() {
         if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
         return dateStr;
       }
+
+      // Khi người dùng chọn một ngày khác: tự động nạp bảng cược và lịch sử lưu trữ của ngày đó
+      document.getElementById('tgActionDate')?.addEventListener('change', (e) => {
+        const targetDate = e.target.value;
+        if (targetDate) {
+          fetchTgBoard(targetDate);
+        }
+      });
 
       // Nút 🎯 Chốt Tiền Tự Động
       document.getElementById('btnTgSettleMoney')?.addEventListener('click', async () => {
