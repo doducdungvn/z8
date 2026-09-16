@@ -291,6 +291,29 @@ def get_history_logs():
 
 @app.route("/api/bot/board", methods=["GET"])
 def get_board():
+    date_arg = request.args.get("date")
+    if date_arg:
+        archive = bot_service.load_daily_archive(date_arg)
+        if archive:
+            b_data = archive.get("board", {})
+            return jsonify({
+                "from_archive": True,
+                "date": archive.get("date"),
+                "display_date": archive.get("display_date", date_arg),
+                "saved_at": archive.get("saved_at"),
+                "step_count": len(archive.get("transfer_history", [])),
+                "de_sums": b_data.get("de_sums", {}),
+                "lo_sums": b_data.get("lo_sums", {}),
+                "bacang_sums": b_data.get("bacang_sums", {}),
+                "xien_count": len(b_data.get("xien_bets", [])),
+                "history": archive.get("transfer_history", []),
+                "retained": b_data.get("retained", {}),
+                "raw_messages": archive.get("raw_messages", []),
+                "pending_transfers": {},
+                "pending_text": "",
+                "transfers": {}
+            })
+
     b = bot_service.balancer
     retained = b.get_retained_bets()
     raw_messages = bot_service.get_all_raw_messages()
@@ -444,6 +467,26 @@ def get_kqxs():
 def get_report():
     date_arg = request.args.get("date")
     if date_arg:
+        archive = bot_service.load_daily_archive(date_arg)
+        if archive:
+            settle_res = archive.get("settle_result", {})
+            acc = settle_res.get("accounting", {})
+            thau_txt = settle_res.get("thau_report")
+            chuyen_txt = settle_res.get("chuyen_report")
+            giulai_txt = settle_res.get("giulai_report")
+            return jsonify({
+                "from_archive": True,
+                "date": archive.get("date"),
+                "display_date": archive.get("display_date", date_arg),
+                "saved_at": archive.get("saved_at"),
+                "accounting": acc,
+                "text_thau": thau_txt or format_accounting_report(acc, "thau"),
+                "text_chuyen": chuyen_txt or format_accounting_report(acc, "chuyen"),
+                "text_giulai": giulai_txt or format_accounting_report(acc, "giulai"),
+                "summary_text": settle_res.get("summary_text", ""),
+                "clients": settle_res.get("client_messages", []),
+                "kqxs": archive.get("kqxs", {})
+            })
         kq = fetch_xsmb(date_arg)
     else:
         if not bot_service.cached_kqxs:
@@ -539,7 +582,7 @@ def settle_now():
         notify_recipient=send_tg,
         notify_owner=send_tg
     )
-    bot_service._reset_after_settle(kq.get('date', ''))
+    bot_service._reset_after_settle(kq.get('date', ''), settle_result=res, kqxs=kq)
     return jsonify(res)
 
 

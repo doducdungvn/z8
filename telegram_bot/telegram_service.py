@@ -1768,8 +1768,8 @@ class TelegramBotService:
                 return
 
             res = self.settle_all(kq, notify_clients=True, notify_recipient=True, notify_owner=True, requested_by=str(chat_id))
-            self._reset_after_settle(kq.get('date', ''))
-            self.send_telegram_message(str(chat_id), f"✅ <b>ĐÃ HOÀN TẤT CHỐT TIỀN NGÀY {kq.get('date')}!</b>\n👉 Đã gửi tin nhắn âm/dương tới <b>{res['settled_clients_count']}</b> khách cược và người nhận cược thừa.\n🔄 Bảng cược đã được reset sang ngày mới.")
+            self._reset_after_settle(kq.get('date', ''), settle_result=res, kqxs=kq)
+            self.send_telegram_message(str(chat_id), f"✅ <b>ĐÃ HOÀN TẤT CHỐT TIỀN NGÀY {kq.get('date')}!</b>\n👉 Đã gửi tin nhắn âm/dương tới <b>{res['settled_clients_count']}</b> khách cược và người nhận cược thừa.\n🔄 Bảng cược đã được reset sang ngày mới (Đã lưu lịch sử đối soát).")
             return
 
 
@@ -2678,12 +2678,84 @@ class TelegramBotService:
             "full_summary": full_summary
         }
 
-    def _reset_after_settle(self, date_str: str):
+    def save_daily_archive(self, date_str: str, settle_result: dict = None, kqxs: dict = None):
+        """
+        Lưu trữ toàn bộ dữ liệu cược, tin nhắn gốc, lần chuyển thầu và báo cáo chốt tiền theo ngày.
+        Giúp chủ bảng luôn có thể tra cứu và đối soát lại bất kỳ lúc nào khách hoặc thầu thắc mắc.
+        """
+        try:
+            archive_dir = os.path.join(os.path.dirname(__file__), "daily_history")
+            os.makedirs(archive_dir, exist_ok=True)
+
+            # Chuẩn hóa tên file YYYY-MM-DD
+            clean_date = date_str.replace("/", "-").strip() if date_str else now_vn().strftime("%Y-%m-%d")
+            parts = clean_date.split("-")
+            if len(parts) == 3 and len(parts[0]) == 2 and len(parts[2]) == 4:
+                clean_date = f"{parts[2]}-{parts[1]}-{parts[0]}"
+
+            file_path = os.path.join(archive_dir, f"{clean_date}.json")
+
+            archive_data = {
+                "date": clean_date,
+                "display_date": date_str,
+                "saved_at": now_vn().strftime("%H:%M:%S %d/%m/%Y"),
+                "client_bets": json.loads(json.dumps(self.client_bets)),
+                "raw_messages": self.get_all_raw_messages(),
+                "transfer_history": json.loads(json.dumps(self.balancer.transfer_history)),
+                "board": {
+                    "de_sums": dict(self.balancer.de_sums),
+                    "lo_sums": dict(self.balancer.lo_sums),
+                    "bacang_sums": dict(self.balancer.bacang_sums),
+                    "xien_bets": list(self.balancer.xien_bets),
+                    "retained": self.balancer.get_retained_bets()
+                },
+                "settle_result": settle_result or {},
+                "kqxs": kqxs or getattr(self, "cached_kqxs", {})
+            }
+
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(archive_data, f, ensure_ascii=False, indent=2)
+
+            self.log(f"💾 Đã lưu trữ an toàn toàn bộ dữ liệu cược & chốt tiền ngày {clean_date} để tra cứu đối soát.", "SUCCESS")
+        except Exception as e:
+            self.log(f"⚠️ Lỗi lưu trữ lịch sử ngày: {e}", "WARN")
+
+    def load_daily_archive(self, date_str: str) -> dict:
+        """Đọc lại dữ liệu lưu trữ của một ngày cũ để đối soát khi có thắc mắc"""
+        try:
+            archive_dir = os.path.join(os.path.dirname(__file__), "daily_history")
+            if not os.path.exists(archive_dir):
+                return None
+
+            clean_date = date_str.replace("/", "-").strip() if date_str else ""
+            parts = clean_date.split("-")
+            if len(parts) == 3 and len(parts[0]) == 2 and len(parts[2]) == 4:
+                clean_date = f"{parts[2]}-{parts[1]}-{parts[0]}"
+
+            candidates = [
+                os.path.join(archive_dir, f"{clean_date}.json"),
+                os.path.join(archive_dir, f"{date_str.replace('/', '-')}.json")
+            ]
+            for p in candidates:
+                if os.path.exists(p):
+                    with open(p, "r", encoding="utf-8") as f:
+                        return json.load(f)
+        except Exception as e:
+            self.log(f"Lỗi đọc file lịch sử ngày {date_str}: {e}", "WARN")
+        return None
+
+    def _reset_after_settle(self, date_str: str, settle_result: dict = None, kqxs: dict = None):
         """Reset toàn bộ bảng cược sang ngày mới sau khi đã chốt tiền xong.
         Được gọi sau settle_all() để tránh bot tính lại dữ liệu cũ sang ngày hôm sau.
         """
+        # 1. Lưu trữ an toàn dữ liệu ngày cũ để đối soát khi khách/thầu thắc mắc
+        self.save_daily_archive(date_str, settle_result=settle_result, kqxs=kqxs)
+
+        # 2. Đặt cờ ngày đã chốt
         today_str = now_vn().strftime("%Y-%m-%d")
         self.last_daily_report_date = today_str  # Ngăn check_daily_schedule() chốt lại
+
+        # 3. Làm sạch bảng và reset bộ đếm
         self.balancer.reset_board()
         self.client_bets = {}
         self.save_client_bets()
@@ -2718,8 +2790,8 @@ class TelegramBotService:
                     self.cached_kqxs = kq
                     self.last_daily_report_date = today_str
                     self.log(f"🎯 Đã có đầy đủ KQXS 27 giải ngày {kq.get('date')}! Tự động chốt tiền với khách cược & người nhận...", "SUCCESS")
-                    self.settle_all(kq, notify_clients=True, notify_recipient=True, notify_owner=True)
-                    self._reset_after_settle(kq.get('date', today_str))
+                    res = self.settle_all(kq, notify_clients=True, notify_recipient=True, notify_owner=True)
+                    self._reset_after_settle(kq.get('date', today_str), settle_result=res, kqxs=kq)
 
     def poll_updates(self):
         """Vòng lặp Long Polling nhận tin nhắn liên tục"""
