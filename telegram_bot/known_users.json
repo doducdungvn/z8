@@ -26,40 +26,5 @@
     "username": "congty987",
     "first_name": "Pl",
     "updated_at": "03:27:00 13/09"
-  },
-  "999888": {
-    "user_id": "999888",
-    "chat_id": 999888,
-    "username": "Zeng86",
-    "first_name": "Zeng",
-    "updated_at": "22:58:43 14/09"
-  },
-  "111222333": {
-    "user_id": "111222333",
-    "chat_id": 111222333,
-    "username": "chuthau",
-    "first_name": "ChuThau",
-    "updated_at": "01:34:30 14/09"
-  },
-  "555444": {
-    "user_id": "555444",
-    "chat_id": 555444,
-    "username": "khach1",
-    "first_name": "Khach1",
-    "updated_at": "01:34:30 14/09"
-  },
-  "999999": {
-    "user_id": "999999",
-    "chat_id": 999999,
-    "username": "testclient",
-    "first_name": "Khách Test",
-    "updated_at": "22:48:09 14/09"
-  },
-  "123456": {
-    "user_id": "123456",
-    "chat_id": 123456,
-    "username": "Zeng86",
-    "first_name": "Zeng",
-    "updated_at": "22:49:53 14/09"
   }
 }
