@@ -7513,6 +7513,17 @@ function resetTable() {
                     </button>
                     <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[11px] font-mono text-slate-600 dark:text-slate-400 cursor-pointer outline-none px-1" title="Chọn ngày cụ thể bất kỳ để xem lại">
                   </div>
+
+                  <!-- Ô cài đặt TỰ ĐỘNG XÓA (Retention Hours) trực tiếp tại Hộp Thư -->
+                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 px-2 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs" title="Cài đặt số tiếng (giờ) tự động xóa lịch sử tin cược cũ. Điền 0 = Lưu vĩnh viễn không xóa.">
+                    <i class="fa-solid fa-clock-rotate-left text-amber-600 text-[11px]"></i>
+                    <span class="text-[11px] text-slate-600 dark:text-slate-300 font-semibold hidden sm:inline">Tự xóa sau:</span>
+                    <input type="number" id="tgInboxRetentionHours" min="0" max="720" step="1" value="36" onchange="saveTgRetentionHours(this.value)" class="w-12 border border-slate-300 dark:border-slate-600 rounded-xs px-1 py-0.5 text-xs text-center font-bold font-mono bg-white dark:bg-dark-800 text-slate-800 dark:text-slate-200" title="Nhập số tiếng (0 = Lưu vĩnh viễn)">
+                    <span class="text-[11px] text-slate-500 font-medium">tiếng</span>
+                    <button type="button" onclick="saveTgRetentionHours(document.getElementById('tgInboxRetentionHours').value, true)" class="text-sky-600 hover:text-sky-700 p-0.5 cursor-pointer" title="Lưu cài đặt số tiếng tự động xóa">
+                      <i class="fa-solid fa-floppy-disk text-[11px]"></i>
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Bộ Lọc Tìm Kiếm Tin Cược -->
@@ -8116,15 +8127,34 @@ function resetTable() {
                   </p>
                 </div>
 
-                <!-- Thời gian tự động xóa dấu vết -->
-                <div class="pt-1.5 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2">
-                  <label class="font-bold text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1">
-                    <i class="fa-solid fa-clock-rotate-left text-amber-500"></i>
-                    <span>Tự động xóa sạch dấu vết sau:</span>
-                  </label>
-                  <div class="flex items-center gap-1 font-mono">
-                    <input type="number" id="tgInputCleanupHours" min="0.1" step="0.5" value="24" class="w-16 border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-0.5 text-xs text-center font-bold bg-slate-50 dark:bg-dark-900">
-                    <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">tiếng</span>
+                <!-- Thời gian tự động xóa lịch sử tin cược & Dấu vết Telegram -->
+                <div class="pt-1.5 border-t border-slate-200 dark:border-slate-700 space-y-2">
+                  <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <label class="font-bold text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-box-archive text-amber-500"></i>
+                        <span>Tự động xóa lịch sử tin cược cũ sau:</span>
+                      </label>
+                      <p class="text-[10px] text-slate-400">Số tiếng (giờ) lưu trữ Hộp Thư &amp; Bảng cược ngày cũ (Ví dụ: 24, 36, 48 tiếng; Điền 0 = Giữ vĩnh viễn không xóa)</p>
+                    </div>
+                    <div class="flex items-center gap-1 font-mono">
+                      <input type="number" id="tgInputRetentionHours" min="0" max="720" step="1" value="36" onchange="syncTgRetentionInputs(this.value)" class="w-16 border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-0.5 text-xs text-center font-bold bg-slate-50 dark:bg-dark-900">
+                      <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">tiếng</span>
+                      <button type="button" onclick="triggerManualCleanupHistory()" class="ml-1 px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-300 dark:border-rose-800 cursor-pointer" title="Dọn dẹp ngay các file lịch sử cũ hơn số tiếng cài đặt">
+                        <i class="fa-solid fa-trash-can"></i> Dọn ngay
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-slate-100 dark:border-slate-700/60">
+                    <label class="font-bold text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1">
+                      <i class="fa-solid fa-clock-rotate-left text-slate-400"></i>
+                      <span>Xóa dấu vết tin nhắn Telegram sau:</span>
+                    </label>
+                    <div class="flex items-center gap-1 font-mono">
+                      <input type="number" id="tgInputCleanupHours" min="0.1" step="0.5" value="24" class="w-16 border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-0.5 text-xs text-center font-bold bg-slate-50 dark:bg-dark-900">
+                      <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">tiếng</span>
+                    </div>
                   </div>
                 </div>
 
@@ -8946,6 +8976,18 @@ function resetTable() {
         const infoCleanup = document.getElementById('tgInfoCleanupHours');
         if (infoCleanup) infoCleanup.textContent = cleanupH;
 
+        // History retention hours
+        let retentionHours = 36;
+        if (cfg.history_retention_hours !== undefined) {
+          retentionHours = parseFloat(cfg.history_retention_hours);
+        } else if (cfg.history_retention_days !== undefined) {
+          retentionHours = Math.round(parseFloat(cfg.history_retention_days) * 24);
+        }
+        const inbRet = document.getElementById('tgInboxRetentionHours') || document.getElementById('tgInboxRetentionDays');
+        if (inbRet) inbRet.value = retentionHours;
+        const setRet = document.getElementById('tgInputRetentionHours') || document.getElementById('tgInputRetentionDays');
+        if (setRet) setRet.value = retentionHours;
+
         // Retain config
         const r = cfg.retain_config || {};
         if (r.retain_type === "percentage") {
@@ -8979,10 +9021,71 @@ function resetTable() {
       }
     }
 
+    function syncTgRetentionInputs(val) {
+      const v = Math.max(0, parseFloat(val) || 0);
+      const inb = document.getElementById('tgInboxRetentionHours') || document.getElementById('tgInboxRetentionDays');
+      if (inb && inb.value != v) inb.value = v;
+      const inp = document.getElementById('tgInputRetentionHours') || document.getElementById('tgInputRetentionDays');
+      if (inp && inp.value != v) inp.value = v;
+    }
+    window.syncTgRetentionInputs = syncTgRetentionInputs;
+
+    async function saveTgRetentionHours(val, showNotice = false) {
+      const hours = Math.max(0, parseFloat(val) || 0);
+      syncTgRetentionInputs(hours);
+      try {
+        const res = await callBotApi("/api/bot/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            history_retention_hours: hours,
+            history_retention_days: Math.round((hours / 24.0) * 10) / 10 
+          })
+        });
+        if (res.ok) {
+          if (showNotice) {
+            alert(`✅ Đã lưu cài đặt tự động xóa lịch sử tin cược!\n` + 
+                  (hours > 0 ? `Các file cược cũ hơn ${hours} tiếng sẽ được tự động xóa khi qua ngày mới hoặc khi dọn dẹp.` : `Đã chọn 0: Lịch sử tin cược sẽ được giữ VĨNH VIỄN không bao giờ xóa.`));
+          }
+        }
+      } catch (e) {
+        if (showNotice) alert("Lỗi khi lưu số tiếng tự động xóa: " + e.message);
+      }
+    }
+    window.saveTgRetentionHours = saveTgRetentionHours;
+    window.saveTgRetentionDays = saveTgRetentionHours; // alias for backwards compatibility
+
+    async function triggerManualCleanupHistory() {
+      const hours = parseFloat(document.getElementById('tgInputRetentionHours')?.value ?? document.getElementById('tgInboxRetentionHours')?.value ?? document.getElementById('tgInputRetentionDays')?.value) || 36;
+      if (hours <= 0) {
+        alert("⚠️ Hiện đang cài đặt 0 tiếng (Giữ vĩnh viễn), hệ thống sẽ không xóa file lịch sử nào.");
+        return;
+      }
+      if (!confirm(`Bạn có chắc chắn muốn DỌN DẸP NGAY các file lịch sử cược cũ hơn ${hours} tiếng không?`)) return;
+      try {
+        const res = await callBotApi("/api/bot/cleanup_history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hours: hours })
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          alert(`✅ ${data.message || `Đã dọn dẹp ${data.deleted_files_count || 0} file lịch sử cũ!`}`);
+          fetchTgBoard();
+        } else {
+          alert("Lỗi dọn dẹp: " + (data.error || "Không thành công"));
+        }
+      } catch (e) {
+        alert("Lỗi kết nối: " + e.message);
+      }
+    }
+    window.triggerManualCleanupHistory = triggerManualCleanupHistory;
+
     async function saveTgBotConfig() {
       const allowedRaw = document.getElementById('tgInputAllowedSenders').value;
       const allowedList = allowedRaw.split(',').map(s => s.trim()).filter(Boolean);
       const cleanupHours = parseFloat(document.getElementById('tgInputCleanupHours').value) || 24;
+      const retentionHours = parseFloat(document.getElementById('tgInputRetentionHours')?.value ?? document.getElementById('tgInboxRetentionHours')?.value ?? document.getElementById('tgInputRetentionDays')?.value) || 0;
 
       const payload = {
         bot_token: document.getElementById('tgInputBotToken').value.trim(),
@@ -8998,6 +9101,8 @@ function resetTable() {
         bet_filter_enabled: document.getElementById('tgCheckBetFilter')?.checked || false,
         bet_filter_keywords: document.getElementById('tgInputBetFilterKeywords')?.value?.trim() || '',
         cleanup_after_hours: cleanupHours,
+        history_retention_hours: retentionHours,
+        history_retention_days: Math.round((retentionHours / 24.0) * 10) / 10,
         client_prices: window.tgCustomClientPrices || {},
         price_config: window.priceConfigData || JSON.parse(localStorage.getItem(RATES_STORAGE_KEY) || "{}"),
         retain_config: {
