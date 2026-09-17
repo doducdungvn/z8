@@ -135,6 +135,7 @@ class TelegramBotService:
             "price_config": DEFAULT_PRICE_CONFIG,
             "cleanup_after_seconds": 86400,
             "cleanup_after_hours": 24.0,
+            "history_retention_hours": 36.0,
             "admin_password": "123456",
             "authenticated_admins": []
         }
@@ -2965,6 +2966,68 @@ class TelegramBotService:
         except Exception as e:
             self.log(f"⚠️ Lỗi lưu trữ lịch sử ngày: {e}", "WARN")
 
+    def cleanup_old_history(self, hours: float = None) -> int:
+        """Tự động dọn dẹp các file lịch sử cược cũ trong daily_history/ vượt quá số tiếng (giờ) chỉ định.
+        Nếu hours == 0: Giữ vĩnh viễn (không xóa).
+        """
+        if hours is not None:
+            retention_hours = float(hours)
+        elif "history_retention_hours" in self.config:
+            retention_hours = float(self.config.get("history_retention_hours", 36.0))
+        elif "history_retention_days" in self.config:
+            retention_hours = float(self.config.get("history_retention_days", 1.5)) * 24.0
+        else:
+            retention_hours = 36.0
+
+        if retention_hours <= 0:
+            return 0  # 0: Giữ vĩnh viễn không xóa
+
+        archive_dir = os.path.join(os.path.dirname(__file__), "daily_history")
+        if not os.path.exists(archive_dir):
+            return 0
+
+        deleted_count = 0
+        now_ts = now_vn().timestamp()
+        retention_seconds = retention_hours * 3600.0
+
+        try:
+            for fname in os.listdir(archive_dir):
+                if not fname.endswith(".json"):
+                    continue
+                file_p = os.path.join(archive_dir, fname)
+
+                # Xác định thời điểm lưu trữ của file (từ saved_at hoặc file mtime)
+                file_ts = None
+                try:
+                    with open(file_p, "r", encoding="utf-8") as f:
+                        fdata = json.load(f)
+                    saved_at_str = fdata.get("saved_at", "")
+                    if saved_at_str:
+                        # format ví dụ: "22:17:14 17/09/2026"
+                        dt = datetime.strptime(saved_at_str, "%H:%M:%S %d/%m/%Y").replace(tzinfo=VN_TZ)
+                        file_ts = dt.timestamp()
+                except Exception:
+                    pass
+
+                if not file_ts:
+                    try:
+                        file_ts = os.path.getmtime(file_p)
+                    except Exception:
+                        continue
+
+                age_seconds = now_ts - file_ts
+                if age_seconds >= retention_seconds:
+                    try:
+                        os.remove(file_p)
+                        deleted_count += 1
+                        self.log(f"🗑️ [Tự động xóa lịch sử > {retention_hours:g} tiếng] Đã dọn file {fname} (đã lưu được {round(age_seconds/3600, 1):g} tiếng).", "INFO")
+                    except Exception as fe:
+                        self.log(f"Lỗi khi xóa file {fname}: {fe}", "WARN")
+        except Exception as e:
+            self.log(f"Lỗi quét dọn dẹp thư mục lịch sử: {e}", "WARN")
+
+        return deleted_count
+
     def load_daily_archive(self, date_str: str) -> dict:
         """Đọc lại dữ liệu lưu trữ của một ngày cũ để đối soát khi có thắc mắc"""
         try:
@@ -3124,6 +3187,9 @@ class TelegramBotService:
 
             self.current_date = today_str
             self.log(f"✅ ĐÃ ĐƯA TẤT CẢ VỀ 0 CHO NGÀY MỚI {today_str}. Sẵn sàng nhận tin cược mới bắt đầu từ Tin #1!", "SUCCESS")
+
+            # Tự động dọn dẹp các file lịch sử cược quá hạn lưu trữ
+            self.cleanup_old_history()
             return True
 
         return False

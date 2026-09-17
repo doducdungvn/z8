@@ -158,6 +158,26 @@ def update_config():
                 current["cleanup_after_hours"] = round(s / 3600.0, 2)
         except Exception:
             pass
+    if "history_retention_hours" in data:
+        try:
+            h_val = float(data["history_retention_hours"])
+            if h_val >= 0:
+                current["history_retention_hours"] = h_val
+                current["history_retention_days"] = round(h_val / 24.0, 2)
+                if h_val > 0:
+                    bot_service.cleanup_old_history(h_val)
+        except Exception:
+            pass
+    elif "history_retention_days" in data:
+        try:
+            d_val = float(data["history_retention_days"])
+            if d_val >= 0:
+                current["history_retention_days"] = d_val
+                current["history_retention_hours"] = round(d_val * 24.0, 1)
+                if d_val > 0:
+                    bot_service.cleanup_old_history(d_val * 24.0)
+        except Exception:
+            pass
     if "owner_chat_id" in data:
         current["owner_chat_id"] = str(data["owner_chat_id"]).strip()
     if "admin_password" in data and str(data["admin_password"]).strip():
@@ -172,6 +192,28 @@ def update_config():
     safe_cfg["has_admin_password"] = bool(safe_cfg.get("admin_password"))
     safe_cfg.pop("admin_password", None)
     return jsonify({"success": True, "config": safe_cfg})
+
+
+@app.route("/api/bot/cleanup_history", methods=["POST"])
+def cleanup_history():
+    data = request.json or {}
+    hours = data.get("hours")
+    if hours is not None:
+        try:
+            hours = float(hours)
+        except Exception:
+            hours = None
+    elif "days" in data and data.get("days") is not None:
+        try:
+            hours = float(data["days"]) * 24.0
+        except Exception:
+            hours = None
+    deleted = bot_service.cleanup_old_history(hours)
+    return jsonify({
+        "success": True,
+        "deleted_files_count": deleted,
+        "message": f"Đã dọn dẹp {deleted} file lịch sử cũ thành công."
+    })
 
 
 @app.route("/api/bot/start", methods=["POST"])
