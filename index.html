@@ -7495,11 +7495,23 @@ function resetTable() {
             <!-- KHU VỰC 2: HỘP THƯ TIN CƯỢC TRONG NGÀY (INBOX FEED) -->
             <div class="bg-white dark:bg-dark-800 p-3 rounded-xs border border-slate-300 dark:border-slate-700 space-y-2.5">
               <div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-200 dark:border-slate-700">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <span class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm uppercase flex items-center gap-1.5">
                     <i class="fa-solid fa-envelope-open-text text-sky-600"></i>
                     <span>Hộp Thư Tin Cược Gốc (<span id="tgCountClientMsgs">0</span> tin)</span>
                   </span>
+
+                  <!-- Lựa chọn xem dữ liệu Hôm Nay / Hôm Trước (Yêu cầu xem lại sau khi reset) -->
+                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 p-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs">
+                    <button type="button" id="btnTgInboxViewToday" onclick="switchTgInboxDate('today')" class="px-2 py-0.5 bg-white dark:bg-dark-800 text-sky-700 dark:text-sky-300 font-bold rounded-xs shadow-2xs border border-slate-300 dark:border-slate-600 flex items-center gap-1 cursor-pointer" title="Xem tin cược ngày hôm nay">
+                      <span id="lblTgInboxViewToday">📅 Hôm nay</span>
+                    </button>
+                    <button type="button" id="btnTgInboxViewYesterday" onclick="switchTgInboxDate('yesterday')" class="px-2 py-0.5 bg-transparent hover:bg-white dark:hover:bg-dark-800 text-slate-600 dark:text-slate-400 font-semibold rounded-xs flex items-center gap-1 cursor-pointer transition" title="Xem lại tin cược ngày hôm trước">
+                      <i class="fa-solid fa-clock-rotate-left text-amber-600"></i>
+                      <span id="lblTgInboxViewYesterday">⏮️ Hôm trước</span>
+                    </button>
+                    <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[11px] font-mono text-slate-600 dark:text-slate-400 cursor-pointer outline-none px-1" title="Chọn ngày cụ thể bất kỳ để xem lại">
+                  </div>
                 </div>
 
                 <!-- Bộ Lọc Tìm Kiếm Tin Cược -->
@@ -7521,6 +7533,17 @@ function resetTable() {
                 </div>
               </div>
 
+              <!-- Banner thông báo khi xem dữ liệu lịch sử ngày hôm trước -->
+              <div id="tgInboxArchiveBanner" class="hidden p-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/80 rounded-xs flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
+                <div class="flex items-center gap-1.5 font-semibold">
+                  <i class="fa-solid fa-clock-rotate-left text-amber-600"></i>
+                  <span id="tgInboxArchiveBannerText">Đang xem lại toàn bộ tin cược đã lưu trữ của ngày hôm trước.</span>
+                </div>
+                <button type="button" onclick="switchTgInboxDate('today')" class="px-2 py-0.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xs text-[11px] font-bold cursor-pointer">
+                  Quay lại Hôm nay ❯
+                </button>
+              </div>
+
               <!-- Danh sách thẻ tin nhắn cược gốc -->
               <div id="tgClientMessagesList" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
                 <p class="text-slate-400 italic p-4 text-center text-xs">Chưa có tin nhắn nào từ khách hôm nay.</p>
@@ -7540,12 +7563,6 @@ function resetTable() {
                   <input type="checkbox" id="tgChkAutoScrollLogs" checked class="form-checkbox text-sky-600 rounded-xs">
                   <span>Tự cuộn</span>
                 </label>
-                <button type="button" id="btnViewYesterdayLogs" class="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 rounded-xs text-[11px] font-semibold border border-sky-300 dark:border-sky-700 cursor-pointer" title="Xem log hôm qua">
-                  Hôm qua
-                </button>
-                <button type="button" id="btnViewAllFileLogs" class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 rounded-xs text-[11px] font-semibold border border-purple-300 dark:border-purple-700 cursor-pointer" title="Xem 300 dòng từ file">
-                  File log
-                </button>
                 <button type="button" id="btnClearTgLogs" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-300 dark:border-rose-700 cursor-pointer" title="Xóa log">
                   Xóa
                 </button>
@@ -7572,6 +7589,9 @@ function resetTable() {
               </span>
               <span id="tgBoardStatsText" class="text-xs text-slate-700 dark:text-slate-300 font-semibold font-mono">
                 Đề: 0 con | Lô: 0 con | 3C: 0 con | Xiên: 0 cặp
+              </span>
+              <span id="tgBoardSettledBadge" class="hidden text-xs font-mono font-bold px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 rounded-xs border border-emerald-300 dark:border-emerald-700 flex items-center gap-1">
+                <i class="fa-solid fa-circle-check text-emerald-600"></i> ĐÃ CHỐT SỔ (Về 0 lúc 00:00)
               </span>
             </div>
             
@@ -8637,13 +8657,24 @@ function resetTable() {
           }
         }
 
-        // Tự động làm mới dữ liệu Hộp Thư nếu đang xem tab Hộp Thư (và không gõ tìm kiếm)
+        // Tự động làm mới dữ liệu Hộp Thư nếu đang xem tab Hộp Thư (và không gõ tìm kiếm, và không đang xem hôm trước)
         const inboxTab = document.getElementById('tgTabContentInbox');
         const isInboxActive = inboxTab && !inboxTab.classList.contains('hidden');
         const searchInp = document.getElementById('tgInboxSearchInput');
         const isSearching = searchInp && (document.activeElement === searchInp || searchInp.value.trim() !== '');
         if (isInboxActive && !isSearching && sessionStorage.getItem('tg_admin_unlocked') === 'true') {
-          fetchTgBoard();
+          if (window.tgInboxDateMode !== 'yesterday') {
+            // Tự động cập nhật tgActionDate sang ngày mới nếu bước qua nửa đêm
+            const actionDateInp = document.getElementById('tgActionDate');
+            if (actionDateInp) {
+              const now = new Date();
+              const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+              if (actionDateInp.value !== todayStr) {
+                actionDateInp.value = todayStr;
+              }
+            }
+            fetchTgBoard();
+          }
         }
       } catch (err) {
         if (badge) {
@@ -9194,7 +9225,7 @@ function resetTable() {
                   📥 Nạp Web
                 </button>
                 ${actionBtns}
-                <button type="button" onclick="deleteTgClientMessage('${m.chat_id || m.sender || ''}', ${histIdx}, ${pendingArg})" class="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-200 dark:border-rose-800 cursor-pointer" title="Xóa vĩnh viễn">
+                <button type="button" onclick="deleteTgClientMessage('${m.chat_id || m.sender || ''}', ${histIdx}, ${pendingArg}, \`${safeText}\`)" class="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-200 dark:border-rose-800 cursor-pointer" title="Xóa vĩnh viễn">
                   🗑️ Xóa
                 </button>
               </div>
@@ -9367,6 +9398,86 @@ function resetTable() {
     }
     window.loadTgClientsCrm = loadTgClientsCrm;
 
+    window.tgInboxDateMode = 'today';
+
+    function updateTgInboxDateLabels() {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const lblToday = document.getElementById('lblTgInboxViewToday');
+      if (lblToday) lblToday.textContent = `📅 Hôm nay (${dd}/${mm})`;
+
+      const dPrev = new Date();
+      dPrev.setDate(dPrev.getDate() - 1);
+      const prevD = String(dPrev.getDate()).padStart(2, '0');
+      const prevM = String(dPrev.getMonth() + 1).padStart(2, '0');
+      const lblYesterday = document.getElementById('lblTgInboxViewYesterday');
+      if (lblYesterday) lblYesterday.textContent = `⏮️ Hôm trước (${prevD}/${prevM})`;
+    }
+
+    function switchTgInboxDate(mode, customDateVal = null) {
+      window.tgInboxDateMode = mode;
+      updateTgInboxDateLabels();
+      const btnToday = document.getElementById('btnTgInboxViewToday');
+      const btnYesterday = document.getElementById('btnTgInboxViewYesterday');
+      const banner = document.getElementById('tgInboxArchiveBanner');
+      const bannerText = document.getElementById('tgInboxArchiveBannerText');
+      const customPicker = document.getElementById('tgInboxCustomDatePicker');
+
+      if (mode === 'yesterday') {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const yesterdayStr = `${yyyy}-${mm}-${dd}`;
+        const dispYesterday = `${dd}/${mm}/${yyyy}`;
+
+        if (btnToday) btnToday.className = "px-2 py-0.5 bg-transparent hover:bg-white dark:hover:bg-dark-800 text-slate-600 dark:text-slate-400 font-semibold rounded-xs flex items-center gap-1 cursor-pointer transition";
+        if (btnYesterday) btnYesterday.className = "px-2 py-0.5 bg-white dark:bg-dark-800 text-amber-700 dark:text-amber-300 font-bold rounded-xs shadow-2xs border border-amber-300 dark:border-amber-700 flex items-center gap-1 cursor-pointer";
+        if (banner) banner.classList.remove('hidden');
+        if (bannerText) bannerText.textContent = `Đang xem lại toàn bộ tin cược đã lưu trữ của ngày hôm trước (${dispYesterday}).`;
+
+        const actionDateInp = document.getElementById('tgActionDate');
+        if (actionDateInp) actionDateInp.value = yesterdayStr;
+        if (customPicker) customPicker.value = yesterdayStr;
+
+        fetchTgBoard(yesterdayStr);
+      } else if (mode === 'custom' && customDateVal) {
+        const pts = customDateVal.split('-');
+        const dispCustom = pts.length === 3 ? `${pts[2]}/${pts[1]}/${pts[0]}` : customDateVal;
+
+        if (btnToday) btnToday.className = "px-2 py-0.5 bg-transparent hover:bg-white dark:hover:bg-dark-800 text-slate-600 dark:text-slate-400 font-semibold rounded-xs flex items-center gap-1 cursor-pointer transition";
+        if (btnYesterday) btnYesterday.className = "px-2 py-0.5 bg-transparent hover:bg-white dark:hover:bg-dark-800 text-slate-600 dark:text-slate-400 font-semibold rounded-xs flex items-center gap-1 cursor-pointer transition";
+        if (banner) banner.classList.remove('hidden');
+        if (bannerText) bannerText.textContent = `Đang xem lại toàn bộ tin cược đã lưu trữ của ngày ${dispCustom}.`;
+
+        const actionDateInp = document.getElementById('tgActionDate');
+        if (actionDateInp) actionDateInp.value = customDateVal;
+
+        fetchTgBoard(customDateVal);
+      } else {
+        if (btnToday) btnToday.className = "px-2 py-0.5 bg-white dark:bg-dark-800 text-sky-700 dark:text-sky-300 font-bold rounded-xs shadow-2xs border border-slate-300 dark:border-slate-600 flex items-center gap-1 cursor-pointer";
+        if (btnYesterday) btnYesterday.className = "px-2 py-0.5 bg-transparent hover:bg-white dark:hover:bg-dark-800 text-slate-600 dark:text-slate-400 font-semibold rounded-xs flex items-center gap-1 cursor-pointer transition";
+        if (banner) banner.classList.add('hidden');
+
+        // Đồng bộ lại ô ngày về hôm nay nếu đang xem hôm trước
+        const actionDateInp = document.getElementById('tgActionDate');
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${y}-${m}-${d}`;
+        if (actionDateInp) actionDateInp.value = todayStr;
+        if (customPicker) customPicker.value = todayStr;
+
+        fetchTgBoard('');
+      }
+    }
+    window.switchTgInboxDate = switchTgInboxDate;
+    window.updateTgInboxDateLabels = updateTgInboxDateLabels;
+    updateTgInboxDateLabels();
+
     async function fetchTgBoard(customDate = null) {
       try {
         const actionDateInp = document.getElementById('tgActionDate');
@@ -9387,6 +9498,15 @@ function resetTable() {
         if (badgeStep) badgeStep.textContent = `Đã chuyển: ${b.step_count || 0} lần`;
         const statsText = document.getElementById('tgBoardStatsText');
         if (statsText) statsText.textContent = `Đề: ${deKeys.length} con | Lô: ${loKeys.length} con | 3C: ${bcKeys.length} con | Xiên: ${xCount} cặp`;
+
+        const settledBadge = document.getElementById('tgBoardSettledBadge');
+        if (settledBadge) {
+          if (b.is_settled) {
+            settledBadge.classList.remove('hidden');
+          } else {
+            settledBadge.classList.add('hidden');
+          }
+        }
 
         // KQXS & Báo Cáo Tài Chính
         const kqxs = window.tgCachedKQXS || null;
@@ -9829,12 +9949,16 @@ function resetTable() {
     }
     window.toggleTgTransferVoid = toggleTgTransferVoid;
 
-    async function deleteTgClientMessage(chatId, historyIdx, pendingId = null) {
+    async function deleteTgClientMessage(chatId, historyIdx, pendingId = null, rawText = null) {
       if (!confirm("Bạn có chắc chắn muốn xóa VĨNH VIỄN tin nhắn này khỏi danh sách Tin Gốc?")) return;
       try {
-        const payload = pendingId != null 
-          ? { chat_id: chatId, history_idx: historyIdx, pending_id: pendingId }
-          : { chat_id: chatId, history_idx: historyIdx };
+        const cleanPendingId = (pendingId !== null && pendingId !== undefined && pendingId !== 'null') ? pendingId : null;
+        const payload = {
+          chat_id: chatId,
+          history_idx: (historyIdx !== null && historyIdx !== undefined && historyIdx !== 'null') ? parseInt(historyIdx) : null,
+          pending_id: cleanPendingId,
+          raw_text: rawText || null
+        };
         const res = await callBotApi("/api/bot/delete_message", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -9846,7 +9970,7 @@ function resetTable() {
           fetchTgBoard();
           checkTgBotStatus();
         } else {
-          alert("Lỗi khi xóa tin nhắn: " + (data.error || "Không thành công"));
+          alert("Lỗi khi xóa tin nhắn: " + (data.message || data.error || "Không thành công"));
         }
       } catch (e) {
         alert("Lỗi kết nối Backend: " + e.message);
@@ -10098,62 +10222,6 @@ function resetTable() {
       if (window.location.hash === '#bot') {
         showBotManagementPage();
       }
-
-      // Nút Xem log ngày hôm qua
-      document.getElementById('btnViewYesterdayLogs')?.addEventListener('click', async () => {
-        const consoleEl = document.getElementById('tgLogsConsole');
-        if (consoleEl) consoleEl.innerHTML = '<p class="text-sky-400 italic">Đang tải nhật ký ngày hôm qua (12/09) từ file log...</p>';
-        try {
-          const res = await callBotApi("/api/bot/history_logs?date=12/09");
-          if (!res.ok) return;
-          const data = await res.json();
-          const logs = data.logs || [];
-          if (logs.length === 0) {
-            if (consoleEl) consoleEl.innerHTML = '<p class="text-slate-400 italic">Không tìm thấy bản ghi log nào của ngày 12/09 trong file bot_activity.log.</p>';
-            return;
-          }
-          if (consoleEl) {
-            consoleEl.innerHTML = `<div class="text-amber-400 font-bold mb-2 pb-1 border-b border-slate-700">📜 NHẬT KÝ LỊCH SỬ NGÀY HÔM QUA (12/09) TRÍCH TỪ FILE:</div>` + logs.map(line => {
-              let color = "text-slate-200";
-              if (line.includes("[SUCCESS]")) color = "text-emerald-400 font-semibold";
-              if (line.includes("[WARN]")) color = "text-amber-300 font-semibold";
-              if (line.includes("[ERROR]")) color = "text-rose-400 font-bold";
-              return `<div class="${color} py-0.5 leading-relaxed break-words text-sm sm:text-base">${line.replace(/\\n/g, '<br>')}</div>`;
-            }).join('');
-            consoleEl.scrollTop = consoleEl.scrollHeight;
-          }
-        } catch (e) {
-          if (consoleEl) consoleEl.innerHTML = '<p class="text-rose-400">Lỗi khi tải file log lịch sử: ' + e.message + '</p>';
-        }
-      });
-
-      // Nút Xem toàn bộ file log
-      document.getElementById('btnViewAllFileLogs')?.addEventListener('click', async () => {
-        const consoleEl = document.getElementById('tgLogsConsole');
-        if (consoleEl) consoleEl.innerHTML = '<p class="text-purple-400 italic">Đang đọc toàn bộ file log bot_activity.log...</p>';
-        try {
-          const res = await callBotApi("/api/bot/history_logs");
-          if (!res.ok) return;
-          const data = await res.json();
-          const logs = data.logs || [];
-          if (logs.length === 0) {
-            if (consoleEl) consoleEl.innerHTML = '<p class="text-slate-400 italic">File bot_activity.log hiện tại đang trống.</p>';
-            return;
-          }
-          if (consoleEl) {
-            consoleEl.innerHTML = `<div class="text-purple-400 font-bold mb-2 pb-1 border-b border-slate-700">📜 TOÀN BỘ NHẬT KÝ TỪ FILE (300 DÒNG GẦN NHẤT):</div>` + logs.map(line => {
-              let color = "text-slate-200";
-              if (line.includes("[SUCCESS]")) color = "text-emerald-400 font-semibold";
-              if (line.includes("[WARN]")) color = "text-amber-300 font-semibold";
-              if (line.includes("[ERROR]")) color = "text-rose-400 font-bold";
-              return `<div class="${color} py-0.5 leading-relaxed break-words text-sm sm:text-base">${line.replace(/\\n/g, '<br>')}</div>`;
-            }).join('');
-            consoleEl.scrollTop = consoleEl.scrollHeight;
-          }
-        } catch (e) {
-          if (consoleEl) consoleEl.innerHTML = '<p class="text-rose-400">Lỗi khi đọc file log: ' + e.message + '</p>';
-        }
-      });
 
       // Nút Làm mới log
       document.getElementById('btnRefreshTgLogs')?.addEventListener('click', () => {
