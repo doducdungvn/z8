@@ -18,7 +18,8 @@ from bet_parser import (
     expand_filter_numbers,
     filter_parsed_bets,
     format_rejected_receipt,
-    update_parsed_summary
+    update_parsed_summary,
+    strip_accents
 )
 from balancer import BoardBalancer
 from lottery_engine import (
@@ -480,6 +481,156 @@ class TelegramBotService:
         status_txt = "BỎ QUA (không tính thầu)" if voided else "KHÔI PHỤC tính thầu"
         self.log(f"Đã {status_txt} tin chuyển #{step_idx + 1}. Đã cập nhật lại bảng cược & tiền thầu.", "SUCCESS")
         return {"success": True, "voided": voided}
+
+    def cancel_client_bet_by_index(self, chat_id_str: str, sender_label: str, target_msg_idx: int) -> dict:
+        """Xử lý yêu cầu hủy tin cược từ khách (VD: 'hủy tin 1').
+        Thực hiện đầy đủ:
+        1. Tìm tin cược có msg_index == target_msg_idx của khách đó.
+        2. Đánh dấu HỦY (Void) tin cược của khách và tính lại tiền cược.
+        3. HỦY các bước chuyển thầu sinh ra từ tin cược này và dựng lại bảng balancer.
+        4. Gửi tin nhắn thông báo hủy cho CHỦ THẦU (nếu tin này có cược cân chuyển sang thầu).
+        5. Thông báo cho Chủ Bot (nếu có owner_chat_id).
+        6. Trả về câu phản hồi gửi lại cho khách (VD: 'Đã hủy tin 1').
+        """
+        cid_str = str(chat_id_str).strip()
+
+        # 1. Kiểm tra nếu là tin treo (chưa duyệt)
+        if hasattr(self, "pending_bets"):
+            for i, pb in enumerate(self.pending_bets):
+                if str(pb.get("chat_id")) == cid_str and pb.get("msg_idx") == target_msg_idx:
+                    self.pending_bets.pop(i)
+                    self.save_pending_bets()
+                    self.log(f"Đã hủy tin treo #{target_msg_idx} của khách {sender_label}", "SUCCESS")
+                    return {
+                        "success": True,
+                        "client_reply": f"Đã hủy tin {target_msg_idx}",
+                        "cancelled_transfers": 0
+                    }
+
+        # 2. Tìm trong client_bets
+        target_client_key = None
+        if cid_str in self.client_bets:
+            target_client_key = cid_str
+        else:
+            for k, c in self.client_bets.items():
+                if str(k) == cid_str or str(k).lstrip("@") == cid_str.lstrip("@") or str(c.get("username", "")).lstrip("@") == cid_str.lstrip("@"):
+                    target_client_key = k
+                    break
+
+        if not target_client_key or target_client_key not in self.client_bets:
+            return {
+                "success": False,
+                "client_reply": f"Không tìm thấy tin #{target_msg_idx} để hủy.",
+                "cancelled_transfers": 0
+            }
+
+        client_data = self.client_bets[target_client_key]
+        hist = client_data.get("history", [])
+
+        # Tìm tin có msg_index == target_msg_idx
+        found_hist_idx = None
+        found_item = None
+        for idx, item in enumerate(hist):
+            if item.get("msg_index") == target_msg_idx:
+                found_hist_idx = idx
+                found_item = item
+                break
+
+        # Nếu không tìm thấy theo msg_index, kiểm tra theo vị trí thứ tự nếu phù hợp
+        if found_item is None and 0 <= (target_msg_idx - 1) < len(hist):
+            found_hist_idx = target_msg_idx - 1
+            found_item = hist[found_hist_idx]
+
+        if found_item is None:
+            return {
+                "success": False,
+                "client_reply": f"Không tìm thấy tin #{target_msg_idx} để hủy.",
+                "cancelled_transfers": 0
+            }
+
+        if found_item.get("voided", False):
+            return {
+                "success": True,
+                "client_reply": f"Tin #{target_msg_idx} đã được hủy trước đó rồi.",
+                "cancelled_transfers": 0
+            }
+
+        # Đánh dấu HỦY tin cược của khách
+        found_item["voided"] = True
+        raw_text_cancelled = found_item.get("raw_text", "")
+
+        # 3. Hủy đồng bộ các bước chuyển thầu tương ứng trong balancer.transfer_history
+        transfers_to_notify = []
+        for h in getattr(self.balancer, "transfer_history", []):
+            h_cid = str(h.get("client_chat_id", "")).strip()
+            h_idx = h.get("client_history_idx")
+            m_idx = h.get("client_msg_idx")
+
+            match = False
+            if h_cid == target_client_key:
+                if m_idx is not None and m_idx == target_msg_idx:
+                    match = True
+                elif found_hist_idx is not None and h_idx == found_hist_idx:
+                    match = True
+
+            if match and not h.get("voided", False):
+                h["voided"] = True
+                transfers_to_notify.append(h)
+
+        if transfers_to_notify:
+            self.balancer.recalculate_cumulative_transfers()
+
+        # Tính lại tiền cược của khách và nạp lại bảng Balancer
+        self.recompute_client_totals(target_client_key)
+        self.rebuild_board_from_active_bets()
+        self.save_client_bets()
+
+        # Đồng bộ lại số thứ tự tin của khách
+        valid_count = len([h for h in hist if not h.get("voided", False)])
+        self.client_msg_counters[target_client_key] = valid_count
+
+        # 4. Gửi tin nhắn thông báo HỦY SANG CHỦ THẦU (target_recipient)
+        target_recipient = self.config.get("target_recipient", "").strip()
+        contractor_notified = False
+        if transfers_to_notify and target_recipient:
+            for t_item in transfers_to_notify:
+                step_num = t_item.get("step", "")
+                t_text = t_item.get("transfer_text", "").strip()
+                if not t_text:
+                    # Tự dựng lại text từ transferred nếu transfer_text rỗng
+                    transferred_dict = t_item.get("transferred", {})
+                    t_text = self.balancer.format_transfer_message(transferred_dict, include_header=False)
+
+                cancel_contractor_msg = (
+                    f"Hủy tin (khách {sender_label} hủy tin #{target_msg_idx} - Lần #{step_num}):\n"
+                    f"{t_text}"
+                )
+                ok, err = self.send_telegram_message(target_recipient, cancel_contractor_msg, track_for_cleanup=True, tag="transfer_cancel")
+                if ok:
+                    contractor_notified = True
+                    self.log(f"📤 Đã gửi tin báo HỦY CƯỢC sang chủ thầu {target_recipient}:\n{cancel_contractor_msg}", "SUCCESS")
+                else:
+                    self.log(f"⚠️ Không gửi được tin báo hủy sang chủ thầu {target_recipient}: {err}", "WARN")
+
+        # 5. Thông báo cho Chủ Bot (owner_chat_id)
+        owner_cid = self.config.get("owner_chat_id")
+        if owner_cid and str(target_client_key) != str(owner_cid):
+            rec_status = f" (Đã báo hủy sang thầu {target_recipient})" if contractor_notified else " (Cược giữ lại ôm hết, không bắn thầu)"
+            owner_msg = (
+                f"🔔 <b>KHÁCH HỦY TIN #{target_msg_idx}:</b>\n"
+                f"👤 Khách: {sender_label}\n"
+                f"📝 Nội dung tin hủy: <code>{raw_text_cancelled}</code>\n"
+                f"ℹ️ Trạng thái:{rec_status}"
+            )
+            self.send_telegram_message(str(owner_cid), owner_msg)
+
+        self.log(f"✅ Đã hủy thành công tin #{target_msg_idx} của khách {sender_label}. Đã cập nhật lại bảng cược.", "SUCCESS")
+        return {
+            "success": True,
+            "client_reply": f"Đã hủy tin {target_msg_idx}",
+            "cancelled_transfers": len(transfers_to_notify),
+            "contractor_notified": contractor_notified
+        }
 
     def delete_single_raw_message(self, chat_id_str: str, history_idx: int = None, pending_id: any = None, raw_text: str = None) -> bool:
         """Xóa 1 tin nhắn gốc cụ thể khỏi danh sách (hoặc tin treo) và xóa đồng bộ cược chuyển thầu"""
@@ -1750,6 +1901,7 @@ class TelegramBotService:
                     "• Lô: <code>lo 65=30d</code>, <code>lo 09 575=10d</code>\n"
                     "• 3 Càng: <code>3c 686 685 586=10k</code>\n"
                     "• Xiên: <code>xien 12.34=50k</code>, <code>xq 12.34.56=20k</code>\n"
+                    "• Hủy tin: <code>hủy tin 1</code>, <code>huy tin 2</code> (để hủy tin cược đã đặt)\n"
                     "━━━━━━━━━━━━━━━━━━\n"
                     "🆔 <b>/id</b>: Xem Chat ID của bạn\n"
                     "🎯 <b>/kqxs</b>: Xem Kết quả Xổ số Miền Bắc hôm nay\n"
@@ -2434,6 +2586,16 @@ class TelegramBotService:
             self.log(f"⚠️ Từ chối tin từ '{sender_label}' (ID: {user_id}){group_title}: Người gửi KHÔNG có trong danh sách Khách chỉ định! (Để nhận từ tất cả, hãy điền dấu * vào ô Khách chỉ định)", "WARN")
             return
 
+        # 1b. Kiểm tra nếu khách nhắn yêu cầu HỦY TIN (VD: "hủy tin 1", "huy tin 1", "hủy t1", "hủy 1", "xóa tin 1"...)
+        clean_no_accents = strip_accents(text).lower().strip()
+        cancel_match = re.search(r"^(?:huy|xoa|bo)\s*(?:tin\s*(?:cuoc\s*)?(?:so\s*)?|cuoc\s*|t\s*|\#\s*)?(\d+)(?:\s*(?:nhe|nha|gium|giup|ho|\.|\!))*$", clean_no_accents)
+        if cancel_match:
+            target_idx = int(cancel_match.group(1))
+            self.log(f"Khách {sender_label}: {text} (Yêu cầu hủy tin #{target_idx})", "INFO")
+            res_cancel = self.cancel_client_bet_by_index(chat_id_str=str(chat_id), sender_label=sender_label, target_msg_idx=target_idx)
+            self.send_telegram_message(str(chat_id), res_cancel.get("client_reply", f"Đã hủy tin {target_idx}"), track_for_cleanup=True, tag="cancel_receipt")
+            return
+
         self.stats["messages_received"] += 1
         self.stats["last_active"] = datetime.now().strftime("%H:%M:%S")
 
@@ -2827,6 +2989,80 @@ class TelegramBotService:
             self.log(f"Lỗi đọc file lịch sử ngày {date_str}: {e}", "WARN")
         return None
 
+    def get_settle_status(self, date_str: str = None) -> dict:
+        """Kiểm tra trạng thái chốt tiền của ngày chỉ định hoặc ngày hôm nay.
+        Trả về dict:
+        {
+            "is_settled": True/False,
+            "settled_date": "17/09/2026",
+            "settled_at": "22:52:54 17/09/2026",
+            "settled_time": "22:52:54",
+            "net_profit": 1000 or None
+        }
+        """
+        now = now_vn()
+        today_clean = now.strftime("%Y-%m-%d")
+        today_vn = now.strftime("%d/%m/%Y")
+        
+        target = date_str or getattr(self, "current_date", "") or today_clean
+        clean_target = target.replace("/", "-").strip()
+        parts = clean_target.split("-")
+        if len(parts) == 3 and len(parts[0]) == 2 and len(parts[2]) == 4:
+            clean_target = f"{parts[2]}-{parts[1]}-{parts[0]}"
+        
+        disp_date = f"{parts[2]}/{parts[1]}/{parts[0]}" if (len(parts) == 3 and len(parts[0]) == 4) else (
+            f"{parts[0]}/{parts[1]}/{parts[2]}" if (len(parts) == 3 and len(parts[2]) == 4) else target
+        )
+
+        is_querying_today = (clean_target == today_clean) or (target in [today_clean, today_vn])
+
+        # 1. Kiểm tra cờ bộ nhớ nếu đang xem hôm nay
+        if is_querying_today:
+            if getattr(self, "is_settled_today", False):
+                return {
+                    "is_settled": True,
+                    "settled_date": getattr(self, "last_settled_date", "") or disp_date,
+                    "settled_at": getattr(self, "last_settled_at", "") or now.strftime("%H:%M:%S %d/%m/%Y"),
+                    "settled_time": getattr(self, "last_settled_time", "") or now.strftime("%H:%M:%S"),
+                    "net_profit": getattr(self, "last_settle_result", {}).get("net")
+                }
+            if getattr(self, "last_settled_date", None):
+                return {
+                    "is_settled": True,
+                    "settled_date": self.last_settled_date,
+                    "settled_at": getattr(self, "last_settled_at", ""),
+                    "settled_time": getattr(self, "last_settled_time", ""),
+                    "net_profit": getattr(self, "last_settle_result", {}).get("net")
+                }
+
+        # 2. Kiểm tra file lưu trữ trong daily_history
+        archive = self.load_daily_archive(clean_target)
+        if archive:
+            res = archive.get("settle_result") or {}
+            saved_at = archive.get("saved_at", "")
+            time_str = saved_at.split(" ")[0] if " " in saved_at else ""
+            file_disp = archive.get("display_date") or disp_date
+            if file_disp and "-" in file_disp:
+                fp = file_disp.split("-")
+                if len(fp) == 3 and len(fp[0]) == 4:
+                    file_disp = f"{fp[2]}/{fp[1]}/{fp[0]}"
+            return {
+                "is_settled": True,
+                "settled_date": file_disp,
+                "settled_at": saved_at,
+                "settled_time": time_str,
+                "net_profit": res.get("net") if isinstance(res, dict) else None
+            }
+
+        # 3. Chưa chốt tiền
+        return {
+            "is_settled": False,
+            "settled_date": disp_date,
+            "settled_at": "",
+            "settled_time": "",
+            "net_profit": None
+        }
+
     def _reset_after_settle(self, date_str: str, settle_result: dict = None, kqxs: dict = None):
         """Lưu trữ dữ liệu ngày cũ và đánh dấu ngày hôm nay đã chốt tiền thành công.
         Theo đúng kế hoạch:
@@ -2842,6 +3078,10 @@ class TelegramBotService:
         today_str = now_vn().strftime("%Y-%m-%d")
         self.last_daily_report_date = today_str  # Ngăn check_daily_schedule() chốt lại
         self.is_settled_today = True
+        self.last_settled_date = date_str or now_vn().strftime("%d/%m/%Y")
+        self.last_settled_at = now_vn().strftime("%H:%M:%S %d/%m/%Y")
+        self.last_settled_time = now_vn().strftime("%H:%M:%S")
+        self.last_settle_result = settle_result or {}
 
         self.log(f"🎯 Đã chốt tiền thành công ngày {date_str}. Dữ liệu được bảo lưu và giữ nguyên trên màn hình đối soát đến 12h đêm.", "SUCCESS")
 

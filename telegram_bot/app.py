@@ -53,6 +53,7 @@ if os.environ.get("AUTO_START_BOT", "").lower() in ["true", "1"]:
 def get_status():
     b_mode = bot_service.config.get("bot_mode", "auto")
     pending_cnt = len([b for b in getattr(bot_service, "pending_bets", []) if b.get("status") == "pending"])
+    settle_st = bot_service.get_settle_status()
     return jsonify({
         "running": bot_service.is_running,
         "is_running": bot_service.is_running,
@@ -63,7 +64,12 @@ def get_status():
         "step_count": bot_service.balancer.step_count,
         "has_token": bool(bot_service.config.get("bot_token")),
         "recipient": bot_service.config.get("target_recipient"),
-        "allowed_count": len(bot_service.config.get("allowed_senders", []))
+        "allowed_count": len(bot_service.config.get("allowed_senders", [])),
+        "is_settled": settle_st.get("is_settled", False),
+        "settled_date": settle_st.get("settled_date", ""),
+        "settled_at": settle_st.get("settled_at", ""),
+        "settled_time": settle_st.get("settled_time", ""),
+        "settle_status": settle_st
     })
 
 
@@ -292,7 +298,15 @@ def get_history_logs():
 @app.route("/api/bot/board", methods=["GET"])
 def get_board():
     date_arg = request.args.get("date")
-    if date_arg:
+    today_str = getattr(bot_service, "current_date", "") or datetime.now().strftime("%Y-%m-%d")
+    clean_date = date_arg.replace("/", "-").strip() if date_arg else ""
+    parts = clean_date.split("-")
+    if len(parts) == 3 and len(parts[0]) == 2 and len(parts[2]) == 4:
+        clean_date = f"{parts[2]}-{parts[1]}-{parts[0]}"
+
+    is_today = not clean_date or (clean_date == today_str)
+
+    if not is_today:
         archive = bot_service.load_daily_archive(date_arg)
         if archive:
             b_data = archive.get("board", {})
@@ -311,7 +325,16 @@ def get_board():
                 "raw_messages": archive.get("raw_messages", []),
                 "pending_transfers": {},
                 "pending_text": "",
-                "transfers": {}
+                "transfers": {},
+                "is_settled": True,
+                "settled_date": archive.get("display_date", date_arg),
+                "settled_at": archive.get("saved_at", ""),
+                "settled_time": archive.get("saved_at", "").split(" ")[0] if " " in archive.get("saved_at", "") else "",
+                "settle_status": {
+                    "is_settled": True,
+                    "settled_date": archive.get("display_date", date_arg),
+                    "settled_at": archive.get("saved_at", "")
+                }
             })
 
     # Nếu xem bảng ngày hôm nay, tự động kiểm tra xem đã qua nửa đêm sang ngày mới chưa
@@ -322,6 +345,7 @@ def get_board():
     raw_messages = bot_service.get_all_raw_messages()
     pending = b.calculate_excess()
     pending_text = b.format_transfer_message(pending, include_header=False)
+    settle_st = bot_service.get_settle_status()
     return jsonify({
         "step_count": b.step_count,
         "de_sums": b.de_sums,
@@ -339,7 +363,11 @@ def get_board():
             "bacang": b.cumulative_bacang_transfers,
             "xien": b.cumulative_xien_transfers
         },
-        "is_settled": getattr(bot_service, "is_settled_today", False)
+        "is_settled": settle_st.get("is_settled", False),
+        "settled_date": settle_st.get("settled_date", ""),
+        "settled_at": settle_st.get("settled_at", ""),
+        "settled_time": settle_st.get("settled_time", ""),
+        "settle_status": settle_st
     })
 
 

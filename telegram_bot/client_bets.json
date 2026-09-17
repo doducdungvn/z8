@@ -1,7 +1,24 @@
 {
-  "123456": {
-    "username": "testuser",
-    "history": [],
+  "999888": {
+    "username": "khach_vip",
+    "history": [
+      {
+        "raw_text": "de 10=50k",
+        "msg_index": 1,
+        "voided": true,
+        "parsed": {
+          "de": [
+            {
+              "number": "10",
+              "amount": 50.0
+            }
+          ],
+          "summary": {
+            "de_count": 1
+          }
+        }
+      }
+    ],
     "de": {},
     "lo": {},
     "bacang": {},
