@@ -1,0 +1,63 @@
+{
+  "date": "2026-09-16",
+  "display_date": "2026-09-16",
+  "saved_at": "21:46:20 17/09/2026",
+  "client_bets": {
+    "111": {
+      "username": "u1",
+      "history": [
+        {
+          "raw_text": "de 12x20k",
+          "msg_index": 1
+        }
+      ]
+    }
+  },
+  "raw_messages": [
+    {
+      "chat_id": "111",
+      "sender_name": "111",
+      "username": "u1",
+      "timestamp": null,
+      "raw_text": "de 12x20k",
+      "msg_index": 1,
+      "history_idx": 0,
+      "summary": {},
+      "invalid_items": [],
+      "voided": false,
+      "transfer_text": "",
+      "retained_text": "",
+      "is_pending": false,
+      "status": "active"
+    }
+  ],
+  "transfer_history": [],
+  "board": {
+    "de_sums": {},
+    "lo_sums": {},
+    "bacang_sums": {},
+    "xien_bets": [],
+    "retained": {
+      "de": {},
+      "lo": {},
+      "bacang": {},
+      "xien": [],
+      "summary": {
+        "de_count": 0,
+        "de_sum": 0,
+        "lo_count": 0,
+        "lo_sum": 0,
+        "bacang_count": 0,
+        "bacang_sum": 0,
+        "xien_count": 0,
+        "xien_sum": 0
+      }
+    }
+  },
+  "settle_result": {
+    "test": 123
+  },
+  "kqxs": {
+    "date": "16/09/2026"
+  }
+}

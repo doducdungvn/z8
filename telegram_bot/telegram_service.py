@@ -55,7 +55,9 @@ class TelegramBotService:
         self.is_running = False
         self.polling_thread = None
         self.last_update_id = 0
+        self.current_date = now_vn().strftime("%Y-%m-%d")
         self.last_daily_report_date = None
+        self.is_settled_today = False
         self.cached_kqxs = None
         self.logs = []  # Ring buffer log messages (max 200)
         self.client_msg_counters = {}  # Đếm số thứ tự tin của từng khách trong ngày (Ok tin 1, Ok tin 2...)
@@ -479,11 +481,19 @@ class TelegramBotService:
         self.log(f"Đã {status_txt} tin chuyển #{step_idx + 1}. Đã cập nhật lại bảng cược & tiền thầu.", "SUCCESS")
         return {"success": True, "voided": voided}
 
-    def delete_single_raw_message(self, chat_id_str: str, history_idx: int = None, pending_id: int = None) -> bool:
+    def delete_single_raw_message(self, chat_id_str: str, history_idx: int = None, pending_id: any = None, raw_text: str = None) -> bool:
         """Xóa 1 tin nhắn gốc cụ thể khỏi danh sách (hoặc tin treo) và xóa đồng bộ cược chuyển thầu"""
-        if pending_id is not None:
+        clean_pending_id = None
+        if pending_id not in [None, "", "null", "undefined"]:
+            try:
+                clean_pending_id = int(pending_id)
+            except (ValueError, TypeError):
+                clean_pending_id = None
+
+        # 1. Xóa nếu là tin treo (pending)
+        if clean_pending_id is not None:
             for i, pb in enumerate(getattr(self, "pending_bets", [])):
-                if pb.get("id") == int(pending_id):
+                if pb.get("id") == clean_pending_id:
                     m_idx = pb.get("msg_idx")
                     self.balancer.delete_transfers_for_client_bet(
                         client_chat_id=pb.get("chat_id"),
@@ -491,25 +501,68 @@ class TelegramBotService:
                     )
                     self.pending_bets.pop(i)
                     self.save_pending_bets()
-                    self.log(f"Đã xóa vĩnh viễn tin treo #{pending_id}", "SUCCESS")
+                    self.log(f"Đã xóa vĩnh viễn tin treo #{clean_pending_id}", "SUCCESS")
                     return True
-        if chat_id_str in self.client_bets and history_idx is not None:
-            hist = self.client_bets[chat_id_str].get("history", [])
-            if 0 <= history_idx < len(hist):
-                item = hist[history_idx]
+
+        # 2. Xóa nếu là tin đã nhận trong client_bets
+        cid_str = str(chat_id_str or "").strip()
+        target_cid = None
+        if cid_str in self.client_bets:
+            target_cid = cid_str
+        else:
+            for k, c in self.client_bets.items():
+                if str(k) == cid_str or str(k).lstrip("@") == cid_str.lstrip("@") or str(c.get("username", "")).lstrip("@") == cid_str.lstrip("@"):
+                    target_cid = k
+                    break
+
+        if target_cid and target_cid in self.client_bets:
+            hist = self.client_bets[target_cid].get("history", [])
+            target_h_idx = None
+
+            # Xác định index cần xóa: ưu tiên history_idx, nếu lệch thì đối chiếu raw_text
+            if history_idx is not None and 0 <= history_idx < len(hist):
+                target_h_idx = history_idx
+            elif raw_text:
+                clean_raw = raw_text.strip()
+                for idx, h in enumerate(hist):
+                    if h.get("raw_text", "").strip() == clean_raw:
+                        target_h_idx = idx
+                        break
+
+            if target_h_idx is not None and 0 <= target_h_idx < len(hist):
+                item = hist[target_h_idx]
                 m_idx = item.get("msg_index")
                 self.balancer.delete_transfers_for_client_bet(
-                    client_chat_id=chat_id_str,
-                    client_history_idx=history_idx,
+                    client_chat_id=target_cid,
+                    client_history_idx=target_h_idx,
                     client_msg_idx=m_idx
                 )
-                hist.pop(history_idx)
-                self.recompute_client_totals(chat_id_str)
+                hist.pop(target_h_idx)
+                self.save_client_bets()
+                self.recompute_client_totals(target_cid)
                 self.rebuild_board_from_active_bets()
                 valid_count = len([h for h in hist if not h.get("voided", False)])
-                self.client_msg_counters[chat_id_str] = valid_count
-                self.log(f"Đã xóa vĩnh viễn tin nhắn gốc #{history_idx + 1} của {chat_id_str}", "SUCCESS")
+                self.client_msg_counters[target_cid] = valid_count
+                self.log(f"Đã xóa vĩnh viễn tin nhắn gốc #{target_h_idx + 1} của khách {target_cid}", "SUCCESS")
                 return True
+
+        # 3. Phương án vét cạn: tìm theo raw_text trên toàn bộ client_bets
+        if raw_text:
+            clean_raw = raw_text.strip()
+            for k, c in self.client_bets.items():
+                hist = c.get("history", [])
+                for idx, h in enumerate(hist):
+                    if h.get("raw_text", "").strip() == clean_raw:
+                        m_idx = h.get("msg_index")
+                        self.balancer.delete_transfers_for_client_bet(client_chat_id=k, client_history_idx=idx, client_msg_idx=m_idx)
+                        hist.pop(idx)
+                        self.save_client_bets()
+                        self.recompute_client_totals(k)
+                        self.rebuild_board_from_active_bets()
+                        self.client_msg_counters[k] = len([x for x in hist if not x.get("voided", False)])
+                        self.log(f"Đã tìm thấy và xóa vĩnh viễn tin nhắn theo nội dung của khách {k}", "SUCCESS")
+                        return True
+
         return False
 
 
@@ -522,6 +575,17 @@ class TelegramBotService:
         clean_text = bet_text.strip()
         if not clean_text:
             return {"success": False, "error": "Chưa có nội dung cược để nạp."}
+
+        self.check_and_rollover_date()
+
+        if getattr(self, "is_settled_today", False):
+            self.balancer.reset_board()
+            self.client_bets = {}
+            self.save_client_bets()
+            self.client_msg_counters = {}
+            self.pending_bets = []
+            self.save_pending_bets()
+            self.is_settled_today = False
 
         import hashlib
         text_hash = hashlib.md5(clean_text.encode("utf-8")).hexdigest()
@@ -1357,6 +1421,9 @@ class TelegramBotService:
 
         if not text:
             return
+
+        # Tự động kiểm tra sang ngày mới trước khi tiếp nhận bất kỳ tin nhắn nào
+        self.check_and_rollover_date()
 
         # Lưu người dùng vào known_users
         self.record_user(from_user, chat_id)
@@ -2453,6 +2520,22 @@ class TelegramBotService:
             self.notify_owner_new_pending_bet(pending_item)
             return
 
+        # Nếu hôm nay đã chốt tiền xong mà có cược mới đến: tự động làm sạch bảng và bắt đầu ca mới từ Tin #1!
+        if getattr(self, "is_settled_today", False):
+            self.log("🌅 Có tin cược mới sau khi đã chốt tiền -> Bắt đầu bảng mới cho ngày tiếp theo (tính từ Tin #1)...", "INFO")
+            self.balancer.reset_board()
+            self.client_bets = {}
+            self.save_client_bets()
+            self.client_msg_counters = {}
+            self.pending_bets = []
+            self.save_pending_bets()
+            self.pending_client_receipts = []
+            self.last_web_bet_hash = None
+            self.last_web_bet_text = ""
+            self.last_bet_timestamp = None
+            self.cached_kqxs = None
+            self.is_settled_today = False
+
         # Tăng số thứ tự tin của khách (Ok tin 1, Ok tin 2...)
         msg_idx = self.client_msg_counters.get(chat_id_str, 0) + 1
         self.client_msg_counters[chat_id_str] = msg_idx
@@ -2745,53 +2828,110 @@ class TelegramBotService:
         return None
 
     def _reset_after_settle(self, date_str: str, settle_result: dict = None, kqxs: dict = None):
-        """Reset toàn bộ bảng cược sang ngày mới sau khi đã chốt tiền xong.
-        Được gọi sau settle_all() để tránh bot tính lại dữ liệu cũ sang ngày hôm sau.
+        """Lưu trữ dữ liệu ngày cũ và đánh dấu ngày hôm nay đã chốt tiền thành công.
+        Theo đúng kế hoạch:
+        1. Các con số thống kê và tin cược trong ngày vẫn được GIỮ NGUYÊN trên màn hình suốt buổi tối
+           để chủ bảng xem lại, kiểm tra lãi/lỗ và đối soát thoải mái.
+        2. Toàn bộ số liệu sẽ tự động reset về 0 khi đồng hồ điểm 12h đêm (00:00:00) chuyển sang ngày hôm sau.
+        3. Nếu sau khi chốt tiền mà có khách gửi tin cược mới (chuẩn bị ngày mai), hệ thống tự động bắt đầu tính từ Tin #1 cho ngày mới.
         """
-        # 1. Lưu trữ an toàn dữ liệu ngày cũ để đối soát khi khách/thầu thắc mắc
+        # 1. Lưu trữ an toàn dữ liệu ngày vừa chốt vào kho daily_history
         self.save_daily_archive(date_str, settle_result=settle_result, kqxs=kqxs)
 
         # 2. Đặt cờ ngày đã chốt
         today_str = now_vn().strftime("%Y-%m-%d")
         self.last_daily_report_date = today_str  # Ngăn check_daily_schedule() chốt lại
+        self.is_settled_today = True
 
-        # 3. Làm sạch bảng và reset bộ đếm
-        self.balancer.reset_board()
-        self.client_bets = {}
-        self.save_client_bets()
-        self.client_msg_counters = {}
-        self.pending_bets = []
-        self.save_pending_bets()
-        self.pending_client_receipts = []
-        self.last_web_bet_hash = None
-        self.last_web_bet_text = ""
-        self.last_bet_timestamp = None
-        self.log(f"🔄 Đã tự động reset bảng cược sang ngày mới sau khi chốt tiền {date_str}.", "INFO")
+        self.log(f"🎯 Đã chốt tiền thành công ngày {date_str}. Dữ liệu được bảo lưu và giữ nguyên trên màn hình đối soát đến 12h đêm.", "SUCCESS")
+
+    def check_and_rollover_date(self) -> bool:
+        """Tự động kiểm tra chuyển sang ngày mới khi đồng hồ điểm 12h đêm (00:00:00):
+        1. Đưa tất cả các con số thống kê về 0.
+        2. Làm sạch bảng cược và bộ đếm tin nhắn khách để đón ngày mới.
+        3. Dữ liệu ngày hôm qua được lưu trữ an toàn trong kho lịch sử, xem lại qua nút [⏮️ Hôm trước].
+        """
+        now = now_vn()
+        today_str = now.strftime("%Y-%m-%d")
+
+        if not hasattr(self, "current_date") or not self.current_date:
+            self.current_date = today_str
+            return False
+
+        if self.current_date != today_str:
+            old_date = self.current_date
+            self.log(f"⏰ [12H ĐÊM - SANG NGÀY MỚI {today_str}] Tự động reset toàn bộ các con số thống kê về 0...", "INFO")
+
+            # Lưu archive nếu ngày cũ còn dữ liệu chưa lưu
+            has_old_data = bool(self.client_bets or (hasattr(self, "balancer") and self.balancer.step_count > 0) or getattr(self, "pending_bets", []))
+            if has_old_data and not getattr(self, "is_settled_today", False):
+                self.save_daily_archive(old_date)
+
+            # Reset sạch sẽ đón ngày mới
+            self.balancer.reset_board()
+            self.client_bets = {}
+            self.save_client_bets()
+            self.client_msg_counters = {}
+            self.pending_bets = []
+            self.save_pending_bets()
+            self.pending_client_receipts = []
+            self.last_web_bet_hash = None
+            self.last_web_bet_text = ""
+            self.last_bet_timestamp = None
+            self.cached_kqxs = None
+            self.is_settled_today = False
+            self.last_daily_report_date = None  # Cho phép ngày mới được chốt tiền
+
+            self.current_date = today_str
+            self.log(f"✅ ĐÃ ĐƯA TẤT CẢ VỀ 0 CHO NGÀY MỚI {today_str}. Sẵn sàng nhận tin cược mới bắt đầu từ Tin #1!", "SUCCESS")
+            return True
+
+        return False
 
     def check_daily_schedule(self):
-        """Kiểm tra thời gian và tự động cào KQXS lúc 18h30 - 18h48"""
+        """Kiểm tra thời gian và tự động chốt tiền từ 18h35, nếu chưa có KQXS thì lặp lại mỗi 5 phút/lần cho đến khi chốt thành công và đưa tất cả về 0.
+        Nếu đã chốt thủ công bằng tay thì dừng hoàn toàn việc chốt tiền của ngày hôm đó.
+        """
         if not self.config.get("auto_fetch_kqxs_daily", True):
             return
 
-        now = datetime.now()
+        now = now_vn()
         today_str = now.strftime("%Y-%m-%d")
 
-        # Khung giờ quay thưởng XSMB từ 18:30 đến 18:48
-        if now.hour == 18 and 30 <= now.minute <= 48:
-            if self.last_daily_report_date != today_str:
-                last_check = getattr(self, "_last_kqxs_check_ts", 0)
-                if time.time() - last_check < 60:
-                    return
-                self._last_kqxs_check_ts = time.time()
+        # NẾU ĐÃ CHỐT TIỀN HÔM NAY RỒI (kể cả tự chốt bằng tay thủ công hay tự động) THÌ DỪNG!
+        if getattr(self, "last_daily_report_date", "") == today_str:
+            return
 
-                self.log(f"⏰ Đang tự động kiểm tra KQXS hôm nay ({now.strftime('%H:%M:%S')})...", "INFO")
-                kq = fetch_xsmb()
-                if kq.get("is_complete"):
-                    self.cached_kqxs = kq
-                    self.last_daily_report_date = today_str
-                    self.log(f"🎯 Đã có đầy đủ KQXS 27 giải ngày {kq.get('date')}! Tự động chốt tiền với khách cược & người nhận...", "SUCCESS")
-                    res = self.settle_all(kq, notify_clients=True, notify_recipient=True, notify_owner=True)
-                    self._reset_after_settle(kq.get('date', today_str), settle_result=res, kqxs=kq)
+        # BẮT ĐẦU TỪ LÚC 18h35 TRỞ ĐI (18:35 đến 23:59):
+        is_settle_time = (now.hour == 18 and now.minute >= 35) or (now.hour > 18)
+        if not is_settle_time:
+            return
+
+        # CỨ 5 PHÚT / LẦN (300 giây) THỰC HIỆN LẤY KẾT QUẢ VÀ CHỐT TIỀN:
+        last_check = getattr(self, "_last_kqxs_check_ts", 0)
+        if time.time() - last_check < 300:
+            return
+        self._last_kqxs_check_ts = time.time()
+
+        self.log(f"⏰ [18h35+] Đến giờ chốt tiền tự động ({now.strftime('%H:%M:%S')}) -> Đang kiểm tra KQXS Miền Bắc...", "INFO")
+        try:
+            kq = fetch_xsmb()
+            # Điều kiện KQXS hợp lệ: đài báo đầy đủ (is_complete) hoặc đã có giải đặc biệt và ít nhất 20 giải
+            prizes_count = len(kq.get("all_last2", [])) if kq.get("all_last2") else 0
+            has_db = bool(kq.get("special_last2"))
+            is_valid_kqxs = kq.get("is_complete") or (has_db and prizes_count >= 20)
+
+            if is_valid_kqxs:
+                self.cached_kqxs = kq
+                date_label = kq.get('date') or today_str
+                self.log(f"🎯 ĐÃ CÓ ĐẦY ĐỦ KQXS NGÀY {date_label}! Tiến hành tự động chốt tiền với khách & chủ thầu...", "SUCCESS")
+                res = self.settle_all(kq, notify_clients=True, notify_recipient=True, notify_owner=True)
+                self._reset_after_settle(date_label, settle_result=res, kqxs=kq)
+                self.log(f"✅ ĐÃ TỰ ĐỘNG CHỐT TIỀN THÀNH CÔNG VÀ ĐƯA TẤT CẢ THỐNG KÊ VỀ 0 CHO NGÀY TIẾP THEO.", "SUCCESS")
+            else:
+                self.log(f"⏳ Chưa có đầy đủ KQXS 27 giải ngày {today_str} (đài chưa quay xong). Sẽ tiếp tục kiểm tra lại sau 5 phút...", "WARN")
+        except Exception as ex:
+            self.log(f"⚠️ Lỗi trong quá trình tự động chốt tiền: {ex}. Sẽ thử lại sau 5 phút...", "WARN")
 
     def poll_updates(self):
         """Vòng lặp Long Polling nhận tin nhắn liên tục"""
@@ -2809,7 +2949,13 @@ class TelegramBotService:
                     except Exception as ex:
                         self.log(f"Lỗi tự động xóa dấu vết cược: {ex}", "WARN")
 
-                # Tự động kiểm tra lịch KQXS 18h30
+                # Tự động kiểm tra chuyển ngày mới qua nửa đêm (00:00)
+                try:
+                    self.check_and_rollover_date()
+                except Exception as ex:
+                    pass
+
+                # Tự động kiểm tra lịch KQXS 18h35
                 try:
                     self.check_daily_schedule()
                 except Exception as ex:

@@ -314,6 +314,9 @@ def get_board():
                 "transfers": {}
             })
 
+    # Nếu xem bảng ngày hôm nay, tự động kiểm tra xem đã qua nửa đêm sang ngày mới chưa
+    bot_service.check_and_rollover_date()
+
     b = bot_service.balancer
     retained = b.get_retained_bets()
     raw_messages = bot_service.get_all_raw_messages()
@@ -335,7 +338,8 @@ def get_board():
             "lo": b.cumulative_lo_transfers,
             "bacang": b.cumulative_bacang_transfers,
             "xien": b.cumulative_xien_transfers
-        }
+        },
+        "is_settled": getattr(bot_service, "is_settled_today", False)
     })
 
 
@@ -381,11 +385,27 @@ def delete_message():
     chat_id = str(data.get("chat_id", "")).strip()
     history_idx = data.get("history_idx")
     pending_id = data.get("pending_id")
-    if pending_id is None and (not chat_id or history_idx is None):
-        return jsonify({"success": False, "error": "Thiếu chat_id/history_idx hoặc pending_id"}), 400
-    
-    ok = bot_service.delete_single_raw_message(chat_id, int(history_idx) if history_idx is not None else None, pending_id=pending_id)
-    return jsonify({"success": ok})
+    raw_text = data.get("raw_text")
+
+    clean_pending_id = None
+    if pending_id not in [None, "", "null", "undefined"]:
+        try:
+            clean_pending_id = int(pending_id)
+        except (ValueError, TypeError):
+            clean_pending_id = None
+
+    clean_h_idx = None
+    if history_idx not in [None, "", "null", "undefined"]:
+        try:
+            clean_h_idx = int(history_idx)
+        except (ValueError, TypeError):
+            clean_h_idx = None
+
+    if clean_pending_id is None and not chat_id and clean_h_idx is None and not raw_text:
+        return jsonify({"success": False, "error": "Thiếu thông tin nhận diện tin nhắn cần xóa"}), 400
+
+    ok = bot_service.delete_single_raw_message(chat_id, clean_h_idx, pending_id=clean_pending_id, raw_text=raw_text)
+    return jsonify({"success": ok, "message": "Đã xóa tin nhắn thành công" if ok else "Không tìm thấy tin nhắn cần xóa"})
 
 
 @app.route("/api/bot/void_message", methods=["POST"])
