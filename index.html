@@ -7381,19 +7381,20 @@ function resetTable() {
         </div>
 
         <!-- KPI 4: KQXS & Lãi/Lỗ Tạm Tính -->
-        <div onclick="clickTgKpiCard('kqxs_accounting')" title="👉 Bấm để xem Báo Cáo Tài Chính Lãi/Lỗ & Kết Quả Xổ Số Hôm Nay" class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all duration-150 hover:border-amber-500 hover:shadow-md hover:-translate-y-0.5 cursor-pointer select-none group">
+        <div onclick="clickTgKpiCard('kqxs_accounting')" title="👉 Bấm để xem Báo Cáo Tài Chính Lãi/Lỗ & Kết Quả Xổ Số Hôm Nay" class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all duration-150 hover:border-amber-500 hover:shadow-md hover:-translate-y-0.5 cursor-pointer select-none group" id="kpiTgCard4">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-amber-600 transition-colors">KQXS &amp; Lãi/Lỗ Tạm Tính</span>
-            <div class="w-7 h-7 rounded-xs bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center text-xs group-hover:bg-amber-600 group-hover:text-white transition-all">
+            <span id="kpiTgCard4Title" class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-amber-600 transition-colors">KQXS &amp; LÃI/LỖ TẠM TÍNH</span>
+            <div id="kpiTgCard4Icon" class="w-7 h-7 rounded-xs bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center text-xs group-hover:bg-amber-600 group-hover:text-white transition-all">
               <i class="fa-solid fa-trophy"></i>
             </div>
           </div>
-          <div class="mt-1 flex items-baseline gap-2">
+          <div class="mt-1 flex items-baseline justify-between gap-1.5 flex-wrap">
             <span id="kpiTgNetProfit" class="text-xl sm:text-2xl font-black font-mono text-slate-700 dark:text-slate-300">--</span>
+            <span id="kpiTgSettleBadge" class="hidden text-[10px] font-bold px-1.5 py-0.5 rounded-xs border"></span>
           </div>
-          <div id="kpiTgKqxsStatus" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate flex items-center justify-between">
-            <span>Chưa có KQXS hôm nay</span>
-            <span class="text-[10px] text-amber-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Báo Cáo 👉</span>
+          <div class="mt-1 text-[11px] font-mono truncate flex items-center justify-between">
+            <span id="kpiTgKqxsStatus" class="truncate font-semibold text-slate-500 dark:text-slate-400">Chờ KQXS 18h15</span>
+            <span class="text-[10px] text-amber-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity ml-1">Báo Cáo 👉</span>
           </div>
         </div>
       </div>
@@ -7516,9 +7517,12 @@ function resetTable() {
 
                 <!-- Bộ Lọc Tìm Kiếm Tin Cược -->
                 <div class="flex items-center gap-1.5 flex-wrap">
-                  <div class="relative">
-                    <input type="text" id="tgInboxSearchInput" oninput="filterTgClientMessages()" placeholder="Tìm khách, ID, nội dung..." class="border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-1 text-xs bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 pl-6 w-36 sm:w-48 outline-none focus:border-sky-500">
+                  <div class="relative flex items-center">
+                    <input type="text" id="tgInboxSearchInput" oninput="filterTgClientMessages()" placeholder="Tìm khách, ID, nội dung..." class="border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-1 text-xs bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 pl-6 pr-6 w-36 sm:w-48 outline-none focus:border-sky-500">
                     <i class="fa-solid fa-magnifying-glass absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+                    <button type="button" id="btnClearTgInboxSearch" onclick="clearTgInboxSearch()" class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-xs cursor-pointer p-0.5" title="Xóa tìm kiếm">
+                      <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
                   </div>
                   <select id="tgInboxStatusFilter" onchange="filterTgClientMessages()" class="border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-1 text-xs bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
                     <option value="all">Tất cả trạng thái</option>
@@ -9110,6 +9114,11 @@ function resetTable() {
     function filterTgClientMessages() {
       const searchVal = (document.getElementById('tgInboxSearchInput')?.value || '').trim().toLowerCase();
       const statusFilter = document.getElementById('tgInboxStatusFilter')?.value || 'all';
+      const btnClear = document.getElementById('btnClearTgInboxSearch');
+      if (btnClear) {
+        if (searchVal) btnClear.classList.remove('hidden');
+        else btnClear.classList.add('hidden');
+      }
       renderTgClientMessagesFiltered(searchVal, statusFilter);
     }
     window.filterTgClientMessages = filterTgClientMessages;
@@ -9144,9 +9153,18 @@ function resetTable() {
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = query || statusFilter !== 'all' 
-          ? '<p class="text-slate-400 italic p-4 text-center text-xs">Không tìm thấy tin nhắn nào khớp với bộ lọc.</p>'
-          : '<p class="text-slate-400 italic p-4 text-center text-xs">Chưa có tin nhắn nào từ khách hôm nay.</p>';
+        if (query || statusFilter !== 'all') {
+          container.innerHTML = `
+            <div class="p-6 text-center text-xs text-slate-400 space-y-2">
+              <p class="italic">Không tìm thấy tin nhắn nào khớp với bộ lọc "${query || statusFilter}".</p>
+              <button type="button" onclick="clearTgInboxSearch(); if(document.getElementById('tgInboxStatusFilter')) document.getElementById('tgInboxStatusFilter').value='all'; filterTgClientMessages();" class="px-2.5 py-1 bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-300 rounded border border-sky-300 dark:border-sky-800 text-xs font-semibold cursor-pointer">
+                ✕ Xóa bộ lọc để hiện tất cả (${list.length} tin)
+              </button>
+            </div>
+          `;
+        } else {
+          container.innerHTML = '<p class="text-slate-400 italic p-4 text-center text-xs">Chưa có tin nhắn nào từ khách hôm nay.</p>';
+        }
         return;
       }
 
@@ -9471,6 +9489,16 @@ function resetTable() {
         if (actionDateInp) actionDateInp.value = todayStr;
         if (customPicker) customPicker.value = todayStr;
 
+        // Xóa bộ lọc tìm kiếm khi bấm Hôm nay để hiện đầy đủ tin
+        const searchInp = document.getElementById('tgInboxSearchInput');
+        if (searchInp) {
+          searchInp.value = '';
+          const btnClear = document.getElementById('btnClearTgInboxSearch');
+          if (btnClear) btnClear.classList.add('hidden');
+        }
+        const statusFilter = document.getElementById('tgInboxStatusFilter');
+        if (statusFilter) statusFilter.value = 'all';
+
         fetchTgBoard('');
       }
     }
@@ -9478,15 +9506,68 @@ function resetTable() {
     window.updateTgInboxDateLabels = updateTgInboxDateLabels;
     updateTgInboxDateLabels();
 
+    function clearTgInboxSearch() {
+      const searchInp = document.getElementById('tgInboxSearchInput');
+      if (searchInp) {
+        searchInp.value = '';
+        searchInp.focus();
+      }
+      const btnClear = document.getElementById('btnClearTgInboxSearch');
+      if (btnClear) btnClear.classList.add('hidden');
+      filterTgClientMessages();
+    }
+    window.clearTgInboxSearch = clearTgInboxSearch;
+
     async function fetchTgBoard(customDate = null) {
       try {
-        const actionDateInp = document.getElementById('tgActionDate');
-        const selDate = customDate || (actionDateInp && actionDateInp.value ? actionDateInp.value : '');
-        const url = selDate ? `/api/bot/board?date=${encodeURIComponent(selDate)}` : "/api/bot/board";
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${y}-${m}-${d}`;
+
+        let queryDate = '';
+        if (customDate !== null && customDate !== undefined && customDate !== '') {
+          if (customDate !== todayStr) {
+            queryDate = customDate;
+          }
+        } else if (window.tgInboxDateMode === 'yesterday') {
+          const yd = new Date();
+          yd.setDate(yd.getDate() - 1);
+          queryDate = `${yd.getFullYear()}-${String(yd.getMonth() + 1).padStart(2, '0')}-${String(yd.getDate()).padStart(2, '0')}`;
+        } else if (window.tgInboxDateMode === 'custom') {
+          const cp = document.getElementById('tgInboxCustomDatePicker');
+          if (cp && cp.value && cp.value !== todayStr) {
+            queryDate = cp.value;
+          }
+        }
+
+        // Nếu xem hôm nay thì gọi trực tiếp /api/bot/board (bảng live thời gian thực)
+        const url = queryDate ? `/api/bot/board?date=${encodeURIComponent(queryDate)}` : "/api/bot/board";
         const res = await callBotApi(url);
         if (!res.ok) return;
         const b = await res.json();
         tgCachedBoardData = b;
+
+        const todayDisp = `${d}/${m}/${y}`;
+        // Nếu đang xem hôm nay mà chưa có thông tin chốt tiền, kiểm tra xem hôm nay đã có file chốt chưa
+        if (!queryDate && (!window.tgTodaySettledInfo || window.tgForceCheckSettle)) {
+          try {
+            const chkRes = await callBotApi(`/api/bot/board?date=${todayStr}`);
+            if (chkRes.ok) {
+              const chkData = await chkRes.json();
+              if (chkData && (chkData.from_archive || chkData.saved_at)) {
+                window.tgTodaySettledInfo = {
+                  is_settled: true,
+                  settled_date: chkData.display_date || chkData.date || todayDisp,
+                  settled_at: chkData.saved_at || '',
+                  settled_time: (chkData.saved_at && chkData.saved_at.includes(' ')) ? chkData.saved_at.split(' ')[0] : ''
+                };
+              }
+            }
+          } catch (_) {}
+          window.tgForceCheckSettle = false;
+        }
 
         const deKeys = Object.keys(b.de_sums || {});
         const loKeys = Object.keys(b.lo_sums || {});
@@ -9602,9 +9683,82 @@ function resetTable() {
         const kpiSteps = document.getElementById('kpiTgTransfersSteps');
         if (kpiSteps) kpiSteps.textContent = `(Đã bắn ${b.step_count || histList.length || 0} lần)`;
 
-        // KPI Lãi / Lỗ & KQXS
+        // KPI 4: LÃI/LỖ & KQXS & BÁO CÁO TRẠNG THÁI CHỐT TIỀN
         const kpiNetProfit = document.getElementById('kpiTgNetProfit');
         const kpiKqxsStatus = document.getElementById('kpiTgKqxsStatus');
+        const kpiCard4Title = document.getElementById('kpiTgCard4Title');
+        const kpiSettleBadge = document.getElementById('kpiTgSettleBadge');
+        const kpiCard4Icon = document.getElementById('kpiTgCard4Icon');
+
+        // Xác định ngày đang xem
+        let curViewDate = todayDisp;
+        if (window.tgInboxDateMode === 'yesterday') {
+          const yd = new Date();
+          yd.setDate(yd.getDate() - 1);
+          curViewDate = `${String(yd.getDate()).padStart(2, '0')}/${String(yd.getMonth() + 1).padStart(2, '0')}/${yd.getFullYear()}`;
+        } else if (window.tgInboxDateMode === 'custom') {
+          const cp = document.getElementById('tgInboxCustomDatePicker');
+          if (cp && cp.value) {
+            const p = cp.value.split('-');
+            if (p.length === 3) curViewDate = `${p[2]}/${p[1]}/${p[0]}`;
+          }
+        }
+
+        // Xác định trạng thái chốt tiền và ngày chốt
+        let isSettled = false;
+        let settledDate = curViewDate;
+        let settledTime = '';
+        let settledAt = '';
+
+        if (b.is_settled) {
+          isSettled = true;
+          settledDate = b.settled_date || curViewDate;
+          settledTime = b.settled_time || '';
+          settledAt = b.settled_at || '';
+        } else if (b.from_archive || b.saved_at) {
+          isSettled = true;
+          settledDate = b.display_date || b.date || curViewDate;
+          settledAt = b.saved_at || '';
+          if (settledAt && settledAt.includes(' ')) settledTime = settledAt.split(' ')[0];
+        } else if (window.tgInboxDateMode === 'today' && window.tgTodaySettledInfo?.is_settled) {
+          isSettled = true;
+          settledDate = window.tgTodaySettledInfo.settled_date || curViewDate;
+          settledAt = window.tgTodaySettledInfo.settled_at || '';
+          settledTime = window.tgTodaySettledInfo.settled_time || (settledAt && settledAt.includes(' ') ? settledAt.split(' ')[0] : '');
+        }
+
+        // Chuẩn hóa settledDate hiển thị DD/MM/YYYY
+        if (settledDate && settledDate.includes('-')) {
+          const p = settledDate.split('-');
+          if (p.length === 3 && p[0].length === 4) settledDate = `${p[2]}/${p[1]}/${p[0]}`;
+        }
+
+        // Cập nhật Tiêu đề, Badge và Icon Chốt Tiền
+        if (isSettled) {
+          if (kpiCard4Title) kpiCard4Title.textContent = "KQXS & LÃI/LỖ (ĐÃ CHỐT SỔ)";
+          if (kpiSettleBadge) {
+            kpiSettleBadge.className = "text-[10px] font-bold px-1.5 py-0.5 rounded-xs border bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 flex items-center gap-1 shadow-2xs";
+            kpiSettleBadge.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600"></i> ĐÃ CHỐT TIỀN';
+            kpiSettleBadge.classList.remove('hidden');
+          }
+          if (kpiCard4Icon) {
+            kpiCard4Icon.className = "w-7 h-7 rounded-xs bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center text-xs group-hover:bg-emerald-600 group-hover:text-white transition-all";
+            kpiCard4Icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+          }
+        } else {
+          if (kpiCard4Title) kpiCard4Title.textContent = "KQXS & LÃI/LỖ TẠM TÍNH";
+          if (kpiSettleBadge) {
+            kpiSettleBadge.className = "text-[10px] font-bold px-1.5 py-0.5 rounded-xs border bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700 flex items-center gap-1";
+            kpiSettleBadge.innerHTML = '<i class="fa-solid fa-clock text-amber-600"></i> CHƯA CHỐT';
+            kpiSettleBadge.classList.remove('hidden');
+          }
+          if (kpiCard4Icon) {
+            kpiCard4Icon.className = "w-7 h-7 rounded-xs bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center text-xs group-hover:bg-amber-600 group-hover:text-white transition-all";
+            kpiCard4Icon.innerHTML = '<i class="fa-solid fa-trophy"></i>';
+          }
+        }
+
+        // Cập nhật Số tiền Lãi / Lỗ
         if (accReport?.thau) {
           const net = accReport.thau.totalNet || 0;
           const isPos = net >= 0;
@@ -9618,13 +9772,22 @@ function resetTable() {
             kpiNetProfit.className = "text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 font-mono tracking-tight";
           }
         }
+
+        // Cập nhật Dòng trạng thái (Báo rõ đã chốt tiền ngày nào hay chưa chốt)
         if (kpiKqxsStatus) {
-          if (kqxs) {
-            kpiKqxsStatus.textContent = `● Đã có KQXS (Đề: ${winDe})`;
-            kpiKqxsStatus.className = "text-[10px] text-emerald-600 dark:text-emerald-400 font-bold truncate";
+          if (isSettled) {
+            const timeTag = settledTime ? ` (${settledTime})` : '';
+            const deTag = winDe ? ` ● Đề: ${winDe}` : '';
+            kpiKqxsStatus.innerHTML = `🎯 Đã chốt ngày <b>${settledDate}</b>${timeTag}${deTag}`;
+            kpiKqxsStatus.className = "text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate";
           } else {
-            kpiKqxsStatus.textContent = "Chờ KQXS 18h15";
-            kpiKqxsStatus.className = "text-[10px] text-slate-400 italic truncate";
+            if (kqxs) {
+              kpiKqxsStatus.innerHTML = `⏳ Chưa chốt ngày <b>${curViewDate}</b> (● Đề: ${winDe})`;
+              kpiKqxsStatus.className = "text-[10px] text-amber-700 dark:text-amber-400 font-bold truncate";
+            } else {
+              kpiKqxsStatus.innerHTML = `⏳ Chưa chốt ngày <b>${curViewDate}</b> (Chờ KQXS 18h15)`;
+              kpiKqxsStatus.className = "text-[10px] text-slate-500 dark:text-slate-400 italic truncate";
+            }
           }
         }
 
@@ -11221,7 +11384,16 @@ function resetTable() {
             const plain = (clientMsgs.length > 0
               ? clientMsgs.map(c => `👤 ${c.name || 'Khách'}:\n${c.text || c.message || ''}`)
               : [data.summary_text || '']).join('\n\n─────────────────────\n\n');
-            pre.dataset.plainText = plain;
+            // Cập nhật ngay trạng thái chốt tiền và nạp lại bảng thống kê
+            const nowTime = new Date().toLocaleTimeString('vi-VN');
+            window.tgForceCheckSettle = true;
+            window.tgTodaySettledInfo = {
+              is_settled: true,
+              settled_date: dispDate,
+              settled_at: `${nowTime} ${dispDate}`,
+              settled_time: nowTime
+            };
+            fetchTgBoard();
 
             alert(`✅ ĐÃ CHỐT TIỀN TỰ ĐỘNG THÀNH CÔNG NGÀY ${dispDate}!\nĐã gửi tin nhắn chốt tiền tới ${data.settled_clients_count || 0} khách cược.`);
           } else {
