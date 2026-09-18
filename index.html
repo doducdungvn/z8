@@ -181,7 +181,7 @@
       <button type="button" id="btnOpenTelegramBot" onclick="showBotManagementPage()" class="px-2.5 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded-md font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95 text-xs sm:text-sm" title="Quản lý & Cấu hình Bot Telegram (Trang riêng)">
         <i class="fa-brands fa-telegram text-sm sm:text-base"></i>
         <span>Telegram Bot</span>
-        <span id="tgBotStatusDot" class="w-2 h-2 rounded-full bg-slate-400 border border-white" title="Trạng thái Bot"></span>
+        <span id="tgBotStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white animate-pulse inline-block shadow-xs" title="Trạng thái Bot: Online (Đang hoạt động)"></span>
       </button>
 
       <!-- Dark Mode Toggle Button -->
@@ -7316,85 +7316,100 @@ function resetTable() {
     <div id="tgModalBodyContainer" class="flex-1 flex flex-col hidden max-w-7xl w-full mx-auto p-2.5 sm:p-4 space-y-3">
 
       <!-- Executive KPI Dashboard Cards (4 Thẻ Chỉ Số Thông Minh) -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 select-none">
-        <!-- KPI 1: Tin Cược & Tin Treo -->
-        <div onclick="clickTgKpiCard('messages')" title="👉 Bấm để xem chi tiết Hộp Thư Tin Cược Gốc & Tin Treo Chờ Duyệt" class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all duration-150 hover:border-sky-500 hover:shadow-md hover:-translate-y-0.5 cursor-pointer select-none group">
+      <!-- Executive KPI Dashboard Cards (4 Thẻ Chỉ Số Thông Minh - Gọn Gàng, Tiết Kiệm Diện Tích, Nhiều Thông Tin Hơn) -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 select-none">
+        <!-- KPI 1: Tin Cược & Khách -->
+        <div onclick="clickTgKpiCard('messages')" title="👉 Bấm để xem chi tiết Hộp Thư Tin Cược Gốc &amp; Tin Treo Chờ Duyệt" class="p-2 sm:p-2.5 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-2xs hover:border-sky-500 hover:shadow-xs cursor-pointer select-none group transition-all">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-sky-600 transition-colors">Tin Nhận &amp; Tin Treo</span>
-            <div class="w-7 h-7 rounded-xs bg-sky-100 dark:bg-sky-950/60 text-sky-600 flex items-center justify-center text-xs group-hover:bg-sky-600 group-hover:text-white transition-all">
-              <i class="fa-solid fa-inbox"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-sky-600 transition-colors flex items-center gap-1">
+              <i class="fa-solid fa-inbox text-sky-600 text-xs"></i>
+              <span>TIN CƯỢC &amp; KHÁCH</span>
+            </span>
+            <span id="kpiTgClientsBadge" class="text-[9px] font-bold px-1 py-0.2 rounded-xs bg-slate-100 dark:bg-dark-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono">0 khách</span>
+          </div>
+          <div class="mt-0.5 flex items-baseline justify-between gap-1">
+            <div class="flex items-baseline gap-1">
+              <span id="kpiTgTotalMsgs" class="text-lg sm:text-xl font-black font-mono text-slate-800 dark:text-white leading-tight">0</span>
+              <span class="text-[11px] text-slate-500 font-semibold">tin</span>
+            </div>
+            <div id="kpiTgPendingAlert" class="hidden text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+              <span>Treo: <b id="kpiTgPendingCount">0</b></span>
+            </div>
+            <div id="kpiTgNoPendingText" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">
+              <i class="fa-solid fa-check text-[9px]"></i><span>Đã duyệt</span>
             </div>
           </div>
-          <div class="mt-1 flex items-baseline gap-2">
-            <span id="kpiTgTotalMsgs" class="text-xl sm:text-2xl font-black font-mono text-slate-800 dark:text-white">0</span>
-            <span class="text-xs text-slate-500 font-semibold">tin hôm nay</span>
-          </div>
-          <div id="kpiTgPendingAlert" class="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-amber-600 dark:text-amber-400 hidden">
-            <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-            <span>Chờ duyệt: <b id="kpiTgPendingCount">0</b> tin treo</span>
-          </div>
-          <div id="kpiTgNoPendingText" class="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center justify-between">
-            <span><i class="fa-solid fa-check-double text-[10px] mr-0.5"></i> Không có tin treo</span>
-            <span class="text-[10px] text-sky-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Xem tin 👉</span>
+          <div class="mt-0.5 pt-0.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between">
+            <span id="kpiTgMsgStatusDetail" class="truncate">✅ 0 nhận | ⏳ 0 chờ | 🚫 0 hủy</span>
+            <span class="text-sky-600 font-bold group-hover:translate-x-0.5 transition-transform text-[9px] ml-1 shrink-0">Xem ❯</span>
           </div>
         </div>
 
-        <!-- KPI 2: Tổng Doanh Số Nhận -->
-        <div onclick="clickTgKpiCard('total_bets')" title="👉 Bấm để xem chi tiết Bảng Cược Khách Đánh (Cột 1: Tổng Bảng)" class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all duration-150 hover:border-emerald-500 hover:shadow-md hover:-translate-y-0.5 cursor-pointer select-none group">
+        <!-- KPI 2: Doanh Số Khách Đánh -->
+        <div onclick="clickTgKpiCard('total_bets')" title="👉 Bấm để xem chi tiết Bảng Cược Khách Đánh (Cột 1: Tổng Bảng)" class="p-2 sm:p-2.5 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-2xs hover:border-emerald-500 hover:shadow-xs cursor-pointer select-none group transition-all">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 transition-colors">Doanh Số Khách Đánh</span>
-            <div class="w-7 h-7 rounded-xs bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center text-xs group-hover:bg-emerald-600 group-hover:text-white transition-all">
-              <i class="fa-solid fa-coins"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 transition-colors flex items-center gap-1">
+              <i class="fa-solid fa-coins text-emerald-600 text-xs"></i>
+              <span>DOANH SỐ KHÁCH</span>
+            </span>
+            <span id="kpiTgTotalNumbersBadge" class="text-[9px] font-bold px-1 py-0.2 rounded-xs bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-mono">0 con</span>
+          </div>
+          <div class="mt-0.5 flex items-baseline justify-between gap-1">
+            <div class="flex items-baseline gap-1">
+              <span id="kpiTgTotalBets" class="text-lg sm:text-xl font-black font-mono text-emerald-700 dark:text-emerald-400 leading-tight">0 đ</span>
             </div>
+            <span id="kpiTgTotalDeLoCount" class="text-[10px] text-slate-500 font-mono">Đ: 0 | L: 0</span>
           </div>
-          <div class="mt-1 flex items-baseline gap-2">
-            <span id="kpiTgTotalBets" class="text-xl sm:text-2xl font-black font-mono text-emerald-700 dark:text-emerald-400">0</span>
-            <span class="text-xs text-slate-500 font-semibold">k / đ</span>
-          </div>
-          <div id="kpiTgBreakdownText" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate flex items-center justify-between">
-            <span>Đ: 0 con | L: 0 con | 3C: 0 con | X: 0</span>
+          <div class="mt-0.5 pt-0.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between">
+            <span id="kpiTgBreakdownText" class="truncate">Đề: 0 | Lô: 0 | 3C: 0 | X: 0</span>
+            <span class="text-emerald-600 font-bold group-hover:translate-x-0.5 transition-transform text-[9px] ml-1 shrink-0">Bảng ❯</span>
           </div>
         </div>
 
         <!-- KPI 3: Giữ Lại & Bắn Thầu -->
-        <div onclick="clickTgKpiCard('retained_transfers')" title="👉 Bấm để xem chi tiết Mức Giữ Lại (Ôm) & Cược Thừa Đã Bắn Thầu (Cột 2 & Cột 3)" class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all duration-150 hover:border-indigo-500 hover:shadow-md hover:-translate-y-0.5 cursor-pointer select-none group">
+        <div onclick="clickTgKpiCard('retained_transfers')" title="👉 Bấm để xem chi tiết Mức Giữ Lại (Ôm) &amp; Cược Thừa Đã Bắn Thầu (Cột 2 &amp; Cột 3)" class="p-2 sm:p-2.5 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-2xs hover:border-indigo-500 hover:shadow-xs cursor-pointer select-none group transition-all">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 transition-colors">Giữ Lại ⇄ Bắn Thầu</span>
-            <div class="w-7 h-7 rounded-xs bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center text-xs group-hover:bg-indigo-600 group-hover:text-white transition-all">
-              <i class="fa-solid fa-paper-plane"></i>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 transition-colors flex items-center gap-1">
+              <i class="fa-solid fa-paper-plane text-indigo-600 text-xs"></i>
+              <span>GIỮ LẠI ⇄ BẮN THẦU</span>
+            </span>
+            <span id="kpiTgTransfersStepsBadge" class="text-[9px] font-bold px-1 py-0.2 rounded-xs bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono">0 lần bắn</span>
+          </div>
+          <div class="mt-0.5 flex items-center justify-between gap-1 font-mono text-xs">
+            <div class="flex items-baseline gap-1">
+              <span class="text-[10px] text-slate-400 font-sans">🛡️ Giữ:</span>
+              <span id="kpiTgRetainedAmount" class="font-bold text-slate-800 dark:text-slate-200 text-xs sm:text-sm">0 con</span>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span class="text-[10px] text-slate-400 font-sans">🛸 Bắn:</span>
+              <span id="kpiTgTransfersAmount" class="font-bold text-indigo-600 dark:text-indigo-400 text-xs sm:text-sm">0 con</span>
             </div>
           </div>
-          <div class="mt-1 flex items-baseline justify-between gap-1">
-            <div class="text-xs">
-              <span class="text-slate-500 block text-[10px]">🛡️ Giữ:</span>
-              <span id="kpiTgRetainedAmount" class="font-bold font-mono text-slate-800 dark:text-slate-200 text-sm">0 con</span>
-            </div>
-            <div class="text-xs text-right">
-              <span class="text-slate-500 block text-[10px]">🛸 Bắn:</span>
-              <span id="kpiTgTransfersAmount" class="font-bold font-mono text-indigo-600 dark:text-indigo-400 text-sm">0 lần</span>
-            </div>
-          </div>
-          <div class="mt-1 text-[11px] text-slate-500 dark:text-slate-400 truncate flex items-center justify-between">
-            <span id="kpiTgTransfersSteps">Chưa chuyển cược thừa</span>
-            <span class="text-[10px] text-indigo-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Xem bảng 👉</span>
+          <div class="mt-0.5 pt-0.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between">
+            <span id="kpiTgRetainRatioText" class="truncate">Tỷ lệ giữ: 100% (Ôm trọn)</span>
+            <span class="text-indigo-600 font-bold group-hover:translate-x-0.5 transition-transform text-[9px] ml-1 shrink-0">Chuyển ❯</span>
           </div>
         </div>
 
         <!-- KPI 4: KQXS & Lãi/Lỗ Tạm Tính -->
-        <div onclick="clickTgKpiCard('kqxs_accounting')" title="👉 Bấm để xem Báo Cáo Tài Chính Lãi/Lỗ & Kết Quả Xổ Số Hôm Nay" class="p-3 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-xs relative overflow-hidden transition-all duration-150 hover:border-amber-500 hover:shadow-md hover:-translate-y-0.5 cursor-pointer select-none group" id="kpiTgCard4">
+        <div onclick="clickTgKpiCard('kqxs_accounting')" title="👉 Bấm để xem Báo Cáo Tài Chính Lãi/Lỗ &amp; Kết Quả Xổ Số Hôm Nay" class="p-2 sm:p-2.5 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-2xs hover:border-amber-500 hover:shadow-xs cursor-pointer select-none group transition-all" id="kpiTgCard4">
           <div class="flex items-center justify-between">
-            <span id="kpiTgCard4Title" class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-amber-600 transition-colors">KQXS &amp; LÃI/LỖ TẠM TÍNH</span>
-            <div id="kpiTgCard4Icon" class="w-7 h-7 rounded-xs bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center text-xs group-hover:bg-amber-600 group-hover:text-white transition-all">
-              <i class="fa-solid fa-trophy"></i>
+            <span id="kpiTgCard4Title" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-amber-600 transition-colors flex items-center gap-1 truncate">
+              <i class="fa-solid fa-trophy text-amber-500 text-xs shrink-0"></i>
+              <span class="truncate">KQXS &amp; LÃI/LỖ</span>
+            </span>
+            <span id="kpiTgSettleBadge" class="text-[9px] font-bold px-1 py-0.2 rounded-xs border font-mono shrink-0">⏳ CHƯA CHỐT</span>
+          </div>
+          <div class="mt-0.5 flex items-baseline justify-between gap-1">
+            <div class="flex items-baseline gap-1">
+              <span id="kpiTgNetProfit" class="text-lg sm:text-xl font-black font-mono text-slate-700 dark:text-slate-300 leading-tight">0 đ</span>
             </div>
+            <span id="kpiTgKqxsDePrize" class="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">Đề: -- | 3C: ---</span>
           </div>
-          <div class="mt-1 flex items-baseline justify-between gap-1.5 flex-wrap">
-            <span id="kpiTgNetProfit" class="text-xl sm:text-2xl font-black font-mono text-slate-700 dark:text-slate-300">--</span>
-            <span id="kpiTgSettleBadge" class="hidden text-[10px] font-bold px-1.5 py-0.5 rounded-xs border"></span>
-          </div>
-          <div class="mt-1 text-[11px] font-mono truncate flex items-center justify-between">
-            <span id="kpiTgKqxsStatus" class="truncate font-semibold text-slate-500 dark:text-slate-400">Chờ KQXS 18h15</span>
-            <span class="text-[10px] text-amber-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity ml-1">Báo Cáo 👉</span>
+          <div class="mt-0.5 pt-0.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between">
+            <span id="kpiTgKqxsStatus" class="truncate font-semibold">Chờ KQXS 18h15</span>
+            <span class="text-amber-600 font-bold group-hover:translate-x-0.5 transition-transform text-[9px] ml-1 shrink-0">Chi tiết ❯</span>
           </div>
         </div>
       </div>
@@ -7502,27 +7517,22 @@ function resetTable() {
                     <span>Hộp Thư Tin Cược Gốc (<span id="tgCountClientMsgs">0</span> tin)</span>
                   </span>
 
-                  <!-- Lựa chọn xem dữ liệu Hôm Nay / Hôm Trước (Yêu cầu xem lại sau khi reset) -->
-                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 p-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs">
-                    <button type="button" id="btnTgInboxViewToday" onclick="switchTgInboxDate('today')" class="px-2 py-0.5 bg-white dark:bg-dark-800 text-sky-700 dark:text-sky-300 font-bold rounded-xs shadow-2xs border border-slate-300 dark:border-slate-600 flex items-center gap-1 cursor-pointer" title="Xem tin cược ngày hôm nay">
-                      <span id="lblTgInboxViewToday">📅 Hôm nay</span>
-                    </button>
-                    <button type="button" id="btnTgInboxViewYesterday" onclick="switchTgInboxDate('yesterday')" class="px-2 py-0.5 bg-transparent hover:bg-white dark:hover:bg-dark-800 text-slate-600 dark:text-slate-400 font-semibold rounded-xs flex items-center gap-1 cursor-pointer transition" title="Xem lại tin cược ngày hôm trước">
-                      <i class="fa-solid fa-clock-rotate-left text-amber-600"></i>
-                      <span id="lblTgInboxViewYesterday">⏮️ Hôm trước</span>
-                    </button>
-                    <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[11px] font-mono text-slate-600 dark:text-slate-400 cursor-pointer outline-none px-1" title="Chọn ngày cụ thể bất kỳ để xem lại">
-                  </div>
-
-                  <!-- Ô cài đặt TỰ ĐỘNG XÓA (Retention Hours) trực tiếp tại Hộp Thư -->
-                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 px-2 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs" title="Cài đặt số tiếng (giờ) tự động xóa lịch sử tin cược cũ. Điền 0 = Lưu vĩnh viễn không xóa.">
-                    <i class="fa-solid fa-clock-rotate-left text-amber-600 text-[11px]"></i>
-                    <span class="text-[11px] text-slate-600 dark:text-slate-300 font-semibold hidden sm:inline">Tự xóa sau:</span>
-                    <input type="number" id="tgInboxRetentionHours" min="0" max="720" step="1" value="36" onchange="saveTgRetentionHours(this.value)" class="w-12 border border-slate-300 dark:border-slate-600 rounded-xs px-1 py-0.5 text-xs text-center font-bold font-mono bg-white dark:bg-dark-800 text-slate-800 dark:text-slate-200" title="Nhập số tiếng (0 = Lưu vĩnh viễn)">
-                    <span class="text-[11px] text-slate-500 font-medium">tiếng</span>
-                    <button type="button" onclick="saveTgRetentionHours(document.getElementById('tgInboxRetentionHours').value, true)" class="text-sky-600 hover:text-sky-700 p-0.5 cursor-pointer" title="Lưu cài đặt số tiếng tự động xóa">
-                      <i class="fa-solid fa-floppy-disk text-[11px]"></i>
-                    </button>
+                  <!-- Ô Chọn Ngày & Cài Đặt Xóa Sau (Gộp chung 1 ô gọn gàng, tiết kiệm diện tích) -->
+                  <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-dark-900 px-2 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs">
+                    <div class="flex items-center gap-1" title="Chọn ngày xem tin cược &amp; đối soát">
+                      <i class="fa-regular fa-calendar-days text-sky-600 text-[11px]"></i>
+                      <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none px-0.5">
+                    </div>
+                    <span class="text-slate-300 dark:text-slate-600">|</span>
+                    <div class="flex items-center gap-1" title="Cài đặt số giờ (h) tự động xóa lịch sử tin cược cũ. Điền 0 = Lưu vĩnh viễn.">
+                      <i class="fa-solid fa-clock-rotate-left text-amber-600 text-[11px]"></i>
+                      <span class="text-[11px] text-slate-600 dark:text-slate-300 font-semibold">Xóa sau:</span>
+                      <input type="number" id="tgInboxRetentionHours" min="0" max="720" step="1" value="36" onchange="saveTgRetentionHours(this.value)" class="w-11 border border-slate-300 dark:border-slate-600 rounded-xs px-1 py-0.5 text-xs text-center font-bold font-mono bg-white dark:bg-dark-800 text-slate-800 dark:text-slate-200" title="Nhập số giờ (0 = Lưu vĩnh viễn)">
+                      <span class="text-[11px] text-slate-500 font-medium">h</span>
+                      <button type="button" onclick="saveTgRetentionHours(document.getElementById('tgInboxRetentionHours').value, true)" class="text-sky-600 hover:text-sky-700 p-0.5 cursor-pointer" title="Lưu cài đặt số giờ tự động xóa">
+                        <i class="fa-solid fa-floppy-disk text-[11px]"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -8133,14 +8143,14 @@ function resetTable() {
                     <div>
                       <label class="font-bold text-slate-700 dark:text-slate-300 text-xs flex items-center gap-1.5">
                         <i class="fa-solid fa-box-archive text-amber-500"></i>
-                        <span>Tự động xóa lịch sử tin cược cũ sau:</span>
+                        <span>Xóa lịch sử tin cược cũ sau:</span>
                       </label>
-                      <p class="text-[10px] text-slate-400">Số tiếng (giờ) lưu trữ Hộp Thư &amp; Bảng cược ngày cũ (Ví dụ: 24, 36, 48 tiếng; Điền 0 = Giữ vĩnh viễn không xóa)</p>
+                      <p class="text-[10px] text-slate-400">Số giờ (h) lưu trữ Hộp Thư &amp; Bảng cược ngày cũ (Ví dụ: 24, 36, 48h; Điền 0 = Giữ vĩnh viễn không xóa)</p>
                     </div>
                     <div class="flex items-center gap-1 font-mono">
                       <input type="number" id="tgInputRetentionHours" min="0" max="720" step="1" value="36" onchange="syncTgRetentionInputs(this.value)" class="w-16 border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-0.5 text-xs text-center font-bold bg-slate-50 dark:bg-dark-900">
-                      <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">tiếng</span>
-                      <button type="button" onclick="triggerManualCleanupHistory()" class="ml-1 px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-300 dark:border-rose-800 cursor-pointer" title="Dọn dẹp ngay các file lịch sử cũ hơn số tiếng cài đặt">
+                      <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">h</span>
+                      <button type="button" onclick="triggerManualCleanupHistory()" class="ml-1 px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-300 dark:border-rose-800 cursor-pointer" title="Dọn dẹp ngay các file lịch sử cũ hơn số giờ cài đặt">
                         <i class="fa-solid fa-trash-can"></i> Dọn ngay
                       </button>
                     </div>
@@ -8153,7 +8163,7 @@ function resetTable() {
                     </label>
                     <div class="flex items-center gap-1 font-mono">
                       <input type="number" id="tgInputCleanupHours" min="0.1" step="0.5" value="24" class="w-16 border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-0.5 text-xs text-center font-bold bg-slate-50 dark:bg-dark-900">
-                      <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">tiếng</span>
+                      <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">h</span>
                     </div>
                   </div>
                 </div>
@@ -8637,6 +8647,7 @@ function resetTable() {
       const kpiNoPending = document.getElementById('kpiTgNoPendingText');
       const tabInboxBadge = document.getElementById('tgTabInboxBadge');
       const subTabInboxBadge = document.getElementById('tgSubTabInboxPendingBadge');
+      const tgDot = document.getElementById('tgBotStatusDot');
 
       try {
         const res = await callBotApi("/api/bot/status");
@@ -8646,6 +8657,20 @@ function resetTable() {
         const isRunning = !!(data.running !== undefined ? data.running : data.is_active);
         const botMode = data.bot_mode || (isRunning ? "auto" : "manual");
         const pendingCount = data.pending_count || 0;
+        const curMsgCount = data.total_messages !== undefined ? data.total_messages : ((data.stats && data.stats.messages_received) || 0);
+        const curBetTs = data.last_bet_timestamp || 0;
+        const curStepCount = data.step_count || 0;
+
+        // 1. Cập nhật chấm xanh Online trên nút Telegram Bot ở thanh điều hướng trên cùng
+        if (tgDot) {
+          if (isRunning) {
+            tgDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 border border-white animate-pulse inline-block shadow-xs";
+            tgDot.title = "Telegram Bot: Online (Đang chạy tự động)";
+          } else {
+            tgDot.className = "w-2.5 h-2.5 rounded-full bg-amber-400 border border-white inline-block shadow-xs";
+            tgDot.title = "Telegram Bot: Đang tắt / Treo tin";
+          }
+        }
 
         // Cập nhật KPI tin treo & badge trên tab chính và sub-tab
         if (kpiPendingCount) kpiPendingCount.textContent = pendingCount;
@@ -8672,7 +8697,7 @@ function resetTable() {
 
         if (botMode === "auto" && isRunning) {
           if (badge) {
-            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span><span>BẬT (${srvLabel})</span>`;
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span><span>BẬT (${srvLabel})</span>`;
             badge.className = "flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-xs text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-emerald-900/60 text-emerald-300 border border-emerald-600 shrink-0";
           }
           if (btnToggle) {
@@ -8682,7 +8707,7 @@ function resetTable() {
         } else {
           if (badge) {
             const pendingTxt = pendingCount > 0 ? ` (${pendingCount})` : '';
-            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span><span>TẮT${pendingTxt} (${srvLabel})</span>`;
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span><span>TẮT${pendingTxt} (${srvLabel})</span>`;
             badge.className = "flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-xs text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-amber-900/60 text-amber-300 border border-amber-600 shrink-0";
           }
           if (btnToggle) {
@@ -8691,22 +8716,36 @@ function resetTable() {
           }
         }
 
-        // Tự động làm mới dữ liệu Hộp Thư nếu đang xem tab Hộp Thư (và không gõ tìm kiếm, và không đang xem hôm trước)
+        // Kiểm tra biến động tin cược mới để tự động cập nhật ngay lập tức
+        const hasBetChanges = (window.lastKnownMsgCount !== undefined && curMsgCount !== window.lastKnownMsgCount) ||
+                              (window.lastKnownPendingCount !== undefined && pendingCount !== window.lastKnownPendingCount) ||
+                              (window.lastKnownBetTs !== undefined && curBetTs !== window.lastKnownBetTs) ||
+                              (window.lastKnownStepCount !== undefined && curStepCount !== window.lastKnownStepCount);
+
+        window.lastKnownMsgCount = curMsgCount;
+        window.lastKnownPendingCount = pendingCount;
+        window.lastKnownBetTs = curBetTs;
+        window.lastKnownStepCount = curStepCount;
+
+        // Tự động làm mới dữ liệu Hộp Thư nếu có tin mới hoặc đang xem tab Hộp Thư
         const inboxTab = document.getElementById('tgTabContentInbox');
         const isInboxActive = inboxTab && !inboxTab.classList.contains('hidden');
         const searchInp = document.getElementById('tgInboxSearchInput');
         const isSearching = searchInp && (document.activeElement === searchInp || searchInp.value.trim() !== '');
-        if (isInboxActive && !isSearching && sessionStorage.getItem('tg_admin_unlocked') === 'true') {
-          if (window.tgInboxDateMode !== 'yesterday') {
-            // Tự động cập nhật tgActionDate sang ngày mới nếu bước qua nửa đêm
-            const actionDateInp = document.getElementById('tgActionDate');
-            if (actionDateInp) {
-              const now = new Date();
-              const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-              if (actionDateInp.value !== todayStr) {
-                actionDateInp.value = todayStr;
-              }
+
+        if (window.tgInboxDateMode !== 'yesterday' && window.tgInboxDateMode !== 'custom') {
+          // Tự động cập nhật tgActionDate sang ngày mới nếu bước qua nửa đêm
+          const actionDateInp = document.getElementById('tgActionDate');
+          if (actionDateInp) {
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            if (actionDateInp.value !== todayStr) {
+              actionDateInp.value = todayStr;
             }
+          }
+
+          // Tự làm mới ngay khi có tin cược mới, hoặc chu kỳ thường xuyên khi đang mở Hộp Thư
+          if (hasBetChanges || (isInboxActive && !isSearching)) {
             fetchTgBoard();
           }
         }
@@ -8714,8 +8753,12 @@ function resetTable() {
         if (badge) {
           const isCloud = (TG_BOT_API || '').includes('onrender.com');
           const srvLabel = isCloud ? 'CLOUD' : 'LOCAL';
-          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span><span>MẤT KẾT NỐI (${srvLabel})</span>`;
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span><span>MẤT KẾT NỐI (${srvLabel})</span>`;
           badge.className = "flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-xs text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-rose-950 text-rose-400 border border-rose-800 shrink-0";
+        }
+        if (tgDot) {
+          tgDot.className = "w-2.5 h-2.5 rounded-full bg-rose-500 border border-white inline-block shadow-xs";
+          tgDot.title = "Telegram Bot: Mất kết nối";
         }
       }
     }
@@ -9547,17 +9590,21 @@ function resetTable() {
       const bannerText = document.getElementById('tgInboxArchiveBannerText');
       const customPicker = document.getElementById('tgInboxCustomDatePicker');
 
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${y}-${m}-${d}`;
+
       if (mode === 'yesterday') {
-        const d = new Date();
-        d.setDate(d.getDate() - 1);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
+        const dPrev = new Date();
+        dPrev.setDate(dPrev.getDate() - 1);
+        const yyyy = dPrev.getFullYear();
+        const mm = String(dPrev.getMonth() + 1).padStart(2, '0');
+        const dd = String(dPrev.getDate()).padStart(2, '0');
         const yesterdayStr = `${yyyy}-${mm}-${dd}`;
         const dispYesterday = `${dd}/${mm}/${yyyy}`;
 
-        if (btnToday) btnToday.className = "px-2 py-0.5 bg-transparent hover:bg-white dark:hover:bg-dark-800 text-slate-600 dark:text-slate-400 font-semibold rounded-xs flex items-center gap-1 cursor-pointer transition";
-        if (btnYesterday) btnYesterday.className = "px-2 py-0.5 bg-white dark:bg-dark-800 text-amber-700 dark:text-amber-300 font-bold rounded-xs shadow-2xs border border-amber-300 dark:border-amber-700 flex items-center gap-1 cursor-pointer";
         if (banner) banner.classList.remove('hidden');
         if (bannerText) bannerText.textContent = `Đang xem lại toàn bộ tin cược đã lưu trữ của ngày hôm trước (${dispYesterday}).`;
 
@@ -9567,11 +9614,20 @@ function resetTable() {
 
         fetchTgBoard(yesterdayStr);
       } else if (mode === 'custom' && customDateVal) {
+        if (customDateVal === todayStr) {
+          window.tgInboxDateMode = 'today';
+          if (banner) banner.classList.add('hidden');
+          const actionDateInp = document.getElementById('tgActionDate');
+          if (actionDateInp) actionDateInp.value = todayStr;
+          if (customPicker) customPicker.value = todayStr;
+          fetchTgBoard('');
+          return;
+        }
+
+        window.tgInboxDateMode = 'custom';
         const pts = customDateVal.split('-');
         const dispCustom = pts.length === 3 ? `${pts[2]}/${pts[1]}/${pts[0]}` : customDateVal;
 
-        if (btnToday) btnToday.className = "px-2 py-0.5 bg-transparent hover:bg-white dark:hover:bg-dark-800 text-slate-600 dark:text-slate-400 font-semibold rounded-xs flex items-center gap-1 cursor-pointer transition";
-        if (btnYesterday) btnYesterday.className = "px-2 py-0.5 bg-transparent hover:bg-white dark:hover:bg-dark-800 text-slate-600 dark:text-slate-400 font-semibold rounded-xs flex items-center gap-1 cursor-pointer transition";
         if (banner) banner.classList.remove('hidden');
         if (bannerText) bannerText.textContent = `Đang xem lại toàn bộ tin cược đã lưu trữ của ngày ${dispCustom}.`;
 
@@ -9580,21 +9636,15 @@ function resetTable() {
 
         fetchTgBoard(customDateVal);
       } else {
-        if (btnToday) btnToday.className = "px-2 py-0.5 bg-white dark:bg-dark-800 text-sky-700 dark:text-sky-300 font-bold rounded-xs shadow-2xs border border-slate-300 dark:border-slate-600 flex items-center gap-1 cursor-pointer";
-        if (btnYesterday) btnYesterday.className = "px-2 py-0.5 bg-transparent hover:bg-white dark:hover:bg-dark-800 text-slate-600 dark:text-slate-400 font-semibold rounded-xs flex items-center gap-1 cursor-pointer transition";
+        window.tgInboxDateMode = 'today';
         if (banner) banner.classList.add('hidden');
 
-        // Đồng bộ lại ô ngày về hôm nay nếu đang xem hôm trước
+        // Đồng bộ lại ô ngày về hôm nay
         const actionDateInp = document.getElementById('tgActionDate');
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = String(now.getMonth() + 1).padStart(2, '0');
-        const d = String(now.getDate()).padStart(2, '0');
-        const todayStr = `${y}-${m}-${d}`;
         if (actionDateInp) actionDateInp.value = todayStr;
         if (customPicker) customPicker.value = todayStr;
 
-        // Xóa bộ lọc tìm kiếm khi bấm Hôm nay để hiện đầy đủ tin
+        // Xóa bộ lọc tìm kiếm khi quay lại Hôm nay để hiện đầy đủ tin
         const searchInp = document.getElementById('tgInboxSearchInput');
         if (searchInp) {
           searchInp.value = '';
@@ -9715,17 +9765,22 @@ function resetTable() {
         }
         const accReport = window.tgCachedReportData?.accounting || null;
 
-        // 1. CẬP NHẬT 4 THẺ KPI THÔNG MINH TRÊN HEADER
+        // 1. CẬP NHẬT 4 THẺ KPI THÔNG MINH TRÊN HEADER (GIÀU THÔNG TIN, GỌN GÀNG)
         const rawList = b.raw_messages || [];
         window.tgRawMessagesCache = rawList;
         const pendingBets = rawList.filter(m => m.is_pending || m.status === 'pending');
+        const approvedBets = rawList.filter(m => !m.voided && !m.is_pending && m.status !== 'rejected' && m.status !== 'pending');
+        const voidedBets = rawList.filter(m => m.voided);
+        const uniqueClients = new Set(rawList.map(m => m.chat_id || m.sender_name || m.username || m.name || '')).size;
 
+        // KPI 1: TIN CƯỢC & KHÁCH
         const kpiTotalMsgs = document.getElementById('kpiTgTotalMsgs');
         if (kpiTotalMsgs) kpiTotalMsgs.textContent = rawList.length;
+        const kpiClientsBadge = document.getElementById('kpiTgClientsBadge');
+        if (kpiClientsBadge) kpiClientsBadge.textContent = `${uniqueClients} khách`;
 
         const kpiPendingCount = document.getElementById('kpiTgPendingCount');
         if (kpiPendingCount) kpiPendingCount.textContent = pendingBets.length;
-
         const kpiPendingAlert = document.getElementById('kpiTgPendingAlert');
         const kpiNoPending = document.getElementById('kpiTgNoPendingText');
         const tabInboxBadge = document.getElementById('tgTabInboxBadge');
@@ -9743,14 +9798,51 @@ function resetTable() {
           if (tabInboxBadge) tabInboxBadge.classList.add('hidden');
         }
 
+        const kpiMsgStatusDetail = document.getElementById('kpiTgMsgStatusDetail');
+        if (kpiMsgStatusDetail) {
+          kpiMsgStatusDetail.textContent = `✅ ${approvedBets.length} nhận | ⏳ ${pendingBets.length} chờ | 🚫 ${voidedBets.length} hủy`;
+        }
+
+        // KPI 2: DOANH SỐ KHÁCH ĐÁNH (Tính cả tiền cược và số lượng con)
+        let sumDeMoney = 0;
+        for (const amt of Object.values(b.de_sums || {})) sumDeMoney += (Number(amt) || 0);
+        let sumLoMoney = 0;
+        for (const amt of Object.values(b.lo_sums || {})) sumLoMoney += (Number(amt) || 0);
+        let sumBcMoney = 0;
+        for (const amt of Object.values(b.bacang_sums || {})) sumBcMoney += (Number(amt) || 0);
+        let sumXienMoney = 0;
+        for (const xb of (b.xien_bets || [])) sumXienMoney += (Number(xb.amount) || 0);
+        const totalBetMoney = sumDeMoney + sumLoMoney + sumBcMoney + sumXienMoney;
+
         const totalBetsCount = deKeys.length + loKeys.length + bcKeys.length + xCount;
         const kpiTotalBets = document.getElementById('kpiTgTotalBets');
-        if (kpiTotalBets) kpiTotalBets.textContent = `${totalBetsCount} con`;
+        if (kpiTotalBets) {
+          if (totalBetMoney >= 1000000) {
+            kpiTotalBets.textContent = `${(Math.round(totalBetMoney / 1000) / 1000).toLocaleString('vi-VN')} tr`;
+          } else if (totalBetMoney >= 1000) {
+            kpiTotalBets.textContent = `${Math.round(totalBetMoney).toLocaleString('vi-VN')} đ`;
+          } else if (totalBetMoney > 0) {
+            kpiTotalBets.textContent = `${totalBetMoney}k`;
+          } else {
+            kpiTotalBets.textContent = "0 đ";
+          }
+        }
+        const kpiTotalNumbersBadge = document.getElementById('kpiTgTotalNumbersBadge');
+        if (kpiTotalNumbersBadge) kpiTotalNumbersBadge.textContent = `${totalBetsCount} con`;
+
+        const kpiTotalDeLoCount = document.getElementById('kpiTgTotalDeLoCount');
+        if (kpiTotalDeLoCount) kpiTotalDeLoCount.textContent = `Đ: ${deKeys.length} | L: ${loKeys.length}`;
 
         const kpiBreakdown = document.getElementById('kpiTgBreakdownText');
-        if (kpiBreakdown) kpiBreakdown.textContent = `Đề: ${deKeys.length} | Lô: ${loKeys.length} | 3C: ${bcKeys.length} | Xiên: ${xCount}`;
+        if (kpiBreakdown) {
+          const fmtDe = sumDeMoney >= 1000 ? Math.round(sumDeMoney / 1000) + 'k' : sumDeMoney;
+          const fmtLo = sumLoMoney >= 1000 ? Math.round(sumLoMoney / 1000) + 'k' : sumLoMoney;
+          const fmtBc = sumBcMoney >= 1000 ? Math.round(sumBcMoney / 1000) + 'k' : sumBcMoney;
+          const fmtX = sumXienMoney >= 1000 ? Math.round(sumXienMoney / 1000) + 'k' : sumXienMoney;
+          kpiBreakdown.textContent = `Đề: ${fmtDe} | Lô: ${fmtLo} | 3C: ${fmtBc} | X: ${fmtX}`;
+        }
 
-        // Retained numbers
+        // KPI 3: GIỮ LẠI & BẮN THẦU
         const ret = b.retained || {};
         const retDe = ret.de || {};
         const retLo = ret.lo || {};
@@ -9761,8 +9853,21 @@ function resetTable() {
         const retBcKeys = Object.keys(retBc);
         const totalRetainedCount = retDeKeys.length + retLoKeys.length + retBcKeys.length + retX.length;
 
+        let sumRetDe = 0;
+        for (const v of Object.values(retDe)) sumRetDe += (Number(v) || 0);
+        let sumRetLo = 0;
+        for (const v of Object.values(retLo)) sumRetLo += (Number(v) || 0);
+        let sumRetBc = 0;
+        for (const v of Object.values(retBc)) sumRetBc += (Number(v) || 0);
+        let sumRetX = 0;
+        for (const xb of retX) sumRetX += (Number(xb.amount) || 0);
+        const totalRetMoney = sumRetDe + sumRetLo + sumRetBc + sumRetX;
+
         const kpiRetained = document.getElementById('kpiTgRetainedAmount');
-        if (kpiRetained) kpiRetained.textContent = `${totalRetainedCount} con`;
+        if (kpiRetained) {
+          const fmtRetM = totalRetMoney >= 1000 ? Math.round(totalRetMoney / 1000) + 'k' : (totalRetMoney > 0 ? totalRetMoney + 'k' : '0');
+          kpiRetained.textContent = `${fmtRetM} (${totalRetainedCount} con)`;
+        }
 
         // Transfers numbers
         const histList = b.history || [];
@@ -9783,10 +9888,35 @@ function resetTable() {
         const cumBcKeys = Object.keys(cumBc);
         const totalTransfersCount = cumDeKeys.length + cumLoKeys.length + cumBcKeys.length;
 
+        let sumTransDe = 0;
+        for (const v of Object.values(cumDe)) sumTransDe += (Number(v) || 0);
+        let sumTransLo = 0;
+        for (const v of Object.values(cumLo)) sumTransLo += (Number(v) || 0);
+        let sumTransBc = 0;
+        for (const v of Object.values(cumBc)) sumTransBc += (Number(v) || 0);
+        const totalTransMoney = sumTransDe + sumTransLo + sumTransBc;
+
         const kpiTransfers = document.getElementById('kpiTgTransfersAmount');
-        if (kpiTransfers) kpiTransfers.textContent = `${totalTransfersCount} con`;
-        const kpiSteps = document.getElementById('kpiTgTransfersSteps');
-        if (kpiSteps) kpiSteps.textContent = `(Đã bắn ${b.step_count || histList.length || 0} lần)`;
+        if (kpiTransfers) {
+          const fmtTransM = totalTransMoney >= 1000 ? Math.round(totalTransMoney / 1000) + 'k' : (totalTransMoney > 0 ? totalTransMoney + 'k' : '0');
+          kpiTransfers.textContent = `${fmtTransM} (${totalTransfersCount} con)`;
+        }
+        const kpiTransStepsBadge = document.getElementById('kpiTgTransfersStepsBadge');
+        if (kpiTransStepsBadge) {
+          kpiTransStepsBadge.textContent = `${b.step_count || histList.length || 0} lần bắn`;
+        }
+
+        const kpiRetainRatioText = document.getElementById('kpiTgRetainRatioText');
+        if (kpiRetainRatioText) {
+          if (totalBetMoney > 0 && totalTransMoney > 0) {
+            const retPct = Math.round((totalRetMoney / totalBetMoney) * 100);
+            kpiRetainRatioText.textContent = `Giữ ${retPct}% | Chuyển ${100 - retPct}%`;
+          } else if (totalTransMoney > 0) {
+            kpiRetainRatioText.textContent = `Chuyển thầu: ${totalTransfersCount} con`;
+          } else {
+            kpiRetainRatioText.textContent = `Tỷ lệ giữ: 100% (Ôm trọn)`;
+          }
+        }
 
         // KPI 4: LÃI/LỖ & KQXS & BÁO CÁO TRẠNG THÁI CHỐT TIỀN
         const kpiNetProfit = document.getElementById('kpiTgNetProfit');
@@ -9794,6 +9924,7 @@ function resetTable() {
         const kpiCard4Title = document.getElementById('kpiTgCard4Title');
         const kpiSettleBadge = document.getElementById('kpiTgSettleBadge');
         const kpiCard4Icon = document.getElementById('kpiTgCard4Icon');
+        const kpiKqxsDePrize = document.getElementById('kpiTgKqxsDePrize');
 
         // Xác định ngày đang xem
         let curViewDate = todayDisp;
@@ -9838,28 +9969,27 @@ function resetTable() {
           if (p.length === 3 && p[0].length === 4) settledDate = `${p[2]}/${p[1]}/${p[0]}`;
         }
 
+        // Cập nhật Giải đặc biệt & Đề về
+        if (kpiKqxsDePrize) {
+          const specDe = winDe || (kqxs?.special_last2) || '--';
+          const specBc = winBc || (kqxs?.special_last3) || '---';
+          kpiKqxsDePrize.textContent = `Đề: ${specDe} | 3C: ${specBc}`;
+        }
+
         // Cập nhật Tiêu đề, Badge và Icon Chốt Tiền
         if (isSettled) {
-          if (kpiCard4Title) kpiCard4Title.textContent = "KQXS & LÃI/LỖ (ĐÃ CHỐT SỔ)";
+          if (kpiCard4Title) kpiCard4Title.innerHTML = '<i class="fa-solid fa-trophy text-emerald-600 text-xs shrink-0"></i><span class="truncate">KQXS &amp; LÃI/LỖ</span>';
           if (kpiSettleBadge) {
-            kpiSettleBadge.className = "text-[10px] font-bold px-1.5 py-0.5 rounded-xs border bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 flex items-center gap-1 shadow-2xs";
-            kpiSettleBadge.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600"></i> ĐÃ CHỐT TIỀN';
+            kpiSettleBadge.className = "text-[9px] font-bold px-1 py-0.2 rounded-xs border bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 font-mono shadow-2xs shrink-0";
+            kpiSettleBadge.innerHTML = '🎯 ĐÃ CHỐT';
             kpiSettleBadge.classList.remove('hidden');
-          }
-          if (kpiCard4Icon) {
-            kpiCard4Icon.className = "w-7 h-7 rounded-xs bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center text-xs group-hover:bg-emerald-600 group-hover:text-white transition-all";
-            kpiCard4Icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
           }
         } else {
-          if (kpiCard4Title) kpiCard4Title.textContent = "KQXS & LÃI/LỖ TẠM TÍNH";
+          if (kpiCard4Title) kpiCard4Title.innerHTML = '<i class="fa-solid fa-trophy text-amber-500 text-xs shrink-0"></i><span class="truncate">KQXS &amp; LÃI/LỖ</span>';
           if (kpiSettleBadge) {
-            kpiSettleBadge.className = "text-[10px] font-bold px-1.5 py-0.5 rounded-xs border bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700 flex items-center gap-1";
-            kpiSettleBadge.innerHTML = '<i class="fa-solid fa-clock text-amber-600"></i> CHƯA CHỐT';
+            kpiSettleBadge.className = "text-[9px] font-bold px-1 py-0.2 rounded-xs border bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700 font-mono shrink-0";
+            kpiSettleBadge.innerHTML = '⏳ CHƯA CHỐT';
             kpiSettleBadge.classList.remove('hidden');
-          }
-          if (kpiCard4Icon) {
-            kpiCard4Icon.className = "w-7 h-7 rounded-xs bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center text-xs group-hover:bg-amber-600 group-hover:text-white transition-all";
-            kpiCard4Icon.innerHTML = '<i class="fa-solid fa-trophy"></i>';
           }
         }
 
@@ -9869,12 +9999,12 @@ function resetTable() {
           const isPos = net >= 0;
           if (kpiNetProfit) {
             kpiNetProfit.textContent = `${isPos ? '+' : ''}${Math.round(net).toLocaleString('vi-VN')} đ`;
-            kpiNetProfit.className = `text-sm sm:text-base font-black font-mono tracking-tight ${isPos ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`;
+            kpiNetProfit.className = `text-lg sm:text-xl font-black font-mono leading-tight tracking-tight ${isPos ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`;
           }
         } else {
           if (kpiNetProfit) {
             kpiNetProfit.textContent = "0 đ";
-            kpiNetProfit.className = "text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 font-mono tracking-tight";
+            kpiNetProfit.className = "text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100 font-mono leading-tight tracking-tight";
           }
         }
 
@@ -10410,6 +10540,14 @@ function resetTable() {
         const mm = String(now.getMonth() + 1).padStart(2, '0');
         const dd = String(now.getDate()).padStart(2, '0');
         actionDateInp.value = `${yyyy}-${mm}-${dd}`;
+      }
+      const customPicker = document.getElementById('tgInboxCustomDatePicker');
+      if (customPicker && !customPicker.value) {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        customPicker.value = `${yyyy}-${mm}-${dd}`;
       }
 
       // Đồng bộ ô input URL máy chủ trên màn hình khóa & tab cài đặt
@@ -11740,9 +11878,9 @@ function resetTable() {
         }
       });
 
-      // Định kỳ kiểm tra trạng thái Bot mỗi 5 giây
+      // Định kỳ kiểm tra trạng thái Bot & Tự làm mới Hộp Thư mỗi 2.5 giây
       checkTgBotStatus();
-      tgStatusInterval = setInterval(checkTgBotStatus, 5000);
+      tgStatusInterval = setInterval(checkTgBotStatus, 2500);
     });
   </script>
 
