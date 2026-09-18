@@ -616,12 +616,10 @@ class TelegramBotService:
         # 5. Thông báo cho Chủ Bot (owner_chat_id)
         owner_cid = self.config.get("owner_chat_id")
         if owner_cid and str(target_client_key) != str(owner_cid):
-            rec_status = f" (Đã báo hủy sang thầu {target_recipient})" if contractor_notified else " (Cược giữ lại ôm hết, không bắn thầu)"
             owner_msg = (
                 f"🔔 <b>KHÁCH HỦY TIN #{target_msg_idx}:</b>\n"
                 f"👤 Khách: {sender_label}\n"
-                f"📝 Nội dung tin hủy: <code>{raw_text_cancelled}</code>\n"
-                f"ℹ️ Trạng thái:{rec_status}"
+                f"📝 Nội dung tin hủy: <code>{raw_text_cancelled}</code>"
             )
             self.send_telegram_message(str(owner_cid), owner_msg)
 
