@@ -7315,145 +7315,64 @@ function resetTable() {
     <!-- Main Body Container (Full Width / Max-width 7xl) -->
     <div id="tgModalBodyContainer" class="flex-1 flex flex-col hidden max-w-7xl w-full mx-auto p-2.5 sm:p-4 space-y-3">
 
-      <!-- Executive KPI Dashboard Cards (4 Thẻ Chỉ Số Thông Minh) -->
-      <!-- Executive KPI Dashboard Cards (4 Thẻ Chỉ Số Thông Minh - Gọn Gàng, Tiết Kiệm Diện Tích, Nhiều Thông Tin Hơn) -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 select-none">
-        <!-- KPI 1: Tin Cược & Khách -->
+      <!-- Executive KPI Dashboard Card (Chỉ giữ lại thẻ Tin Cược & Khách, hiển thị số lần chuyển, % chuyển, % giữ lại) -->
+      <div class="select-none">
+        <!-- KPI: Tin Cược & Khách, Số lần chuyển, % Chuyển, % Giữ lại -->
         <div onclick="clickTgKpiCard('messages')" title="👉 Bấm để xem chi tiết Hộp Thư Tin Cược Gốc &amp; Tin Treo Chờ Duyệt" class="p-2 sm:p-2.5 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-2xs hover:border-sky-500 hover:shadow-xs cursor-pointer select-none group transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-sky-600 transition-colors flex items-center gap-1">
-              <i class="fa-solid fa-inbox text-sky-600 text-xs"></i>
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 group-hover:text-sky-600 transition-colors flex items-center gap-1.5">
+              <i class="fa-solid fa-inbox text-sky-600 text-xs sm:text-sm"></i>
               <span>TIN CƯỢC &amp; KHÁCH</span>
             </span>
-            <span id="kpiTgClientsBadge" class="text-[9px] font-bold px-1 py-0.2 rounded-xs bg-slate-100 dark:bg-dark-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-mono">0 khách</span>
-          </div>
-          <div class="mt-0.5 flex items-baseline justify-between gap-1">
-            <div class="flex items-baseline gap-1">
-              <span id="kpiTgTotalMsgs" class="text-lg sm:text-xl font-black font-mono text-slate-800 dark:text-white leading-tight">0</span>
-              <span class="text-[11px] text-slate-500 font-semibold">tin</span>
-            </div>
-            <div id="kpiTgPendingAlert" class="hidden text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-              <span>Treo: <b id="kpiTgPendingCount">0</b></span>
-            </div>
-            <div id="kpiTgNoPendingText" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">
-              <i class="fa-solid fa-check text-[9px]"></i><span>Đã duyệt</span>
+            <div class="flex items-center gap-1.5 font-mono">
+              <span id="kpiTgClientsBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded-xs bg-slate-100 dark:bg-dark-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">0 khách</span>
+              <span id="kpiTgTransfersStepsBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded-xs bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">0 lần chuyển</span>
             </div>
           </div>
-          <div class="mt-0.5 pt-0.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between">
+          <div class="mt-1 flex items-baseline justify-between flex-wrap gap-2">
+            <div class="flex items-baseline gap-2">
+              <div class="flex items-baseline gap-1">
+                <span id="kpiTgTotalMsgs" class="text-xl sm:text-2xl font-black font-mono text-slate-800 dark:text-white leading-tight">0</span>
+                <span class="text-xs text-slate-500 font-semibold">tin</span>
+              </div>
+              <div id="kpiTgPendingAlert" class="hidden text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                <span>Treo: <b id="kpiTgPendingCount">0</b></span>
+              </div>
+              <div id="kpiTgNoPendingText" class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">
+                <i class="fa-solid fa-check text-[10px]"></i><span>Đã duyệt</span>
+              </div>
+            </div>
+            <!-- Phần trăm Giữ lại & Chuyển -->
+            <div id="kpiTgRetainRatioText" class="text-xs font-mono font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-dark-900/80 px-2 py-0.5 rounded-xs border border-slate-200 dark:border-slate-700">
+              🛡️ Giữ: <b class="text-emerald-600 dark:text-emerald-400">100%</b> | 🛸 Chuyển: <b class="text-slate-400">0%</b>
+            </div>
+          </div>
+          <div class="mt-1 pt-1 border-t border-slate-100 dark:border-slate-700/60 text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between">
             <span id="kpiTgMsgStatusDetail" class="truncate">✅ 0 nhận | ⏳ 0 chờ | 🚫 0 hủy</span>
-            <span class="text-sky-600 font-bold group-hover:translate-x-0.5 transition-transform text-[9px] ml-1 shrink-0">Xem ❯</span>
-          </div>
-        </div>
-
-        <!-- KPI 2: Doanh Số Khách Đánh -->
-        <div onclick="clickTgKpiCard('total_bets')" title="👉 Bấm để xem chi tiết Bảng Cược Khách Đánh (Cột 1: Tổng Bảng)" class="p-2 sm:p-2.5 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-2xs hover:border-emerald-500 hover:shadow-xs cursor-pointer select-none group transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 transition-colors flex items-center gap-1">
-              <i class="fa-solid fa-coins text-emerald-600 text-xs"></i>
-              <span>DOANH SỐ KHÁCH</span>
-            </span>
-            <span id="kpiTgTotalNumbersBadge" class="text-[9px] font-bold px-1 py-0.2 rounded-xs bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-mono">0 con</span>
-          </div>
-          <div class="mt-0.5 flex items-baseline justify-between gap-1">
-            <div class="flex items-baseline gap-1">
-              <span id="kpiTgTotalBets" class="text-lg sm:text-xl font-black font-mono text-emerald-700 dark:text-emerald-400 leading-tight">0 đ</span>
-            </div>
-            <span id="kpiTgTotalDeLoCount" class="text-[10px] text-slate-500 font-mono">Đ: 0 | L: 0</span>
-          </div>
-          <div class="mt-0.5 pt-0.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between">
-            <span id="kpiTgBreakdownText" class="truncate">Đề: 0 | Lô: 0 | 3C: 0 | X: 0</span>
-            <span class="text-emerald-600 font-bold group-hover:translate-x-0.5 transition-transform text-[9px] ml-1 shrink-0">Bảng ❯</span>
-          </div>
-        </div>
-
-        <!-- KPI 3: Giữ Lại & Bắn Thầu -->
-        <div onclick="clickTgKpiCard('retained_transfers')" title="👉 Bấm để xem chi tiết Mức Giữ Lại (Ôm) &amp; Cược Thừa Đã Bắn Thầu (Cột 2 &amp; Cột 3)" class="p-2 sm:p-2.5 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-2xs hover:border-indigo-500 hover:shadow-xs cursor-pointer select-none group transition-all">
-          <div class="flex items-center justify-between">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 transition-colors flex items-center gap-1">
-              <i class="fa-solid fa-paper-plane text-indigo-600 text-xs"></i>
-              <span>GIỮ LẠI ⇄ BẮN THẦU</span>
-            </span>
-            <span id="kpiTgTransfersStepsBadge" class="text-[9px] font-bold px-1 py-0.2 rounded-xs bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-mono">0 lần bắn</span>
-          </div>
-          <div class="mt-0.5 flex items-center justify-between gap-1 font-mono text-xs">
-            <div class="flex items-baseline gap-1">
-              <span class="text-[10px] text-slate-400 font-sans">🛡️ Giữ:</span>
-              <span id="kpiTgRetainedAmount" class="font-bold text-slate-800 dark:text-slate-200 text-xs sm:text-sm">0 con</span>
-            </div>
-            <div class="flex items-baseline gap-1">
-              <span class="text-[10px] text-slate-400 font-sans">🛸 Bắn:</span>
-              <span id="kpiTgTransfersAmount" class="font-bold text-indigo-600 dark:text-indigo-400 text-xs sm:text-sm">0 con</span>
-            </div>
-          </div>
-          <div class="mt-0.5 pt-0.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between">
-            <span id="kpiTgRetainRatioText" class="truncate">Tỷ lệ giữ: 100% (Ôm trọn)</span>
-            <span class="text-indigo-600 font-bold group-hover:translate-x-0.5 transition-transform text-[9px] ml-1 shrink-0">Chuyển ❯</span>
-          </div>
-        </div>
-
-        <!-- KPI 4: KQXS & Lãi/Lỗ Tạm Tính -->
-        <div onclick="clickTgKpiCard('kqxs_accounting')" title="👉 Bấm để xem Báo Cáo Tài Chính Lãi/Lỗ &amp; Kết Quả Xổ Số Hôm Nay" class="p-2 sm:p-2.5 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-2xs hover:border-amber-500 hover:shadow-xs cursor-pointer select-none group transition-all" id="kpiTgCard4">
-          <div class="flex items-center justify-between">
-            <span id="kpiTgCard4Title" class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-amber-600 transition-colors flex items-center gap-1 truncate">
-              <i class="fa-solid fa-trophy text-amber-500 text-xs shrink-0"></i>
-              <span class="truncate">KQXS &amp; LÃI/LỖ</span>
-            </span>
-            <span id="kpiTgSettleBadge" class="text-[9px] font-bold px-1 py-0.2 rounded-xs border font-mono shrink-0">⏳ CHƯA CHỐT</span>
-          </div>
-          <div class="mt-0.5 flex items-baseline justify-between gap-1">
-            <div class="flex items-baseline gap-1">
-              <span id="kpiTgNetProfit" class="text-lg sm:text-xl font-black font-mono text-slate-700 dark:text-slate-300 leading-tight">0 đ</span>
-            </div>
-            <span id="kpiTgKqxsDePrize" class="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">Đề: -- | 3C: ---</span>
-          </div>
-          <div class="mt-0.5 pt-0.5 border-t border-slate-100 dark:border-slate-700/60 text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between">
-            <span id="kpiTgKqxsStatus" class="truncate font-semibold">Chờ KQXS 18h15</span>
-            <span class="text-amber-600 font-bold group-hover:translate-x-0.5 transition-transform text-[9px] ml-1 shrink-0">Chi tiết ❯</span>
+            <span class="text-sky-600 font-bold group-hover:translate-x-0.5 transition-transform text-[10px] ml-1 shrink-0">Xem Hộp Thư ❯</span>
           </div>
         </div>
       </div>
 
-      <!-- Quick Sync Bar: Toolbar phẳng có nút Ẩn/Hiện (Web ⇄ Bot) -->
-      <div class="bg-[#f8fafc] dark:bg-dark-800 p-2 rounded-xs border border-slate-300 dark:border-slate-700 text-xs space-y-1.5">
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2 font-bold text-slate-700 dark:text-slate-300">
-            <i class="fa-solid fa-arrows-rotate text-sky-600"></i>
-            <span>ĐỒNG BỘ 2 CHIỀU (Web ⇄ Bot):</span>
-          </div>
-          <button type="button" id="btnToggleQuickSyncBar" onclick="toggleTgQuickSync()" class="px-2 py-0.5 bg-white hover:bg-slate-100 dark:bg-dark-700 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-200 rounded-xs border border-slate-300 dark:border-slate-600 flex items-center gap-1 text-[11px] font-semibold cursor-pointer" title="Ẩn/Hiện thanh công cụ đồng bộ">
-            <i id="iconToggleQuickSync" class="fa-solid fa-chevron-down sm:fa-chevron-up text-sky-600"></i>
-            <span id="lblToggleQuickSync" class="sm:hidden">Hiện nút</span>
-            <span class="hidden sm:inline" id="lblToggleQuickSyncDesktop">Thu gọn</span>
-          </button>
-        </div>
-        <div id="tgQuickSyncButtons" class="hidden sm:flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-200 dark:border-slate-700">
-          <button type="button" id="btnSyncAllWebToBot" class="px-2.5 py-1 bg-white hover:bg-slate-100 dark:bg-dark-700 dark:hover:bg-dark-600 text-emerald-700 dark:text-emerald-300 font-semibold rounded-xs border border-emerald-600/60 flex items-center gap-1 cursor-pointer" title="Gửi cả bảng giá và mức giữ lại hiện tại của Web sang Bot">
-            <i class="fa-solid fa-cloud-arrow-up"></i> Đẩy cấu hình sang Bot
-          </button>
-          <button type="button" id="btnPullAllBotToWeb" class="px-2.5 py-1 bg-white hover:bg-slate-100 dark:bg-dark-700 dark:hover:bg-dark-600 text-indigo-700 dark:text-indigo-300 font-semibold rounded-xs border border-indigo-600/60 flex items-center gap-1 cursor-pointer" title="Kéo bảng giá và mức giữ lại từ Bot về nạp vào Web">
-            <i class="fa-solid fa-cloud-arrow-down"></i> Lấy cấu hình từ Bot
-          </button>
-        </div>
-      </div>
 
       <!-- Tabs Navigation (Responsive 4 Tabs Hiện Đại) -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-1.5 pt-0.5 select-none text-xs sm:text-sm font-bold">
-        <button id="tgTabBtnInbox" type="button" onclick="switchTgTab('inbox')" class="px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-800 border-2 border-sky-700 dark:border-sky-500 text-sky-900 dark:text-sky-300 font-bold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none rounded-xs cursor-pointer shadow-xs">
-          <i class="fa-solid fa-inbox text-sky-600 shrink-0"></i>
+        <button id="tgTabBtnInbox" type="button" onclick="switchTgTab('inbox')" class="px-2.5 sm:px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none rounded-xs cursor-pointer shadow-md border-2 border-sky-700 text-xs sm:text-sm transition-all">
+          <i class="fa-solid fa-inbox text-white shrink-0"></i>
           <span class="truncate">1. Tác Nghiệp &amp; Duyệt Tin</span>
           <span id="tgTabInboxBadge" class="hidden px-1.5 py-0.2 bg-amber-500 text-white text-[10px] font-black rounded-full animate-pulse ml-auto">0</span>
         </button>
-        <button id="tgTabBtnBoard" type="button" onclick="switchTgTab('board')" class="px-2.5 sm:px-3.5 py-2 bg-slate-100 dark:bg-dark-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-dark-700 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer">
-          <i class="fa-solid fa-table-columns text-slate-500 shrink-0"></i>
+        <button id="tgTabBtnBoard" type="button" onclick="switchTgTab('board')" class="px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-emerald-400 dark:border-emerald-700 text-slate-700 dark:text-slate-300 hover:bg-emerald-50/60 hover:border-emerald-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer">
+          <i class="fa-solid fa-table-columns text-emerald-600 shrink-0"></i>
           <span class="truncate">2. Bảng Cược &amp; Cân Bảng</span>
         </button>
-        <button id="tgTabBtnClients" type="button" onclick="switchTgTab('clients')" class="px-2.5 sm:px-3.5 py-2 bg-slate-100 dark:bg-dark-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-dark-700 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer">
-          <i class="fa-solid fa-users text-slate-500 shrink-0"></i>
+        <button id="tgTabBtnClients" type="button" onclick="switchTgTab('clients')" class="px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-amber-400 dark:border-amber-700 text-slate-700 dark:text-slate-300 hover:bg-amber-50/60 hover:border-amber-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer">
+          <i class="fa-solid fa-users text-amber-600 shrink-0"></i>
           <span class="truncate">3. Khách Cược &amp; Bảng Giá</span>
         </button>
-        <button id="tgTabBtnSettings" type="button" onclick="switchTgTab('settings')" class="px-2.5 sm:px-3.5 py-2 bg-slate-100 dark:bg-dark-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-dark-700 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer">
-          <i class="fa-solid fa-sliders text-slate-500 shrink-0"></i>
+        <button id="tgTabBtnSettings" type="button" onclick="switchTgTab('settings')" class="px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-indigo-400 dark:border-indigo-700 text-slate-700 dark:text-slate-300 hover:bg-indigo-50/60 hover:border-indigo-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer">
+          <i class="fa-solid fa-sliders text-indigo-600 shrink-0"></i>
           <span class="truncate">4. Cài Đặt Hệ Thống</span>
         </button>
       </div>
@@ -7476,10 +7395,6 @@ function resetTable() {
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>2. Nhật Ký Hoạt Động Live</span>
               </button>
-            </div>
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              <i class="fa-solid fa-circle-info text-sky-600"></i>
-              <span>Giám sát tin cược của khách và nhật ký thực thi của Bot thời gian thực.</span>
             </div>
           </div>
 
@@ -7516,6 +7431,10 @@ function resetTable() {
                     <i class="fa-solid fa-envelope-open-text text-sky-600"></i>
                     <span>Hộp Thư Tin Cược Gốc (<span id="tgCountClientMsgs">0</span> tin)</span>
                   </span>
+                  <!-- Nút Làm Mới (Chỉ Biểu Tượng) ngay sau tiêu đề Hộp Thư -->
+                  <button type="button" onclick="fetchTgBoard()" class="p-1 px-1.5 bg-white hover:bg-slate-100 active:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs text-sky-600 hover:text-sky-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs cursor-pointer shadow-2xs transition" title="Làm mới Hộp Thư">
+                    <i class="fa-solid fa-rotate"></i>
+                  </button>
 
                   <!-- Ô Chọn Ngày & Cài Đặt Xóa Sau (Gộp chung 1 ô gọn gàng, tiết kiệm diện tích) -->
                   <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-dark-900 px-2 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs">
@@ -7552,9 +7471,6 @@ function resetTable() {
                     <option value="voided">🚫 Đã bỏ qua</option>
                     <option value="rejected">❌ Đã từ chối</option>
                   </select>
-                  <button type="button" onclick="fetchTgBoard()" class="px-2.5 py-1 bg-white hover:bg-slate-100 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs text-slate-700 dark:text-slate-200 font-semibold border border-slate-300 dark:border-slate-600 flex items-center gap-1 text-xs cursor-pointer" title="Làm mới hộp thư">
-                    <i class="fa-solid fa-rotate text-sky-600"></i> Làm mới
-                  </button>
                 </div>
               </div>
 
@@ -8587,17 +8503,48 @@ function resetTable() {
       }
 
       const tabs = ['inbox', 'board', 'clients', 'settings'];
+      const tabStyles = {
+        inbox: {
+          activeBtn: "px-2.5 sm:px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none rounded-xs cursor-pointer shadow-md border-2 border-sky-700 text-xs sm:text-sm transition-all",
+          inactiveBtn: "px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-sky-400 dark:border-sky-600 text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-sky-950/40 hover:border-sky-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer text-xs sm:text-sm",
+          iconActive: "fa-solid fa-inbox text-white shrink-0",
+          iconInactive: "fa-solid fa-inbox text-sky-600 dark:text-sky-400 shrink-0"
+        },
+        board: {
+          activeBtn: "px-2.5 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none rounded-xs cursor-pointer shadow-md border-2 border-emerald-700 text-xs sm:text-sm transition-all",
+          inactiveBtn: "px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-emerald-400 dark:border-emerald-600 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer text-xs sm:text-sm",
+          iconActive: "fa-solid fa-table-columns text-white shrink-0",
+          iconInactive: "fa-solid fa-table-columns text-emerald-600 dark:text-emerald-400 shrink-0"
+        },
+        clients: {
+          activeBtn: "px-2.5 sm:px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none rounded-xs cursor-pointer shadow-md border-2 border-amber-700 text-xs sm:text-sm transition-all",
+          inactiveBtn: "px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-amber-400 dark:border-amber-600 text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:border-amber-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer text-xs sm:text-sm",
+          iconActive: "fa-solid fa-users text-white shrink-0",
+          iconInactive: "fa-solid fa-users text-amber-600 dark:text-amber-400 shrink-0"
+        },
+        settings: {
+          activeBtn: "px-2.5 sm:px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none rounded-xs cursor-pointer shadow-md border-2 border-indigo-700 text-xs sm:text-sm transition-all",
+          inactiveBtn: "px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-indigo-400 dark:border-indigo-600 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer text-xs sm:text-sm",
+          iconActive: "fa-solid fa-sliders text-white shrink-0",
+          iconInactive: "fa-solid fa-sliders text-indigo-600 dark:text-indigo-400 shrink-0"
+        }
+      };
       tabs.forEach(t => {
         const btn = document.getElementById('tgTabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
         const content = document.getElementById('tgTabContent' + t.charAt(0).toUpperCase() + t.slice(1));
+        const st = tabStyles[t];
         if (t === tabName) {
-          if (btn) {
-            btn.className = "px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-800 border-2 border-sky-700 dark:border-sky-500 text-sky-900 dark:text-sky-300 font-bold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none rounded-xs cursor-pointer shadow-xs text-xs sm:text-sm";
+          if (btn && st) {
+            btn.className = st.activeBtn;
+            const icon = btn.querySelector('i');
+            if (icon) icon.className = st.iconActive;
           }
           if (content) content.classList.remove('hidden');
         } else {
-          if (btn) {
-            btn.className = "px-2.5 sm:px-3.5 py-2 bg-slate-100 dark:bg-dark-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-dark-700 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer text-xs sm:text-sm";
+          if (btn && st) {
+            btn.className = st.inactiveBtn;
+            const icon = btn.querySelector('i');
+            if (icon) icon.className = st.iconInactive;
           }
           if (content) content.classList.add('hidden');
         }
@@ -8726,6 +8673,11 @@ function resetTable() {
         window.lastKnownPendingCount = pendingCount;
         window.lastKnownBetTs = curBetTs;
         window.lastKnownStepCount = curStepCount;
+
+        const kpiStepBadge = document.getElementById('kpiTgTransfersStepsBadge');
+        if (kpiStepBadge && curStepCount !== undefined) {
+          kpiStepBadge.textContent = `${curStepCount} lần chuyển`;
+        }
 
         // Tự động làm mới dữ liệu Hộp Thư nếu có tin mới hoặc đang xem tab Hộp Thư
         const inboxTab = document.getElementById('tgTabContentInbox');
@@ -9903,18 +9855,20 @@ function resetTable() {
         }
         const kpiTransStepsBadge = document.getElementById('kpiTgTransfersStepsBadge');
         if (kpiTransStepsBadge) {
-          kpiTransStepsBadge.textContent = `${b.step_count || histList.length || 0} lần bắn`;
+          const stepVal = b.step_count !== undefined ? b.step_count : (histList.length || 0);
+          kpiTransStepsBadge.textContent = `${stepVal} lần chuyển`;
         }
 
         const kpiRetainRatioText = document.getElementById('kpiTgRetainRatioText');
         if (kpiRetainRatioText) {
           if (totalBetMoney > 0 && totalTransMoney > 0) {
-            const retPct = Math.round((totalRetMoney / totalBetMoney) * 100);
-            kpiRetainRatioText.textContent = `Giữ ${retPct}% | Chuyển ${100 - retPct}%`;
+            const retPct = Math.max(0, Math.min(100, Math.round((totalRetMoney / totalBetMoney) * 100)));
+            const transPct = 100 - retPct;
+            kpiRetainRatioText.innerHTML = `🛡️ Giữ: <b class="text-emerald-600 dark:text-emerald-400 font-mono">${retPct}%</b> | 🛸 Chuyển: <b class="text-indigo-600 dark:text-indigo-400 font-mono">${transPct}%</b>`;
           } else if (totalTransMoney > 0) {
-            kpiRetainRatioText.textContent = `Chuyển thầu: ${totalTransfersCount} con`;
+            kpiRetainRatioText.innerHTML = `🛡️ Giữ: <b class="text-slate-400 font-mono">0%</b> | 🛸 Chuyển: <b class="text-indigo-600 dark:text-indigo-400 font-mono">100%</b>`;
           } else {
-            kpiRetainRatioText.textContent = `Tỷ lệ giữ: 100% (Ôm trọn)`;
+            kpiRetainRatioText.innerHTML = `🛡️ Giữ: <b class="text-emerald-600 dark:text-emerald-400 font-mono">100%</b> | 🛸 Chuyển: <b class="text-slate-400 font-mono">0%</b>`;
           }
         }
 
