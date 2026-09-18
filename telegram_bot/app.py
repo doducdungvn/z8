@@ -54,12 +54,15 @@ def get_status():
     b_mode = bot_service.config.get("bot_mode", "auto")
     pending_cnt = len([b for b in getattr(bot_service, "pending_bets", []) if b.get("status") == "pending"])
     settle_st = bot_service.get_settle_status()
+    raw_msgs = bot_service.get_all_raw_messages()
     return jsonify({
         "running": bot_service.is_running,
         "is_running": bot_service.is_running,
         "bot_mode": b_mode,
         "is_active": (b_mode == "auto"),
         "pending_count": pending_cnt,
+        "total_messages": len(raw_msgs),
+        "last_bet_timestamp": bot_service.last_bet_timestamp,
         "stats": bot_service.stats,
         "step_count": bot_service.balancer.step_count,
         "has_token": bool(bot_service.config.get("bot_token")),
@@ -678,6 +681,11 @@ def settle_now():
 
 
 if __name__ == "__main__":
+    if bot_service.config.get("bot_token") and bot_service.config.get("bot_mode", "auto") == "auto":
+        try:
+            bot_service.start()
+        except Exception as e:
+            print(f"[WARN] Khởi động bot tự động: {e}")
     port = int(os.environ.get("PORT", 5005))
     print(f"[OK] Telegram Bot Backend Server running on http://0.0.0.0:{port}")
     app.run(host="0.0.0.0", port=port, debug=False)
