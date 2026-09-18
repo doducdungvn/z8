@@ -26,5 +26,12 @@
     "username": "congty987",
     "first_name": "Pl",
     "updated_at": "03:27:00 13/09"
+  },
+  "111": {
+    "user_id": "111",
+    "chat_id": 111,
+    "username": "alice_uname",
+    "first_name": "Alice",
+    "updated_at": "13:42:10 18/09"
   }
 }

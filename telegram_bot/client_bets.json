@@ -1,27 +1,153 @@
 {
-  "999888": {
-    "username": "khach_vip",
-    "history": [
-      {
-        "raw_text": "de 10=50k",
-        "msg_index": 1,
-        "voided": true,
-        "parsed": {
-          "de": [
-            {
-              "number": "10",
-              "amount": 50.0
-            }
-          ],
-          "summary": {
-            "de_count": 1
-          }
-        }
-      }
-    ],
+  "111": {
+    "name": "Alice",
+    "username": "alice_uname",
     "de": {},
     "lo": {},
     "bacang": {},
-    "xien": []
+    "xien": [],
+    "history": [
+      {
+        "timestamp": "13:42:10 18/09",
+        "raw_text": "de 12.34x100k",
+        "msg_index": 1,
+        "summary": {
+          "de_count": 2,
+          "de_sum": 200.0,
+          "lo_count": 0,
+          "lo_sum": 0,
+          "bacang_count": 0,
+          "bacang_sum": 0,
+          "xien_count": 0,
+          "xien_sum": 0
+        },
+        "invalid_items": [],
+        "parsed": {
+          "de": [
+            {
+              "number": "12",
+              "amount": 100.0
+            },
+            {
+              "number": "34",
+              "amount": 100.0
+            }
+          ],
+          "lo": [],
+          "xien2": [],
+          "xien3": [],
+          "xien4": [],
+          "bacang": [],
+          "invalid_items": [],
+          "rawOrder": [],
+          "summary": {
+            "de_count": 2,
+            "de_sum": 200.0,
+            "lo_count": 0,
+            "lo_sum": 0,
+            "bacang_count": 0,
+            "bacang_sum": 0,
+            "xien_count": 0,
+            "xien_sum": 0
+          }
+        },
+        "voided": true,
+        "transfer_text": "",
+        "retain_text": "",
+        "user_msg_id": 55555
+      },
+      {
+        "timestamp": "13:42:10 18/09",
+        "raw_text": "lo 88x10k",
+        "msg_index": 2,
+        "summary": {
+          "de_count": 0,
+          "de_sum": 0,
+          "lo_count": 1,
+          "lo_sum": 10.0,
+          "bacang_count": 0,
+          "bacang_sum": 0,
+          "xien_count": 0,
+          "xien_sum": 0
+        },
+        "invalid_items": [],
+        "parsed": {
+          "de": [],
+          "lo": [
+            {
+              "number": "88",
+              "amount": 10.0
+            }
+          ],
+          "xien2": [],
+          "xien3": [],
+          "xien4": [],
+          "bacang": [],
+          "invalid_items": [],
+          "rawOrder": [],
+          "summary": {
+            "de_count": 0,
+            "de_sum": 0,
+            "lo_count": 1,
+            "lo_sum": 10.0,
+            "bacang_count": 0,
+            "bacang_sum": 0,
+            "xien_count": 0,
+            "xien_sum": 0
+          }
+        },
+        "voided": true,
+        "transfer_text": "",
+        "retain_text": "",
+        "user_msg_id": 55556
+      },
+      {
+        "timestamp": "13:42:10 18/09",
+        "raw_text": "3c 123x10k",
+        "msg_index": 3,
+        "summary": {
+          "de_count": 0,
+          "de_sum": 0,
+          "lo_count": 0,
+          "lo_sum": 0,
+          "bacang_count": 1,
+          "bacang_sum": 10.0,
+          "xien_count": 0,
+          "xien_sum": 0
+        },
+        "invalid_items": [],
+        "parsed": {
+          "de": [],
+          "lo": [],
+          "xien2": [],
+          "xien3": [],
+          "xien4": [],
+          "bacang": [
+            {
+              "number": "123",
+              "amount": 10.0
+            }
+          ],
+          "invalid_items": [],
+          "rawOrder": [],
+          "summary": {
+            "de_count": 0,
+            "de_sum": 0,
+            "lo_count": 0,
+            "lo_sum": 0,
+            "bacang_count": 1,
+            "bacang_sum": 10.0,
+            "xien_count": 0,
+            "xien_sum": 0
+          }
+        },
+        "voided": true,
+        "transfer_text": "",
+        "retain_text": "",
+        "user_msg_id": 55557
+      }
+    ],
+    "msg_count": 3,
+    "last_settled": null
   }
 }

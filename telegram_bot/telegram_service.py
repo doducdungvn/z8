@@ -266,7 +266,7 @@ class TelegramBotService:
         self.save_pending_bets()
         return item
 
-    def record_client_bet(self, chat_id_str: str, sender_label: str, username: str, parsed: dict, raw_text: str = "", msg_index: int = 1, transfer_text: str = "", retain_text: str = ""):
+    def record_client_bet(self, chat_id_str: str, sender_label: str, username: str, parsed: dict, raw_text: str = "", msg_index: int = 1, transfer_text: str = "", retain_text: str = "", user_msg_id: int = None):
         c = self.client_bets.setdefault(chat_id_str, {
             "name": sender_label,
             "username": username,
@@ -295,7 +295,8 @@ class TelegramBotService:
                 "parsed": parsed,
                 "voided": False,
                 "transfer_text": transfer_text,  # Nội dung cân chuyển sang thầu (nếu có)
-                "retain_text": retain_text        # Tóm tắt phần giữ lại
+                "retain_text": retain_text,       # Tóm tắt phần giữ lại
+                "user_msg_id": user_msg_id
             })
 
 
@@ -483,28 +484,38 @@ class TelegramBotService:
         self.log(f"Đã {status_txt} tin chuyển #{step_idx + 1}. Đã cập nhật lại bảng cược & tiền thầu.", "SUCCESS")
         return {"success": True, "voided": voided}
 
-    def cancel_client_bet_by_index(self, chat_id_str: str, sender_label: str, target_msg_idx: int) -> dict:
-        """Xử lý yêu cầu hủy tin cược từ khách (VD: 'hủy tin 1').
+    def cancel_client_bet_by_index(self, chat_id_str: str, sender_label: str, target_msg_idx: int = None, target_msg_id: int = None, target_raw_text: str = None) -> dict:
+        """Xử lý yêu cầu hủy tin cược từ khách (VD: 'hủy tin 1' hoặc reply tin cược nhắn 'hủy').
         Thực hiện đầy đủ:
-        1. Tìm tin cược có msg_index == target_msg_idx của khách đó.
+        1. Tìm tin cược theo msg_index, message_id (reply), hoặc raw_text của khách đó.
         2. Đánh dấu HỦY (Void) tin cược của khách và tính lại tiền cược.
         3. HỦY các bước chuyển thầu sinh ra từ tin cược này và dựng lại bảng balancer.
-        4. Gửi tin nhắn thông báo hủy cho CHỦ THẦU (nếu tin này có cược cân chuyển sang thầu).
-        5. Thông báo cho Chủ Bot (nếu có owner_chat_id).
-        6. Trả về câu phản hồi gửi lại cho khách (VD: 'Đã hủy tin 1').
+        4. Gửi tin nhắn thông báo hủy cho CHỦ THẦU (KHÔNG nhắc đến khách để bảo mật).
+        5. Thông báo cho Chủ Bot (có ghi rõ khách nào để chủ bot quản lý).
+        6. Trả về câu phản hồi gửi lại cho khách (VD: 'Đã hủy tin 1' - KHÔNG nhắc đến thầu).
         """
         cid_str = str(chat_id_str).strip()
 
         # 1. Kiểm tra nếu là tin treo (chưa duyệt)
         if hasattr(self, "pending_bets"):
             for i, pb in enumerate(self.pending_bets):
-                if str(pb.get("chat_id")) == cid_str and pb.get("msg_idx") == target_msg_idx:
+                match = False
+                if str(pb.get("chat_id")) == cid_str:
+                    if target_msg_idx is not None and pb.get("msg_idx") == target_msg_idx:
+                        match = True
+                    elif target_msg_id is not None and pb.get("user_msg_id") == target_msg_id:
+                        match = True
+                    elif target_raw_text and pb.get("raw_text", "").strip() == target_raw_text.strip():
+                        match = True
+
+                if match:
+                    m_idx = pb.get("msg_idx", target_msg_idx or pb.get("id"))
                     self.pending_bets.pop(i)
                     self.save_pending_bets()
-                    self.log(f"Đã hủy tin treo #{target_msg_idx} của khách {sender_label}", "SUCCESS")
+                    self.log(f"Đã hủy tin treo #{m_idx} của khách {sender_label}", "SUCCESS")
                     return {
                         "success": True,
-                        "client_reply": f"Đã hủy tin {target_msg_idx}",
+                        "client_reply": f"Đã hủy tin {m_idx}",
                         "cancelled_transfers": 0
                     }
 
@@ -519,35 +530,66 @@ class TelegramBotService:
                     break
 
         if not target_client_key or target_client_key not in self.client_bets:
+            lbl = f"#{target_msg_idx}" if target_msg_idx else ""
             return {
                 "success": False,
-                "client_reply": f"Không tìm thấy tin #{target_msg_idx} để hủy.",
+                "client_reply": f"Không tìm thấy tin cược {lbl} để hủy.".strip(),
                 "cancelled_transfers": 0
             }
 
         client_data = self.client_bets[target_client_key]
         hist = client_data.get("history", [])
 
-        # Tìm tin có msg_index == target_msg_idx
+        # Tìm tin cược trong history
         found_hist_idx = None
         found_item = None
-        for idx, item in enumerate(hist):
-            if item.get("msg_index") == target_msg_idx:
-                found_hist_idx = idx
-                found_item = item
-                break
 
-        # Nếu không tìm thấy theo msg_index, kiểm tra theo vị trí thứ tự nếu phù hợp
-        if found_item is None and 0 <= (target_msg_idx - 1) < len(hist):
-            found_hist_idx = target_msg_idx - 1
-            found_item = hist[found_hist_idx]
+        # Ưu tiên 1: Theo target_msg_idx (nếu có chỉ định)
+        if target_msg_idx is not None:
+            for idx, item in enumerate(hist):
+                if item.get("msg_index") == target_msg_idx:
+                    found_hist_idx = idx
+                    found_item = item
+                    break
+            # Fallback theo vị trí index nếu phù hợp
+            if found_item is None and 0 <= (target_msg_idx - 1) < len(hist):
+                found_hist_idx = target_msg_idx - 1
+                found_item = hist[found_hist_idx]
+
+        # Ưu tiên 2: Theo message_id của tin nhắn khách được reply
+        if found_item is None and target_msg_id is not None:
+            for idx in range(len(hist) - 1, -1, -1):
+                item = hist[idx]
+                if item.get("user_msg_id") == target_msg_id:
+                    found_hist_idx = idx
+                    found_item = item
+                    break
+
+        # Ưu tiên 3: Theo nội dung tin cược raw_text
+        if found_item is None and target_raw_text:
+            clean_tgt = target_raw_text.strip()
+            for idx in range(len(hist) - 1, -1, -1):
+                item = hist[idx]
+                if item.get("raw_text", "").strip() == clean_tgt and not item.get("voided", False):
+                    found_hist_idx = idx
+                    found_item = item
+                    break
+
+        # Ưu tiên 4: Nếu không có target_msg_idx và khách chỉ có đúng 1 tin chưa hủy
+        if found_item is None and target_msg_idx is None:
+            unvoided = [(i, it) for i, it in enumerate(hist) if not it.get("voided", False)]
+            if len(unvoided) == 1:
+                found_hist_idx, found_item = unvoided[0]
 
         if found_item is None:
+            lbl = f"#{target_msg_idx}" if target_msg_idx else ""
             return {
                 "success": False,
-                "client_reply": f"Không tìm thấy tin #{target_msg_idx} để hủy.",
+                "client_reply": f"Không tìm thấy tin cược {lbl} để hủy.".strip(),
                 "cancelled_transfers": 0
             }
+
+        target_msg_idx = found_item.get("msg_index", found_hist_idx + 1)
 
         if found_item.get("voided", False):
             return {
@@ -591,6 +633,7 @@ class TelegramBotService:
         self.client_msg_counters[target_client_key] = valid_count
 
         # 4. Gửi tin nhắn thông báo HỦY SANG CHỦ THẦU (target_recipient)
+        # BẢO MẬT TUYỆT ĐỐI: KHÔNG NHẮC ĐẾN TÊN HOẶC TIN CỦA KHÁCH KHI GỬI CHỦ THẦU
         target_recipient = self.config.get("target_recipient", "").strip()
         contractor_notified = False
         if transfers_to_notify and target_recipient:
@@ -602,8 +645,9 @@ class TelegramBotService:
                     transferred_dict = t_item.get("transferred", {})
                     t_text = self.balancer.format_transfer_message(transferred_dict, include_header=False)
 
+                step_info = f" (Lần #{step_num})" if step_num else ""
                 cancel_contractor_msg = (
-                    f"Hủy tin (khách {sender_label} hủy tin #{target_msg_idx} - Lần #{step_num}):\n"
+                    f"Hủy tin{step_info}:\n"
                     f"{t_text}"
                 )
                 ok, err = self.send_telegram_message(target_recipient, cancel_contractor_msg, track_for_cleanup=True, tag="transfer_cancel")
@@ -614,8 +658,20 @@ class TelegramBotService:
                     self.log(f"⚠️ Không gửi được tin báo hủy sang chủ thầu {target_recipient}: {err}", "WARN")
 
         # 5. Thông báo cho Chủ Bot (owner_chat_id)
+        # CHỈ GỬI CHO CHỦ BOT MỚI NÊU RÕ KHÁCH NÀO ĐỂ CHỦ BOT QUẢN LÝ
         owner_cid = self.config.get("owner_chat_id")
-        if owner_cid and str(target_client_key) != str(owner_cid):
+        is_same_owner = False
+        if owner_cid:
+            clean_owner = str(owner_cid).strip().lstrip("@").lower()
+            clean_target = str(target_client_key).strip().lstrip("@").lower()
+            if clean_owner == clean_target:
+                is_same_owner = True
+            elif hasattr(self, "known_users"):
+                u_info = self.known_users.get(str(target_client_key), {})
+                if str(u_info.get("username", "")).lower() == clean_owner or str(u_info.get("user_id", "")) == clean_owner:
+                    is_same_owner = True
+
+        if owner_cid and not is_same_owner:
             owner_msg = (
                 f"🔔 <b>KHÁCH HỦY TIN #{target_msg_idx}:</b>\n"
                 f"👤 Khách: {sender_label}\n"
@@ -1420,7 +1476,7 @@ class TelegramBotService:
         item["msg_idx"] = msg_idx
 
         # 2. Ghi nhận cược vào client_bets
-        self.record_client_bet(chat_id_str, sender_label, username, parsed, raw_text=text, msg_index=msg_idx)
+        self.record_client_bet(chat_id_str, sender_label, username, parsed, raw_text=text, msg_index=msg_idx, user_msg_id=item.get("user_msg_id"))
         hist_idx = len(self.client_bets[chat_id_str].get("history", [])) - 1
 
         # 3. Cân bảng và tính phần cược thừa
@@ -1788,7 +1844,7 @@ class TelegramBotService:
             return
 
         # B4. Hủy / Từ chối tin cược đang treo: /huy <id>
-        if cmd_root in ["/huy", "huy"] or cmd_root.startswith("/huy@"):
+        if cmd_root.startswith("/huy") or cmd_root in ["/tuchoi", "/reject"]:
             if not user_is_admin:
                 self.send_telegram_message(str(chat_id), self.msg_need_auth())
                 return
@@ -2585,15 +2641,52 @@ class TelegramBotService:
             self.log(f"⚠️ Từ chối tin từ '{sender_label}' (ID: {user_id}){group_title}: Người gửi KHÔNG có trong danh sách Khách chỉ định! (Để nhận từ tất cả, hãy điền dấu * vào ô Khách chỉ định)", "WARN")
             return
 
-        # 1b. Kiểm tra nếu khách nhắn yêu cầu HỦY TIN (VD: "hủy tin 1", "huy tin 1", "hủy t1", "hủy 1", "xóa tin 1"...)
+        # 1b. Kiểm tra nếu khách nhắn yêu cầu HỦY TIN:
+        # Cách 1: Gõ lệnh có số tin (VD: "hủy tin 1", "huy tin 1", "hủy t1", "hủy 1", "xóa tin 1"...)
+        # Cách 2: Reply lại tin nhắn cần hủy (tin gốc của khách hoặc tin 'Ok tin X' của bot) rồi nhắn "hủy", "huy", "bỏ", "xóa"...
         clean_no_accents = strip_accents(text).lower().strip()
-        cancel_match = re.search(r"^(?:huy|xoa|bo)\s*(?:tin\s*(?:cuoc\s*)?(?:so\s*)?|cuoc\s*|t\s*|\#\s*)?(\d+)(?:\s*(?:nhe|nha|gium|giup|ho|\.|\!))*$", clean_no_accents)
-        if cancel_match:
-            target_idx = int(cancel_match.group(1))
-            self.log(f"Khách {sender_label}: {text} (Yêu cầu hủy tin #{target_idx})", "INFO")
-            res_cancel = self.cancel_client_bet_by_index(chat_id_str=str(chat_id), sender_label=sender_label, target_msg_idx=target_idx)
-            self.send_telegram_message(str(chat_id), res_cancel.get("client_reply", f"Đã hủy tin {target_idx}"), track_for_cleanup=True, tag="cancel_receipt")
-            return
+        cancel_kw_match = re.search(
+            r"^(?:huy|xoa|bo|cancel)\s*(?:tin\s*(?:cuoc\s*)?(?:so\s*)?|cuoc\s*|so\s*|don\s*|t\s*|\#\s*)?(\d*)(?:\s*(?:nay|di|nhe|nha|gium|giup|ho|oi|e|em|a|anh|c|chi|duoc\s*khong|duoc\s*ko|\.|\!))*$",
+            clean_no_accents
+        )
+
+        reply_to = message.get("reply_to_message")
+
+        if cancel_kw_match:
+            num_str = cancel_kw_match.group(1).strip()
+            target_idx = int(num_str) if num_str.isdigit() else None
+            reply_mid = reply_to.get("message_id") if reply_to else None
+            reply_text = (reply_to.get("text") or reply_to.get("caption") or "").strip() if reply_to else ""
+
+            # Nếu reply tin nhắn "Ok tin 1..." của Bot:
+            if target_idx is None and reply_text:
+                ok_m = re.search(r"ok\s+tin\s+(\d+)", strip_accents(reply_text).lower())
+                if ok_m:
+                    target_idx = int(ok_m.group(1))
+
+            self.log(f"Khách {sender_label}: {text} (Yêu cầu hủy tin - target_idx={target_idx}, reply_mid={reply_mid})", "INFO")
+            res_cancel = self.cancel_client_bet_by_index(
+                chat_id_str=str(chat_id),
+                sender_label=sender_label,
+                target_msg_idx=target_idx,
+                target_msg_id=reply_mid,
+                target_raw_text=reply_text
+            )
+
+            if res_cancel.get("success"):
+                reply_out = res_cancel.get("client_reply", f"Đã hủy tin")
+                self.send_telegram_message(str(chat_id), reply_out, track_for_cleanup=True, tag="cancel_receipt")
+                return
+            elif target_idx is not None or reply_to:
+                reply_err = res_cancel.get("client_reply", "⚠️ Không tìm thấy tin cược cần hủy.")
+                self.send_telegram_message(str(chat_id), reply_err, track_for_cleanup=True, tag="cancel_receipt")
+                return
+            else:
+                self.send_telegram_message(
+                    str(chat_id),
+                    "⚠️ Vui lòng gõ số tin cần hủy (VD: <code>hủy tin 1</code>) hoặc <b>reply (trả lời)</b> lại tin cược rồi nhắn <code>hủy</code>."
+                )
+                return
 
         self.stats["messages_received"] += 1
         self.stats["last_active"] = datetime.now().strftime("%H:%M:%S")
@@ -2702,7 +2795,7 @@ class TelegramBotService:
         self.client_msg_counters[chat_id_str] = msg_idx
 
         # Ghi nhận cược theo từng khách để chốt tiền âm/dương khi có KQXS
-        self.record_client_bet(chat_id_str, sender_label, username, parsed, raw_text=text, msg_index=msg_idx)
+        self.record_client_bet(chat_id_str, sender_label, username, parsed, raw_text=text, msg_index=msg_idx, user_msg_id=user_msg_id)
         hist_idx = len(self.client_bets[chat_id_str].get("history", [])) - 1
 
         # Forward tin nhắn cược của khách sang cho Chủ Bot (nếu bật tùy chọn)
