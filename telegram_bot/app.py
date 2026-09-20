@@ -137,6 +137,10 @@ def update_config():
         current["bet_filter_enabled"] = bool(data["bet_filter_enabled"])
     if "bet_filter_keywords" in data:
         current["bet_filter_keywords"] = str(data["bet_filter_keywords"]).strip()
+    if "cancel_detail_client" in data:
+        current["cancel_detail_client"] = bool(data["cancel_detail_client"])
+    if "cancel_detail_contractor" in data:
+        current["cancel_detail_contractor"] = bool(data["cancel_detail_contractor"])
     if "mode" in data:
         current["mode"] = data["mode"]
     if "retain_config" in data:

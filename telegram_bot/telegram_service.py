@@ -129,6 +129,8 @@ class TelegramBotService:
             "forward_client_to_owner": False,     # Chuyển tiếp tin nhắn khách cược cho chủ bot
             "bet_filter_enabled": False,  # Bật/tắt bộ lọc cược cấm nhận
             "bet_filter_keywords": "",    # Từ khóa hoặc số cấm nhận
+            "cancel_detail_client": False,      # Kèm diễn giải con số cược khi nhắn hủy cho Khách
+            "cancel_detail_contractor": False,  # Kèm diễn giải con số cược khi báo hủy cho Chủ thầu
             "auto_fetch_kqxs_daily": True,# Tự động lấy KQXS lúc 18h30
             "mode": "instant",            # "instant" hoặc "batch"
             "retain_config": BoardBalancer.default_config(),
@@ -510,12 +512,15 @@ class TelegramBotService:
 
                 if match:
                     m_idx = pb.get("msg_idx", target_msg_idx or pb.get("id"))
+                    raw_txt = pb.get("raw_text", "").strip()
                     self.pending_bets.pop(i)
                     self.save_pending_bets()
                     self.log(f"Đã hủy tin treo #{m_idx} của khách {sender_label}", "SUCCESS")
+                    include_details_client = bool(self.config.get("cancel_detail_client", False))
+                    c_reply = f"Đã hủy tin {m_idx}:\n{raw_txt}" if (include_details_client and raw_txt) else f"Đã hủy tin {m_idx}"
                     return {
                         "success": True,
-                        "client_reply": f"Đã hủy tin {m_idx}",
+                        "client_reply": c_reply,
                         "cancelled_transfers": 0
                     }
 
@@ -634,26 +639,32 @@ class TelegramBotService:
 
         # 4. Gửi tin nhắn thông báo HỦY SANG CHỦ THẦU (target_recipient)
         # BẢO MẬT TUYỆT ĐỐI: KHÔNG NHẮC ĐẾN TÊN HOẶC TIN CỦA KHÁCH KHI GỬI CHỦ THẦU
+        # Chỉ gửi thông báo ngắn gọn: "Hủy tin 1", "Hủy tin 2"... KHÔNG viết thêm diễn giải các con số cược
         target_recipient = self.config.get("target_recipient", "").strip()
         contractor_notified = False
+        include_details_contractor = bool(self.config.get("cancel_detail_contractor", False))
         if transfers_to_notify and target_recipient:
+            sent_cancel_steps = set()
             for t_item in transfers_to_notify:
-                step_num = t_item.get("step", "")
-                t_text = t_item.get("transfer_text", "").strip()
-                if not t_text:
-                    # Tự dựng lại text từ transferred nếu transfer_text rỗng
-                    transferred_dict = t_item.get("transferred", {})
-                    t_text = self.balancer.format_transfer_message(transferred_dict, include_header=False)
+                step_num = t_item.get("step")
+                cancel_num = step_num if (step_num is not None and str(step_num).strip() != "") else (target_msg_idx or 1)
+                if cancel_num in sent_cancel_steps:
+                    continue
+                sent_cancel_steps.add(cancel_num)
 
-                step_info = f" (Lần #{step_num})" if step_num else ""
-                cancel_contractor_msg = (
-                    f"Hủy tin{step_info}:\n"
-                    f"{t_text}"
-                )
+                if include_details_contractor:
+                    t_text = t_item.get("transfer_text", "").strip()
+                    if not t_text:
+                        transferred_dict = t_item.get("transferred", {})
+                        t_text = self.balancer.format_transfer_message(transferred_dict, include_header=False)
+                    cancel_contractor_msg = f"Hủy tin {cancel_num}:\n{t_text}" if t_text else f"Hủy tin {cancel_num}"
+                else:
+                    cancel_contractor_msg = f"Hủy tin {cancel_num}"
+
                 ok, err = self.send_telegram_message(target_recipient, cancel_contractor_msg, track_for_cleanup=True, tag="transfer_cancel")
                 if ok:
                     contractor_notified = True
-                    self.log(f"📤 Đã gửi tin báo HỦY CƯỢC sang chủ thầu {target_recipient}:\n{cancel_contractor_msg}", "SUCCESS")
+                    self.log(f"📤 Đã gửi tin báo HỦY CƯỢC sang chủ thầu {target_recipient}: {cancel_contractor_msg}", "SUCCESS")
                 else:
                     self.log(f"⚠️ Không gửi được tin báo hủy sang chủ thầu {target_recipient}: {err}", "WARN")
 
@@ -679,10 +690,16 @@ class TelegramBotService:
             )
             self.send_telegram_message(str(owner_cid), owner_msg)
 
+        include_details_client = bool(self.config.get("cancel_detail_client", False))
+        if include_details_client and raw_text_cancelled:
+            client_reply_msg = f"Đã hủy tin {target_msg_idx}:\n{raw_text_cancelled}"
+        else:
+            client_reply_msg = f"Đã hủy tin {target_msg_idx}"
+
         self.log(f"✅ Đã hủy thành công tin #{target_msg_idx} của khách {sender_label}. Đã cập nhật lại bảng cược.", "SUCCESS")
         return {
             "success": True,
-            "client_reply": f"Đã hủy tin {target_msg_idx}",
+            "client_reply": client_reply_msg,
             "cancelled_transfers": len(transfers_to_notify),
             "contractor_notified": contractor_notified
         }
@@ -3333,7 +3350,11 @@ class TelegramBotService:
     def poll_updates(self):
         """Vòng lặp Long Polling nhận tin nhắn liên tục"""
         self.log("Bot Telegram bắt đầu lắng nghe tin cược...")
-        token = self.config.get("bot_token", "").strip()
+        # Tự động gỡ webhook (nếu có) để tránh xung đột getUpdates 409
+        try:
+            requests.post(f"https://api.telegram.org/bot{token}/deleteWebhook", json={"drop_pending_updates": False}, timeout=8)
+        except Exception:
+            pass
 
         while self.is_running:
             try:
