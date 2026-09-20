@@ -3397,12 +3397,33 @@ function calculateSum(isFromRunBalancing = false, preservePending = false) {
         isExcl = isExcluded(categoryKey, key);
       }
 
+      let effectiveRetainType = retainType;
+      if (retainType === "de_money_lo_percent") {
+        effectiveRetainType = (categoryKey === "lo") ? "percentage" : "money";
+      } else if (retainType === "de_percent_lo_money") {
+        effectiveRetainType = (categoryKey === "lo") ? "money" : "percentage";
+      }
+
+      const isDeOrLo = (categoryKey === 'de' || categoryKey === 'lo');
+
       let excess;
-      if (isExcl) {
+      // Khi đề hoặc lô có mức giá cược dưới 2 thì giữ lại, chỉ cân chuyển đi khi giá trị cược là 2 trở lên
+      if (isDeOrLo && val < 2) {
+        excess = 0;
+      } else if (isExcl) {
         excess = val;
         excess = Math.max(0, Math.ceil(excess));
       } else {
-        if (retainType === "money") {
+        if (effectiveRetainType === "percentage") {
+          if (retainUseBranch) {
+            const targetRetain = Math.min(val * (retainVal / 100), branchLimit);
+            excess = val - targetRetain;
+          } else {
+            excess = val - (val * (retainVal / 100));
+          }
+          excess = Math.max(0, Math.ceil(excess));
+        } else {
+          // money
           if (retainUseBranch) {
             if (val >= branchLimit) {
               excess = Math.max(0, val - retainVal);
@@ -3411,14 +3432,6 @@ function calculateSum(isFromRunBalancing = false, preservePending = false) {
             }
           } else {
             excess = val - retainVal;
-          }
-          excess = Math.max(0, Math.ceil(excess));
-        } else {
-          if (retainUseBranch) {
-            const targetRetain = Math.min(val * (retainVal / 100), branchLimit);
-            excess = val - targetRetain;
-          } else {
-            excess = val - (val * (retainVal / 100));
           }
           excess = Math.max(0, Math.ceil(excess));
         }
@@ -6388,12 +6401,24 @@ function runBalancingStep(isPercent) {
   const stepBaCangTransfers = {};
   const stepXienTransfers = {};
 
+  const retainTypeRun = document.querySelector('input[name="retainType"]:checked')?.value || (isPercent ? "percentage" : "money");
+  const isCategoryPercentRun = (cat) => {
+    if (retainTypeRun === "percentage") return true;
+    if (retainTypeRun === "de_money_lo_percent") return (cat === "lo");
+    if (retainTypeRun === "de_percent_lo_money") return (cat !== "lo");
+    return false;
+  };
+
   const processCategory = (totals, transfersMap, stepTransfersMap, limit, branchLimit, isPct, categoryKey) => {
+    const isDeOrLo = (categoryKey === 'de' || categoryKey === 'lo');
     Object.entries(totals).forEach(([key, total]) => {
       const prevTransfer = transfersMap[key] || 0;
       const isExcl = isExcluded(categoryKey, key);
       let excess;
-      if (isExcl) {
+      // Khi đề hoặc lô có mức giá cược dưới 2 thì giữ lại, chỉ cân chuyển đi khi giá trị cược là 2 trở lên
+      if (isDeOrLo && total < 2) {
+        excess = 0;
+      } else if (isExcl) {
         excess = total - prevTransfer;
         excess = Math.max(0, Math.ceil(excess));
       } else {
@@ -6428,9 +6453,9 @@ function runBalancingStep(isPercent) {
     });
   };
 
-  processCategory(deSums, balanceState.deTransfers, stepDeTransfers, retainDe, retainBranchDe, isPercent, 'de');
-  processCategory(loSums, balanceState.loTransfers, stepLoTransfers, retainLo, retainBranchLo, isPercent, 'lo');
-  processCategory(baCangSums, balanceState.baCangTransfers, stepBaCangTransfers, retain3c, retainBranch3c, isPercent, 'bacang');
+  processCategory(deSums, balanceState.deTransfers, stepDeTransfers, retainDe, retainBranchDe, isCategoryPercentRun('de'), 'de');
+  processCategory(loSums, balanceState.loTransfers, stepLoTransfers, retainLo, retainBranchLo, isCategoryPercentRun('lo'), 'lo');
+  processCategory(baCangSums, balanceState.baCangTransfers, stepBaCangTransfers, retain3c, retainBranch3c, isCategoryPercentRun('bacang'), 'bacang');
 
   // For Xiên:
   xienBets.forEach((bet, idx) => {
@@ -9453,7 +9478,17 @@ function resetTable() {
         const cData = cRes && cRes.ok ? await cRes.json() : {};
         const rawUsers = uData ? (Array.isArray(uData) ? uData : (uData.users || Object.values(uData))) : [];
         const users = rawUsers.filter(u => u && (u.chat_id || u.user_id || u.username));
-        const allowedList = cData.allowed_senders || [];
+        const norm = (v) => (!v ? '' : v.toString().trim().replace(/^@/, '').toLowerCase());
+
+        let rawAllowed = cData.allowed_senders || [];
+        if (typeof rawAllowed === 'string') {
+          rawAllowed = rawAllowed.split(/[,\s]+/).filter(Boolean);
+        }
+        const normAllowed = (Array.isArray(rawAllowed) ? rawAllowed : []).map(norm).filter(Boolean);
+        const isWildcardAllowed = normAllowed.length === 0 || normAllowed.includes('*');
+
+        const ownerVal = norm(cData.owner_chat_id);
+        const contractorVal = norm(cData.target_recipient);
         const customPrices = cData.client_prices || window.tgCustomClientPrices || {};
         window.tgCustomClientPrices = customPrices;
 
@@ -9466,18 +9501,29 @@ function resetTable() {
         }
 
         tbody.innerHTML = users.map(u => {
-          const chatIdStr = (u.chat_id || '').toString();
-          const hasCustomPrice = customPrices[chatIdStr] || (u.username && customPrices[u.username]);
-          const isAllowed = allowedList.length === 0 || allowedList.includes(chatIdStr) || (u.username && allowedList.includes(u.username));
-          const isOwner = (cData.owner_chat_id && cData.owner_chat_id.toString() === chatIdStr);
+          const chatIdStr = (u.chat_id || u.user_id || '').toString();
+          const uChatId = norm(chatIdStr);
+          const uUsername = norm(u.username);
+
+          const isOwner = ownerVal && (ownerVal === uChatId || (uUsername && ownerVal === uUsername));
+          const isContractor = contractorVal && (contractorVal === uChatId || (uUsername && contractorVal === uUsername));
+          const isInAllowedList = normAllowed.some(item => item === uChatId || (uUsername && item === uUsername));
+
+          const hasCustomPrice = (uChatId && customPrices[uChatId]) || 
+                                 (uUsername && (customPrices[uUsername] || customPrices['@' + uUsername])) ||
+                                 (chatIdStr && customPrices[chatIdStr]);
 
           let roleBadge = '';
           if (isOwner) {
-            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-300">👑 Chủ Bot</span>';
-          } else if (isAllowed) {
-            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300">✅ Khách hợp lệ</span>';
+            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-300 flex items-center gap-1 w-fit">👑 Chủ Bot</span>';
+          } else if (isContractor) {
+            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold border border-blue-300 flex items-center gap-1 w-fit">🏢 Chủ thầu</span>';
+          } else if (isInAllowedList) {
+            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300 flex items-center gap-1 w-fit">✅ Khách hợp lệ</span>';
+          } else if (isWildcardAllowed) {
+            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] border border-slate-300 flex items-center gap-1 w-fit">🌐 Nhận tự do</span>';
           } else {
-            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] border border-slate-300">Tự do / Nhận tin</span>';
+            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-semibold border border-rose-300 flex items-center gap-1 w-fit">⛔ Ngoài danh sách</span>';
           }
 
           let priceBadge = '';
