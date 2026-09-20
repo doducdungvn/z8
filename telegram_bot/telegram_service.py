@@ -1147,20 +1147,29 @@ class TelegramBotService:
 
     def is_sender_allowed(self, user_id: int, username: str) -> bool:
         """Kiểm tra người gửi có nằm trong danh sách khách được chỉ định không"""
+        uid_str = str(user_id).strip()
+        uname_raw = (username or "").strip().lstrip("@").lower()
+
+        # 1. Chủ Bot luôn luôn có toàn quyền cược và điều khiển
+        owner_val = str(self.config.get("owner_chat_id", "")).strip().lstrip("@").lower()
+        if owner_val and (owner_val == uid_str or (uname_raw and owner_val == uname_raw)):
+            return True
+
+        # 2. Kiểm tra danh sách khách được phép gửi
         allowed = self.config.get("allowed_senders", [])
         if not allowed or "*" in allowed or "" in allowed:
             return True  # Cho phép tất cả nếu danh sách để trống hoặc chứa *
 
         # Chuẩn hóa
-        uid_str = str(user_id)
-        uname_str = ("@" + username.lstrip("@").lower()) if username else ""
+        uname_str = ("@" + uname_raw) if uname_raw else ""
 
         for item in allowed:
             item_str = str(item).strip().lower()
             if item_str == uid_str:
                 return True
-            if uname_str and (item_str == uname_str or item_str.lstrip("@") == uname_str.lstrip("@")):
+            if uname_raw and (item_str == uname_str or item_str.lstrip("@") == uname_raw):
                 return True
+        return False
 
     def parse_contractor_return_text(self, text: str, context_transferred: dict = None, context_parsed: dict = None) -> tuple[dict, str]:
         """
