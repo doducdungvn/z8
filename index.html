@@ -7826,8 +7826,8 @@ function resetTable() {
                 </label>
                 <div class="flex gap-1.5">
                   <input type="password" id="tgInputBotToken" placeholder="VD: 1234567890:ABCdefGHIjkl..." class="flex-1 border border-slate-300 dark:border-slate-600 rounded-xs px-2.5 py-1 text-xs bg-slate-50 dark:bg-dark-900 font-mono">
-                  <button type="button" id="btnToggleTokenVisibility" class="px-2 py-1 bg-white hover:bg-slate-100 dark:bg-dark-800 dark:hover:bg-dark-700 border border-slate-300 dark:border-slate-600 rounded-xs text-slate-600 dark:text-slate-300 cursor-pointer" title="Ẩn/Hiện Token">
-                    <i class="fa-solid fa-eye"></i>
+                  <button type="button" id="btnToggleTokenVisibility" onclick="toggleBotTokenVisibility()" class="px-2 py-1 bg-white hover:bg-slate-100 dark:bg-dark-800 dark:hover:bg-dark-700 border border-slate-300 dark:border-slate-600 rounded-xs text-slate-600 dark:text-slate-300 cursor-pointer" title="Ẩn/Hiện Token">
+                    <i id="tgIconTokenEye" class="fa-solid fa-eye"></i>
                   </button>
                   <button type="button" id="btnCheckBotToken" class="px-2.5 py-1 bg-sky-700 hover:bg-sky-600 text-white rounded-xs font-semibold border border-sky-800 flex items-center gap-1 cursor-pointer text-xs">
                     <i class="fa-solid fa-plug"></i> Test
@@ -10777,11 +10777,21 @@ function resetTable() {
       });
 
       // Nút Ẩn/Hiện Token
-      document.getElementById('btnToggleTokenVisibility')?.addEventListener('click', () => {
+      function toggleBotTokenVisibility() {
         const inp = document.getElementById('tgInputBotToken');
+        const icon = document.getElementById('tgIconTokenEye') || document.querySelector('#btnToggleTokenVisibility i');
         if (!inp) return;
-        inp.type = inp.type === 'password' ? 'text' : 'password';
-      });
+        const isPassword = (inp.type === 'password');
+        inp.type = isPassword ? 'text' : 'password';
+        if (icon) {
+          if (isPassword) {
+            icon.className = 'fa-solid fa-eye-slash text-sky-600';
+          } else {
+            icon.className = 'fa-solid fa-eye';
+          }
+        }
+      }
+      window.toggleBotTokenVisibility = toggleBotTokenVisibility;
 
       // Nút Bật/Tắt Bot (Tự động <-> Treo chờ duyệt)
       const btnToggle = document.getElementById('btnToggleBotRun');
@@ -10814,7 +10824,9 @@ function resetTable() {
             const infoText = document.getElementById('tgBotInfoText');
             if (data.status === "started" || data.status === "already_running") {
               if (infoText) {
-                infoText.textContent = `Kết nối thành công tới Bot: ${data.info?.first_name || ''} (@${data.info?.username || ''})`;
+                const bName = data.info?.first_name || data.info?.username || 'Bot';
+                const bUname = data.info?.username ? ` (@${data.info.username})` : '';
+                infoText.textContent = `Kết nối thành công tới Bot: ${bName}${bUname}`;
                 infoText.classList.remove('hidden');
               }
               alert("Kết nối Bot Token thành công!");
@@ -11961,13 +11973,6 @@ function resetTable() {
         }
       });
 
-      // Nút ẩn/hiện token
-      document.getElementById('btnToggleTokenVisibility')?.addEventListener('click', () => {
-        const input = document.getElementById('tgInputBotToken');
-        if (input) {
-          input.type = input.type === 'password' ? 'text' : 'password';
-        }
-      });
 
       // Tự động xóa số 0 có sẵn khi click/focus vào ô nhập để gõ số mới
       function isNumericField(el) {
