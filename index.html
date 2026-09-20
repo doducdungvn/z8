@@ -3405,17 +3405,18 @@ function calculateSum(isFromRunBalancing = false, preservePending = false) {
       }
 
       const isDeOrLo = (categoryKey === 'de' || categoryKey === 'lo');
+      const hasBranch = retainUseBranch && branchLimit > 0;
 
       let excess;
-      // Khi đề hoặc lô có mức giá cược dưới 2 thì giữ lại, chỉ cân chuyển đi khi giá trị cược là 2 trở lên
-      if (isDeOrLo && val < 2) {
+      // Khi KHÔNG dùng nhánh: đề hoặc lô có mức giá cược dưới 2 thì giữ lại (khi dùng nhánh thì bỏ qua quy tắc dưới 2)
+      if (!hasBranch && isDeOrLo && val < 2) {
         excess = 0;
       } else if (isExcl) {
         excess = val;
         excess = Math.max(0, Math.ceil(excess));
       } else {
         if (effectiveRetainType === "percentage") {
-          if (retainUseBranch) {
+          if (hasBranch) {
             const targetRetain = Math.min(val * (retainVal / 100), branchLimit);
             excess = val - targetRetain;
           } else {
@@ -3424,11 +3425,12 @@ function calculateSum(isFromRunBalancing = false, preservePending = false) {
           excess = Math.max(0, Math.ceil(excess));
         } else {
           // money
-          if (retainUseBranch) {
-            if (val >= branchLimit) {
-              excess = Math.max(0, val - retainVal);
-            } else {
+          if (hasBranch) {
+            if (val < branchLimit) {
               excess = val;
+            } else {
+              const targetRetain = Math.min(retainVal, val - branchLimit);
+              excess = val - targetRetain;
             }
           } else {
             excess = val - retainVal;
@@ -6411,12 +6413,13 @@ function runBalancingStep(isPercent) {
 
   const processCategory = (totals, transfersMap, stepTransfersMap, limit, branchLimit, isPct, categoryKey) => {
     const isDeOrLo = (categoryKey === 'de' || categoryKey === 'lo');
+    const hasBranch = retainUseBranch && branchLimit > 0;
     Object.entries(totals).forEach(([key, total]) => {
       const prevTransfer = transfersMap[key] || 0;
       const isExcl = isExcluded(categoryKey, key);
       let excess;
-      // Khi đề hoặc lô có mức giá cược dưới 2 thì giữ lại, chỉ cân chuyển đi khi giá trị cược là 2 trở lên
-      if (isDeOrLo && total < 2) {
+      // Khi KHÔNG dùng nhánh: đề hoặc lô có mức giá cược dưới 2 thì giữ lại (khi dùng nhánh thì bỏ qua quy tắc dưới 2)
+      if (!hasBranch && isDeOrLo && total < 2) {
         excess = 0;
       } else if (isExcl) {
         excess = total - prevTransfer;
@@ -6424,7 +6427,7 @@ function runBalancingStep(isPercent) {
       } else {
         if (isPct) {
           let targetTransfer;
-          if (retainUseBranch) {
+          if (hasBranch) {
             const targetRetain = Math.min(total * (limit / 100), branchLimit);
             targetTransfer = total - targetRetain;
           } else {
@@ -6434,11 +6437,12 @@ function runBalancingStep(isPercent) {
           excess = Math.max(0, Math.ceil(excess));
         } else {
           let targetTransfer;
-          if (retainUseBranch) {
-            if (total >= branchLimit) {
-              targetTransfer = total - limit;
-            } else {
+          if (hasBranch) {
+            if (total < branchLimit) {
               targetTransfer = total;
+            } else {
+              const targetRetain = Math.min(limit, total - branchLimit);
+              targetTransfer = total - targetRetain;
             }
           } else {
             targetTransfer = total - limit;
@@ -6458,6 +6462,8 @@ function runBalancingStep(isPercent) {
   processCategory(baCangSums, balanceState.baCangTransfers, stepBaCangTransfers, retain3c, retainBranch3c, isCategoryPercentRun('bacang'), 'bacang');
 
   // For Xiên:
+  const isXienPct = isCategoryPercentRun('xien');
+  const hasBranchX = retainUseBranch && retainBranchX > 0;
   xienBets.forEach((bet, idx) => {
     const prevTransfer = balanceState.xienTransfers[idx] || 0;
     const isExcl = isExcluded('xien', idx, bet.numbers);
@@ -6466,9 +6472,9 @@ function runBalancingStep(isPercent) {
       excess = bet.amount - prevTransfer;
       excess = Math.max(0, Math.ceil(excess));
     } else {
-      if (isPercent) {
+      if (isXienPct) {
         let targetTransfer;
-        if (retainUseBranch) {
+        if (hasBranchX) {
           const targetRetain = Math.min(bet.amount * (retainX / 100), retainBranchX);
           targetTransfer = bet.amount - targetRetain;
         } else {
@@ -6478,11 +6484,12 @@ function runBalancingStep(isPercent) {
         excess = Math.max(0, Math.ceil(excess));
       } else {
         let targetTransfer;
-        if (retainUseBranch) {
-          if (bet.amount >= retainBranchX) {
-            targetTransfer = bet.amount - retainX;
-          } else {
+        if (hasBranchX) {
+          if (bet.amount < retainBranchX) {
             targetTransfer = bet.amount;
+          } else {
+            const targetRetain = Math.min(retainX, bet.amount - retainBranchX);
+            targetTransfer = bet.amount - targetRetain;
           }
         } else {
           targetTransfer = bet.amount - retainX;
