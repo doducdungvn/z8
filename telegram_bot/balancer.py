@@ -64,16 +64,29 @@ class BoardBalancer:
 
         return self.calculate_excess()
 
-    def _calc_excess_for_item(self, total: float, prev_transfer: float, limit: float, branch_limit: float, is_excluded: bool = False) -> float:
+    def _get_category_retain_type(self, cat: str) -> str:
+        """Xác định loại tính giữ lại (tiền hoặc %) cho từng thể loại theo cấu hình"""
+        r_type = self.config.get("retain_type", "money")
+        if r_type == "money":
+            return "money"
+        elif r_type == "percentage":
+            return "percentage"
+        elif r_type == "de_money_lo_percent":
+            return "percentage" if cat == "lo" else "money"
+        elif r_type == "de_percent_lo_money":
+            return "money" if cat == "lo" else "percentage"
+        return "money"
+
+    def _calc_excess_for_item(self, total: float, prev_transfer: float, limit: float, branch_limit: float, is_excluded: bool = False, cat: str = "de") -> float:
         if is_excluded:
             excess = total - prev_transfer
             return max(0.0, math.ceil(excess))
 
-        retain_type = self.config.get("retain_type", "money")
+        retain_type = self._get_category_retain_type(cat)
         use_branch = self.config.get("retain_use_branch", False)
 
         if retain_type == "percentage":
-            if use_branch:
+            if use_branch and branch_limit > 0:
                 target_retain = min(total * (limit / 100.0), branch_limit)
                 target_transfer = total - target_retain
             else:
@@ -82,7 +95,7 @@ class BoardBalancer:
             return max(0.0, math.ceil(excess))
         else:
             # money
-            if use_branch:
+            if use_branch and branch_limit > 0:
                 if total >= branch_limit:
                     target_transfer = total - limit
                 else:
@@ -112,7 +125,8 @@ class BoardBalancer:
                 val,
                 already,
                 cfg.get('retain_de', 20.0),
-                cfg.get('branch_de', 0.0)
+                cfg.get('branch_de', 0.0),
+                cat='de'
             )
             if pending >= 0.1:
                 new_transfers['de'][num] = pending
@@ -124,7 +138,8 @@ class BoardBalancer:
                 val,
                 already,
                 cfg.get('retain_lo', 5.0),
-                cfg.get('branch_lo', 0.0)
+                cfg.get('branch_lo', 0.0),
+                cat='lo'
             )
             if pending >= 0.1:
                 new_transfers['lo'][num] = pending
@@ -136,7 +151,8 @@ class BoardBalancer:
                 val,
                 already,
                 cfg.get('retain_3c', 0.0),
-                cfg.get('branch_3c', 0.0)
+                cfg.get('branch_3c', 0.0),
+                cat='bacang'
             )
             if pending >= 0.1:
                 new_transfers['bacang'][num] = pending
@@ -151,7 +167,8 @@ class BoardBalancer:
                 val,
                 already,
                 retain_x,
-                branch_x
+                branch_x,
+                cat='xien'
             )
             if pending >= 0.1:
                 key_str = "-".join(bet['numbers'])

@@ -266,17 +266,26 @@ def format_retain_config_summary(config: dict) -> str:
     """Tạo bảng báo cáo hiển thị cấu hình Cân chuyển & Mức giữ lại"""
     r = config.get("retain_config", {})
     r_type = r.get("retain_type", "percentage")
-    is_pct = (r_type == "percentage")
+    if r_type == "percentage":
+        type_str = "Phần trăm (%)"
+        unit_de = unit_lo = unit_3c = unit_x = "%"
+    elif r_type == "de_money_lo_percent":
+        type_str = "Đề tiền (k) - Lô %"
+        unit_de = unit_3c = unit_x = "k"
+        unit_lo = "%"
+    elif r_type == "de_percent_lo_money":
+        type_str = "Đề % - Lô tiền (đ)"
+        unit_de = unit_3c = unit_x = "%"
+        unit_lo = "đ"
+    else:
+        type_str = "Số tiền (k / đ)"
+        unit_de = unit_3c = unit_x = "k"
+        unit_lo = "đ"
 
     de_val = r.get("retain_de", 0)
     lo_val = r.get("retain_lo", 0)
     c3_val = r.get("retain_3c", 0)
     x_val = r.get("retain_x", 0)
-
-    unit_de = "%" if is_pct else "k"
-    unit_lo = "%" if is_pct else "đ"
-    unit_3c = "%" if is_pct else "k"
-    unit_x = "%" if is_pct else "k"
 
     mode = config.get("mode", "instant")
     mode_str = "Tức thì (cược thừa bắn ngay)" if mode == "instant" else "Gom bảng (chờ lệnh mới bắn)"

@@ -15,6 +15,7 @@ def now_vn() -> datetime:
 from bet_parser import (
     parse_bet_message,
     format_ok_receipt,
+    format_ok_receipt_detailed,
     expand_filter_numbers,
     filter_parsed_bets,
     format_rejected_receipt,
@@ -131,6 +132,8 @@ class TelegramBotService:
             "bet_filter_keywords": "",    # Từ khóa hoặc số cấm nhận
             "cancel_detail_client": False,      # Kèm diễn giải con số cược khi nhắn hủy cho Khách
             "cancel_detail_contractor": False,  # Kèm diễn giải con số cược khi báo hủy cho Chủ thầu
+            "ok_detail_client": False,          # Kèm diễn giải con số cược & giá tiền khi Ok tin cho Khách
+            "ok_detail_contractor": False,      # Kèm diễn giải con số cược & giá tiền khi Ok tin cho Chủ thầu
             "auto_fetch_kqxs_daily": True,# Tự động lấy KQXS lúc 18h30
             "mode": "instant",            # "instant" hoặc "batch"
             "retain_config": BoardBalancer.default_config(),
@@ -1534,8 +1537,19 @@ class TelegramBotService:
         item["transfer_text"] = single_transfer_txt
         item["retained_text"] = single_retained_txt
 
-        # 5. Phản hồi xác nhận cho khách:
-        receipt_text = format_ok_receipt(parsed, msg_idx)
+        # 5. Phản hồi xác nhận cho khách (hoặc chủ thầu):
+        is_contractor_sender = False
+        target_rec = str(self.config.get("target_recipient", "")).strip().lstrip("@").lower()
+        if target_rec:
+            sender_uname = (item.get("username") or "").strip().lstrip("@").lower()
+            if str(chat_id_str).strip().lower() == target_rec or sender_uname == target_rec:
+                is_contractor_sender = True
+
+        ok_detailed = bool(self.config.get("ok_detail_contractor", False)) if is_contractor_sender else bool(self.config.get("ok_detail_client", False))
+        if ok_detailed:
+            receipt_text = format_ok_receipt_detailed(parsed, msg_idx)
+        else:
+            receipt_text = format_ok_receipt(parsed, msg_idx)
         if filter_return_msg:
             receipt_text = f"{receipt_text}\n{filter_return_msg}"
 
@@ -2865,7 +2879,18 @@ class TelegramBotService:
         # - Nếu cược thừa ĐÃ CHUYỂN cho Chủ thầu: Bot chờ Chủ thầu Ok thì mới nhắn Ok lại cho khách!
         # - Nếu KHÔNG CÓ cược thừa (giữ lại 100%): Nhắn Ok tin X cho khách ngay lập tức.
         if self.config.get("auto_reply_client", True):
-            receipt_text = format_ok_receipt(parsed, msg_idx)
+            is_contractor_sender = False
+            target_rec = str(self.config.get("target_recipient", "")).strip().lstrip("@").lower()
+            if target_rec:
+                sender_uname = (user_info.get("username") or "").strip().lstrip("@").lower() if user_info else ""
+                if str(chat_id_str).strip().lower() == target_rec or sender_uname == target_rec:
+                    is_contractor_sender = True
+
+            ok_detailed = bool(self.config.get("ok_detail_contractor", False)) if is_contractor_sender else bool(self.config.get("ok_detail_client", False))
+            if ok_detailed:
+                receipt_text = format_ok_receipt_detailed(parsed, msg_idx)
+            else:
+                receipt_text = format_ok_receipt(parsed, msg_idx)
             if filter_return_msg:
                 receipt_text = f"{receipt_text}\n{filter_return_msg}"
             if has_forwarded_excess:

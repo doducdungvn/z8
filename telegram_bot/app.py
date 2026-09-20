@@ -141,6 +141,10 @@ def update_config():
         current["cancel_detail_client"] = bool(data["cancel_detail_client"])
     if "cancel_detail_contractor" in data:
         current["cancel_detail_contractor"] = bool(data["cancel_detail_contractor"])
+    if "ok_detail_client" in data:
+        current["ok_detail_client"] = bool(data["ok_detail_client"])
+    if "ok_detail_contractor" in data:
+        current["ok_detail_contractor"] = bool(data["ok_detail_contractor"])
     if "mode" in data:
         current["mode"] = data["mode"]
     if "retain_config" in data:
@@ -383,7 +387,8 @@ def get_board():
                     "is_settled": True,
                     "settled_date": archive.get("display_date", date_arg),
                     "settled_at": archive.get("saved_at", "")
-                }
+                },
+                "cached_kqxs": archive.get("kqxs")
             })
 
     # Nếu xem bảng ngày hôm nay, tự động kiểm tra xem đã qua nửa đêm sang ngày mới chưa
@@ -416,7 +421,8 @@ def get_board():
         "settled_date": settle_st.get("settled_date", ""),
         "settled_at": settle_st.get("settled_at", ""),
         "settled_time": settle_st.get("settled_time", ""),
-        "settle_status": settle_st
+        "settle_status": settle_st,
+        "cached_kqxs": bot_service.cached_kqxs
     })
 
 
