@@ -78,19 +78,20 @@ class BoardBalancer:
         return "money"
 
     def _calc_excess_for_item(self, total: float, prev_transfer: float, limit: float, branch_limit: float, is_excluded: bool = False, cat: str = "de") -> float:
-        # Nếu đề hoặc lô có mức giá cược dưới 2 thì giữ lại, chỉ cân chuyển đi khi giá trị cược là 2 trở lên
-        if cat in ("de", "lo") and total < 2.0:
-            return 0.0
-
         if is_excluded:
             excess = total - prev_transfer
             return max(0.0, math.ceil(excess))
 
         retain_type = self._get_category_retain_type(cat)
         use_branch = self.config.get("retain_use_branch", False)
+        has_branch = use_branch and branch_limit > 0
+
+        # Nếu KHÔNG dùng nhánh: khi đề hoặc lô có mức giá cược dưới 2 thì giữ lại (khi dùng nhánh thì bỏ qua quy tắc dưới 2)
+        if not has_branch and cat in ("de", "lo") and total < 2.0:
+            return 0.0
 
         if retain_type == "percentage":
-            if use_branch and branch_limit > 0:
+            if has_branch:
                 target_retain = min(total * (limit / 100.0), branch_limit)
                 target_transfer = total - target_retain
             else:
@@ -99,11 +100,12 @@ class BoardBalancer:
             return max(0.0, math.ceil(excess))
         else:
             # money
-            if use_branch and branch_limit > 0:
-                if total >= branch_limit:
-                    target_transfer = total - limit
-                else:
+            if has_branch:
+                if total < branch_limit:
                     target_transfer = total
+                else:
+                    target_retain = min(limit, total - branch_limit)
+                    target_transfer = total - target_retain
             else:
                 target_transfer = total - limit
             excess = target_transfer - prev_transfer
