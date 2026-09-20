@@ -9449,6 +9449,8 @@ function resetTable() {
           callBotApi("/api/bot/known_users"),
           callBotApi("/api/bot/config")
         ]);
+        const uData = uRes && uRes.ok ? await uRes.json() : {};
+        const cData = cRes && cRes.ok ? await cRes.json() : {};
         const rawUsers = uData ? (Array.isArray(uData) ? uData : (uData.users || Object.values(uData))) : [];
         const users = rawUsers.filter(u => u && (u.chat_id || u.user_id || u.username));
         const allowedList = cData.allowed_senders || [];
