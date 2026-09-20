@@ -7583,19 +7583,15 @@ function resetTable() {
             <pre id="tgReportTextContent" class="whitespace-pre-wrap font-mono text-xs bg-white dark:bg-dark-900 p-2.5 rounded-xs border border-amber-200 dark:border-amber-900/60 text-slate-800 dark:text-slate-200 leading-relaxed max-h-72 overflow-y-auto"></pre>
           </div>
 
-          <!-- CHẾ ĐỘ XEM BẢNG CƯỢC: CHUYỂN ĐỔI TOÀN CẢNH (3 CỘT) ⇄ TỪNG TAB -->
+          <!-- TOÀN CẢNH 3 CỘT DATA FLOW -->
           <div class="flex items-center justify-between flex-wrap gap-2 pb-1 border-b border-slate-300 dark:border-slate-700">
-            <div class="flex items-center gap-1">
-              <button type="button" id="btnTgViewModePanorama" onclick="switchTgBoardViewMode('panorama')" class="px-3 py-1 bg-[#1e293b] text-white font-bold text-xs rounded-xs border border-slate-700 flex items-center gap-1.5 cursor-pointer shadow-2xs">
-                <i class="fa-solid fa-table-columns text-sky-400"></i> <span>Toàn Cảnh 3 Cột (Khuyên Dùng)</span>
-              </button>
-              <button type="button" id="btnTgViewModeTabs" onclick="switchTgBoardViewMode('tabs')" class="px-3 py-1 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700">
-                <i class="fa-solid fa-folder-tree text-slate-500"></i> <span>Xem Từng Bảng (Tabs)</span>
-              </button>
+            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-800 dark:text-slate-200 uppercase">
+              <i class="fa-solid fa-table-columns text-sky-500"></i>
+              <span>Toàn Cảnh Bảng Cược (3 Cột)</span>
             </div>
             <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
               <i class="fa-solid fa-circle-info text-sky-600"></i>
-              <span>Khi có KQXS, hệ thống tự động highlight số trúng &amp; tính âm dương chi tiết.</span>
+              <span>Khi có KQXS hoặc đã chốt, hệ thống tự động highlight số trúng &amp; tính âm dương chi tiết.</span>
             </div>
           </div>
 
@@ -7648,51 +7644,6 @@ function resetTable() {
               <div id="tgColTransfersArea" class="flex-1 max-h-[62vh] overflow-y-auto font-mono text-xs space-y-2 pr-1">
                 <p class="text-slate-400 italic">Chưa có bước chuyển nào được thực hiện.</p>
               </div>
-            </div>
-          </div>
-
-          <!-- VIEW MODE 2: XEM TỪNG BẢNG (TABS) -->
-          <div id="tgBoardTabsView" class="hidden space-y-2">
-            <!-- 4 Sub-tabs Flat -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 border-b border-slate-300 dark:border-slate-700 pb-1">
-              <button type="button" id="btnTgSubTabTotal" class="tg-sub-tab px-2 sm:px-3 py-1.5 bg-[#1e293b] text-white rounded-xs font-bold text-xs border border-slate-700 cursor-pointer flex items-center justify-center gap-1.5">
-                <i class="fa-solid fa-calculator shrink-0"></i> <span class="truncate">📊 Tổng Bảng Nhận</span>
-              </button>
-              <button type="button" id="btnTgSubTabRetained" class="tg-sub-tab px-2 sm:px-3 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 rounded-xs font-semibold text-xs border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center justify-center gap-1.5">
-                <i class="fa-solid fa-shield-halved shrink-0"></i> <span class="truncate">🛡️ Giữ Lại</span>
-              </button>
-              <button type="button" id="btnTgSubTabTransfers" class="tg-sub-tab px-2 sm:px-3 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 rounded-xs font-semibold text-xs border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center justify-center gap-1.5">
-                <i class="fa-solid fa-paper-plane shrink-0"></i> <span class="truncate">🛸 Tin Chuyển (<span id="tgCountTransfers">0</span>)</span>
-              </button>
-              <button type="button" id="btnTgSubTabClientBets" class="tg-sub-tab px-2 sm:px-3 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-700 rounded-xs font-semibold text-xs border border-slate-300 dark:border-slate-700 cursor-pointer flex items-center justify-center gap-1.5">
-                <i class="fa-solid fa-inbox shrink-0"></i> <span class="truncate">📥 Tin Gốc Khách</span>
-              </button>
-            </div>
-
-            <!-- View 4: Tổng Bảng Cược Nhận -->
-            <div id="tgSubViewTotal" class="space-y-2">
-              <div id="tgBoardDisplayArea" class="bg-white dark:bg-dark-900 p-2.5 rounded-xs border border-slate-300 dark:border-slate-700 font-mono text-xs max-h-80 overflow-y-auto space-y-2">
-                <p class="text-slate-400 italic">Chưa có dữ liệu cược nào được nhận hôm nay.</p>
-              </div>
-            </div>
-
-            <!-- View 2: Tin Giữ Lại -->
-            <div id="tgSubViewRetained" class="hidden space-y-2">
-              <div id="tgRetainedDisplayArea" class="bg-white dark:bg-dark-900 p-2.5 rounded-xs border border-slate-300 dark:border-slate-700 font-mono text-xs max-h-80 overflow-y-auto space-y-1.5">
-                <p class="text-slate-400 italic">Chưa có dữ liệu giữ lại.</p>
-              </div>
-            </div>
-
-            <!-- View 3: Tin Chuyển (Thầu Chuyển) -->
-            <div id="tgSubViewTransfers" class="hidden space-y-2">
-              <div id="tgTransfersList" class="space-y-1.5 max-h-80 sm:max-h-96 overflow-y-auto pr-1">
-                <p class="text-slate-400 italic p-3 text-center text-xs">Chưa có bước chuyển nào được thực hiện.</p>
-              </div>
-            </div>
-
-            <!-- View 1: Tin Gốc (Fallback subview) -->
-            <div id="tgSubViewClientBets" class="hidden space-y-2">
-              <div id="tgClientMessagesListFallback" class="space-y-1.5 max-h-80 overflow-y-auto pr-1"></div>
             </div>
           </div>
 
@@ -7925,9 +7876,9 @@ function resetTable() {
                 </div>
 
                 <!-- Loại tính giữ lại -->
-                <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
                   <span class="font-bold text-slate-700 dark:text-slate-300 text-xs">Loại tính:</span>
-                  <div class="flex items-center gap-3 bg-slate-100 dark:bg-dark-900 px-2 py-1 rounded-xs border border-slate-300 dark:border-slate-600 text-xs">
+                  <div class="flex items-center gap-2 bg-slate-100 dark:bg-dark-900 px-2 py-1 rounded-xs border border-slate-300 dark:border-slate-600 text-xs flex-wrap">
                     <label class="flex items-center gap-1.5 cursor-pointer font-bold">
                       <input type="radio" name="tgRetainType" id="tgRetainTypeMoney" value="money" checked class="form-radio text-sky-600">
                       <span>Tiền (k / đ)</span>
@@ -7936,25 +7887,33 @@ function resetTable() {
                       <input type="radio" name="tgRetainType" id="tgRetainTypePercent" value="percentage" class="form-radio text-sky-600">
                       <span>Phần trăm (%)</span>
                     </label>
+                    <label class="flex items-center gap-1.5 cursor-pointer font-bold" title="Cân đề theo tiền (k), cân lô theo %">
+                      <input type="radio" name="tgRetainType" id="tgRetainTypeDeMoneyLoPct" value="de_money_lo_percent" class="form-radio text-sky-600">
+                      <span>Đề tiền - Lô %</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 cursor-pointer font-bold" title="Cân đề theo %, cân lô theo tiền (đ)">
+                      <input type="radio" name="tgRetainType" id="tgRetainTypeDePctLoMoney" value="de_percent_lo_money" class="form-radio text-sky-600">
+                      <span>Đề % - Lô tiền</span>
+                    </label>
                   </div>
                 </div>
 
                 <!-- 4 ô giữ lại chính -->
                 <div class="grid grid-cols-4 gap-1.5 sm:gap-2">
                   <div>
-                    <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1 text-center text-[11px] truncate">Giữ Đề (k)</label>
+                    <label id="tgLblRetainDe" class="block font-bold text-slate-600 dark:text-slate-300 mb-1 text-center text-[11px] truncate">Giữ Đề (k)</label>
                     <input type="number" id="tgRetainDe" value="20" class="w-full border border-slate-300 dark:border-slate-600 rounded-xs p-1.5 text-center font-bold text-xs sm:text-sm bg-white dark:bg-dark-900">
                   </div>
                   <div>
-                    <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1 text-center text-[11px] truncate">Giữ Lô (đ)</label>
+                    <label id="tgLblRetainLo" class="block font-bold text-slate-600 dark:text-slate-300 mb-1 text-center text-[11px] truncate">Giữ Lô (đ)</label>
                     <input type="number" id="tgRetainLo" value="5" class="w-full border border-slate-300 dark:border-slate-600 rounded-xs p-1.5 text-center font-bold text-xs sm:text-sm bg-white dark:bg-dark-900">
                   </div>
                   <div>
-                    <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1 text-center text-[11px] truncate">Giữ 3C (k)</label>
+                    <label id="tgLblRetain3c" class="block font-bold text-slate-600 dark:text-slate-300 mb-1 text-center text-[11px] truncate">Giữ 3C (k)</label>
                     <input type="number" id="tgRetain3c" value="0" class="w-full border border-slate-300 dark:border-slate-600 rounded-xs p-1.5 text-center font-bold text-xs sm:text-sm bg-white dark:bg-dark-900">
                   </div>
                   <div>
-                    <label class="block font-bold text-slate-600 dark:text-slate-300 mb-1 text-center text-[11px] truncate">Giữ Xiên (k)</label>
+                    <label id="tgLblRetainX" class="block font-bold text-slate-600 dark:text-slate-300 mb-1 text-center text-[11px] truncate">Giữ Xiên (k)</label>
                     <input type="number" id="tgRetainX" value="0" class="w-full border border-slate-300 dark:border-slate-600 rounded-xs p-1.5 text-center font-bold text-xs sm:text-sm bg-white dark:bg-dark-900">
                   </div>
                 </div>
@@ -8034,6 +7993,22 @@ function resetTable() {
                     <input type="checkbox" id="tgCheckForwardClient" class="form-checkbox text-amber-600 rounded-xs">
                     <span>Forward tin nhắn từ Khách cược về Telegram Chủ Bot</span>
                   </label>
+
+                  <!-- Tùy chọn khi Xác Nhận 'Ok' Tin Cược -->
+                  <div class="pt-1.5 border-t border-slate-200 dark:border-slate-700 space-y-1.5">
+                    <div class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 text-[11px] uppercase">
+                      <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                      <span>Khi Bot Nhắn 'Ok' Tin Cược:</span>
+                    </div>
+                    <label class="flex items-center gap-2 cursor-pointer" title="Nếu bật: bot sẽ gửi kèm diễn giải từng con số cược và tiền khi Ok lại cho khách (VD: Ok tin 1\nĐề 36.56.12x10\nLô 52.51x5). Nếu tắt: chỉ nhắn 'Ok tin 1'.">
+                      <input type="checkbox" id="tgCheckOkDetailClient" class="form-checkbox text-sky-600 rounded-xs">
+                      <span>Kèm diễn giải con số cược &amp; giá tiền khi Ok cho <b>Khách</b></span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer" title="Nếu bật: bot sẽ gửi kèm diễn giải từng con số cược và tiền khi Ok lại cho chủ thầu. Nếu tắt: chỉ nhắn 'Ok tin 1'.">
+                      <input type="checkbox" id="tgCheckOkDetailContractor" class="form-checkbox text-indigo-600 rounded-xs">
+                      <span>Kèm diễn giải con số cược &amp; giá tiền khi Ok cho <b>Chủ thầu</b></span>
+                    </label>
+                  </div>
 
                   <!-- Tùy chọn khi Khách Hủy Tin Cược -->
                   <div class="pt-1.5 border-t border-slate-200 dark:border-slate-700 space-y-1.5">
@@ -8585,20 +8560,7 @@ function resetTable() {
 
     function switchTgBoardViewMode(mode) {
       const pView = document.getElementById('tgBoardPanoramaView');
-      const tView = document.getElementById('tgBoardTabsView');
-      const btnP = document.getElementById('btnTgViewModePanorama');
-      const btnT = document.getElementById('btnTgViewModeTabs');
-      if (mode === 'tabs') {
-        if (pView) pView.classList.add('hidden');
-        if (tView) tView.classList.remove('hidden');
-        if (btnT) btnT.className = "px-3 py-1 bg-[#1e293b] text-white font-bold text-xs rounded-xs border border-slate-700 flex items-center gap-1.5 cursor-pointer shadow-2xs";
-        if (btnP) btnP.className = "px-3 py-1 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700";
-      } else {
-        if (pView) pView.classList.remove('hidden');
-        if (tView) tView.classList.add('hidden');
-        if (btnP) btnP.className = "px-3 py-1 bg-[#1e293b] text-white font-bold text-xs rounded-xs border border-slate-700 flex items-center gap-1.5 cursor-pointer shadow-2xs";
-        if (btnT) btnT.className = "px-3 py-1 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700";
-      }
+      if (pView) pView.classList.remove('hidden');
     }
     window.switchTgBoardViewMode = switchTgBoardViewMode;
 
@@ -8981,6 +8943,12 @@ function resetTable() {
         if (document.getElementById('tgCheckCancelDetailContractor')) {
           document.getElementById('tgCheckCancelDetailContractor').checked = !!cfg.cancel_detail_contractor;
         }
+        if (document.getElementById('tgCheckOkDetailClient')) {
+          document.getElementById('tgCheckOkDetailClient').checked = !!cfg.ok_detail_client;
+        }
+        if (document.getElementById('tgCheckOkDetailContractor')) {
+          document.getElementById('tgCheckOkDetailContractor').checked = !!cfg.ok_detail_contractor;
+        }
 
         // Cleanup hours
         let cleanupH = 24;
@@ -9007,8 +8975,15 @@ function resetTable() {
 
         // Retain config
         const r = cfg.retain_config || {};
-        if (r.retain_type === "percentage") {
+        const rType = r.retain_type || "money";
+        if (rType === "percentage") {
           document.getElementById('tgRetainTypePercent').checked = true;
+        } else if (rType === "de_money_lo_percent") {
+          const rDMLP = document.getElementById('tgRetainTypeDeMoneyLoPct');
+          if (rDMLP) rDMLP.checked = true;
+        } else if (rType === "de_percent_lo_money") {
+          const rDPLM = document.getElementById('tgRetainTypeDePctLoMoney');
+          if (rDPLM) rDPLM.checked = true;
         } else {
           document.getElementById('tgRetainTypeMoney').checked = true;
         }
@@ -9119,13 +9094,15 @@ function resetTable() {
         bet_filter_keywords: document.getElementById('tgInputBetFilterKeywords')?.value?.trim() || '',
         cancel_detail_client: document.getElementById('tgCheckCancelDetailClient')?.checked || false,
         cancel_detail_contractor: document.getElementById('tgCheckCancelDetailContractor')?.checked || false,
+        ok_detail_client: document.getElementById('tgCheckOkDetailClient')?.checked || false,
+        ok_detail_contractor: document.getElementById('tgCheckOkDetailContractor')?.checked || false,
         cleanup_after_hours: cleanupHours,
         history_retention_hours: retentionHours,
         history_retention_days: Math.round((retentionHours / 24.0) * 10) / 10,
         client_prices: window.tgCustomClientPrices || {},
         price_config: window.priceConfigData || JSON.parse(localStorage.getItem(RATES_STORAGE_KEY) || "{}"),
         retain_config: {
-          retain_type: document.getElementById('tgRetainTypePercent').checked ? "percentage" : "money",
+          retain_type: document.querySelector('input[name="tgRetainType"]:checked')?.value || "money",
           retain_de: parseFloat(document.getElementById('tgRetainDe').value) || 0,
           retain_lo: parseFloat(document.getElementById('tgRetainLo').value) || 0,
           retain_3c: parseFloat(document.getElementById('tgRetain3c').value) || 0,
@@ -9472,9 +9449,8 @@ function resetTable() {
           callBotApi("/api/bot/known_users"),
           callBotApi("/api/bot/config")
         ]);
-        const uData = uRes.ok ? await uRes.json() : {};
-        const cData = cRes.ok ? await cRes.json() : {};
-        const users = uData.users || [];
+        const rawUsers = uData ? (Array.isArray(uData) ? uData : (uData.users || Object.values(uData))) : [];
+        const users = rawUsers.filter(u => u && (u.chat_id || u.user_id || u.username));
         const allowedList = cData.allowed_senders || [];
         const customPrices = cData.client_prices || window.tgCustomClientPrices || {};
         window.tgCustomClientPrices = customPrices;
@@ -9721,6 +9697,22 @@ function resetTable() {
         }
 
         // KQXS & Báo Cáo Tài Chính
+        if (b.cached_kqxs || b.kqxs) {
+          window.tgCachedKQXS = b.cached_kqxs || b.kqxs;
+        }
+        const checkIsSettledEarly = !!(b.is_settled || b.from_archive || b.saved_at || (window.tgInboxDateMode === 'today' && window.tgTodaySettledInfo?.is_settled));
+        if (checkIsSettledEarly && !window.tgCachedKQXS) {
+          try {
+            const selDate = (typeof getTgSelectedDate === 'function') ? getTgSelectedDate() : '';
+            const kRes = await callBotApi(`/api/bot/kqxs?date=${encodeURIComponent(selDate)}`);
+            if (kRes.ok) {
+              const kData = await kRes.json();
+              if (kData && !kData.error) {
+                window.tgCachedKQXS = kData;
+              }
+            }
+          } catch (_) {}
+        }
         const kqxs = window.tgCachedKQXS || null;
         const winDe = kqxs ? (kqxs.special_last2 || '') : '';
         const winBc = kqxs ? (kqxs.special_last3 || '') : '';
@@ -10043,7 +10035,51 @@ function resetTable() {
         // TAB 1: RENDER FEED TIN NHẮN GỐC
         filterTgClientMessages();
 
-        // 3. TAB 2: RENDER BẢNG CƯỢC & CÂN BẢNG (PANORAMA 3 CỘT & TABS)
+        // 3. TAB 2: RENDER BẢNG CƯỢC & CÂN BẢNG (PANORAMA 3 CỘT)
+        function calcCategoryStakeAndWin(numbersObj, isLo = false, isBc = false) {
+          let stake = 0;
+          let winStake = 0;
+          for (const [k, v] of Object.entries(numbersObj || {})) {
+            const amt = Number(v) || 0;
+            stake += amt;
+            if (kqxs) {
+              if (isLo) {
+                const hits = loHitCount[k] || 0;
+                if (hits > 0) winStake += amt * hits;
+              } else if (isBc) {
+                if (k === winBc) winStake += amt;
+              } else {
+                if (k === winDe) winStake += amt;
+              }
+            }
+          }
+          return { stake, winStake };
+        }
+
+        function calcXienStakeAndWin(xienList) {
+          let stake = 0;
+          let winStake = 0;
+          for (const x of (xienList || [])) {
+            const amt = Number(x.amount) || 0;
+            stake += amt;
+            if (kqxs && x.numbers && x.numbers.length > 1 && x.numbers.every(n => (loHitCount[n] || 0) >= 1)) {
+              winStake += amt;
+            }
+          }
+          return { stake, winStake };
+        }
+
+        function formatCategoryHeader(title, iconColor, count, stake, winStake, isLo = false, unit = 'con') {
+          const stakeUnit = isLo ? 'đ' : 'k';
+          const stakeLabel = isLo ? 'Xác' : 'Gốc';
+          const fmt = (num) => Math.round(num || 0).toLocaleString('vi-VN');
+          let text = `${title} (${count} ${unit}) - ${stakeLabel}: ${fmt(stake)}${stakeUnit}`;
+          if (kqxs) {
+            text += ` | Trúng: ${fmt(winStake)}${stakeUnit}`;
+          }
+          return `<b class="${iconColor}">${text}:</b>`;
+        }
+
         function renderNumberListWithHits(numbersObj, isLo = false, isBc = false) {
           const entries = Object.entries(numbersObj || {});
           if (entries.length === 0) return '';
@@ -10063,10 +10099,21 @@ function resetTable() {
             const cls = isWin
               ? 'inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/40 border border-red-400 dark:border-red-700 rounded px-1.5 text-red-700 dark:text-red-300 font-bold'
               : 'inline-flex items-center gap-1';
-            const badge = isWin
-              ? `<span class="text-[10px] font-bold text-red-600 dark:text-red-400">●trúng${hitCount >= 2 ? ' ' + hitCount + 'nháy' : ''}</span>`
+            const nhayBadge = (isWin && isLo && hitCount >= 2)
+              ? `<span class="text-[10px] font-bold text-red-600 dark:text-red-400">(${hitCount} nháy)</span>`
               : '';
-            return `<span class="${cls}"><b>${k}</b>(${v}${isLo ? 'đ' : ''}) ${badge}</span>`;
+            return `<span class="${cls}"><b>${k}</b>(${v}${isLo ? 'đ' : ''})${nhayBadge ? ' ' + nhayBadge : ''}</span>`;
+          }).join(' ');
+        }
+
+        function renderXienListWithHits(xienList) {
+          if (!xienList || xienList.length === 0) return '';
+          return xienList.map(x => {
+            const isWin = kqxs && x.numbers && x.numbers.length > 1 && x.numbers.every(n => (loHitCount[n] || 0) >= 1);
+            const cls = isWin
+              ? 'inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/40 border border-red-400 dark:border-red-700 rounded px-1.5 text-red-700 dark:text-red-300 font-bold'
+              : 'inline-flex items-center gap-1';
+            return `<span class="${cls}"><b>${x.numbers ? x.numbers.join('-') : ''}</b>(${x.amount}đ)</span>`;
           }).join(' ');
         }
 
@@ -10133,23 +10180,25 @@ function resetTable() {
             totalBoardHtml += renderAccountingCard(accReport.thau, 'TÀI CHÍNH TỔNG BẢNG (THẦU)', 'thau');
           }
           if (deKeys.length > 0) {
+            const st = calcCategoryStakeAndWin(b.de_sums, false, false);
             const items = renderNumberListWithHits(b.de_sums, false, false);
-            totalBoardHtml += `<div><b class="text-rose-600 dark:text-rose-400">🔴 Đề (${deKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+            totalBoardHtml += `<div>${formatCategoryHeader('🔴 Đề', 'text-rose-600 dark:text-rose-400', deKeys.length, st.stake, st.winStake, false)}<div class="mt-1 leading-loose">${items}</div></div>`;
           }
           if (loKeys.length > 0) {
+            const st = calcCategoryStakeAndWin(b.lo_sums, true, false);
             const items = renderNumberListWithHits(b.lo_sums, true, false);
-            totalBoardHtml += `<div><b class="text-sky-600 dark:text-sky-400">🔵 Lô (${loKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+            totalBoardHtml += `<div>${formatCategoryHeader('🔵 Lô', 'text-sky-600 dark:text-sky-400', loKeys.length, st.stake, st.winStake, true)}<div class="mt-1 leading-loose">${items}</div></div>`;
           }
           if (bcKeys.length > 0) {
+            const st = calcCategoryStakeAndWin(b.bacang_sums, false, true);
             const items = renderNumberListWithHits(b.bacang_sums, false, true);
-            totalBoardHtml += `<div><b class="text-purple-600 dark:text-purple-400">🟣 3 Càng (${bcKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+            totalBoardHtml += `<div>${formatCategoryHeader('🟣 3 Càng', 'text-purple-600 dark:text-purple-400', bcKeys.length, st.stake, st.winStake, false)}<div class="mt-1 leading-loose">${items}</div></div>`;
           }
           if (xCount > 0) {
-            const xien = (b.retained && b.retained.xien) ? b.retained.xien : [];
-            const xItems = xien.length > 0
-              ? xien.map(x => `<span class="inline-flex items-center gap-1"><b>${x.numbers ? x.numbers.join('-') : ''}</b>(${x.amount}đ)</span>`).join(' ')
-              : `<span class="text-slate-500">${xCount} cặp</span>`;
-            totalBoardHtml += `<div><b class="text-emerald-600 dark:text-emerald-400">🟢 Xiên (${xCount} cặp):</b><div class="mt-1 leading-loose">${xItems}</div></div>`;
+            const xien = (b.retained && b.retained.xien) ? b.retained.xien : (b.xien_bets || []);
+            const st = calcXienStakeAndWin(xien);
+            const xItems = renderXienListWithHits(xien);
+            totalBoardHtml += `<div>${formatCategoryHeader('🟢 Xiên', 'text-emerald-600 dark:text-emerald-400', xCount, st.stake, st.winStake, false, 'cặp')}<div class="mt-1 leading-loose">${xItems}</div></div>`;
           }
           if (!kqxs) {
             totalBoardHtml += '<div class="text-[11px] text-slate-400 italic border-t border-slate-200 dark:border-slate-700 pt-2 mt-1">Chưa có KQXS – bấm nút KQXS để tự động tính âm/dương & highlight số trúng.</div>';
@@ -10174,20 +10223,24 @@ function resetTable() {
             retainedHtml += renderAccountingCard(accReport.giulai, 'TÀI CHÍNH GIỮ LẠI', 'giulai');
           }
           if (retDeKeys.length > 0) {
+            const st = calcCategoryStakeAndWin(retDe, false, false);
             const items = renderNumberListWithHits(retDe, false, false);
-            retainedHtml += `<div><b class="text-rose-600 dark:text-rose-400">🔴 Đề (${retDeKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+            retainedHtml += `<div>${formatCategoryHeader('🔴 Đề', 'text-rose-600 dark:text-rose-400', retDeKeys.length, st.stake, st.winStake, false)}<div class="mt-1 leading-loose">${items}</div></div>`;
           }
           if (retLoKeys.length > 0) {
+            const st = calcCategoryStakeAndWin(retLo, true, false);
             const items = renderNumberListWithHits(retLo, true, false);
-            retainedHtml += `<div><b class="text-sky-600 dark:text-sky-400">🔵 Lô (${retLoKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+            retainedHtml += `<div>${formatCategoryHeader('🔵 Lô', 'text-sky-600 dark:text-sky-400', retLoKeys.length, st.stake, st.winStake, true)}<div class="mt-1 leading-loose">${items}</div></div>`;
           }
           if (retBcKeys.length > 0) {
+            const st = calcCategoryStakeAndWin(retBc, false, true);
             const items = renderNumberListWithHits(retBc, false, true);
-            retainedHtml += `<div><b class="text-purple-600 dark:text-purple-400">🟣 3 Càng (${retBcKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+            retainedHtml += `<div>${formatCategoryHeader('🟣 3 Càng', 'text-purple-600 dark:text-purple-400', retBcKeys.length, st.stake, st.winStake, false)}<div class="mt-1 leading-loose">${items}</div></div>`;
           }
           if (retX.length > 0) {
-            const xItems = retX.map(x => `<span class="inline-flex items-center gap-1"><b>${x.numbers ? x.numbers.join('-') : ''}</b>(${x.amount}đ)</span>`).join(' ');
-            retainedHtml += `<div><b class="text-emerald-600 dark:text-emerald-400">🟢 Xiên (${retX.length} cặp):</b><div class="mt-1 leading-loose">${xItems}</div></div>`;
+            const st = calcXienStakeAndWin(retX);
+            const xItems = renderXienListWithHits(retX);
+            retainedHtml += `<div>${formatCategoryHeader('🟢 Xiên', 'text-emerald-600 dark:text-emerald-400', retX.length, st.stake, st.winStake, false, 'cặp')}<div class="mt-1 leading-loose">${xItems}</div></div>`;
           }
           if (!kqxs) {
             retainedHtml += '<div class="text-[11px] text-slate-400 italic border-t border-slate-200 dark:border-slate-700 pt-2 mt-1">Chưa có KQXS – bấm nút KQXS để tự động tính âm/dương & highlight số trúng.</div>';
@@ -10213,16 +10266,19 @@ function resetTable() {
           if (cumDeKeys.length > 0 || cumLoKeys.length > 0 || cumBcKeys.length > 0) {
             let sumHtml = '<div class="space-y-2">';
             if (cumDeKeys.length > 0) {
+              const st = calcCategoryStakeAndWin(cumDe, false, false);
               const items = renderNumberListWithHits(cumDe, false, false);
-              sumHtml += `<div><b class="text-rose-600 dark:text-rose-400">🔴 Đề chuyển (${cumDeKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+              sumHtml += `<div>${formatCategoryHeader('🔴 Đề chuyển', 'text-rose-600 dark:text-rose-400', cumDeKeys.length, st.stake, st.winStake, false)}<div class="mt-1 leading-loose">${items}</div></div>`;
             }
             if (cumLoKeys.length > 0) {
+              const st = calcCategoryStakeAndWin(cumLo, true, false);
               const items = renderNumberListWithHits(cumLo, true, false);
-              sumHtml += `<div><b class="text-sky-600 dark:text-sky-400">🔵 Lô chuyển (${cumLoKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+              sumHtml += `<div>${formatCategoryHeader('🔵 Lô chuyển', 'text-sky-600 dark:text-sky-400', cumLoKeys.length, st.stake, st.winStake, true)}<div class="mt-1 leading-loose">${items}</div></div>`;
             }
             if (cumBcKeys.length > 0) {
+              const st = calcCategoryStakeAndWin(cumBc, false, true);
               const items = renderNumberListWithHits(cumBc, false, true);
-              sumHtml += `<div><b class="text-purple-600 dark:text-purple-400">🟣 3C chuyển (${cumBcKeys.length} con):</b><div class="mt-1 leading-loose">${items}</div></div>`;
+              sumHtml += `<div>${formatCategoryHeader('🟣 3C chuyển', 'text-purple-600 dark:text-purple-400', cumBcKeys.length, st.stake, st.winStake, false)}<div class="mt-1 leading-loose">${items}</div></div>`;
             }
             sumHtml += '</div>';
 
@@ -10791,22 +10847,65 @@ function resetTable() {
       }
 
       function updateTgRetainLabels() {
-        const isPercent = document.getElementById('tgRetainTypePercent')?.checked;
+        const curType = document.querySelector('input[name="tgRetainType"]:checked')?.value || "money";
         const lblBox = document.getElementById('tgLblBranchCheckbox');
         const lblDe = document.getElementById('tgLblBranchDe');
         const lblLo = document.getElementById('tgLblBranchLo');
         const lbl3c = document.getElementById('tgLblBranch3c');
         const lblX = document.getElementById('tgLblBranchX');
 
-        if (lblBox) lblBox.textContent = isPercent ? "Bật mức trần Tối đa (k / đ)" : "Bật cấu hình Nhánh";
-        if (lblDe) lblDe.textContent = isPercent ? "T.Đ (k)" : "Nh. Đề";
-        if (lblLo) lblLo.textContent = isPercent ? "T.L (đ)" : "Nh. Lô";
-        if (lbl3c) lbl3c.textContent = isPercent ? "T.3c (k)" : "Nh. 3C";
-        if (lblX) lblX.textContent = isPercent ? "T.X (k)" : "Nh. Xiên";
+        const mainDe = document.getElementById('tgLblRetainDe');
+        const mainLo = document.getElementById('tgLblRetainLo');
+        const main3c = document.getElementById('tgLblRetain3c');
+        const mainX = document.getElementById('tgLblRetainX');
+
+        if (curType === "percentage") {
+          if (mainDe) mainDe.textContent = "Giữ Đề (%)";
+          if (mainLo) mainLo.textContent = "Giữ Lô (%)";
+          if (main3c) main3c.textContent = "Giữ 3C (%)";
+          if (mainX) mainX.textContent = "Giữ Xiên (%)";
+          if (lblBox) lblBox.textContent = "Bật mức trần Tối đa (k / đ)";
+          if (lblDe) lblDe.textContent = "Tối đa Đề (k)";
+          if (lblLo) lblLo.textContent = "Tối đa Lô (đ)";
+          if (lbl3c) lbl3c.textContent = "Tối đa 3C (k)";
+          if (lblX) lblX.textContent = "Tối đa Xiên (k)";
+        } else if (curType === "de_money_lo_percent") {
+          if (mainDe) mainDe.textContent = "Giữ Đề (k)";
+          if (mainLo) mainLo.textContent = "Giữ Lô (%)";
+          if (main3c) main3c.textContent = "Giữ 3C (k)";
+          if (mainX) mainX.textContent = "Giữ Xiên (k)";
+          if (lblBox) lblBox.textContent = "Bật giới hạn (Nhánh Đề/3C/X & Mức trần Lô)";
+          if (lblDe) lblDe.textContent = "Nh. Đề (k)";
+          if (lblLo) lblLo.textContent = "Tối đa Lô (đ)";
+          if (lbl3c) lbl3c.textContent = "Nh. 3C (k)";
+          if (lblX) lblX.textContent = "Nh. Xiên (k)";
+        } else if (curType === "de_percent_lo_money") {
+          if (mainDe) mainDe.textContent = "Giữ Đề (%)";
+          if (mainLo) mainLo.textContent = "Giữ Lô (đ)";
+          if (main3c) main3c.textContent = "Giữ 3C (%)";
+          if (mainX) mainX.textContent = "Giữ Xiên (%)";
+          if (lblBox) lblBox.textContent = "Bật giới hạn (Mức trần Đề/3C/X & Nhánh Lô)";
+          if (lblDe) lblDe.textContent = "Tối đa Đề (k)";
+          if (lblLo) lblLo.textContent = "Nh. Lô (đ)";
+          if (lbl3c) lbl3c.textContent = "Tối đa 3C (k)";
+          if (lblX) lblX.textContent = "Tối đa Xiên (k)";
+        } else {
+          // money
+          if (mainDe) mainDe.textContent = "Giữ Đề (k)";
+          if (mainLo) mainLo.textContent = "Giữ Lô (đ)";
+          if (main3c) main3c.textContent = "Giữ 3C (k)";
+          if (mainX) mainX.textContent = "Giữ Xiên (k)";
+          if (lblBox) lblBox.textContent = "Bật cấu hình Nhánh";
+          if (lblDe) lblDe.textContent = "Nh. Đề (k)";
+          if (lblLo) lblLo.textContent = "Nh. Lô (đ)";
+          if (lbl3c) lbl3c.textContent = "Nh. 3C (k)";
+          if (lblX) lblX.textContent = "Nh. Xiên (k)";
+        }
       }
 
-      document.getElementById('tgRetainTypeMoney')?.addEventListener('change', updateTgRetainLabels);
-      document.getElementById('tgRetainTypePercent')?.addEventListener('change', updateTgRetainLabels);
+      document.querySelectorAll('input[name="tgRetainType"]').forEach(radio => {
+        radio.addEventListener('change', updateTgRetainLabels);
+      });
 
       // Nút đồng bộ mức giữ lại từ Web sang Bot
       const btnSyncRetain = document.getElementById('btnSyncWebRetainToBot');
