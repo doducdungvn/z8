@@ -2882,7 +2882,7 @@ class TelegramBotService:
             is_contractor_sender = False
             target_rec = str(self.config.get("target_recipient", "")).strip().lstrip("@").lower()
             if target_rec:
-                sender_uname = (user_info.get("username") or "").strip().lstrip("@").lower() if user_info else ""
+                sender_uname = (username or "").strip().lstrip("@").lower()
                 if str(chat_id_str).strip().lower() == target_rec or sender_uname == target_rec:
                     is_contractor_sender = True
 
@@ -3460,16 +3460,16 @@ class TelegramBotService:
         self.save_config()
         self.log("Bot đã BẬT (Chế độ Tự Động): Tự động nhận cược, cân chuyển và Ok lại cho khách.", "SUCCESS")
 
+        check = self.check_bot_token()
+        if not check.get("valid"):
+            return {"status": "error", "message": check.get("error")}
+
         if not self.is_running:
-            check = self.check_bot_token()
-            if not check.get("valid"):
-                return {"status": "error", "message": check.get("error")}
             self.is_running = True
             self.polling_thread = threading.Thread(target=self.poll_updates, daemon=True)
             self.polling_thread.start()
-            return {"status": "started", "bot_mode": "auto", "running": True, "info": check.get("info")}
 
-        return {"status": "started", "bot_mode": "auto", "running": True}
+        return {"status": "started", "bot_mode": "auto", "running": True, "info": check.get("info")}
 
     def stop(self) -> dict:
         """
