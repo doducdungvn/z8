@@ -8034,6 +8034,22 @@ function resetTable() {
                     <input type="checkbox" id="tgCheckForwardClient" class="form-checkbox text-amber-600 rounded-xs">
                     <span>Forward tin nhắn từ Khách cược về Telegram Chủ Bot</span>
                   </label>
+
+                  <!-- Tùy chọn khi Khách Hủy Tin Cược -->
+                  <div class="pt-1.5 border-t border-slate-200 dark:border-slate-700 space-y-1.5">
+                    <div class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 text-[11px] uppercase">
+                      <i class="fa-solid fa-ban text-rose-500"></i>
+                      <span>Khi Khách Hủy Tin Cược:</span>
+                    </div>
+                    <label class="flex items-center gap-2 cursor-pointer" title="Nếu bật: bot sẽ gửi kèm diễn giải con số cược khi nhắn hủy cho khách. Nếu tắt: bot chỉ nhắn ngắn gọn 'Đã hủy tin 1'.">
+                      <input type="checkbox" id="tgCheckCancelDetailClient" class="form-checkbox text-sky-600 rounded-xs">
+                      <span>Kèm diễn giải con số cược khi nhắn cho <b>Khách</b></span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer" title="Nếu bật: bot sẽ gửi kèm diễn giải con số cược khi báo hủy cho chủ thầu. Nếu tắt: bot chỉ nhắn 'Hủy tin 1'.">
+                      <input type="checkbox" id="tgCheckCancelDetailContractor" class="form-checkbox text-indigo-600 rounded-xs">
+                      <span>Kèm diễn giải con số cược khi báo cho <b>Chủ thầu</b></span>
+                    </label>
+                  </div>
                 </div>
 
                 <!-- Bộ lọc cược cấm nhận -->
@@ -8959,6 +8975,12 @@ function resetTable() {
         if (document.getElementById('tgInputBetFilterKeywords')) {
           document.getElementById('tgInputBetFilterKeywords').value = cfg.bet_filter_keywords || '';
         }
+        if (document.getElementById('tgCheckCancelDetailClient')) {
+          document.getElementById('tgCheckCancelDetailClient').checked = !!cfg.cancel_detail_client;
+        }
+        if (document.getElementById('tgCheckCancelDetailContractor')) {
+          document.getElementById('tgCheckCancelDetailContractor').checked = !!cfg.cancel_detail_contractor;
+        }
 
         // Cleanup hours
         let cleanupH = 24;
@@ -9095,6 +9117,8 @@ function resetTable() {
         forward_client_to_owner: document.getElementById('tgCheckForwardClient')?.checked || false,
         bet_filter_enabled: document.getElementById('tgCheckBetFilter')?.checked || false,
         bet_filter_keywords: document.getElementById('tgInputBetFilterKeywords')?.value?.trim() || '',
+        cancel_detail_client: document.getElementById('tgCheckCancelDetailClient')?.checked || false,
+        cancel_detail_contractor: document.getElementById('tgCheckCancelDetailContractor')?.checked || false,
         cleanup_after_hours: cleanupHours,
         history_retention_hours: retentionHours,
         history_retention_days: Math.round((retentionHours / 24.0) * 10) / 10,
