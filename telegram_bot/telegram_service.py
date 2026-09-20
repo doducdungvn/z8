@@ -3350,6 +3350,11 @@ class TelegramBotService:
     def poll_updates(self):
         """Vòng lặp Long Polling nhận tin nhắn liên tục"""
         self.log("Bot Telegram bắt đầu lắng nghe tin cược...")
+        token = self.config.get("bot_token", "").strip()
+        if not token:
+            self.log("Chưa cài đặt Bot Token!", "ERROR")
+            return
+
         # Tự động gỡ webhook (nếu có) để tránh xung đột getUpdates 409
         try:
             requests.post(f"https://api.telegram.org/bot{token}/deleteWebhook", json={"drop_pending_updates": False}, timeout=8)
