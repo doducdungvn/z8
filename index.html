@@ -9520,18 +9520,21 @@ function resetTable() {
                                  (uUsername && (customPrices[uUsername] || customPrices['@' + uUsername])) ||
                                  (chatIdStr && customPrices[chatIdStr]);
 
-          let roleBadge = '';
+          const badges = [];
           if (isOwner) {
-            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-300 flex items-center gap-1 w-fit">👑 Chủ Bot</span>';
-          } else if (isContractor) {
-            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold border border-blue-300 flex items-center gap-1 w-fit">🏢 Chủ thầu</span>';
-          } else if (isInAllowedList) {
-            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300 flex items-center gap-1 w-fit">✅ Khách hợp lệ</span>';
-          } else if (isWildcardAllowed) {
-            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] border border-slate-300 flex items-center gap-1 w-fit">🌐 Nhận tự do</span>';
-          } else {
-            roleBadge = '<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-semibold border border-rose-300 flex items-center gap-1 w-fit">⛔ Ngoài danh sách</span>';
+            badges.push('<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-300 flex items-center gap-1 w-fit">👑 Chủ Bot</span>');
           }
+          if (isContractor) {
+            badges.push('<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold border border-blue-300 flex items-center gap-1 w-fit">🏢 Chủ thầu</span>');
+          }
+          if (isInAllowedList) {
+            badges.push('<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300 flex items-center gap-1 w-fit">✅ Khách hợp lệ</span>');
+          } else if (isWildcardAllowed && !isOwner && !isContractor) {
+            badges.push('<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] border border-slate-300 flex items-center gap-1 w-fit">🌐 Nhận tự do</span>');
+          } else if (!isOwner && !isContractor) {
+            badges.push('<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-semibold border border-rose-300 flex items-center gap-1 w-fit">⛔ Ngoài danh sách</span>');
+          }
+          const roleBadge = `<div class="flex items-center flex-wrap gap-1">${badges.join('')}</div>`;
 
           let priceBadge = '';
           if (hasCustomPrice) {
