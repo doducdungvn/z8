@@ -7357,8 +7357,8 @@ function resetTable() {
               <span>TIN CƯỢC &amp; KHÁCH</span>
             </span>
             <div class="flex items-center gap-1.5 font-mono">
-              <span id="kpiTgClientsBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded-xs bg-slate-100 dark:bg-dark-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">0 khách</span>
-              <span id="kpiTgTransfersStepsBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded-xs bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">0 lần chuyển</span>
+              <span id="kpiTgClientsBadge" class="text-xs font-semibold px-2 py-0.5 rounded-xs bg-slate-100 dark:bg-dark-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"><b class="text-[13px] font-black text-slate-800 dark:text-slate-100">0</b> khách</span>
+              <span id="kpiTgTransfersStepsBadge" class="text-xs font-semibold px-2 py-0.5 rounded-xs bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"><b class="text-[13px] font-black text-indigo-800 dark:text-indigo-200">0</b> lần chuyển</span>
             </div>
           </div>
           <div class="mt-1 flex items-baseline justify-between flex-wrap gap-2">
@@ -7377,12 +7377,12 @@ function resetTable() {
             </div>
             <!-- Phần trăm Giữ lại & Chuyển -->
             <div id="kpiTgRetainRatioText" class="text-xs font-mono font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-dark-900/80 px-2 py-0.5 rounded-xs border border-slate-200 dark:border-slate-700">
-              🛡️ Giữ: <b class="text-emerald-600 dark:text-emerald-400">100%</b> | 🛸 Chuyển: <b class="text-slate-400">0%</b>
+              🛡️ Giữ: <b class="text-sm font-black text-emerald-600 dark:text-emerald-400">100%</b> | 🛸 Chuyển: <b class="text-sm font-black text-slate-400">0%</b>
             </div>
           </div>
-          <div class="mt-1 pt-1 border-t border-slate-100 dark:border-slate-700/60 text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between">
-            <span id="kpiTgMsgStatusDetail" class="truncate">✅ 0 nhận | ⏳ 0 chờ | 🚫 0 hủy</span>
-            <span class="text-sky-600 font-bold group-hover:translate-x-0.5 transition-transform text-[10px] ml-1 shrink-0">Xem Hộp Thư ❯</span>
+          <div class="mt-1 pt-1 border-t border-slate-100 dark:border-slate-700/60 text-xs font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between">
+            <span id="kpiTgMsgStatusDetail" class="truncate">✅ <b class="text-[13px] font-black text-emerald-600 dark:text-emerald-400">0</b> nhận &nbsp;|&nbsp; ⏳ <b class="text-[13px] font-black text-amber-600 dark:text-amber-400">0</b> chờ &nbsp;|&nbsp; 🚫 <b class="text-[13px] font-black text-rose-600 dark:text-rose-400">0</b> hủy</span>
+            <span class="text-sky-600 font-bold group-hover:translate-x-0.5 transition-transform text-[11px] ml-1 shrink-0">Xem Hộp Thư ❯</span>
           </div>
         </div>
       </div>
@@ -8686,7 +8686,7 @@ function resetTable() {
 
         const kpiStepBadge = document.getElementById('kpiTgTransfersStepsBadge');
         if (kpiStepBadge && curStepCount !== undefined) {
-          kpiStepBadge.textContent = `${curStepCount} lần chuyển`;
+          kpiStepBadge.innerHTML = `<b class="text-[13px] font-black text-indigo-800 dark:text-indigo-200">${curStepCount}</b> lần chuyển`;
         }
 
         // Tự động làm mới dữ liệu Hộp Thư nếu có tin mới hoặc đang xem tab Hộp Thư
@@ -9558,10 +9558,13 @@ function resetTable() {
                     <i class="fa-solid fa-tags"></i> Sửa giá
                   </button>
                   ${hasCustomPrice ? `
-                    <button type="button" onclick="deleteClientPriceDirect('${chatIdStr}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-200 dark:border-rose-800 cursor-pointer" title="Hủy giá riêng, dùng giá thầu chung">
+                    <button type="button" onclick="deleteClientPriceDirect('${chatIdStr}')" class="px-2 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 dark:bg-dark-900 dark:text-slate-300 rounded-xs text-[11px] font-semibold border border-slate-200 dark:border-slate-700 cursor-pointer" title="Hủy giá riêng, dùng giá thầu chung">
                       <i class="fa-solid fa-rotate-left"></i> Dùng giá chung
                     </button>
                   ` : ''}
+                  <button type="button" onclick="deleteKnownUser('${chatIdStr || u.username}', '${(u.name || u.first_name || u.username || chatIdStr).replace(/'/g, "\\'")}')" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-200 dark:border-rose-800 cursor-pointer flex items-center gap-1" title="Xóa người này khỏi danh bạ">
+                    <i class="fa-solid fa-trash-can"></i> Xóa
+                  </button>
                 </div>
               </td>
             </tr>
@@ -9573,6 +9576,31 @@ function resetTable() {
       }
     }
     window.loadTgClientsCrm = loadTgClientsCrm;
+
+    async function deleteKnownUser(userId, name) {
+      if (!confirm(`Bạn có chắc chắn muốn xóa "${name || userId}" khỏi danh sách không?\n(Nếu người này từng được cấp quyền nhận cược, quyền cũng sẽ được gỡ bỏ)`)) {
+        return;
+      }
+      try {
+        const res = await callBotApi(`/api/bot/known_users/${encodeURIComponent(userId)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (typeof showToast === 'function') {
+            showToast(`Đã xóa "${name || userId}" khỏi danh sách`, 'success');
+          } else {
+            alert(`Đã xóa "${name || userId}" thành công!`);
+          }
+          loadTgClientsCrm();
+        } else {
+          alert('Lỗi: ' + (data.error || 'Không thể xóa'));
+        }
+      } catch (err) {
+        alert('Lỗi kết nối máy chủ bot: ' + err.message);
+      }
+    }
+    window.deleteKnownUser = deleteKnownUser;
 
     window.tgInboxDateMode = 'today';
 
@@ -9754,19 +9782,37 @@ function resetTable() {
           }
         }
 
-        // KQXS & Báo Cáo Tài Chính
+        // KQXS & Báo Cáo Tài Chính: Bắt buộc khớp đúng ngày đang xem, không dùng KQXS ngày cũ
+        const selDate = (typeof getTgSelectedDate === 'function') ? getTgSelectedDate() : '';
+        const dispDate = (typeof formatTgDateDisplay === 'function') ? formatTgDateDisplay(selDate) : '';
+
+        if (window.tgCachedKQXS) {
+          const cDate = (window.tgCachedKQXS.date || '').replace(/-/g, '/');
+          if (dispDate && cDate && cDate !== dispDate) {
+            window.tgCachedKQXS = null;
+          }
+        }
+
         if (b.cached_kqxs || b.kqxs) {
-          window.tgCachedKQXS = b.cached_kqxs || b.kqxs;
+          const cand = b.cached_kqxs || b.kqxs;
+          const candDate = (cand?.date || '').replace(/-/g, '/');
+          if (cand && cand.success && (!dispDate || candDate === dispDate)) {
+            window.tgCachedKQXS = cand;
+          } else if (dispDate && candDate && candDate !== dispDate) {
+            window.tgCachedKQXS = null;
+          }
         }
         const checkIsSettledEarly = !!(b.is_settled || b.from_archive || b.saved_at || (window.tgInboxDateMode === 'today' && window.tgTodaySettledInfo?.is_settled));
         if (checkIsSettledEarly && !window.tgCachedKQXS) {
           try {
-            const selDate = (typeof getTgSelectedDate === 'function') ? getTgSelectedDate() : '';
             const kRes = await callBotApi(`/api/bot/kqxs?date=${encodeURIComponent(selDate)}`);
             if (kRes.ok) {
               const kData = await kRes.json();
-              if (kData && !kData.error) {
+              const kDate = (kData?.date || '').replace(/-/g, '/');
+              if (kData && kData.success && (!dispDate || kDate === dispDate)) {
                 window.tgCachedKQXS = kData;
+              } else {
+                window.tgCachedKQXS = null;
               }
             }
           } catch (_) {}
@@ -9803,7 +9849,7 @@ function resetTable() {
         const kpiTotalMsgs = document.getElementById('kpiTgTotalMsgs');
         if (kpiTotalMsgs) kpiTotalMsgs.textContent = rawList.length;
         const kpiClientsBadge = document.getElementById('kpiTgClientsBadge');
-        if (kpiClientsBadge) kpiClientsBadge.textContent = `${uniqueClients} khách`;
+        if (kpiClientsBadge) kpiClientsBadge.innerHTML = `<b class="text-[13px] font-black text-slate-800 dark:text-slate-100">${uniqueClients}</b> khách`;
 
         const kpiPendingCount = document.getElementById('kpiTgPendingCount');
         if (kpiPendingCount) kpiPendingCount.textContent = pendingBets.length;
@@ -9826,7 +9872,7 @@ function resetTable() {
 
         const kpiMsgStatusDetail = document.getElementById('kpiTgMsgStatusDetail');
         if (kpiMsgStatusDetail) {
-          kpiMsgStatusDetail.textContent = `✅ ${approvedBets.length} nhận | ⏳ ${pendingBets.length} chờ | 🚫 ${voidedBets.length} hủy`;
+          kpiMsgStatusDetail.innerHTML = `✅ <b class="text-[13px] font-black text-emerald-600 dark:text-emerald-400">${approvedBets.length}</b> nhận &nbsp;|&nbsp; ⏳ <b class="text-[13px] font-black text-amber-600 dark:text-amber-400">${pendingBets.length}</b> chờ &nbsp;|&nbsp; 🚫 <b class="text-[13px] font-black text-rose-600 dark:text-rose-400">${voidedBets.length}</b> hủy`;
         }
 
         // KPI 2: DOANH SỐ KHÁCH ĐÁNH (Tính cả tiền cược và số lượng con)
@@ -9930,7 +9976,7 @@ function resetTable() {
         const kpiTransStepsBadge = document.getElementById('kpiTgTransfersStepsBadge');
         if (kpiTransStepsBadge) {
           const stepVal = b.step_count !== undefined ? b.step_count : (histList.length || 0);
-          kpiTransStepsBadge.textContent = `${stepVal} lần chuyển`;
+          kpiTransStepsBadge.innerHTML = `<b class="text-[13px] font-black text-indigo-800 dark:text-indigo-200">${stepVal}</b> lần chuyển`;
         }
 
         const kpiRetainRatioText = document.getElementById('kpiTgRetainRatioText');
@@ -9938,11 +9984,11 @@ function resetTable() {
           if (totalBetMoney > 0 && totalTransMoney > 0) {
             const retPct = Math.max(0, Math.min(100, Math.round((totalRetMoney / totalBetMoney) * 100)));
             const transPct = 100 - retPct;
-            kpiRetainRatioText.innerHTML = `🛡️ Giữ: <b class="text-emerald-600 dark:text-emerald-400 font-mono">${retPct}%</b> | 🛸 Chuyển: <b class="text-indigo-600 dark:text-indigo-400 font-mono">${transPct}%</b>`;
+            kpiRetainRatioText.innerHTML = `🛡️ Giữ: <b class="text-emerald-600 dark:text-emerald-400 font-mono text-sm font-black">${retPct}%</b> &nbsp;|&nbsp; 🛸 Chuyển: <b class="text-indigo-600 dark:text-indigo-400 font-mono text-sm font-black">${transPct}%</b>`;
           } else if (totalTransMoney > 0) {
-            kpiRetainRatioText.innerHTML = `🛡️ Giữ: <b class="text-slate-400 font-mono">0%</b> | 🛸 Chuyển: <b class="text-indigo-600 dark:text-indigo-400 font-mono">100%</b>`;
+            kpiRetainRatioText.innerHTML = `🛡️ Giữ: <b class="text-slate-400 font-mono text-sm font-black">0%</b> &nbsp;|&nbsp; 🛸 Chuyển: <b class="text-indigo-600 dark:text-indigo-400 font-mono text-sm font-black">100%</b>`;
           } else {
-            kpiRetainRatioText.innerHTML = `🛡️ Giữ: <b class="text-emerald-600 dark:text-emerald-400 font-mono">100%</b> | 🛸 Chuyển: <b class="text-slate-400 font-mono">0%</b>`;
+            kpiRetainRatioText.innerHTML = `🛡️ Giữ: <b class="text-emerald-600 dark:text-emerald-400 font-mono text-sm font-black">100%</b> &nbsp;|&nbsp; 🛸 Chuyển: <b class="text-slate-400 font-mono text-sm font-black">0%</b>`;
           }
         }
 
@@ -10021,8 +10067,8 @@ function resetTable() {
           }
         }
 
-        // Cập nhật Số tiền Lãi / Lỗ
-        if (accReport?.thau) {
+        // Cập nhật Số tiền Lãi / Lỗ: Chỉ tính toán khi đã có KQXS hợp lệ của ngày hôm nay
+        if (accReport?.thau && !window.tgCachedReportData?.no_valid_kqxs && kqxs) {
           const net = accReport.thau.totalNet || 0;
           const isPos = net >= 0;
           if (kpiNetProfit) {
@@ -10032,7 +10078,7 @@ function resetTable() {
         } else {
           if (kpiNetProfit) {
             kpiNetProfit.textContent = "0 đ";
-            kpiNetProfit.className = "text-lg sm:text-xl font-black text-slate-800 dark:text-slate-100 font-mono leading-tight tracking-tight";
+            kpiNetProfit.className = "text-lg sm:text-xl font-black text-slate-400 dark:text-slate-500 font-mono leading-tight tracking-tight";
           }
         }
 
@@ -10044,7 +10090,7 @@ function resetTable() {
             kpiKqxsStatus.innerHTML = `🎯 Đã chốt ngày <b>${settledDate}</b>${timeTag}${deTag}`;
             kpiKqxsStatus.className = "text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate";
           } else {
-            if (kqxs) {
+            if (kqxs && !window.tgCachedReportData?.no_valid_kqxs) {
               kpiKqxsStatus.innerHTML = `⏳ Chưa chốt ngày <b>${curViewDate}</b> (● Đề: ${winDe})`;
               kpiKqxsStatus.className = "text-[10px] text-amber-700 dark:text-amber-400 font-bold truncate";
             } else {
@@ -11756,15 +11802,12 @@ function resetTable() {
             }
 
             const kqDate = data.kqxs_date || dispDate;
-            const kqDb = data.kqxs_special || data.special_prize || 'Chưa mở';
-            const isDifferentDate = (kqDate && kqDate !== dispDate);
-            const dateNote = isDifferentDate ? `<span class="text-amber-600 font-semibold italic text-[11px] block sm:inline ml-1">(KQXS ${kqDate} - Ngày ${dispDate} chưa mở thưởng)</span>` : '';
+            const kqDb = data.kqxs_special || data.special_prize || '--';
 
             const headerHtml = `<div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-200 dark:border-slate-700 mb-2">
               <span class="font-bold text-emerald-700 dark:text-emerald-400 text-xs">✅ Đã chốt tiền thành công cho ${data.settled_clients_count || clientMsgs.length || 0} khách cược (Ngày ${dispDate})</span>
               <div class="text-[11px] text-slate-500 text-right">
                 <span>KQXS: <b class="text-slate-700 dark:text-slate-300">${kqDate}</b> | ĐB: <b class="text-rose-600 font-bold">${kqDb}</b></span>
-                ${dateNote}
               </div>
             </div>`;
 
@@ -11787,10 +11830,21 @@ function resetTable() {
 
             alert(`✅ ĐÃ CHỐT TIỀN TỰ ĐỘNG THÀNH CÔNG NGÀY ${dispDate}!\nĐã gửi tin nhắn chốt tiền tới ${data.settled_clients_count || 0} khách cược.`);
           } else {
-            pre.style.fontFamily = 'monospace';
-            pre.style.whiteSpace = 'pre-wrap';
-            pre.textContent = "❌ Không thể chốt tiền: " + (data?.error || data?.message || "Lỗi không xác định");
-            alert("❌ Không thể chốt tiền: " + (data?.error || data?.message || "Kiểm tra lại KQXS"));
+            pre.style.fontFamily = 'inherit';
+            pre.style.whiteSpace = 'normal';
+            pre.innerHTML = `
+              <div class="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-xs text-rose-800 dark:text-rose-200 space-y-1">
+                <div class="font-bold flex items-center gap-1.5 text-xs text-rose-700 dark:text-rose-300">
+                  <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+                  <span>KHÔNG THỂ CHỐT TIỀN NGÀY ${dispDate}</span>
+                </div>
+                <p class="text-xs leading-relaxed">${data?.error || "Chưa có kết quả xổ số hợp lệ của ngày hôm nay."}</p>
+                <div class="text-[11px] text-rose-600 dark:text-rose-400 italic">
+                  ⛔ <b>Quy tắc bảo vệ:</b> Bắt buộc phải lấy kết quả xổ số đúng ngày khớp với bảng cược. Tuyệt đối không được dùng kết quả của ngày hôm trước để tính toán!
+                </div>
+              </div>
+            `;
+            alert("⚠️ KHÔNG THỂ CHỐT TIỀN:\n" + (data?.error || "Chưa có KQXS ngày hôm nay") + "\n\nQuy tắc: Tuyệt đối không được lấy kết quả của ngày hôm trước để tính toán!");
           }
         } catch (e) {
           pre.textContent = "Lỗi kết nối Backend: " + e.message;
@@ -11896,15 +11950,28 @@ function resetTable() {
             </div>`;
           }
 
+          let noticeHtml = '';
+          if (data.no_valid_kqxs) {
+            noticeHtml = `
+              <div class="p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xs text-amber-800 dark:text-amber-200 text-xs flex items-start gap-2 mb-2">
+                <i class="fa-solid fa-clock text-amber-600 mt-0.5 shrink-0"></i>
+                <div class="leading-relaxed">
+                  <b>Chưa có KQXS ngày ${dispDate}:</b> Báo cáo dưới đây chỉ thể hiện doanh số và tiền xác cược. Hệ thống <b>tuyệt đối không lấy kết quả của ngày hôm trước</b> để tính tiền trúng ăn thua!
+                </div>
+              </div>
+            `;
+          }
+
           if (!fullHtml) {
             pre.innerHTML = `
+              ${noticeHtml}
               <div class="p-4 text-center rounded-xs border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-dark-800 text-slate-500 dark:text-slate-400 text-xs">
                 📭 Chưa có phát sinh cược trong ngày <b>${dispDate}</b>.
               </div>`;
           } else {
             pre.style.fontFamily = 'inherit';
             pre.style.whiteSpace = 'normal';
-            pre.innerHTML = `<div class="space-y-2">${fullHtml}</div>`;
+            pre.innerHTML = `<div class="space-y-2">${noticeHtml}${fullHtml}</div>`;
           }
 
           // Lưu text thuần để Copy Tin hoạt động đúng
@@ -11948,13 +12015,15 @@ function resetTable() {
           area.classList.remove('hidden');
           const res = await callBotApi(`/api/bot/kqxs?date=${encodeURIComponent(selDate)}`);
           const kq = await res.json();
-          if (kq.success) {
+          if (kq.success && (kq.date === dispDate || !dispDate)) {
             let msg = `🎯 KẾT QUẢ XSMB - ${kq.date || dispDate}\n` +
                       `👑 Giải Đặc Biệt: ${kq.special_prize}\n` +
                       `🔴 Đề (2 số cuối): ${kq.special_last2} | 🟣 3 Càng: ${kq.special_last3}\n` +
                       `━━━━━━━━━━━━━━━━━━\n` +
                       `🔵 Lô 2 số (${kq.prizes.length} giải):\n` +
                       kq.all_last2.join(' - ');
+            pre.style.fontFamily = 'monospace';
+            pre.style.whiteSpace = 'pre-wrap';
             pre.textContent = msg;
             // Cache KQXS để đọ thưởng
             window.tgCachedKQXS = kq;
@@ -11969,7 +12038,20 @@ function resetTable() {
             // Tự động refresh Bảng cược để highlight số trúng & hiện bảng âm/dương ở tất cả các tab
             fetchTgBoard();
           } else {
-            pre.textContent = `Chưa có KQXS ngày ${dispDate}: ` + (kq.error || "Lỗi tải kết quả");
+            pre.style.fontFamily = 'inherit';
+            pre.style.whiteSpace = 'normal';
+            pre.innerHTML = `
+              <div class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 rounded-xs text-amber-900 dark:text-amber-200 space-y-1.5 text-xs">
+                <div class="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                  <i class="fa-solid fa-clock text-amber-600"></i>
+                  <span>CHƯA CÓ KẾT QUẢ XỔ SỐ NGÀY ${dispDate}</span>
+                </div>
+                <p class="leading-relaxed">${kq.error || "Đài Miền Bắc chưa mở thưởng (thường quay lúc 18h15 - 18h30 hàng ngày)."}</p>
+                <div class="text-[11px] text-amber-700 dark:text-amber-400 italic">
+                  ⛔ <b>Nguyên tắc an toàn:</b> Hệ thống tuyệt đối không lấy kết quả của ngày hôm trước để hiển thị hoặc tính tiền trúng cho ngày hôm nay!
+                </div>
+              </div>
+            `;
           }
         } catch (e) {
           pre.textContent = "Không kết nối được server để lấy KQXS.";
