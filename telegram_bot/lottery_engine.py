@@ -107,24 +107,28 @@ def fetch_xsmb(date_str: str = None) -> dict:
             appends = re.findall(r"\$\(\"#box_kqxs_minhngoc\"\)\.append\('(.*?)'\);", content)
             full_html = "".join(appends).replace(r"\'", "'").replace(r'\"', '"').replace(r"\/", "/")
 
-            date_match = re.search(r"(\d{1,2}[-/]\d{1,2}[-/]\d{4})", full_html)
-            res_date = date_match.group(1).replace("-", "/") if date_match else target_date_slash
-
-            parser = MinhNgocParser()
-            parser.feed(full_html)
-            prizes = parser.prizes
-            if len(prizes) >= 27:
-                db = parser.db or prizes[0]
-                return {
-                    "success": True,
-                    "date": res_date,
-                    "special_prize": db,
-                    "special_last2": db[-2:] if len(db) >= 2 else "",
-                    "special_last3": db[-3:] if len(db) >= 3 else "",
-                    "prizes": prizes[:27],
-                    "all_last2": [p[-2:] for p in prizes[:27] if len(p) >= 2],
-                    "is_complete": True
-                }
+            date_match = re.search(r"(\d{1,2})[-/](\d{1,2})[-/](\d{4})", full_html)
+            if date_match:
+                d_found = f"{int(date_match.group(1)):02d}/{int(date_match.group(2)):02d}/{int(date_match.group(3))}"
+                # BẮT BUỘC: Ngày trong feed trực tiếp phải khớp đúng ngày hôm nay target_date_slash
+                if d_found == target_date_slash:
+                    parser = MinhNgocParser()
+                    parser.feed(full_html)
+                    prizes = parser.prizes
+                    if len(prizes) >= 27:
+                        db = parser.db or prizes[0]
+                        return {
+                            "success": True,
+                            "date": target_date_slash,
+                            "requested_date": target_date_slash,
+                            "special_prize": db,
+                            "special_last2": db[-2:] if len(db) >= 2 else "",
+                            "special_last3": db[-3:] if len(db) >= 3 else "",
+                            "prizes": prizes[:27],
+                            "all_last2": [p[-2:] for p in prizes[:27] if len(p) >= 2],
+                            "is_complete": True,
+                            "error": ""
+                        }
         except Exception:
             pass
 
@@ -133,10 +137,44 @@ def fetch_xsmb(date_str: str = None) -> dict:
         archive_url = f"https://www.minhngoc.net.vn/ket-qua-xo-so/mien-bac/{target_date_dash}.html"
         req = urllib.request.Request(archive_url, headers=headers)
         with urllib.request.urlopen(req, timeout=10) as resp:
+            final_url = resp.geturl()
             html = resp.read().decode("utf-8", errors="ignore")
+
+        # KIỂM TRA 1: Nếu server Minh Ngọc tự động redirect sang ngày khác (ngày hôm trước khi hôm nay chưa có)
+        if target_date_dash not in final_url:
+            return {
+                "success": False,
+                "date": target_date_slash,
+                "requested_date": target_date_slash,
+                "special_prize": "",
+                "special_last2": "",
+                "special_last3": "",
+                "prizes": [],
+                "all_last2": [],
+                "is_complete": False,
+                "error": f"Chưa có kết quả xổ số ngày {target_date_slash} (đài chưa mở thưởng, máy chủ web trả về ngày cũ). Không được phép lấy kết quả ngày trước để tính toán!"
+            }
 
         boxes = re.findall(r'<div[^>]*class=\"[^\"]*box_kqxs[^\"]*\"[^>]*>.*?(?=<div[^>]*class=\"[^\"]*box_kqxs[^\"]*\"|$)', html, re.DOTALL)
         target_chunk = boxes[0] if boxes else html
+
+        # KIỂM TRA 2: Xác nhận ngày in trong HTML box có đúng là target_date_slash hay không
+        date_match = re.search(r"(\d{1,2})[-/](\d{1,2})[-/](\d{4})", target_chunk)
+        if date_match:
+            d_found = f"{int(date_match.group(1)):02d}/{int(date_match.group(2)):02d}/{int(date_match.group(3))}"
+            if d_found != target_date_slash:
+                return {
+                    "success": False,
+                    "date": target_date_slash,
+                    "requested_date": target_date_slash,
+                    "special_prize": "",
+                    "special_last2": "",
+                    "special_last3": "",
+                    "prizes": [],
+                    "all_last2": [],
+                    "is_complete": False,
+                    "error": f"Chưa có kết quả xổ số ngày {target_date_slash} (trên web mới chỉ có kết quả ngày cũ {d_found}). Không được dùng kết quả ngày cũ để tính cược!"
+                }
 
         parser = MinhNgocParser()
         parser.feed(target_chunk)
@@ -146,16 +184,31 @@ def fetch_xsmb(date_str: str = None) -> dict:
         is_complete = len(prizes) >= 27
         valid_prizes = prizes[:27] if is_complete else prizes
 
+        if not valid_prizes or not is_complete:
+            return {
+                "success": False,
+                "date": target_date_slash,
+                "requested_date": target_date_slash,
+                "special_prize": db,
+                "special_last2": db[-2:] if len(db) >= 2 else "",
+                "special_last3": db[-3:] if len(db) >= 3 else "",
+                "prizes": valid_prizes,
+                "all_last2": [p[-2:] for p in valid_prizes if len(p) >= 2],
+                "is_complete": False,
+                "error": f"Chưa có đầy đủ 27 giải KQXS ngày {target_date_slash} (đang quay hoặc chưa mở thưởng)."
+            }
+
         return {
-            "success": True if valid_prizes else False,
+            "success": True,
             "date": target_date_slash,
+            "requested_date": target_date_slash,
             "special_prize": db,
             "special_last2": db[-2:] if len(db) >= 2 else "",
             "special_last3": db[-3:] if len(db) >= 3 else "",
             "prizes": valid_prizes,
             "all_last2": [p[-2:] for p in valid_prizes if len(p) >= 2],
-            "is_complete": is_complete,
-            "error": "" if valid_prizes else f"Chưa có kết quả ngày {target_date_slash}"
+            "is_complete": True,
+            "error": ""
         }
     except Exception as e:
         return {

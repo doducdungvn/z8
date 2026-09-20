@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime
 
 if hasattr(sys.stdout, 'reconfigure'):
     try:
@@ -319,6 +320,60 @@ def get_known_users():
     return jsonify(bot_service.known_users)
 
 
+@app.route("/api/bot/known_users/<user_id>", methods=["DELETE", "POST"])
+def delete_known_user(user_id):
+    user_id = str(user_id).strip()
+    bot_service.known_users = bot_service.load_known_users()
+    deleted = False
+    deleted_username = None
+
+    # 1. Tìm và xóa khỏi known_users
+    if user_id in bot_service.known_users:
+        u_info = bot_service.known_users.pop(user_id)
+        deleted_username = u_info.get("username")
+        deleted = True
+    else:
+        # Tra cứu theo username nếu truyền vào username
+        target_uid = None
+        norm_id = user_id.lstrip("@").lower()
+        for uid, info in bot_service.known_users.items():
+            if (info.get("username") or "").lower() == norm_id:
+                target_uid = uid
+                deleted_username = info.get("username")
+                break
+        if target_uid:
+            bot_service.known_users.pop(target_uid)
+            deleted = True
+
+    if deleted:
+        bot_service.save_known_users()
+
+        # 2. Xóa khỏi client_prices nếu có
+        cfg = bot_service.config
+        prices = cfg.get("client_prices", {})
+        keys_to_remove = [k for k in prices if k == user_id or (deleted_username and k in [deleted_username, f"@{deleted_username}"])]
+        for k in keys_to_remove:
+            prices.pop(k, None)
+
+        # 3. Đồng thời gỡ khỏi allowed_senders nếu có
+        raw_allowed = cfg.get("allowed_senders", [])
+        if isinstance(raw_allowed, str):
+            raw_allowed = [x.strip() for x in raw_allowed.split(",") if x.strip()]
+        if isinstance(raw_allowed, list):
+            norm_targets = [user_id.lower()]
+            if deleted_username:
+                norm_targets.extend([deleted_username.lower(), f"@{deleted_username.lower()}"])
+            new_allowed = [x for x in raw_allowed if x.lower() not in norm_targets]
+            if len(new_allowed) != len(raw_allowed):
+                cfg["allowed_senders"] = new_allowed
+
+        bot_service.save_config()
+        bot_service.log(f"Đã xóa người dùng {user_id} khỏi danh bạ CRM.", "INFO")
+        return jsonify({"success": True, "message": f"Đã xóa người dùng {user_id}"})
+    else:
+        return jsonify({"success": False, "error": "Không tìm thấy người dùng trong danh bạ"}), 404
+
+
 @app.route("/api/bot/logs", methods=["GET"])
 def get_logs():
     return jsonify({
@@ -569,6 +624,9 @@ def get_kqxs():
 @app.route("/api/bot/report", methods=["GET"])
 def get_report():
     date_arg = request.args.get("date")
+    today_slash = datetime.now().strftime("%d/%m/%Y")
+    target_date = date_arg or today_slash
+
     if date_arg:
         archive = bot_service.load_daily_archive(date_arg)
         if archive:
@@ -592,11 +650,37 @@ def get_report():
             })
         kq = fetch_xsmb(date_arg)
     else:
-        if not bot_service.cached_kqxs:
-            bot_service.cached_kqxs = fetch_xsmb()
+        if not bot_service.cached_kqxs or bot_service.cached_kqxs.get("date") != today_slash:
+            bot_service.cached_kqxs = fetch_xsmb(today_slash)
         kq = bot_service.cached_kqxs
 
     price_cfg = bot_service.config.get("price_config")
+
+    # KIỂM TRA BẮT BUỘC: Nếu chưa có KQXS hoặc KQXS không khớp ngày cược, KHÔNG tính ăn thua bằng kết quả cũ
+    if not kq.get("success") or not kq.get("is_complete") or (kq.get("date") and kq.get("date") != target_date):
+        kq_empty = {
+            "success": False,
+            "date": target_date,
+            "error": kq.get("error") or f"Chưa có kết quả xổ số ngày {target_date}",
+            "special_prize": "",
+            "special_last2": "",
+            "special_last3": "",
+            "prizes": [],
+            "all_last2": [],
+            "is_complete": False
+        }
+        acc = calculate_board_accounting(bot_service.balancer, kq_empty, price_cfg)
+        return jsonify({
+            "accounting": acc,
+            "text_thau": format_accounting_report(acc, "thau"),
+            "text_chuyen": format_accounting_report(acc, "chuyen"),
+            "text_giulai": format_accounting_report(acc, "giulai"),
+            "clients": [],
+            "kqxs": kq,
+            "no_valid_kqxs": True,
+            "error_kqxs": kq.get("error") or f"Chưa có KQXS ngày {target_date}. Không được dùng kết quả ngày cũ để tính toán."
+        })
+
     acc = calculate_board_accounting(bot_service.balancer, kq, price_cfg)
 
     # Chi tiết từng khách cược (áp dụng giá riêng từng người nếu có)
@@ -675,9 +759,28 @@ def settle_now():
     date_arg = data.get("date")
     send_tg = data.get("send_telegram", True)
 
-    kq = fetch_xsmb(date_arg)
-    if not kq.get("success") or not kq.get("prizes"):
-        return jsonify({"success": False, "error": f"Chưa có kết quả xổ số ngày {date_arg or 'hôm nay'} để chốt tiền."}), 400
+    today_slash = datetime.now().strftime("%d/%m/%Y")
+    target_date = (date_arg or today_slash).strip()
+
+    kq = fetch_xsmb(target_date)
+    # KIỂM TRA NGHIÊM NGẶT: Bắt buộc KQXS phải thành công, đủ 27 giải và KHỚP ĐÚNG NGÀY
+    if not kq.get("success") or not kq.get("is_complete") or not kq.get("prizes"):
+        err_msg = kq.get("error") or f"Chưa có kết quả xổ số ngày {target_date} để chốt tiền."
+        return jsonify({
+            "success": False,
+            "error": err_msg,
+            "detail": "Tuyệt đối không được phép lấy kết quả xổ số ngày hôm trước để tính toán chốt tiền!"
+        }), 400
+
+    # Đối chiếu ngày khớp chính xác (chuẩn hóa dấu /)
+    kq_date = (kq.get("date") or "").replace("-", "/")
+    target_clean = target_date.replace("-", "/")
+    if kq_date != target_clean:
+        return jsonify({
+            "success": False,
+            "error": f"Ngày kết quả xổ số ({kq_date}) không khớp với ngày cược ({target_clean}). Không được dùng kết quả ngày cũ để chốt tiền!",
+            "detail": "Bắt buộc phải lấy kết quả đúng ngày khớp với ngày nhắn tin cược và thầu."
+        }), 400
 
     res = bot_service.settle_all(
         kq,

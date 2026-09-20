@@ -2074,11 +2074,20 @@ class TelegramBotService:
                 self.send_telegram_message(str(chat_id), self.msg_need_auth())
                 return
 
-            target_date = parts[1].strip() if len(parts) >= 2 else None
-            self.log(f"{sender_label} kích hoạt lệnh chốt tiền ngày {target_date or 'hôm nay'}", "INFO")
+            target_date = parts[1].strip() if len(parts) >= 2 else now_vn().strftime("%d/%m/%Y")
+            self.log(f"{sender_label} kích hoạt lệnh chốt tiền ngày {target_date}", "INFO")
             kq = fetch_xsmb(target_date)
-            if not kq.get("success") or not kq.get("prizes"):
-                self.send_telegram_message(str(chat_id), f"⚠️ Không lấy được KQXS cho ngày {target_date or 'hôm nay'} để chốt tiền ({kq.get('error', 'Chưa có kết quả')}).")
+
+            # KIỂM TRA NGHIÊM NGẶT: Bắt buộc KQXS phải thành công, đủ 27 giải và KHỚP ĐÚNG NGÀY
+            is_valid_date = (kq.get("date") or "").replace("-", "/") == target_date.replace("-", "/")
+            if not kq.get("success") or not kq.get("is_complete") or not is_valid_date:
+                err_desc = kq.get('error') or f"Chưa có kết quả xổ số chính thức cho ngày {target_date}."
+                self.send_telegram_message(
+                    str(chat_id),
+                    f"⚠️ <b>KHÔNG THỂ CHỐT TIỀN:</b>\n"
+                    f"• Lý do: {err_desc}\n"
+                    f"⛔ <b>Quy tắc:</b> Bắt buộc phải lấy kết quả đúng ngày khớp với ngày cược. Tuyệt đối không lấy kết quả của ngày hôm trước để tính toán!"
+                )
                 return
 
             res = self.settle_all(kq, notify_clients=True, notify_recipient=True, notify_owner=True, requested_by=str(chat_id))
@@ -3363,11 +3372,10 @@ class TelegramBotService:
 
         self.log(f"⏰ [18h35+] Đến giờ chốt tiền tự động ({now.strftime('%H:%M:%S')}) -> Đang kiểm tra KQXS Miền Bắc...", "INFO")
         try:
-            kq = fetch_xsmb()
-            # Điều kiện KQXS hợp lệ: đài báo đầy đủ (is_complete) hoặc đã có giải đặc biệt và ít nhất 20 giải
-            prizes_count = len(kq.get("all_last2", [])) if kq.get("all_last2") else 0
-            has_db = bool(kq.get("special_last2"))
-            is_valid_kqxs = kq.get("is_complete") or (has_db and prizes_count >= 20)
+            kq = fetch_xsmb(today_str)
+            # Điều kiện KQXS hợp lệ: KQXS thành công, đài báo đầy đủ (is_complete), có giải đặc biệt và BẮT BUỘC ĐÚNG NGÀY today_str
+            is_valid_date = (kq.get("date") or "").replace("-", "/") == today_str.replace("-", "/")
+            is_valid_kqxs = kq.get("success") and kq.get("is_complete") and is_valid_date and bool(kq.get("special_last2"))
 
             if is_valid_kqxs:
                 self.cached_kqxs = kq
@@ -3377,7 +3385,7 @@ class TelegramBotService:
                 self._reset_after_settle(date_label, settle_result=res, kqxs=kq)
                 self.log(f"✅ ĐÃ TỰ ĐỘNG CHỐT TIỀN THÀNH CÔNG VÀ ĐƯA TẤT CẢ THỐNG KÊ VỀ 0 CHO NGÀY TIẾP THEO.", "SUCCESS")
             else:
-                self.log(f"⏳ Chưa có đầy đủ KQXS 27 giải ngày {today_str} (đài chưa quay xong). Sẽ tiếp tục kiểm tra lại sau 5 phút...", "WARN")
+                self.log(f"⏳ Chưa có đầy đủ KQXS 27 giải ngày {today_str} (kết quả web là {kq.get('date', 'chưa có')}). Tuyệt đối không lấy ngày cũ chốt cược. Sẽ kiểm tra lại sau 5 phút...", "WARN")
         except Exception as ex:
             self.log(f"⚠️ Lỗi trong quá trình tự động chốt tiền: {ex}. Sẽ thử lại sau 5 phút...", "WARN")
 
