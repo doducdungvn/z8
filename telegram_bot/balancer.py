@@ -78,6 +78,10 @@ class BoardBalancer:
         return "money"
 
     def _calc_excess_for_item(self, total: float, prev_transfer: float, limit: float, branch_limit: float, is_excluded: bool = False, cat: str = "de") -> float:
+        # Nếu đề hoặc lô có mức giá cược dưới 2 thì giữ lại, chỉ cân chuyển đi khi giá trị cược là 2 trở lên
+        if cat in ("de", "lo") and total < 2.0:
+            return 0.0
+
         if is_excluded:
             excess = total - prev_transfer
             return max(0.0, math.ceil(excess))
