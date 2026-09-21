@@ -8593,6 +8593,7 @@ function resetTable() {
 
       if (tabName === 'settings') {
         loadTgBotConfig();
+        updateTgRetainLabels();
       } else if (tabName === 'board') {
         fetchTgBoard();
       } else if (tabName === 'inbox') {
@@ -8951,6 +8952,64 @@ function resetTable() {
       }
     }
     window.deleteClientPriceDirect = deleteClientPriceDirect;
+
+    function updateTgRetainLabels() {
+      const curType = document.querySelector('input[name="tgRetainType"]:checked')?.value || "money";
+      const lblBox = document.getElementById('tgLblBranchCheckbox');
+      const lblDe = document.getElementById('tgLblBranchDe');
+      const lblLo = document.getElementById('tgLblBranchLo');
+      const lbl3c = document.getElementById('tgLblBranch3c');
+      const lblX = document.getElementById('tgLblBranchX');
+
+      const mainDe = document.getElementById('tgLblRetainDe');
+      const mainLo = document.getElementById('tgLblRetainLo');
+      const main3c = document.getElementById('tgLblRetain3c');
+      const mainX = document.getElementById('tgLblRetainX');
+
+      if (curType === "percentage") {
+        if (mainDe) mainDe.textContent = "Giữ Đề (%)";
+        if (mainLo) mainLo.textContent = "Giữ Lô (%)";
+        if (main3c) main3c.textContent = "Giữ 3C (%)";
+        if (mainX) mainX.textContent = "Giữ Xiên (%)";
+        if (lblBox) lblBox.textContent = "Bật mức trần Tối đa (k / đ)";
+        if (lblDe) lblDe.textContent = "Tối đa Đề (k)";
+        if (lblLo) lblLo.textContent = "Tối đa Lô (đ)";
+        if (lbl3c) lbl3c.textContent = "Tối đa 3C (k)";
+        if (lblX) lblX.textContent = "Tối đa Xiên (k)";
+      } else if (curType === "de_money_lo_percent") {
+        if (mainDe) mainDe.textContent = "Giữ Đề (k)";
+        if (mainLo) mainLo.textContent = "Giữ Lô (%)";
+        if (main3c) main3c.textContent = "Giữ 3C (k)";
+        if (mainX) mainX.textContent = "Giữ Xiên (k)";
+        if (lblBox) lblBox.textContent = "Bật giới hạn (Nhánh Đề/3C/X & Mức trần Lô)";
+        if (lblDe) lblDe.textContent = "Nh. Đề (k)";
+        if (lblLo) lblLo.textContent = "Tối đa Lô (đ)";
+        if (lbl3c) lbl3c.textContent = "Nh. 3C (k)";
+        if (lblX) lblX.textContent = "Nh. Xiên (k)";
+      } else if (curType === "de_percent_lo_money") {
+        if (mainDe) mainDe.textContent = "Giữ Đề (%)";
+        if (mainLo) mainLo.textContent = "Giữ Lô (đ)";
+        if (main3c) main3c.textContent = "Giữ 3C (%)";
+        if (mainX) mainX.textContent = "Giữ Xiên (%)";
+        if (lblBox) lblBox.textContent = "Bật giới hạn (Mức trần Đề/3C/X & Nhánh Lô)";
+        if (lblDe) lblDe.textContent = "Tối đa Đề (k)";
+        if (lblLo) lblLo.textContent = "Nh. Lô (đ)";
+        if (lbl3c) lbl3c.textContent = "Tối đa 3C (k)";
+        if (lblX) lblX.textContent = "Tối đa Xiên (k)";
+      } else {
+        // money
+        if (mainDe) mainDe.textContent = "Giữ Đề (k)";
+        if (mainLo) mainLo.textContent = "Giữ Lô (đ)";
+        if (main3c) main3c.textContent = "Giữ 3C (k)";
+        if (mainX) mainX.textContent = "Giữ Xiên (k)";
+        if (lblBox) lblBox.textContent = "Bật cấu hình Nhánh";
+        if (lblDe) lblDe.textContent = "Nh. Đề (k)";
+        if (lblLo) lblLo.textContent = "Nh. Lô (đ)";
+        if (lbl3c) lbl3c.textContent = "Nh. 3C (k)";
+        if (lblX) lblX.textContent = "Nh. Xiên (k)";
+      }
+    }
+    window.updateTgRetainLabels = updateTgRetainLabels;
 
     async function loadTgBotConfig() {
       try {
@@ -10729,6 +10788,7 @@ function resetTable() {
         loadTgBotConfig();
         checkTgBotStatus();
         switchTgTab('inbox');
+        updateTgRetainLabels();
       } else {
         lockEl?.classList.remove('hidden');
         bodyEl?.classList.add('hidden');
@@ -10980,66 +11040,10 @@ function resetTable() {
         });
       }
 
-      function updateTgRetainLabels() {
-        const curType = document.querySelector('input[name="tgRetainType"]:checked')?.value || "money";
-        const lblBox = document.getElementById('tgLblBranchCheckbox');
-        const lblDe = document.getElementById('tgLblBranchDe');
-        const lblLo = document.getElementById('tgLblBranchLo');
-        const lbl3c = document.getElementById('tgLblBranch3c');
-        const lblX = document.getElementById('tgLblBranchX');
-
-        const mainDe = document.getElementById('tgLblRetainDe');
-        const mainLo = document.getElementById('tgLblRetainLo');
-        const main3c = document.getElementById('tgLblRetain3c');
-        const mainX = document.getElementById('tgLblRetainX');
-
-        if (curType === "percentage") {
-          if (mainDe) mainDe.textContent = "Giữ Đề (%)";
-          if (mainLo) mainLo.textContent = "Giữ Lô (%)";
-          if (main3c) main3c.textContent = "Giữ 3C (%)";
-          if (mainX) mainX.textContent = "Giữ Xiên (%)";
-          if (lblBox) lblBox.textContent = "Bật mức trần Tối đa (k / đ)";
-          if (lblDe) lblDe.textContent = "Tối đa Đề (k)";
-          if (lblLo) lblLo.textContent = "Tối đa Lô (đ)";
-          if (lbl3c) lbl3c.textContent = "Tối đa 3C (k)";
-          if (lblX) lblX.textContent = "Tối đa Xiên (k)";
-        } else if (curType === "de_money_lo_percent") {
-          if (mainDe) mainDe.textContent = "Giữ Đề (k)";
-          if (mainLo) mainLo.textContent = "Giữ Lô (%)";
-          if (main3c) main3c.textContent = "Giữ 3C (k)";
-          if (mainX) mainX.textContent = "Giữ Xiên (k)";
-          if (lblBox) lblBox.textContent = "Bật giới hạn (Nhánh Đề/3C/X & Mức trần Lô)";
-          if (lblDe) lblDe.textContent = "Nh. Đề (k)";
-          if (lblLo) lblLo.textContent = "Tối đa Lô (đ)";
-          if (lbl3c) lbl3c.textContent = "Nh. 3C (k)";
-          if (lblX) lblX.textContent = "Nh. Xiên (k)";
-        } else if (curType === "de_percent_lo_money") {
-          if (mainDe) mainDe.textContent = "Giữ Đề (%)";
-          if (mainLo) mainLo.textContent = "Giữ Lô (đ)";
-          if (main3c) main3c.textContent = "Giữ 3C (%)";
-          if (mainX) mainX.textContent = "Giữ Xiên (%)";
-          if (lblBox) lblBox.textContent = "Bật giới hạn (Mức trần Đề/3C/X & Nhánh Lô)";
-          if (lblDe) lblDe.textContent = "Tối đa Đề (k)";
-          if (lblLo) lblLo.textContent = "Nh. Lô (đ)";
-          if (lbl3c) lbl3c.textContent = "Tối đa 3C (k)";
-          if (lblX) lblX.textContent = "Tối đa Xiên (k)";
-        } else {
-          // money
-          if (mainDe) mainDe.textContent = "Giữ Đề (k)";
-          if (mainLo) mainLo.textContent = "Giữ Lô (đ)";
-          if (main3c) main3c.textContent = "Giữ 3C (k)";
-          if (mainX) mainX.textContent = "Giữ Xiên (k)";
-          if (lblBox) lblBox.textContent = "Bật cấu hình Nhánh";
-          if (lblDe) lblDe.textContent = "Nh. Đề (k)";
-          if (lblLo) lblLo.textContent = "Nh. Lô (đ)";
-          if (lbl3c) lbl3c.textContent = "Nh. 3C (k)";
-          if (lblX) lblX.textContent = "Nh. Xiên (k)";
-        }
-      }
-
       document.querySelectorAll('input[name="tgRetainType"]').forEach(radio => {
         radio.addEventListener('change', updateTgRetainLabels);
       });
+      updateTgRetainLabels();
 
       // Nút đồng bộ mức giữ lại từ Web sang Bot
       const btnSyncRetain = document.getElementById('btnSyncWebRetainToBot');
@@ -11063,6 +11067,7 @@ function resetTable() {
           }
           document.getElementById('tgRetainUseBranch').checked = webUseBranch;
           document.getElementById('tgBranchInputsContainer')?.classList.toggle('hidden', !webUseBranch);
+          updateTgRetainLabels();
 
           alert("Đã sao chép thiết lập Mức Giữ Lại từ Web sang Bot. Hãy bấm 'Lưu Mức Giữ Lại'!");
         });
