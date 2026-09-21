@@ -9882,7 +9882,7 @@ function resetTable() {
         const checkIsSettledEarly = !!(b.is_settled || b.from_archive || b.saved_at || (window.tgInboxDateMode === 'today' && window.tgTodaySettledInfo?.is_settled));
         if (checkIsSettledEarly && !window.tgCachedKQXS) {
           try {
-            const kRes = await callBotApi(`/api/bot/kqxs?date=${encodeURIComponent(selDate)}`);
+            const kRes = await callBotApi(`/api/bot/kqxs?date=${encodeURIComponent(dispDate || selDate)}`);
             if (kRes.ok) {
               const kData = await kRes.json();
               const kDate = (kData?.date || '').replace(/-/g, '/');
@@ -9906,7 +9906,8 @@ function resetTable() {
         if (kqxs && !window.tgCachedReportData) {
           try {
             const selDate = (typeof getTgSelectedDate === 'function') ? getTgSelectedDate() : '';
-            const repRes = await callBotApi(`/api/bot/report?date=${encodeURIComponent(selDate)}`);
+            const dispDate = (typeof formatTgDateDisplay === 'function') ? formatTgDateDisplay(selDate) : '';
+            const repRes = await callBotApi(`/api/bot/report?date=${encodeURIComponent(dispDate || selDate)}`);
             if (repRes.ok) {
               window.tgCachedReportData = await repRes.json();
             }
@@ -11774,7 +11775,7 @@ function resetTable() {
           const res = await callBotApi("/api/bot/settle_now", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ date: selDate })
+            body: JSON.stringify({ date: dispDate || selDate })
           });
           let data = null;
           try {
@@ -11889,7 +11890,7 @@ function resetTable() {
           if (titleEl) titleEl.textContent = `📋 BÁO CÁO THẦU & CHUYỂN (${dispDate})`;
           pre.textContent = `Đang tính toán báo cáo ngày ${dispDate}...`;
           area.classList.remove('hidden');
-          const res = await callBotApi(`/api/bot/report?date=${encodeURIComponent(selDate)}`);
+          const res = await callBotApi(`/api/bot/report?date=${encodeURIComponent(dispDate || selDate)}`);
           const data = await res.json();
 
           // Hàm parse từng dòng báo cáo text thành HTML đẹp
@@ -12036,7 +12037,7 @@ function resetTable() {
           if (titleEl) titleEl.textContent = `🎯 KẾT QUẢ XỔ SỐ MIỀN BẮC (${dispDate})`;
           pre.textContent = `Đang tải KQXS Miền Bắc ngày ${dispDate} từ Minh Ngọc...`;
           area.classList.remove('hidden');
-          const res = await callBotApi(`/api/bot/kqxs?date=${encodeURIComponent(selDate)}`);
+          const res = await callBotApi(`/api/bot/kqxs?date=${encodeURIComponent(dispDate || selDate)}`);
           const kq = await res.json();
           if (kq.success && (kq.date === dispDate || !dispDate)) {
             let msg = `🎯 KẾT QUẢ XSMB - ${kq.date || dispDate}\n` +
