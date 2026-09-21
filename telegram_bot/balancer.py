@@ -86,8 +86,8 @@ class BoardBalancer:
         use_branch = self.config.get("retain_use_branch", False)
         has_branch = use_branch and branch_limit > 0
 
-        # Nếu KHÔNG dùng nhánh: khi đề hoặc lô có mức giá cược dưới 2 thì giữ lại (khi dùng nhánh thì bỏ qua quy tắc dưới 2)
-        if not has_branch and cat in ("de", "lo") and total < 2.0:
+        # 1. Bất kể có dùng nhánh hay không: khi đề hoặc lô có mức giá cược dưới 2 thì giữ lại toàn bộ
+        if cat in ("de", "lo") and total < 2.0:
             return 0.0
 
         if retain_type == "percentage":
@@ -97,7 +97,6 @@ class BoardBalancer:
             else:
                 target_transfer = total * ((100.0 - limit) / 100.0)
             excess = target_transfer - prev_transfer
-            return max(0.0, math.ceil(excess))
         else:
             # money
             if has_branch:
@@ -109,7 +108,9 @@ class BoardBalancer:
             else:
                 target_transfer = total - limit
             excess = target_transfer - prev_transfer
-            return max(0.0, math.ceil(excess))
+
+        excess = max(0.0, math.ceil(excess))
+        return excess
 
     def calculate_excess(self) -> dict:
         """

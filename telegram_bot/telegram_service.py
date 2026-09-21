@@ -3345,6 +3345,20 @@ class TelegramBotService:
 
         return False
 
+    @staticmethod
+    def normalize_date_format(d_str: str) -> str:
+        """Chuẩn hóa mọi định dạng ngày (YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, YYYY/MM/DD) về DD/MM/YYYY"""
+        if not d_str:
+            return ""
+        clean = str(d_str).strip().replace("-", "/")
+        pts = clean.split("/")
+        if len(pts) == 3:
+            if len(pts[0]) == 4:  # YYYY/MM/DD
+                return f"{int(pts[2]):02d}/{int(pts[1]):02d}/{int(pts[0]):04d}"
+            else:  # DD/MM/YYYY
+                return f"{int(pts[0]):02d}/{int(pts[1]):02d}/{int(pts[2]):04d}"
+        return clean
+
     def check_daily_schedule(self):
         """Kiểm tra thời gian và tự động chốt tiền từ 18h35, nếu chưa có KQXS thì lặp lại mỗi 5 phút/lần cho đến khi chốt thành công và đưa tất cả về 0.
         Nếu đã chốt thủ công bằng tay thì dừng hoàn toàn việc chốt tiền của ngày hôm đó.
@@ -3354,9 +3368,11 @@ class TelegramBotService:
 
         now = now_vn()
         today_str = now.strftime("%Y-%m-%d")
+        today_slash = now.strftime("%d/%m/%Y")
 
         # NẾU ĐÃ CHỐT TIỀN HÔM NAY RỒI (kể cả tự chốt bằng tay thủ công hay tự động) THÌ DỪNG!
-        if getattr(self, "last_daily_report_date", "") == today_str:
+        last_daily = getattr(self, "last_daily_report_date", "")
+        if last_daily and self.normalize_date_format(last_daily) == today_slash:
             return
 
         # BẮT ĐẦU TỪ LÚC 18h35 TRỞ ĐI (18:35 đến 23:59):
@@ -3372,20 +3388,22 @@ class TelegramBotService:
 
         self.log(f"⏰ [18h35+] Đến giờ chốt tiền tự động ({now.strftime('%H:%M:%S')}) -> Đang kiểm tra KQXS Miền Bắc...", "INFO")
         try:
-            kq = fetch_xsmb(today_str)
-            # Điều kiện KQXS hợp lệ: KQXS thành công, đài báo đầy đủ (is_complete), có giải đặc biệt và BẮT BUỘC ĐÚNG NGÀY today_str
-            is_valid_date = (kq.get("date") or "").replace("-", "/") == today_str.replace("-", "/")
+            kq = fetch_xsmb(today_slash)
+            # Điều kiện KQXS hợp lệ: KQXS thành công, đài báo đầy đủ (is_complete), có giải đặc biệt và BẮT BUỘC ĐÚNG NGÀY hôm nay
+            kq_date_norm = self.normalize_date_format(kq.get("date"))
+            is_valid_date = bool(kq_date_norm and kq_date_norm == today_slash)
             is_valid_kqxs = kq.get("success") and kq.get("is_complete") and is_valid_date and bool(kq.get("special_last2"))
 
             if is_valid_kqxs:
                 self.cached_kqxs = kq
-                date_label = kq.get('date') or today_str
+                date_label = kq.get('date') or today_slash
                 self.log(f"🎯 ĐÃ CÓ ĐẦY ĐỦ KQXS NGÀY {date_label}! Tiến hành tự động chốt tiền với khách & chủ thầu...", "SUCCESS")
                 res = self.settle_all(kq, notify_clients=True, notify_recipient=True, notify_owner=True)
                 self._reset_after_settle(date_label, settle_result=res, kqxs=kq)
                 self.log(f"✅ ĐÃ TỰ ĐỘNG CHỐT TIỀN THÀNH CÔNG VÀ ĐƯA TẤT CẢ THỐNG KÊ VỀ 0 CHO NGÀY TIẾP THEO.", "SUCCESS")
             else:
-                self.log(f"⏳ Chưa có đầy đủ KQXS 27 giải ngày {today_str} (kết quả web là {kq.get('date', 'chưa có')}). Tuyệt đối không lấy ngày cũ chốt cược. Sẽ kiểm tra lại sau 5 phút...", "WARN")
+                web_date = kq.get('date', 'chưa có')
+                self.log(f"⏳ Chưa có đầy đủ KQXS 27 giải ngày {today_slash} (kết quả web là {web_date}). Tuyệt đối không lấy ngày cũ chốt cược. Sẽ kiểm tra lại sau 5 phút...", "WARN")
         except Exception as ex:
             self.log(f"⚠️ Lỗi trong quá trình tự động chốt tiền: {ex}. Sẽ thử lại sau 5 phút...", "WARN")
 
