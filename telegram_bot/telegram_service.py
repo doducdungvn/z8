@@ -3390,12 +3390,37 @@ class TelegramBotService:
             self.log(f"⚠️ Lỗi trong quá trình tự động chốt tiền: {ex}. Sẽ thử lại sau 5 phút...", "WARN")
 
     def poll_updates(self):
-        """Vòng lặp Long Polling nhận tin nhắn liên tục"""
-        self.log("Bot Telegram bắt đầu lắng nghe tin cược...")
+        """Vòng lặp Long Polling nhận tin nhắn liên tục (Có Process Lock chống xung đột đa tiến trình)"""
         token = self.config.get("bot_token", "").strip()
         if not token:
             self.log("Chưa cài đặt Bot Token!", "ERROR")
             return
+
+        # 1. PROCESS LOCK: Đảm bảo trên Render (nhiều Gunicorn Workers), chỉ DUY NHẤT 1 Worker được gọi getUpdates
+        lock_path = os.path.join(os.path.dirname(__file__), "bot_polling.lock")
+        lock_file = None
+        try:
+            lock_file = open(lock_path, "a+")
+            try:
+                import fcntl
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except (ImportError, AttributeError):
+                try:
+                    import msvcrt
+                    msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+                except Exception:
+                    raise BlockingIOError("Locked by another process")
+        except Exception:
+            self.log("ℹ️ Đã có một tiến trình Worker khác đang phụ trách lắng nghe Telegram. Worker này sẽ tạm dừng để tránh lỗi xung đột 409 Conflict.", "INFO")
+            if lock_file:
+                try:
+                    lock_file.close()
+                except Exception:
+                    pass
+            return
+
+        current_gen = getattr(self, "_polling_generation", 0)
+        self.log("Bot Telegram bắt đầu lắng nghe tin cược...")
 
         # Tự động gỡ webhook (nếu có) để tránh xung đột getUpdates 409
         try:
@@ -3403,71 +3428,96 @@ class TelegramBotService:
         except Exception:
             pass
 
-        while self.is_running:
-            try:
-                # Tự động rà soát và xóa dấu vết cược sau 24h (chạy mỗi 60 giây)
-                now_ts = time.time()
-                if now_ts - getattr(self, "last_cleanup_ts", 0) >= 60:
-                    self.last_cleanup_ts = now_ts
+        try:
+            while self.is_running and getattr(self, "_polling_generation", 0) == current_gen:
+                try:
+                    # Tự động rà soát và xóa dấu vết cược sau 24h (chạy mỗi 60 giây)
+                    now_ts = time.time()
+                    if now_ts - getattr(self, "last_cleanup_ts", 0) >= 60:
+                        self.last_cleanup_ts = now_ts
+                        try:
+                            self.check_and_cleanup_traces()
+                        except Exception as ex:
+                            self.log(f"Lỗi tự động xóa dấu vết cược: {ex}", "WARN")
+
+                    # Tự động kiểm tra chuyển ngày mới qua nửa đêm (00:00)
                     try:
-                        self.check_and_cleanup_traces()
+                        self.check_and_rollover_date()
                     except Exception as ex:
-                        self.log(f"Lỗi tự động xóa dấu vết cược: {ex}", "WARN")
+                        pass
 
-                # Tự động kiểm tra chuyển ngày mới qua nửa đêm (00:00)
-                try:
-                    self.check_and_rollover_date()
-                except Exception as ex:
-                    pass
+                    # Tự động kiểm tra lịch KQXS 18h35
+                    try:
+                        self.check_daily_schedule()
+                    except Exception as ex:
+                        pass
 
-                # Tự động kiểm tra lịch KQXS 18h35
-                try:
-                    self.check_daily_schedule()
-                except Exception as ex:
-                    pass
+                    # Tự động kiểm tra timeout 3 phút người nhận cược thừa chưa phản hồi (nếu bật Check phản hồi)
+                    if self.config.get("check_recipient_ack", True) and self.pending_recipient_acks and not self.pending_recipient_acks.get("alerted"):
+                        if time.time() - self.pending_recipient_acks["timestamp"] >= 180:
+                            self.pending_recipient_acks["alerted"] = True
+                            rec_name = self.pending_recipient_acks.get("recipient", "")
+                            owner_cid = self.config.get("owner_chat_id")
+                            if owner_cid:
+                                self.send_telegram_message(str(owner_cid), "Chủ thầu chưa Ok lại")
+                            self.log(f"Chủ thầu {rec_name} chưa Ok lại sau 3 phút", "WARN")
 
-                # Tự động kiểm tra timeout 3 phút người nhận cược thừa chưa phản hồi (nếu bật Check phản hồi)
-                if self.config.get("check_recipient_ack", True) and self.pending_recipient_acks and not self.pending_recipient_acks.get("alerted"):
-                    if time.time() - self.pending_recipient_acks["timestamp"] >= 180:
-                        self.pending_recipient_acks["alerted"] = True
-                        rec_name = self.pending_recipient_acks.get("recipient", "")
-                        owner_cid = self.config.get("owner_chat_id")
-                        if owner_cid:
-                            self.send_telegram_message(str(owner_cid), "Chủ thầu chưa Ok lại")
-                        self.log(f"Chủ thầu {rec_name} chưa Ok lại sau 3 phút", "WARN")
+                    url = f"https://api.telegram.org/bot{token}/getUpdates"
+                    params = {
+                        "offset": self.last_update_id + 1,
+                        "timeout": 15
+                    }
+                    resp = requests.get(url, params=params, timeout=20)
+                    data = resp.json()
 
-                url = f"https://api.telegram.org/bot{token}/getUpdates"
-                params = {
-                    "offset": self.last_update_id + 1,
-                    "timeout": 15
-                }
-                resp = requests.get(url, params=params, timeout=20)
-                data = resp.json()
-
-                if data.get("ok"):
-                    for update in data.get("result", []):
-                        self.last_update_id = update.get("update_id", self.last_update_id)
-                        message = update.get("message") or update.get("channel_post") or update.get("edited_message")
-                        if message:
-                            self.handle_incoming_message(message)
-                else:
-                    err = data.get("description", "")
-                    if "Conflict" in err:
-                        now_c = time.time()
-                        if now_c - getattr(self, "_last_conflict_log_ts", 0) > 60:
-                            self._last_conflict_log_ts = now_c
-                            self.log("Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.", "WARN")
-                        time.sleep(10)
+                    if data.get("ok"):
+                        self.consecutive_conflicts = 0
+                        for update in data.get("result", []):
+                            self.last_update_id = update.get("update_id", self.last_update_id)
+                            message = update.get("message") or update.get("channel_post") or update.get("edited_message")
+                            if message:
+                                self.handle_incoming_message(message)
                     else:
-                        self.log(f"Lỗi getUpdates: {err}", "WARN")
-                        time.sleep(3)
+                        err = data.get("description", "")
+                        if "Conflict" in err:
+                            self.consecutive_conflicts = getattr(self, "consecutive_conflicts", 0) + 1
+                            now_c = time.time()
+                            if now_c - getattr(self, "_last_conflict_log_ts", 0) > 60:
+                                self._last_conflict_log_ts = now_c
+                                self.log("Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.", "WARN")
+                            
+                            # Giãn cách ngẫu nhiên 12s - 20s để tránh 2 tiến trình ping-pong đè nhau
+                            import random
+                            time.sleep(random.uniform(12, 20))
 
-            except requests.exceptions.Timeout:
-                # Timeout bình thường của Long Polling
-                continue
-            except Exception as e:
-                self.log(f"Lỗi kết nối polling: {e}", "ERROR")
-                time.sleep(3)
+                            # Nếu bị xung đột liên tiếp: thử giải phóng webhook kẹt
+                            if self.consecutive_conflicts >= 3:
+                                try:
+                                    requests.post(f"https://api.telegram.org/bot{token}/deleteWebhook", json={"drop_pending_updates": True}, timeout=8)
+                                except Exception:
+                                    pass
+                        else:
+                            self.consecutive_conflicts = 0
+                            self.log(f"Lỗi getUpdates: {err}", "WARN")
+                            time.sleep(3)
+
+                except requests.exceptions.Timeout:
+                    # Timeout bình thường của Long Polling
+                    continue
+                except Exception as e:
+                    self.log(f"Lỗi kết nối polling: {e}", "ERROR")
+                    time.sleep(3)
+        finally:
+            if lock_file:
+                try:
+                    import fcntl
+                    fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                except Exception:
+                    pass
+                try:
+                    lock_file.close()
+                except Exception:
+                    pass
 
         self.log("Bot Telegram đã dừng lắng nghe.")
 
@@ -3481,7 +3531,8 @@ class TelegramBotService:
         if not check.get("valid"):
             return {"status": "error", "message": check.get("error")}
 
-        if not self.is_running:
+        if not self.is_running or not (self.polling_thread and self.polling_thread.is_alive()):
+            self._polling_generation = getattr(self, "_polling_generation", 0) + 1
             self.is_running = True
             self.polling_thread = threading.Thread(target=self.poll_updates, daemon=True)
             self.polling_thread.start()
@@ -3503,6 +3554,7 @@ class TelegramBotService:
         if not self.is_running and self.config.get("bot_token"):
             check = self.check_bot_token()
             if check.get("valid"):
+                self._polling_generation = getattr(self, "_polling_generation", 0) + 1
                 self.is_running = True
                 self.polling_thread = threading.Thread(target=self.poll_updates, daemon=True)
                 self.polling_thread.start()
@@ -3512,6 +3564,7 @@ class TelegramBotService:
     def stop_polling(self) -> dict:
         """Ngắt kết nối hoàn toàn khỏi Telegram (dừng luồng polling)"""
         self.is_running = False
+        self._polling_generation = getattr(self, "_polling_generation", 0) + 1
         if self.polling_thread and self.polling_thread.is_alive():
             self.polling_thread.join(timeout=2)
         self.log("Đã ngắt kết nối hoàn toàn khỏi Telegram Bot API.", "INFO")
