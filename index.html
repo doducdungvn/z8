@@ -3455,6 +3455,7 @@ function calculateSum(isFromRunBalancing = false, preservePending = false) {
           }
           excess = Math.max(0, Math.ceil(excess));
         }
+      }
       const alreadyTransferred = cumulativeMap[key] || 0;
       const pendingTransfer = Math.max(0, Math.ceil(excess - alreadyTransferred));
 
