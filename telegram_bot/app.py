@@ -657,7 +657,9 @@ def get_report():
     price_cfg = bot_service.config.get("price_config")
 
     # KIỂM TRA BẮT BUỘC: Nếu chưa có KQXS hoặc KQXS không khớp ngày cược, KHÔNG tính ăn thua bằng kết quả cũ
-    if not kq.get("success") or not kq.get("is_complete") or (kq.get("date") and kq.get("date") != target_date):
+    kq_date_norm = bot_service.normalize_date_format(kq.get("date"))
+    target_date_norm = bot_service.normalize_date_format(target_date)
+    if not kq.get("success") or not kq.get("is_complete") or (kq.get("date") and kq_date_norm != target_date_norm):
         kq_empty = {
             "success": False,
             "date": target_date,
@@ -772,13 +774,13 @@ def settle_now():
             "detail": "Tuyệt đối không được phép lấy kết quả xổ số ngày hôm trước để tính toán chốt tiền!"
         }), 400
 
-    # Đối chiếu ngày khớp chính xác (chuẩn hóa dấu /)
-    kq_date = (kq.get("date") or "").replace("-", "/")
-    target_clean = target_date.replace("-", "/")
+    # Đối chiếu ngày khớp chính xác (chuẩn hóa về định dạng DD/MM/YYYY)
+    kq_date = bot_service.normalize_date_format(kq.get("date"))
+    target_clean = bot_service.normalize_date_format(target_date)
     if kq_date != target_clean:
         return jsonify({
             "success": False,
-            "error": f"Ngày kết quả xổ số ({kq_date}) không khớp với ngày cược ({target_clean}). Không được dùng kết quả ngày cũ để chốt tiền!",
+            "error": f"Ngày kết quả xổ số ({kq.get('date')}) không khớp với ngày cược ({target_date}). Không được dùng kết quả ngày cũ để chốt tiền!",
             "detail": "Bắt buộc phải lấy kết quả đúng ngày khớp với ngày nhắn tin cược và thầu."
         }), 400
 

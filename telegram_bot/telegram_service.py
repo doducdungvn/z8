@@ -2079,7 +2079,7 @@ class TelegramBotService:
             kq = fetch_xsmb(target_date)
 
             # KIỂM TRA NGHIÊM NGẶT: Bắt buộc KQXS phải thành công, đủ 27 giải và KHỚP ĐÚNG NGÀY
-            is_valid_date = (kq.get("date") or "").replace("-", "/") == target_date.replace("-", "/")
+            is_valid_date = self.normalize_date_format(kq.get("date")) == self.normalize_date_format(target_date)
             if not kq.get("success") or not kq.get("is_complete") or not is_valid_date:
                 err_desc = kq.get('error') or f"Chưa có kết quả xổ số chính thức cho ngày {target_date}."
                 self.send_telegram_message(
