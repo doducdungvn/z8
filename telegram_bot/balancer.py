@@ -86,11 +86,12 @@ class BoardBalancer:
         use_branch = self.config.get("retain_use_branch", False)
         has_branch = use_branch and branch_limit > 0
 
-        # 1. Bất kể có dùng nhánh hay không: khi đề hoặc lô có mức giá cược dưới 2 thì giữ lại toàn bộ
+        # 1. Quy tắc tối thượng: Bất kỳ con Đề hoặc Lô nào có mức cược gốc nhỏ hơn 2 (1k Đề hoặc 1đ Lô) thì luôn GIỮ LẠI TOÀN BỘ, tuyệt đối không chuyển đi
         if cat in ("de", "lo") and total < 2.0:
             return 0.0
 
         if retain_type == "percentage":
+            # Khi giữ theo Phần trăm (%): branch_limit là MỨC TRẦN TỐI ĐA (Cap) giữ lại cho 1 con số
             if has_branch:
                 target_retain = min(total * (limit / 100.0), branch_limit)
                 target_transfer = total - target_retain
@@ -98,7 +99,7 @@ class BoardBalancer:
                 target_transfer = total * ((100.0 - limit) / 100.0)
             excess = target_transfer - prev_transfer
         else:
-            # money
+            # Khi giữ theo Tiền: branch_limit là Mức định mức Nhánh
             if has_branch:
                 if total < branch_limit:
                     target_transfer = total
