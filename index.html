@@ -769,6 +769,8 @@ const debouncedCalculateResult = debounce((row) => calculateResult(row), 300);
 // Predefined shorthands map from thau_lode.html
 const shorthands = {
   "k": "00.11.22.33.44.55.66.77.88.99",
+  "kep": "00.11.22.33.44.55.66.77.88.99",
+  "lip": "00.11.22.33.44.55.66.77.88.99",
   "kl": "050.161.272.383.494",
   "apkep": "010.121.232.343.454.565.676.787.898",
   "kepam": "070.141.292.363.585",
@@ -988,7 +990,9 @@ function normalizeShorthandToken(token) {
     'tc': 'tongchan',
     'tl': 'tongle',
     'chan': 'ditchan',
-    'le': 'ditle'
+    'le': 'ditle',
+    'lip': 'k',
+    'kep': 'k'
   };
   return aliases[t] || t;
 }
@@ -1317,7 +1321,7 @@ function isTokenRecognized(token, activeCategory, customShortcuts = {}) {
   if (shorthands[normShorthand] || shorthands[normLower] || shorthands[norm]) return true;
 
   if (/^(dau|dit|daudit|cham|tong|t|d|d'|bo|he)\d{1,2}$/i.test(norm)) return true;
-  if (/^(daube|dauto|dauchan|daule|ditbe|ditto|ditchan|ditle|tobe|toto|tochan|tole|bebe|beto|bechan|bele|tongchan|tongle|chanchan|chanle|lechan|lele|kl|k)$/i.test(norm)) return true;
+  if (/^(daube|dauto|dauchan|daule|ditbe|ditto|ditchan|ditle|tobe|toto|tochan|tole|bebe|beto|bechan|bele|tongchan|tongle|chanchan|chanle|lechan|lele|kl|k|lip|kep)$/i.test(norm)) return true;
 
   const resolved = resolveShorthands(trimmed);
   const parsedNums = parseNumbersFromBetString(resolved, activeCategory || 'de');
@@ -1676,7 +1680,7 @@ function normalizeBetLine(line) {
   normalized = normalized.replace(/\b(?:le\s+le|lele)\b/g, 'lele');
   normalized = normalized.replace(/\b(?:daudit|dau\s+dit|dau\s+duoi|dd|đđ)\s*(\d)(?![0-9])/g, 'daudit$1');
   normalized = normalized.replace(/\b(?:kep lech)\b/g, 'kl');
-  normalized = normalized.replace(/\b(?:lip|kep)\b/g, 'k');
+  normalized = normalized.replace(/\b(?:kep\s*bang|kepbang|lip|kep)(?=[x=+*\d\s]|$)/g, 'k ');
   normalized = normalized.replace(/\b(?:dau)\s*(\d)(?![0-9])/g, 'dau$1');
   normalized = normalized.replace(/\b(?:dit|duoi)\s*(\d)(?![0-9])/g, 'dit$1');
   normalized = normalized.replace(/\b(?:cham)\s*(\d)(?![0-9])/g, 'cham$1');
@@ -1826,7 +1830,7 @@ function parseCombinedInput(inputString) {
         const segments = numString.split(/[.,\-\s]+/).filter(s => s.length > 0);
         segments.forEach(seg => {
           if (!/^\d+$/.test(seg)) {
-            const isShorthand = /^(kl|k|dau\d|dit\d|daudit\d|cham\d|t\d|bo\d{1,2})$/i.test(seg);
+            const isShorthand = /^(kl|k|lip|kep|dau\d|dit\d|daudit\d|cham\d|t\d|bo\d{1,2})$/i.test(seg);
             if (isShorthand) {
               if (lineType !== 'de' && lineType !== 'lo') {
                 isValidGroup = false;
@@ -3408,8 +3412,8 @@ function calculateSum(isFromRunBalancing = false, preservePending = false) {
       const hasBranch = retainUseBranch && branchLimit > 0;
 
       let excess;
-      // Khi KHÔNG dùng nhánh: đề hoặc lô có mức giá cược dưới 2 thì giữ lại (khi dùng nhánh thì bỏ qua quy tắc dưới 2)
-      if (!hasBranch && isDeOrLo && val < 2) {
+      // 1. Bất kể có dùng nhánh hay không: đề hoặc lô có mức giá cược dưới 2 thì giữ lại toàn bộ
+      if (isDeOrLo && val < 2) {
         excess = 0;
       } else if (isExcl) {
         excess = val;
@@ -3437,8 +3441,6 @@ function calculateSum(isFromRunBalancing = false, preservePending = false) {
           }
           excess = Math.max(0, Math.ceil(excess));
         }
-      }
-
       const alreadyTransferred = cumulativeMap[key] || 0;
       const pendingTransfer = Math.max(0, Math.ceil(excess - alreadyTransferred));
 
@@ -6418,8 +6420,8 @@ function runBalancingStep(isPercent) {
       const prevTransfer = transfersMap[key] || 0;
       const isExcl = isExcluded(categoryKey, key);
       let excess;
-      // Khi KHÔNG dùng nhánh: đề hoặc lô có mức giá cược dưới 2 thì giữ lại (khi dùng nhánh thì bỏ qua quy tắc dưới 2)
-      if (!hasBranch && isDeOrLo && total < 2) {
+      // 1. Bất kể có dùng nhánh hay không: đề hoặc lô có mức giá cược dưới 2 thì giữ lại toàn bộ
+      if (isDeOrLo && total < 2) {
         excess = 0;
       } else if (isExcl) {
         excess = total - prevTransfer;
@@ -6451,6 +6453,7 @@ function runBalancingStep(isPercent) {
           excess = Math.max(0, Math.ceil(excess));
         }
       }
+
       if (excess >= 0.1) {
         stepTransfersMap[key] = excess;
       }
