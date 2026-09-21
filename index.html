@@ -2524,9 +2524,10 @@ function loadShortcuts() {
     shortcutsArea.value = cached;
   }
   
-  fetch("https://raw.githubusercontent.com/doducdungvn/lucky/refs/heads/main/nhaptat.txt")
+  // Ưu tiên tải từ nhaptat.txt cùng thư mục web trước, nếu không được thì fallback sang GitHub
+  fetch("nhaptat.txt")
     .then(response => {
-      if (!response.ok) throw new Error("Network response was not ok");
+      if (!response.ok) throw new Error("Local nhaptat.txt not ok");
       return response.text();
     })
     .then(data => {
@@ -2535,8 +2536,21 @@ function loadShortcuts() {
         localStorage.setItem("shortcutsData", data);
       }
     })
-    .catch(err => {
-      console.error("Error fetching shortcuts:", err);
+    .catch(() => {
+      fetch("https://raw.githubusercontent.com/doducdungvn/lucky/refs/heads/main/nhaptat.txt")
+        .then(response => {
+          if (!response.ok) throw new Error("Network response was not ok");
+          return response.text();
+        })
+        .then(data => {
+          if (data && data.trim() !== "") {
+            shortcutsArea.value = data;
+            localStorage.setItem("shortcutsData", data);
+          }
+        })
+        .catch(err => {
+          console.error("Error fetching shortcuts:", err);
+        });
     });
 }
 
