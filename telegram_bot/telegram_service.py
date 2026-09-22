@@ -2963,6 +2963,8 @@ class TelegramBotService:
         - Gửi báo cáo tổng hợp (Thầu, Chuyển, Giữ lại) cho Chủ bảng (owner).
         """
         date_str = kqxs.get("date", datetime.now().strftime("%d/%m/%Y"))
+        if kqxs:
+            self.cached_kqxs = kqxs
         price_cfg = self.config.get("price_config", DEFAULT_PRICE_CONFIG)
         acc = calculate_board_accounting(self.balancer, kqxs, price_cfg)
 
@@ -3117,8 +3119,8 @@ class TelegramBotService:
         except Exception as e:
             self.log(f"⚠️ Lỗi lưu trữ lịch sử ngày: {e}", "WARN")
 
-    def cleanup_old_history(self, hours: float = None) -> int:
-        """Tự động dọn dẹp các file lịch sử cược cũ trong daily_history/ vượt quá số tiếng (giờ) chỉ định.
+    def cleanup_old_history(self, hours: float = None) -> dict:
+        """Tự động dọn dẹp các file lịch sử cược cũ trong daily_history/ và tin nhắn cược cũ trong client_bets/pending_bets vượt quá số tiếng (giờ) chỉ định.
         Nếu hours == 0: Giữ vĩnh viễn (không xóa).
         """
         if hours is not None:
@@ -3131,53 +3133,117 @@ class TelegramBotService:
             retention_hours = 36.0
 
         if retention_hours <= 0:
-            return 0  # 0: Giữ vĩnh viễn không xóa
+            return {"deleted_files": 0, "deleted_inbox": 0, "total": 0}
 
-        archive_dir = os.path.join(os.path.dirname(__file__), "daily_history")
-        if not os.path.exists(archive_dir):
-            return 0
-
-        deleted_count = 0
+        deleted_files = 0
+        deleted_inbox = 0
         now_ts = now_vn().timestamp()
         retention_seconds = retention_hours * 3600.0
 
-        try:
-            for fname in os.listdir(archive_dir):
-                if not fname.endswith(".json"):
-                    continue
-                file_p = os.path.join(archive_dir, fname)
+        # 1. Dọn dẹp files trong daily_history
+        archive_dir = os.path.join(os.path.dirname(__file__), "daily_history")
+        if os.path.exists(archive_dir):
+            try:
+                for fname in os.listdir(archive_dir):
+                    if not fname.endswith(".json"):
+                        continue
+                    file_p = os.path.join(archive_dir, fname)
 
-                # Xác định thời điểm lưu trữ của file (từ saved_at hoặc file mtime)
-                file_ts = None
+                    file_ts = None
+                    try:
+                        with open(file_p, "r", encoding="utf-8") as f:
+                            fdata = json.load(f)
+                        saved_at_str = fdata.get("saved_at", "")
+                        if saved_at_str:
+                            dt = datetime.strptime(saved_at_str, "%H:%M:%S %d/%m/%Y").replace(tzinfo=VN_TZ)
+                            file_ts = dt.timestamp()
+                    except Exception:
+                        pass
+
+                    if not file_ts:
+                        try:
+                            file_ts = os.path.getmtime(file_p)
+                        except Exception:
+                            continue
+
+                    age_seconds = now_ts - file_ts
+                    if age_seconds >= retention_seconds:
+                        try:
+                            os.remove(file_p)
+                            deleted_files += 1
+                            self.log(f"🗑️ [Tự động xóa lịch sử > {retention_hours:g} tiếng] Đã dọn file {fname} (đã lưu được {round(age_seconds/3600, 1):g} tiếng).", "INFO")
+                        except Exception as fe:
+                            self.log(f"Lỗi khi xóa file {fname}: {fe}", "WARN")
+            except Exception as e:
+                self.log(f"Lỗi quét dọn dẹp thư mục lịch sử: {e}", "WARN")
+
+        # Helper parse timestamp
+        def _parse_msg_ts(item):
+            if not isinstance(item, dict):
+                return 0.0
+            if "created_at" in item and isinstance(item["created_at"], (int, float)):
+                return float(item["created_at"])
+            ts_str = item.get("timestamp") or ""
+            if ts_str:
                 try:
-                    with open(file_p, "r", encoding="utf-8") as f:
-                        fdata = json.load(f)
-                    saved_at_str = fdata.get("saved_at", "")
-                    if saved_at_str:
-                        # format ví dụ: "22:17:14 17/09/2026"
-                        dt = datetime.strptime(saved_at_str, "%H:%M:%S %d/%m/%Y").replace(tzinfo=VN_TZ)
-                        file_ts = dt.timestamp()
+                    parts = ts_str.strip().split()
+                    if len(parts) == 2:
+                        t_parts = list(map(int, parts[0].split(":")))
+                        d_parts = list(map(int, parts[1].split("/")))
+                        year = d_parts[2] if len(d_parts) >= 3 else now_vn().year
+                        month = d_parts[1]
+                        day = d_parts[0]
+                        h = t_parts[0] if len(t_parts) >= 1 else 0
+                        m = t_parts[1] if len(t_parts) >= 2 else 0
+                        s = t_parts[2] if len(t_parts) >= 3 else 0
+                        return datetime(year, month, day, h, m, s, tzinfo=VN_TZ).timestamp()
                 except Exception:
                     pass
+            return 0.0
 
-                if not file_ts:
-                    try:
-                        file_ts = os.path.getmtime(file_p)
-                    except Exception:
-                        continue
+        # 2. Dọn dẹp tin nhắn cược cũ trong client_bets (Hộp Thư)
+        client_bets_changed = False
+        for cid_str, cdata in list(self.client_bets.items()):
+            history = cdata.get("history", [])
+            if not history:
+                continue
+            new_hist = []
+            for item in history:
+                item_ts = _parse_msg_ts(item)
+                if item_ts > 0 and (now_ts - item_ts >= retention_seconds):
+                    deleted_inbox += 1
+                    client_bets_changed = True
+                else:
+                    new_hist.append(item)
+            cdata["history"] = new_hist
+            cdata["msg_count"] = len(new_hist)
 
-                age_seconds = now_ts - file_ts
-                if age_seconds >= retention_seconds:
-                    try:
-                        os.remove(file_p)
-                        deleted_count += 1
-                        self.log(f"🗑️ [Tự động xóa lịch sử > {retention_hours:g} tiếng] Đã dọn file {fname} (đã lưu được {round(age_seconds/3600, 1):g} tiếng).", "INFO")
-                    except Exception as fe:
-                        self.log(f"Lỗi khi xóa file {fname}: {fe}", "WARN")
-        except Exception as e:
-            self.log(f"Lỗi quét dọn dẹp thư mục lịch sử: {e}", "WARN")
+        if client_bets_changed:
+            self.save_client_bets()
 
-        return deleted_count
+        # 3. Dọn dẹp tin treo pending_bets cũ
+        pending_changed = False
+        if hasattr(self, "pending_bets") and self.pending_bets:
+            new_pending = []
+            for pb in self.pending_bets:
+                pb_ts = _parse_msg_ts(pb)
+                if pb_ts > 0 and (now_ts - pb_ts >= retention_seconds):
+                    deleted_inbox += 1
+                    pending_changed = True
+                else:
+                    new_pending.append(pb)
+            if pending_changed:
+                self.pending_bets = new_pending
+                self.save_pending_bets()
+
+        if deleted_inbox > 0:
+            self.log(f"🗑️ [Dọn Hộp Thư] Đã xóa {deleted_inbox} tin cược cũ hơn {retention_hours:g} tiếng khỏi Hộp Thư.", "INFO")
+
+        return {
+            "deleted_files": deleted_files,
+            "deleted_inbox": deleted_inbox,
+            "total": deleted_files + deleted_inbox
+        }
 
     def load_daily_archive(self, date_str: str) -> dict:
         """Đọc lại dữ liệu lưu trữ của một ngày cũ để đối soát khi có thắc mắc"""
@@ -3287,6 +3353,8 @@ class TelegramBotService:
         """
         # 1. Lưu trữ an toàn dữ liệu ngày vừa chốt vào kho daily_history
         self.save_daily_archive(date_str, settle_result=settle_result, kqxs=kqxs)
+        if kqxs:
+            self.cached_kqxs = kqxs
 
         # 2. Đặt cờ ngày đã chốt
         today_str = now_vn().strftime("%Y-%m-%d")
@@ -3360,7 +3428,7 @@ class TelegramBotService:
         return clean
 
     def check_daily_schedule(self):
-        """Kiểm tra thời gian và tự động chốt tiền từ 18h35, nếu chưa có KQXS thì lặp lại mỗi 5 phút/lần cho đến khi chốt thành công và đưa tất cả về 0.
+        """Kiểm tra thời gian và tự động chốt tiền từ 18h35, nếu chưa có KQXS thì lặp lại mỗi 1 phút/lần cho đến khi chốt thành công và đưa tất cả về 0.
         Nếu đã chốt thủ công bằng tay thì dừng hoàn toàn việc chốt tiền của ngày hôm đó.
         """
         if not self.config.get("auto_fetch_kqxs_daily", True):
@@ -3380,9 +3448,9 @@ class TelegramBotService:
         if not is_settle_time:
             return
 
-        # CỨ 5 PHÚT / LẦN (300 giây) THỰC HIỆN LẤY KẾT QUẢ VÀ CHỐT TIỀN:
+        # TỪ 18h35 TRỞ ĐI: CỨ MỖI 60 GIÂY THỰC HIỆN LẤY KẾT QUẢ VÀ CHỐT TIỀN:
         last_check = getattr(self, "_last_kqxs_check_ts", 0)
-        if time.time() - last_check < 300:
+        if time.time() - last_check < 60:
             return
         self._last_kqxs_check_ts = time.time()
 
@@ -3537,7 +3605,26 @@ class TelegramBotService:
                 except Exception:
                     pass
 
-        self.log("Bot Telegram đã dừng lắng nghe.")
+    def _run_scheduler(self):
+        """Luồng kiểm tra độc lập tự động chốt tiền 18h35 và chuyển ngày nửa đêm 00:00 (chạy mỗi 30s)"""
+        while True:
+            try:
+                self.check_daily_schedule()
+                self.check_and_rollover_date()
+            except Exception:
+                pass
+            time.sleep(30)
+
+    def _run_keep_alive(self):
+        """Tự động ping inbound server định kỳ mỗi 8 phút để ngăn Render đưa container vào trạng thái ngủ đông"""
+        render_url = os.environ.get("RENDER_EXTERNAL_URL") or "https://z8-jv1z.onrender.com"
+        target_url = f"{render_url.rstrip('/')}/api/bot/status"
+        while True:
+            time.sleep(480)
+            try:
+                requests.get(target_url, timeout=15)
+            except Exception:
+                pass
 
     def start(self) -> dict:
         """Bật bot chạy chế độ tự động (auto)"""
@@ -3548,6 +3635,14 @@ class TelegramBotService:
         check = self.check_bot_token()
         if not check.get("valid"):
             return {"status": "error", "message": check.get("error")}
+
+        if not hasattr(self, "scheduler_thread") or not (self.scheduler_thread and self.scheduler_thread.is_alive()):
+            self.scheduler_thread = threading.Thread(target=self._run_scheduler, daemon=True)
+            self.scheduler_thread.start()
+
+        if not hasattr(self, "keepalive_thread") or not (self.keepalive_thread and self.keepalive_thread.is_alive()):
+            self.keepalive_thread = threading.Thread(target=self._run_keep_alive, daemon=True)
+            self.keepalive_thread.start()
 
         if not self.is_running or not (self.polling_thread and self.polling_thread.is_alive()):
             self._polling_generation = getattr(self, "_polling_generation", 0) + 1

@@ -43,11 +43,13 @@ def add_cors_headers(response):
     return response
 
 
-# Chỉ tự động kích hoạt bot khi có biến môi trường AUTO_START_BOT=true (ví dụ trên Cloud server).
-# Trên localhost mặc định KHÔNG tự ý bật bot để tránh xung đột getUpdates và gửi nhầm tin.
-if os.environ.get("AUTO_START_BOT", "").lower() in ["true", "1"]:
+# Tự động khởi động bot nếu trên Cloud/Render hoặc cấu hình bot_mode == auto
+if os.environ.get("AUTO_START_BOT", "").lower() in ["true", "1"] or os.environ.get("RENDER"):
     if bot_service.config.get("bot_token") and not bot_service.is_running:
-        bot_service.start()
+        try:
+            bot_service.start()
+        except Exception as e:
+            print(f"[WARN] Khởi động bot trên Cloud: {e}")
 
 
 @app.route("/api/bot/status", methods=["GET"])
@@ -220,11 +222,18 @@ def cleanup_history():
             hours = float(data["days"]) * 24.0
         except Exception:
             hours = None
-    deleted = bot_service.cleanup_old_history(hours)
+    res = bot_service.cleanup_old_history(hours)
+    if isinstance(res, dict):
+        del_files = res.get("deleted_files", 0)
+        del_inbox = res.get("deleted_inbox", 0)
+    else:
+        del_files = res
+        del_inbox = 0
     return jsonify({
         "success": True,
-        "deleted_files_count": deleted,
-        "message": f"Đã dọn dẹp {deleted} file lịch sử cũ thành công."
+        "deleted_files_count": del_files,
+        "deleted_inbox_count": del_inbox,
+        "message": f"Đã dọn dẹp {del_files} file lưu trữ và {del_inbox} tin cược trong Hộp Thư thành công."
     })
 
 
@@ -791,6 +800,9 @@ def settle_now():
         notify_owner=send_tg
     )
     bot_service._reset_after_settle(kq.get('date', ''), settle_result=res, kqxs=kq)
+    if isinstance(res, dict):
+        res["kqxs"] = kq
+        res["cached_kqxs"] = kq
     return jsonify(res)
 
 
