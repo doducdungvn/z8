@@ -9162,7 +9162,7 @@ function resetTable() {
         alert("⚠️ Hiện đang cài đặt 0 tiếng (Giữ vĩnh viễn), hệ thống sẽ không xóa file lịch sử nào.");
         return;
       }
-      if (!confirm(`Bạn có chắc chắn muốn DỌN DẸP NGAY các file lịch sử cược cũ hơn ${hours} tiếng không?`)) return;
+      if (!confirm(`Bạn có chắc chắn muốn DỌN DẸP NGAY các file lịch sử cược và tin cược trong Hộp Thư cũ hơn ${hours} tiếng không?`)) return;
       try {
         const res = await callBotApi("/api/bot/cleanup_history", {
           method: "POST",
@@ -9171,7 +9171,7 @@ function resetTable() {
         });
         const data = await res.json();
         if (data && data.success) {
-          alert(`✅ ${data.message || `Đã dọn dẹp ${data.deleted_files_count || 0} file lịch sử cũ!`}`);
+          alert(`✅ ${data.message || `Đã dọn dẹp ${data.deleted_files_count || 0} file lịch sử cũ và ${data.deleted_inbox_count || 0} tin cược!`}`);
           fetchTgBoard();
         } else {
           alert("Lỗi dọn dẹp: " + (data.error || "Không thành công"));
@@ -9599,25 +9599,25 @@ function resetTable() {
 
           const badges = [];
           if (isOwner) {
-            badges.push('<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-300 flex items-center gap-1 w-fit">👑 Chủ Bot</span>');
+            badges.push('<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-300 flex items-center gap-1 w-fit">👑 <span class="hidden sm:inline">Chủ Bot</span><span class="sm:hidden">Admin</span></span>');
           }
           if (isContractor) {
-            badges.push('<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold border border-blue-300 flex items-center gap-1 w-fit">🏢 Chủ thầu</span>');
+            badges.push('<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-bold border border-blue-300 flex items-center gap-1 w-fit">🏢 <span class="hidden sm:inline">Chủ thầu</span><span class="sm:hidden">Thầu</span></span>');
           }
           if (isInAllowedList) {
-            badges.push('<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300 flex items-center gap-1 w-fit">✅ Khách hợp lệ</span>');
+            badges.push('<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300 flex items-center gap-1 w-fit">✅ <span class="hidden sm:inline">Khách hợp lệ</span><span class="sm:hidden">Khách</span></span>');
           } else if (isWildcardAllowed && !isOwner && !isContractor) {
-            badges.push('<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] border border-slate-300 flex items-center gap-1 w-fit">🌐 Nhận tự do</span>');
+            badges.push('<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] border border-slate-300 flex items-center gap-1 w-fit">🌐 <span class="hidden sm:inline">Nhận tự do</span><span class="sm:hidden">Tự do</span></span>');
           } else if (!isOwner && !isContractor) {
-            badges.push('<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-semibold border border-rose-300 flex items-center gap-1 w-fit">⛔ Ngoài danh sách</span>');
+            badges.push('<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-semibold border border-rose-300 flex items-center gap-1 w-fit">⛔ <span class="hidden sm:inline">Ngoài danh sách</span><span class="sm:hidden">Ngoài</span></span>');
           }
           const roleBadge = `<div class="flex items-center flex-wrap gap-1">${badges.join('')}</div>`;
 
           let priceBadge = '';
           if (hasCustomPrice) {
-            priceBadge = `<span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold border border-purple-300 flex items-center gap-1 w-fit">🏷️ Giá riêng</span>`;
+            priceBadge = `<span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold border border-purple-300 flex items-center gap-1 w-fit">🏷️ <span class="hidden sm:inline">Giá riêng</span><span class="sm:hidden">Riêng</span></span>`;
           } else {
-            priceBadge = `<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] border border-slate-300 flex items-center gap-1 w-fit">Giá Thầu chung</span>`;
+            priceBadge = `<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] border border-slate-300 flex items-center gap-1 w-fit"><span class="hidden sm:inline">Giá Thầu chung</span><span class="sm:hidden">Chung</span></span>`;
           }
 
           return `
@@ -9787,6 +9787,27 @@ function resetTable() {
       filterTgClientMessages();
     }
     window.clearTgInboxSearch = clearTgInboxSearch;
+
+    function getTgSelectedDate() {
+      const inp = document.getElementById('tgActionDate');
+      if (inp && inp.value) return inp.value;
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${yyyy}-${mm}-${dd}`;
+      if (inp) inp.value = todayStr;
+      return todayStr;
+    }
+    window.getTgSelectedDate = getTgSelectedDate;
+
+    function formatTgDateDisplay(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      return dateStr;
+    }
+    window.formatTgDateDisplay = formatTgDateDisplay;
 
     async function fetchTgBoard(customDate = null) {
       try {
@@ -11850,6 +11871,16 @@ function resetTable() {
               settled_at: `${nowTime} ${dispDate}`,
               settled_time: nowTime
             };
+            if (data.kqxs) {
+              window.tgCachedKQXS = data.kqxs;
+            }
+            window.tgCachedReportData = null;
+            try {
+              const repRes = await callBotApi(`/api/bot/report?date=${encodeURIComponent(dispDate || selDate)}`);
+              if (repRes.ok) {
+                window.tgCachedReportData = await repRes.json();
+              }
+            } catch (_) {}
             fetchTgBoard();
 
             alert(`✅ ĐÃ CHỐT TIỀN TỰ ĐỘNG THÀNH CÔNG NGÀY ${dispDate}!\nĐã gửi tin nhắn chốt tiền tới ${data.settled_clients_count || 0} khách cược.`);
