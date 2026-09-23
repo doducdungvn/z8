@@ -8129,10 +8129,19 @@ function resetTable() {
                         <input type="number" id="tgInputCutoffLoMinute" min="0" max="59" value="10" class="w-10 border border-slate-300 dark:border-slate-600 rounded-xs px-1 py-0.5 text-center font-bold bg-slate-50 dark:bg-dark-800" title="Phút khóa Lô (0-59)">
                       </div>
                     </div>
+
+                    <!-- Bỏ qua cho Chủ bot & Admin -->
+                    <div class="col-span-1 sm:col-span-2 flex items-center justify-between gap-1.5 bg-sky-50/60 dark:bg-sky-950/20 px-2 py-1.5 rounded-xs border border-sky-200 dark:border-sky-800">
+                      <label class="flex items-center gap-1.5 cursor-pointer font-bold text-xs text-sky-800 dark:text-sky-300">
+                        <input type="checkbox" id="tgCheckCutoffAdminBypass" class="form-checkbox text-sky-600 rounded-xs">
+                        <span>Chủ bot &amp; Admin tự động bỏ qua giờ khóa cược &amp; khóa hủy tin</span>
+                      </label>
+                      <span class="text-[10px] text-slate-400 italic shrink-0">(Bỏ chọn để tự test như khách)</span>
+                    </div>
                   </div>
 
                   <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                    Đến giờ đã đặt, khách gửi cược sẽ được bot báo: <i>&quot;Hết giờ không nhận nữa&quot;</i>. Trước giờ hết nhận 1 phút, khách không thể hủy tin có chứa loại hình đó. Qua 12h đêm (00:00), bot tự động mở nhận cược ngày mới bình thường.
+                    Đến giờ đã đặt, khách gửi cược sẽ được bot báo: <i>&quot;Hết giờ lô&quot;</i>, <i>&quot;Hết giờ đề&quot;</i>, hoặc <i>&quot;Hết giờ&quot;</i> (khi tất cả các loại hình đã hết giờ). Trước giờ hết nhận 1 phút, khách không thể hủy tin có chứa loại hình đó. Qua 12h đêm (00:00), bot tự động mở nhận cược ngày mới bình thường.
                   </p>
                 </div>
 
@@ -9110,6 +9119,7 @@ function resetTable() {
           if (document.getElementById('tgCheckCutoffLo')) document.getElementById('tgCheckCutoffLo').checked = cc.lo_enabled !== false;
           if (document.getElementById('tgInputCutoffLoHour') && cc.lo_hour !== undefined) document.getElementById('tgInputCutoffLoHour').value = cc.lo_hour;
           if (document.getElementById('tgInputCutoffLoMinute') && cc.lo_minute !== undefined) document.getElementById('tgInputCutoffLoMinute').value = cc.lo_minute;
+          if (document.getElementById('tgCheckCutoffAdminBypass')) document.getElementById('tgCheckCutoffAdminBypass').checked = !!cc.admin_bypass;
         }
 
         // Cleanup hours
@@ -9267,7 +9277,8 @@ function resetTable() {
           de_minute: parseInt(document.getElementById('tgInputCutoffDeMinute')?.value) || 25,
           lo_enabled: document.getElementById('tgCheckCutoffLo') ? document.getElementById('tgCheckCutoffLo').checked : true,
           lo_hour: parseInt(document.getElementById('tgInputCutoffLoHour')?.value) || 18,
-          lo_minute: parseInt(document.getElementById('tgInputCutoffLoMinute')?.value) || 10
+          lo_minute: parseInt(document.getElementById('tgInputCutoffLoMinute')?.value) || 10,
+          admin_bypass: document.getElementById('tgCheckCutoffAdminBypass') ? document.getElementById('tgCheckCutoffAdminBypass').checked : false
         },
         client_prices: window.tgCustomClientPrices || {},
         price_config: window.priceConfigData || JSON.parse(localStorage.getItem(RATES_STORAGE_KEY) || "{}"),
