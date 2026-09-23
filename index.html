@@ -8094,6 +8094,48 @@ function resetTable() {
                   </p>
                 </div>
 
+                <!-- Giờ Khóa Nhận Cược (Đề & Lô riêng biệt) -->
+                <div class="pt-1.5 border-t border-slate-200 dark:border-slate-700 space-y-2 bg-amber-50/50 dark:bg-amber-950/20 p-2 rounded-xs border border-amber-200 dark:border-amber-800/40">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-amber-800 dark:text-amber-300 text-[11px] uppercase flex items-center gap-1">
+                      <i class="fa-solid fa-clock"></i> Giờ Khóa Nhận Cược (Đề &amp; Lô):
+                    </span>
+                    <span class="text-[10px] text-amber-600 dark:text-amber-400 font-medium">Tự reset 00:00 nhận ngày mới</span>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+                    <!-- Khóa Đề -->
+                    <div class="flex items-center justify-between gap-1.5 bg-white dark:bg-dark-900 px-2 py-1 rounded-xs border border-slate-200 dark:border-slate-700">
+                      <label class="flex items-center gap-1.5 cursor-pointer font-bold text-xs text-slate-700 dark:text-slate-200 shrink-0">
+                        <input type="checkbox" id="tgCheckCutoffDe" class="form-checkbox text-sky-600 rounded-xs" checked>
+                        <span>Khóa Đề</span>
+                      </label>
+                      <div class="flex items-center gap-1 font-mono text-xs">
+                        <input type="number" id="tgInputCutoffDeHour" min="0" max="23" value="18" class="w-10 border border-slate-300 dark:border-slate-600 rounded-xs px-1 py-0.5 text-center font-bold bg-slate-50 dark:bg-dark-800" title="Giờ khóa Đề (0-23)">
+                        <span class="font-bold text-slate-500">:</span>
+                        <input type="number" id="tgInputCutoffDeMinute" min="0" max="59" value="25" class="w-10 border border-slate-300 dark:border-slate-600 rounded-xs px-1 py-0.5 text-center font-bold bg-slate-50 dark:bg-dark-800" title="Phút khóa Đề (0-59)">
+                      </div>
+                    </div>
+
+                    <!-- Khóa Lô -->
+                    <div class="flex items-center justify-between gap-1.5 bg-white dark:bg-dark-900 px-2 py-1 rounded-xs border border-slate-200 dark:border-slate-700">
+                      <label class="flex items-center gap-1.5 cursor-pointer font-bold text-xs text-slate-700 dark:text-slate-200 shrink-0">
+                        <input type="checkbox" id="tgCheckCutoffLo" class="form-checkbox text-sky-600 rounded-xs" checked>
+                        <span>Khóa Lô</span>
+                      </label>
+                      <div class="flex items-center gap-1 font-mono text-xs">
+                        <input type="number" id="tgInputCutoffLoHour" min="0" max="23" value="18" class="w-10 border border-slate-300 dark:border-slate-600 rounded-xs px-1 py-0.5 text-center font-bold bg-slate-50 dark:bg-dark-800" title="Giờ khóa Lô (0-23)">
+                        <span class="font-bold text-slate-500">:</span>
+                        <input type="number" id="tgInputCutoffLoMinute" min="0" max="59" value="10" class="w-10 border border-slate-300 dark:border-slate-600 rounded-xs px-1 py-0.5 text-center font-bold bg-slate-50 dark:bg-dark-800" title="Phút khóa Lô (0-59)">
+                      </div>
+                    </div>
+                  </div>
+
+                  <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                    Đến giờ đã đặt, khách gửi cược sẽ được bot báo: <i>&quot;Hết giờ không nhận nữa&quot;</i>. Trước giờ hết nhận 1 phút, khách không thể hủy tin có chứa loại hình đó. Qua 12h đêm (00:00), bot tự động mở nhận cược ngày mới bình thường.
+                  </p>
+                </div>
+
                 <!-- Thời gian tự động xóa lịch sử tin cược & Dấu vết Telegram -->
                 <div class="pt-1.5 border-t border-slate-200 dark:border-slate-700 space-y-2">
                   <div class="flex items-center justify-between flex-wrap gap-2">
@@ -9059,6 +9101,17 @@ function resetTable() {
           document.getElementById('tgCheckOkDetailContractor').checked = !!cfg.ok_detail_contractor;
         }
 
+        // Cutoff config (Giờ khóa nhận cược Đề/Lô)
+        if (cfg.cutoff_config) {
+          const cc = cfg.cutoff_config;
+          if (document.getElementById('tgCheckCutoffDe')) document.getElementById('tgCheckCutoffDe').checked = cc.de_enabled !== false;
+          if (document.getElementById('tgInputCutoffDeHour') && cc.de_hour !== undefined) document.getElementById('tgInputCutoffDeHour').value = cc.de_hour;
+          if (document.getElementById('tgInputCutoffDeMinute') && cc.de_minute !== undefined) document.getElementById('tgInputCutoffDeMinute').value = cc.de_minute;
+          if (document.getElementById('tgCheckCutoffLo')) document.getElementById('tgCheckCutoffLo').checked = cc.lo_enabled !== false;
+          if (document.getElementById('tgInputCutoffLoHour') && cc.lo_hour !== undefined) document.getElementById('tgInputCutoffLoHour').value = cc.lo_hour;
+          if (document.getElementById('tgInputCutoffLoMinute') && cc.lo_minute !== undefined) document.getElementById('tgInputCutoffLoMinute').value = cc.lo_minute;
+        }
+
         // Cleanup hours
         let cleanupH = 24;
         if (cfg.cleanup_after_hours !== undefined) {
@@ -9208,6 +9261,14 @@ function resetTable() {
         cleanup_after_hours: cleanupHours,
         history_retention_hours: retentionHours,
         history_retention_days: Math.round((retentionHours / 24.0) * 10) / 10,
+        cutoff_config: {
+          de_enabled: document.getElementById('tgCheckCutoffDe') ? document.getElementById('tgCheckCutoffDe').checked : true,
+          de_hour: parseInt(document.getElementById('tgInputCutoffDeHour')?.value) || 18,
+          de_minute: parseInt(document.getElementById('tgInputCutoffDeMinute')?.value) || 25,
+          lo_enabled: document.getElementById('tgCheckCutoffLo') ? document.getElementById('tgCheckCutoffLo').checked : true,
+          lo_hour: parseInt(document.getElementById('tgInputCutoffLoHour')?.value) || 18,
+          lo_minute: parseInt(document.getElementById('tgInputCutoffLoMinute')?.value) || 10
+        },
         client_prices: window.tgCustomClientPrices || {},
         price_config: window.priceConfigData || JSON.parse(localStorage.getItem(RATES_STORAGE_KEY) || "{}"),
         retain_config: {
