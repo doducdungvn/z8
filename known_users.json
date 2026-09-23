@@ -1,0 +1,65 @@
+{
+  "1023927138": {
+    "user_id": "1023927138",
+    "chat_id": 1023927138,
+    "username": "Zeng86",
+    "first_name": "Zeng",
+    "updated_at": "21:37"
+  },
+  "7715286942": {
+    "user_id": "7715286942",
+    "chat_id": 7715286942,
+    "username": "chuthau",
+    "first_name": "Thau",
+    "updated_at": "23:03:51 23/09"
+  },
+  "8836005980": {
+    "user_id": "8836005980",
+    "chat_id": 8836005980,
+    "username": "congty368",
+    "first_name": "Congty368",
+    "updated_at": "03:50:10 13/09"
+  },
+  "6569119253": {
+    "user_id": "6569119253",
+    "chat_id": 6569119253,
+    "username": "congty987",
+    "first_name": "Pl",
+    "updated_at": "03:27:00 13/09"
+  },
+  "111": {
+    "user_id": "111",
+    "chat_id": 111,
+    "username": "alice_uname",
+    "first_name": "Alice",
+    "updated_at": "13:42:10 18/09"
+  },
+  "12345": {
+    "user_id": "12345",
+    "chat_id": 12345,
+    "username": "khach1",
+    "first_name": "Khach",
+    "updated_at": "18:26"
+  },
+  "999888777": {
+    "user_id": "999888777",
+    "chat_id": 999888777,
+    "username": "khach1",
+    "first_name": "Khach",
+    "updated_at": "22:02:57 23/09"
+  },
+  "123456": {
+    "user_id": "123456",
+    "chat_id": 123456,
+    "username": "test_player",
+    "first_name": "Player",
+    "updated_at": "21:00:00 23/09"
+  },
+  "98765": {
+    "user_id": "98765",
+    "chat_id": 98765,
+    "username": "khach_a",
+    "first_name": "A",
+    "updated_at": "23:03:51 23/09"
+  }
+}

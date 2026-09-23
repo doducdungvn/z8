@@ -1,0 +1,195 @@
+[01:13:56 17/09] [SUCCESS] Bot đã BẬT (Chế độ Tự Động): Tự động nhận cược, cân chuyển và Ok lại cho khách.
+[01:13:58 17/09] [INFO] Bot Telegram bắt đầu lắng nghe tin cược...
+[01:14:19 17/09] [INFO] 🗑️ [Tự động xóa 36h] Đã xóa 16 tin nhắn cược trên Telegram.
+[01:14:22 17/09] [INFO] Gửi chủ thầu 7715286942: Đề 55x2, 51x3, 00.12.15.16.47x4, 66x5, 54.83.87x6, 04.06.34.46.56.65.73.85.89x8, 81x9, 82x20, 86x23, 84x32 ; Lô 01.03.15.38.39.43.58.64.67.73.76.83.86.90x1, 09.59.87.97x2, 07.65x3, 71x9
+[01:14:22 17/09] [INFO] Khách (@Zeng86): Đề 55x4, 51x6, 12.16.47x8, 15x9, 00x10, 66x11, 54x14, 83.87x15, 85.89x18, 04.06.34.46.56.65.73x20, 81x21, 82x35, 86x38, 84x47
+Lô 01.03.15.38.39.43.58.67.73.76.83.86.90x1, 64x2, 09.59.87.97x3, 07.65x5, 71x15 (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[01:14:32 17/09] [SUCCESS] Chủ thầu (@lalalew): Ok (đã xác nhận Ok toàn bộ)
+[01:14:35 17/09] [SUCCESS] Khách (@Zeng86): Đề 55x4, 51x6, 12.16.47x8, 15x9, 00x10, 66x11, 54x14, 83.87x15, 85.89x18, 04.06.34.46.56.65.73x20, 81x21, 82x35, 86x38, 84x47
+Lô 01.03.15.38.39.43.58.67.73.76.83.86.90x1, 64x2, 09.59.87.97x3, 07.65x5, 71x15 (Chủ thầu đã Ok -> Đã nhắn lại Ok tin 1)
+[01:17:25 17/09] [INFO] Gửi chủ thầu 7715286942: Đề 14.16.17.30.34.49.62.68x2, 15.25.38.40.55.69.76x4, 56x7, 10.78x8, 87x14, 18x15, 92.98x35, 50x55, 05x65 ; Lô 10x2
+[01:17:25 17/09] [INFO] Khách (@Zeng86): Lo 10=4. 
+Đe 787=20. 34 68=5. 38 76 56 10=10. 05=80. 50=70. 55 25 15 10 69 40=10. 62 16 17 14 49 30=5. 92 98=50. 18=30.17:32 (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[01:17:27 17/09] [SUCCESS] Chủ thầu (@lalalew): Ok (đã xác nhận Ok toàn bộ)
+[01:17:30 17/09] [SUCCESS] Khách (@Zeng86): Lo 10=4. 
+Đe 787=20. 34 68=5. 38 76 56 10=10. 05=80. 50=70. 55 25 15 10 69 40=10. 62 16 17 14 49 30=5. 92 98=50. 18=30.17:32 (Chủ thầu đã Ok -> Đã nhắn lại Ok tin 2)
+[01:17:40 17/09] [SUCCESS] Đã BỎ QUA (không tính tiền) tin #1 của khách 1023927138 (Đã tự động hủy 1 bước chuyển thầu tương ứng). Đã cập nhật lại bảng cược & tiền thầu.
+[21:46:05 17/09] [SUCCESS] Đã xóa vĩnh viễn tin treo #999
+[21:46:05 17/09] [SUCCESS] Đã xóa vĩnh viễn tin nhắn gốc #1 của khách 123456
+[21:46:05 17/09] [SUCCESS] Đã xóa vĩnh viễn tin nhắn gốc #1 của khách 123456
+[21:46:20 17/09] [SUCCESS] 💾 Đã lưu trữ an toàn toàn bộ dữ liệu cược & chốt tiền ngày 2026-09-16 để tra cứu đối soát.
+[22:01:22 17/09] [SUCCESS] 💾 Đã lưu trữ an toàn toàn bộ dữ liệu cược & chốt tiền ngày 2026-09-17 để tra cứu đối soát.
+[22:17:14 17/09] [SUCCESS] 💾 Đã lưu trữ an toàn toàn bộ dữ liệu cược & chốt tiền ngày 2026-09-17 để tra cứu đối soát.
+[22:17:14 17/09] [SUCCESS] 🎯 Đã chốt tiền thành công ngày 2026-09-17. Dữ liệu được bảo lưu và giữ nguyên trên màn hình đối soát đến 12h đêm.
+[22:39:52 17/09] [SUCCESS] 📤 Đã gửi tin báo HỦY CƯỢC sang chủ thầu thau_tong_789:
+Hủy tin (khách (@khach_vip) hủy tin #1 - Lần #1):
+De 10=30k
+[22:39:52 17/09] [SUCCESS] ✅ Đã hủy thành công tin #1 của khách (@khach_vip). Đã cập nhật lại bảng cược.
+[12:09:11 18/09] [SUCCESS] Bot đã BẬT (Chế độ Tự Động): Tự động nhận cược, cân chuyển và Ok lại cho khách.
+[12:09:12 18/09] [INFO] Bot Telegram bắt đầu lắng nghe tin cược...
+[12:09:23 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:10:28 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:11:32 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:12:30 18/09] [SUCCESS] Bot đã BẬT (Chế độ Tự Động): Tự động nhận cược, cân chuyển và Ok lại cho khách.
+[12:12:31 18/09] [INFO] Bot Telegram bắt đầu lắng nghe tin cược...
+[12:12:36 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:12:47 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:13:40 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:13:51 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:14:55 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:15:06 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:16:17 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:16:31 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:17:33 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:17:44 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:19:10 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:19:24 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:20:17 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:20:33 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:21:30 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:21:41 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:22:40 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:22:50 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:23:44 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:23:55 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:24:53 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:25:28 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:26:07 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:26:38 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:27:15 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:28:03 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:28:25 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:29:07 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:29:29 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:30:16 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:30:38 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:31:45 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:31:50 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:32:49 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:32:55 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:33:56 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:34:02 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:35:11 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:35:27 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:36:37 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:36:42 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:37:41 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:37:46 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:38:46 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:38:50 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:39:57 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:40:01 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:41:06 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:41:11 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:42:10 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:42:16 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:43:14 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:43:20 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:44:24 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:44:31 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:45:28 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:45:35 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:46:43 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:46:55 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:47:48 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:47:59 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:48:52 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:49:03 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:49:55 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:50:16 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:51:05 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[12:51:26 18/09] [WARN] Xung đột getUpdates: Có tiến trình bot khác đang chạy trùng lặp.
+[13:41:33 18/09] [INFO] Khách (@alice_uname): hủy (Yêu cầu hủy tin - target_idx=None, reply_mid=55555)
+[13:41:33 18/09] [SUCCESS] 📤 Đã gửi tin báo HỦY CƯỢC sang chủ thầu contractor789:
+Hủy tin (Lần #1):
+Đề 12.34x50
+[13:41:33 18/09] [SUCCESS] ✅ Đã hủy thành công tin #1 của khách (@alice_uname). Đã cập nhật lại bảng cược.
+[13:41:46 18/09] [INFO] Khách (@alice_uname): hủy (Yêu cầu hủy tin - target_idx=None, reply_mid=55555)
+[13:41:46 18/09] [SUCCESS] 📤 Đã gửi tin báo HỦY CƯỢC sang chủ thầu contractor789:
+Hủy tin (Lần #1):
+Đề 12.34x50
+[13:41:46 18/09] [SUCCESS] ✅ Đã hủy thành công tin #1 của khách (@alice_uname). Đã cập nhật lại bảng cược.
+[13:42:10 18/09] [INFO] Khách (@alice_uname): hủy (Yêu cầu hủy tin - target_idx=None, reply_mid=55555)
+[13:42:10 18/09] [SUCCESS] 📤 Đã gửi tin báo HỦY CƯỢC sang chủ thầu contractor789:
+Hủy tin (Lần #1):
+Đề 12.34x50
+[13:42:10 18/09] [SUCCESS] ✅ Đã hủy thành công tin #1 của khách (@alice_uname). Đã cập nhật lại bảng cược.
+[13:42:10 18/09] [INFO] Khách (@alice_uname): huy tin nay giup e (Yêu cầu hủy tin - target_idx=2, reply_mid=77777)
+[13:42:10 18/09] [SUCCESS] ✅ Đã hủy thành công tin #2 của khách (@alice_uname). Đã cập nhật lại bảng cược.
+[13:42:10 18/09] [INFO] Khách (@alice_uname): hủy 3 (Yêu cầu hủy tin - target_idx=3, reply_mid=None)
+[13:42:10 18/09] [SUCCESS] ✅ Đã hủy thành công tin #3 của khách (@alice_uname). Đã cập nhật lại bảng cược.
+[18:26] [WARN] ⚠️ Từ chối tin từ '(@khach1)' (ID: 12345): Người gửi KHÔNG có trong danh sách Khách chỉ định! (Để nhận từ tất cả, hãy điền dấu * vào ô Khách chỉ định)
+[18:26] [WARN] Khách (@congty987): de 55x50 (⛔ Hết giờ không nhận nữa)
+[18:26] [WARN] Khách (@congty987): de 55x50 (⛔ Hết giờ không nhận nữa)
+[18:26] [WARN] Khách (@congty987): de 55x50 lo 12x10d (⛔ Hết giờ không nhận nữa (Lô đã khóa lúc 18:10))
+[18:26] [WARN] Khách (@congty987): de 55x50 (⛔ Hết giờ không nhận nữa)
+[18:26] [WARN] Khách (@congty987): de 55x50 lo 12x10d (⛔ Hết giờ không nhận nữa (Lô đã khóa lúc 18:10))
+[18:26] [INFO] Gửi chủ thầu 7715286942: Đề 55x35
+[18:26] [INFO] Khách (@congty987): de 55x50 (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[18:15] [INFO] Gửi chủ thầu 7715286942: Đề 55x35
+[18:15] [INFO] Khách (@congty987): de 55x50 (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[18:15] [INFO] Gửi chủ thầu 7715286942: Đề 55x35
+[18:15] [INFO] Khách (@congty987): de 55x50 (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[<MagicMock name='mock.strftime()' id='2449683074752'>] [WARN] Khách (@khach1): ⚠️ Không thể hủy tin #2 (cược Đề chỉ được hủy trước 18:24).
+[<MagicMock name='mock.strftime()' id='2449683074752'>] [WARN] ⚠️ Bot đang TẮT: Đã chặn gửi tin nhắn tới @Zeng86.
+[21:36] [WARN] Khách (@Zeng86): de d4x5 (⛔ Hết giờ không nhận nữa)
+[21:37] [INFO] Khách (@Zeng86): huy1 (Yêu cầu hủy tin - target_idx=1, reply_mid=None)
+[21:37] [WARN] Khách (@Zeng86): ⚠️ Không thể hủy tin #1 (cược Đề chỉ được hủy trước 18:24).
+[22:02:14 23/09] [WARN] Khách @Zeng86: ⚠️ Không thể hủy tin #1 (cược Lô chỉ được hủy trước 18:09).
+[22:02:14 23/09] [WARN] ⚠️ Bot đang TẮT: Đã chặn gửi tin nhắn tới @Zeng86.
+[22:02:14 23/09] [WARN] ⚠️ Bot đang TẮT: Đã chặn gửi tin nhắn tới @Zeng86.
+[22:02:14 23/09] [SUCCESS] ✅ Đã hủy thành công tin #1 của khách @Zeng86. Đã cập nhật lại bảng cược.
+[22:02:27 23/09] [INFO] Chủ thầu (@Zeng86): de 55 100k (chưa có Ok ở đầu tin -> tiếp tục đợi Ok)
+[22:02:27 23/09] [INFO] Chủ thầu (@Zeng86): de 55 100k (chưa có Ok ở đầu tin -> tiếp tục đợi Ok)
+[22:02:57 23/09] [WARN] ⚠️ Từ chối tin từ '(@khach1)' (ID: 999888777): Người gửi KHÔNG có trong danh sách Khách chỉ định! (Để nhận từ tất cả, hãy điền dấu * vào ô Khách chỉ định)
+[22:03:05 23/09] [WARN] Khách (@Zeng86): de 55 100k (⛔ Hết giờ không nhận nữa)
+[22:03:15 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 55x85
+[22:03:15 23/09] [INFO] Khách (@Zeng86): de 55 100k (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[18:15:00 23/09] [WARN] Khách (@test_player): lo 10 100d (⛔ Hết giờ lô)
+[18:15:00 23/09] [WARN] Khách (@test_player): lo 10 100d, de 20 50k (⛔ Hết giờ lô)
+[18:15:00 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 20x35
+[18:15:00 23/09] [INFO] Khách (@test_player): de 20 50k (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[18:15:00 23/09] [WARN] Khách (@test_player): de 20 50k (⛔ Hết giờ đề)
+[18:15:00 23/09] [WARN] Khách (@test_player): lo 10 100d, de 20 50k (⛔ Hết giờ đề)
+[18:15:00 23/09] [INFO] Gửi chủ thầu 7715286942: Lô 10x94
+[18:15:00 23/09] [INFO] Khách (@test_player): lo 10 100d (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[21:00:00 23/09] [WARN] Khách (@test_player): lo 10 100d (⛔ Hết giờ)
+[21:00:00 23/09] [WARN] Khách (@test_player): de 20 50k (⛔ Hết giờ)
+[21:00:00 23/09] [WARN] Khách (@test_player): lo 10 100d, de 20 50k (⛔ Hết giờ)
+[23:02:20 23/09] [WARN] Khách (@khach_a): de 10 50k (⛔ Hết giờ)
+[23:02:20 23/09] [WARN] Khách (@khach_a): lo 20 100d (⛔ Hết giờ)
+[23:02:37 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 10x35
+[23:03:04 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 10x35
+[23:03:04 23/09] [INFO] Khách (@khach_a): de 10 50k (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:04 23/09] [INFO] Gửi chủ thầu 7715286942: Lô 20x100
+[23:03:04 23/09] [INFO] Khách (@khach_a): lo 20 100d (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:04 23/09] [INFO] 📋 Đã loại bỏ 3 tin cược CHƯA OK ra khỏi danh sách tính tiền chốt sổ.
+[23:03:04 23/09] [SUCCESS] 💾 Đã lưu trữ an toàn toàn bộ dữ liệu cược & chốt tiền ngày 2026-09-23 để tra cứu đối soát.
+[23:03:04 23/09] [SUCCESS] 🎯 Đã chốt tiền thành công ngày 23/09/2026. Dữ liệu được bảo lưu và giữ nguyên trên màn hình đối soát đến 12h đêm.
+[23:03:22 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 10x15
+[23:03:22 23/09] [INFO] Khách (@khach_a): de 10 50k (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:22 23/09] [INFO] Gửi chủ thầu 7715286942: Lô 20x100
+[23:03:22 23/09] [INFO] Khách (@khach_a): lo 20 100d (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:22 23/09] [INFO] 📋 Đã loại bỏ 2 tin cược CHƯA OK ra khỏi danh sách tính tiền chốt sổ.
+[23:03:22 23/09] [SUCCESS] 💾 Đã lưu trữ an toàn toàn bộ dữ liệu cược & chốt tiền ngày 2026-09-23 để tra cứu đối soát.
+[23:03:22 23/09] [SUCCESS] 🎯 Đã chốt tiền thành công ngày 23/09/2026. Dữ liệu được bảo lưu và giữ nguyên trên màn hình đối soát đến 12h đêm.
+[23:03:37 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 10x35
+[23:03:37 23/09] [INFO] Khách (@khach_a): de 10 50k (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:37 23/09] [INFO] Gửi chủ thầu 7715286942: Lô 20x94
+[23:03:37 23/09] [INFO] Khách (@khach_a): lo 20 100d (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:37 23/09] [INFO] 📋 Đã loại bỏ 2 tin cược CHƯA OK ra khỏi danh sách tính tiền chốt sổ.
+[23:03:37 23/09] [SUCCESS] 💾 Đã lưu trữ an toàn toàn bộ dữ liệu cược & chốt tiền ngày 2026-09-23 để tra cứu đối soát.
+[23:03:37 23/09] [SUCCESS] 🎯 Đã chốt tiền thành công ngày 23/09/2026. Dữ liệu được bảo lưu và giữ nguyên trên màn hình đối soát đến 12h đêm.
+[23:03:51 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 10x35
+[23:03:51 23/09] [INFO] Khách (@khach_a): de 10 50k (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:51 23/09] [SUCCESS] Chủ thầu (@chuthau): Ok (đã xác nhận Ok toàn bộ)
+[23:03:51 23/09] [SUCCESS] Khách (@khach_a): de 10 50k (Chủ thầu đã Ok -> Đã nhắn lại Ok tin 1)
+[23:03:51 23/09] [INFO] Gửi chủ thầu 7715286942: Lô 20x94
+[23:03:51 23/09] [INFO] Khách (@khach_a): lo 20 100d (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:51 23/09] [INFO] 📋 Đã loại bỏ 1 tin cược CHƯA OK ra khỏi danh sách tính tiền chốt sổ.
+[23:03:51 23/09] [SUCCESS] 💾 Đã lưu trữ an toàn toàn bộ dữ liệu cược & chốt tiền ngày 2026-09-23 để tra cứu đối soát.
+[23:03:51 23/09] [SUCCESS] 🎯 Đã chốt tiền thành công ngày 23/09/2026. Dữ liệu được bảo lưu và giữ nguyên trên màn hình đối soát đến 12h đêm.
+[23:36:45 23/09] [WARN] ⚠️ Bot đang TẮT: Đã chặn gửi tin nhắn tới 12345.
+[23:36:45 23/09] [ERROR] ⚠️ Lỗi gửi tin báo tin treo #99 cho Chủ bot (1023927138): Chưa nhập Bot Token.
+[23:37:22 23/09] [SUCCESS] Khách @Zeng86 (1023927138): de 00x5 (Đã duyệt tin #2 -> Giữ lại 100%, đã nhắn Ok tin 1)
+[23:37:31 23/09] [WARN] Chủ bot đã TỪ CHỐI tin #2 của @Zeng86 (1023927138) ('de 00x5')

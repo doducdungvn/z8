@@ -1,0 +1,80 @@
+{
+  "bot_token": "",
+  "allowed_senders": [
+    "@congty987",
+    "@Zeng86"
+  ],
+  "target_recipient": "7715286942",
+  "auto_reply_client": true,
+  "auto_forward_excess": true,
+  "check_recipient_ack": true,
+  "cancel_detail_client": false,
+  "cancel_detail_contractor": false,
+  "ok_detail_client": false,
+  "ok_detail_contractor": false,
+  "mode": "instant",
+  "retain_config": {
+    "retain_type": "percentage",
+    "retain_de": 60,
+    "retain_lo": 50,
+    "retain_3c": 0,
+    "retain_x": 0,
+    "retain_use_branch": true,
+    "branch_de": 15,
+    "branch_lo": 6,
+    "branch_3c": 0,
+    "branch_x": 0
+  },
+  "price_config": {
+    "thau": {
+      "rateDeComm": 88,
+      "rateDePayout": 80,
+      "rateLoCost": 2190,
+      "rateLoPayout": 80,
+      "rateXienComm": 65,
+      "rateXien2Payout": 11,
+      "rateXien3Payout": 45,
+      "rateXien4Payout": 140,
+      "rate3CComm": 75,
+      "rate3CPayout": 400,
+      "rate3CApMa": 5
+    },
+    "chuyen": {
+      "rateDeComm": 88,
+      "rateDePayout": 80,
+      "rateLoCost": 2190,
+      "rateLoPayout": 80,
+      "rateXienComm": 65,
+      "rateXien2Payout": 11,
+      "rateXien3Payout": 45,
+      "rateXien4Payout": 140,
+      "rate3CComm": 75,
+      "rate3CPayout": 400,
+      "rate3CApMa": 5
+    }
+  },
+  "owner_chat_id": "@Zeng86",
+  "cleanup_after_seconds": 129600,
+  "cleanup_after_hours": 36.0,
+  "admin_password": "1986",
+  "authenticated_admins": [
+    "7715286942"
+  ],
+  "client_prices": {},
+  "forward_contractor_to_owner": true,
+  "forward_client_to_owner": true,
+  "bet_filter_enabled": true,
+  "bet_filter_keywords": "",
+  "bot_mode": "auto",
+  "history_retention_hours": 36.0,
+  "history_retention_days": 1.5,
+  "cutoff_config": {
+    "de_enabled": true,
+    "de_hour": 18,
+    "de_minute": 25,
+    "lo_enabled": true,
+    "lo_hour": 18,
+    "lo_minute": 10,
+    "admin_bypass": false
+  }
+}
