@@ -7262,7 +7262,7 @@ function resetTable() {
         <div id="tgHeaderAdminControls" class="flex items-center gap-1 sm:gap-1.5 hidden">
           <button id="btnToggleBotRun" type="button" class="px-2 sm:px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white rounded-xs text-xs font-semibold border border-emerald-800 flex items-center gap-1 cursor-pointer shrink-0">
             <i class="fa-solid fa-play text-[10px]"></i>
-            <span id="lblToggleBotRun">Bật Bot</span>
+            <span id="lblToggleBotRun">Bật (tự động)</span>
           </button>
           <button id="btnLockTgModal" type="button" onclick="lockTgModal()" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-slate-200 border border-slate-600 rounded-xs text-xs font-semibold flex items-center gap-1 cursor-pointer shrink-0" title="Khóa cài đặt ngay">
             <i class="fa-solid fa-lock text-[10px]"></i>
@@ -8724,24 +8724,24 @@ function resetTable() {
 
         if (botMode === "auto" && isRunning) {
           if (badge) {
-            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span><span>BẬT (${srvLabel})</span>`;
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span><span>Đang bật</span>`;
             badge.className = "flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-xs text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-emerald-900/60 text-emerald-300 border border-emerald-600 shrink-0";
           }
           if (btnToggle) {
             btnToggle.className = "px-2 sm:px-2.5 py-1 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white rounded-xs text-xs font-bold border border-amber-700 flex items-center gap-1 cursor-pointer shadow-xs transition shrink-0";
-            btnToggle.title = "Bot đang TỰ ĐỘNG nhận cược và trả Ok cho khách. Bấm để Tạm dừng (Treo tin chờ duyệt tay)";
-            btnToggle.innerHTML = `<i class="fa-solid fa-pause text-[10px]"></i><span id="lblToggleBotRun"><span class="hidden sm:inline">Tạm dừng (Treo tin)</span><span class="sm:hidden">Treo tin</span></span>`;
+            btnToggle.title = "Bot đang TỰ ĐỘNG nhận cược và trả Ok cho khách. Bấm để Tắt (chuyển sang Treo tin chờ duyệt tay)";
+            btnToggle.innerHTML = `<i class="fa-solid fa-pause text-[10px]"></i><span id="lblToggleBotRun"><span>Tắt (treo tin)</span></span>`;
           }
         } else {
           if (badge) {
             const pendingTxt = pendingCount > 0 ? ` (${pendingCount})` : '';
-            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span><span>TREO TIN${pendingTxt} (${srvLabel})</span>`;
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span><span>Đang tắt${pendingTxt}</span>`;
             badge.className = "flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-xs text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-amber-900/60 text-amber-300 border border-amber-600 shrink-0";
           }
           if (btnToggle) {
             btnToggle.className = "px-2 sm:px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xs text-xs font-bold border border-emerald-700 flex items-center gap-1 cursor-pointer shadow-xs transition shrink-0";
             btnToggle.title = "Bot đang ở chế độ Treo tin. Bấm để BẬT chế độ TỰ ĐỘNG nhận cược & Ok khách";
-            btnToggle.innerHTML = `<i class="fa-solid fa-play text-[10px]"></i><span id="lblToggleBotRun"><span class="hidden sm:inline">Bật Bot (Tự động)</span><span class="sm:hidden">Bật Bot</span></span>`;
+            btnToggle.innerHTML = `<i class="fa-solid fa-play text-[10px]"></i><span id="lblToggleBotRun"><span>Bật (tự động)</span></span>`;
           }
         }
 
@@ -8785,9 +8785,7 @@ function resetTable() {
         }
       } catch (err) {
         if (badge) {
-          const isCloud = (TG_BOT_API || '').includes('onrender.com');
-          const srvLabel = isCloud ? 'CLOUD' : 'LOCAL';
-          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span><span>MẤT KẾT NỐI (${srvLabel})</span>`;
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span><span>MẤT KẾT NỐI</span>`;
           badge.className = "flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-xs text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-rose-950 text-rose-400 border border-rose-800 shrink-0";
         }
         if (tgDot) {
@@ -11020,9 +11018,9 @@ function resetTable() {
       const btnToggle = document.getElementById('btnToggleBotRun');
       if (btnToggle) {
         btnToggle.addEventListener('click', async () => {
-          const isTurningOff = btnToggle.innerText.includes("Tắt") || btnToggle.innerText.includes("Dừng") || btnToggle.innerText.includes("Treo");
+          const isTurningOff = btnToggle.innerText.toLowerCase().includes("tắt") || btnToggle.innerText.toLowerCase().includes("dừng");
           if (isTurningOff) {
-            const ok = confirm("Chuyển Bot sang chế độ TREO TIN (Tạm dừng tự động)?\n\n- Khi ở chế độ này, bot sẽ KHÔNG tự động Ok khách mà lưu tin vào hàng đợi chờ bạn duyệt tay.\n- Bạn có muốn chuyển không?");
+            const ok = confirm("Chuyển Bot sang chế độ TẮT (TREO TIN)?\n\n- Khi ở chế độ này, bot sẽ KHÔNG tự động Ok khách mà lưu tin vào hàng đợi chờ bạn duyệt tay.\n- Bạn có muốn chuyển không?");
             if (!ok) return;
           }
           const endpoint = isTurningOff ? "/api/bot/stop" : "/api/bot/start";
