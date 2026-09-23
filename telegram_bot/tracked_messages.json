@@ -52,5 +52,29 @@
     "message_id": 1001,
     "created_at": 1790172742.226738,
     "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "1023927138",
+    "message_id": 9999,
+    "created_at": 1790175111.9308684,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "11223344",
+    "message_id": 1003,
+    "created_at": 1790175785.4271262,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "11223344",
+    "message_id": 1004,
+    "created_at": 1790175795.82483,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "123456",
+    "message_id": 101,
+    "created_at": 1790176075.648331,
+    "tag": "incoming_bet"
   }
 ]

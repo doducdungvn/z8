@@ -111,7 +111,8 @@ class TelegramBotService:
                             "de_minute": 25,
                             "lo_enabled": True,
                             "lo_hour": 18,
-                            "lo_minute": 10
+                            "lo_minute": 10,
+                            "admin_bypass": False
                         }
                     # Đọc bổ sung từ biến môi trường (nếu có, tiện cho Cloud hosting)
                     if os.environ.get("TELEGRAM_BOT_TOKEN") and not cfg.get("bot_token"):
@@ -156,7 +157,8 @@ class TelegramBotService:
                 "de_minute": 25,
                 "lo_enabled": True,
                 "lo_hour": 18,
-                "lo_minute": 10
+                "lo_minute": 10,
+                "admin_bypass": False
             },
             "admin_password": "123456",
             "authenticated_admins": []
@@ -582,17 +584,19 @@ class TelegramBotService:
                     raw_txt = pb.get("raw_text", "").strip()
 
                     # Kiểm tra quy tắc trước 1 phút khi hết giờ không được hủy
-                    if not is_admin:
-                        pb_parsed = pb.get("parsed") or {}
-                        pb_summary = pb_parsed.get("summary") or pb.get("summary") or {}
-                        has_de = bool(pb_summary.get("de_count", 0) > 0 or pb_summary.get("bacang_count", 0) > 0 or pb_parsed.get("de") or pb_parsed.get("bacang"))
-                        has_lo = bool(pb_summary.get("lo_count", 0) > 0 or pb_summary.get("xien_count", 0) > 0 or pb_parsed.get("lo") or pb_parsed.get("xien2") or pb_parsed.get("xien3") or pb_parsed.get("xien4"))
-                        if not has_de and not has_lo and raw_txt:
-                            p_fb = parse_bet_message(raw_txt)
-                            s_fb = p_fb.get("summary", {})
-                            has_de = bool(s_fb.get("de_count", 0) > 0 or s_fb.get("bacang_count", 0) > 0)
-                            has_lo = bool(s_fb.get("lo_count", 0) > 0 or s_fb.get("xien_count", 0) > 0)
+                    pb_parsed = pb.get("parsed") or {}
+                    pb_summary = pb_parsed.get("summary") or pb.get("summary") or {}
+                    has_de = bool(pb_summary.get("de_count", 0) > 0 or pb_summary.get("bacang_count", 0) > 0 or pb_parsed.get("de") or pb_parsed.get("bacang"))
+                    has_lo = bool(pb_summary.get("lo_count", 0) > 0 or pb_summary.get("xien_count", 0) > 0 or pb_parsed.get("lo") or pb_parsed.get("xien2") or pb_parsed.get("xien3") or pb_parsed.get("xien4"))
+                    if not has_de and not has_lo and raw_txt:
+                        p_fb = parse_bet_message(raw_txt)
+                        s_fb = p_fb.get("summary", {})
+                        has_de = bool(s_fb.get("de_count", 0) > 0 or s_fb.get("bacang_count", 0) > 0)
+                        has_lo = bool(s_fb.get("lo_count", 0) > 0 or s_fb.get("xien_count", 0) > 0)
 
+                    cutoff_cfg = self.config.get("cutoff_config", {})
+                    admin_bypass = bool(cutoff_cfg.get("admin_bypass", False))
+                    if not (is_admin and admin_bypass):
                         can_cancel, err_cancel = self._check_cancel_cutoff(has_de, has_lo, m_idx)
                         if not can_cancel:
                             self.log(f"Khách {sender_label}: {err_cancel}", "WARN")
@@ -693,23 +697,25 @@ class TelegramBotService:
             }
 
         # Kiểm tra trước 1 phút khi hết giờ không cho hủy tin có loại hình đó
-        if not is_admin:
-            item_parsed = found_item.get("parsed") or {}
-            item_summary = found_item.get("summary") or item_parsed.get("summary") or {}
-            has_de = bool(item_summary.get("de_count", 0) > 0 or item_summary.get("bacang_count", 0) > 0 or item_parsed.get("de") or item_parsed.get("bacang"))
-            has_lo = bool(item_summary.get("lo_count", 0) > 0 or item_summary.get("xien_count", 0) > 0 or item_parsed.get("lo") or item_parsed.get("xien2") or item_parsed.get("xien3") or item_parsed.get("xien4"))
-            if not has_de and not has_lo and found_item.get("raw_text"):
-                p_fb = parse_bet_message(found_item["raw_text"])
-                s_fb = p_fb.get("summary", {})
-                has_de = bool(s_fb.get("de_count", 0) > 0 or s_fb.get("bacang_count", 0) > 0)
-                has_lo = bool(s_fb.get("lo_count", 0) > 0 or s_fb.get("xien_count", 0) > 0)
+        item_parsed = found_item.get("parsed") or {}
+        item_summary = found_item.get("summary") or item_parsed.get("summary") or {}
+        has_de = bool(item_summary.get("de_count", 0) > 0 or item_summary.get("bacang_count", 0) > 0 or item_parsed.get("de") or item_parsed.get("bacang"))
+        has_lo = bool(item_summary.get("lo_count", 0) > 0 or item_summary.get("xien_count", 0) > 0 or item_parsed.get("lo") or item_parsed.get("xien2") or item_parsed.get("xien3") or item_parsed.get("xien4"))
+        if not has_de and not has_lo and found_item.get("raw_text"):
+            p_fb = parse_bet_message(found_item["raw_text"])
+            s_fb = p_fb.get("summary", {})
+            has_de = bool(s_fb.get("de_count", 0) > 0 or s_fb.get("bacang_count", 0) > 0)
+            has_lo = bool(s_fb.get("lo_count", 0) > 0 or s_fb.get("xien_count", 0) > 0)
 
+        cutoff_cfg = self.config.get("cutoff_config", {})
+        admin_bypass = bool(cutoff_cfg.get("admin_bypass", False))
+        if not (is_admin and admin_bypass):
             can_cancel, err_cancel = self._check_cancel_cutoff(has_de, has_lo, target_msg_idx)
             if not can_cancel:
                 self.log(f"Khách {sender_label}: {err_cancel}", "WARN")
                 if self.config.get("forward_client_to_owner", False):
                     owner_cid = self.config.get("owner_chat_id")
-                    if owner_cid and str(chat_id_str) != str(owner_cid):
+                    if owner_cid:
                         self.send_telegram_message(str(owner_cid), f"⚠️ [TỪ CHỐI HỦY] Khách {sender_label} xin hủy tin #{target_msg_idx} nhưng: {err_cancel}")
                 return {
                     "success": False,
@@ -785,18 +791,7 @@ class TelegramBotService:
         # 5. Thông báo cho Chủ Bot (owner_chat_id)
         # CHỈ GỬI CHO CHỦ BOT MỚI NÊU RÕ KHÁCH NÀO ĐỂ CHỦ BOT QUẢN LÝ
         owner_cid = self.config.get("owner_chat_id")
-        is_same_owner = False
         if owner_cid:
-            clean_owner = str(owner_cid).strip().lstrip("@").lower()
-            clean_target = str(target_client_key).strip().lstrip("@").lower()
-            if clean_owner == clean_target:
-                is_same_owner = True
-            elif hasattr(self, "known_users"):
-                u_info = self.known_users.get(str(target_client_key), {})
-                if str(u_info.get("username", "")).lower() == clean_owner or str(u_info.get("user_id", "")) == clean_owner:
-                    is_same_owner = True
-
-        if owner_cid and not is_same_owner:
             owner_msg = (
                 f"🔔 <b>KHÁCH HỦY TIN #{target_msg_idx}:</b>\n"
                 f"👤 Khách: {sender_label}\n"
@@ -2500,6 +2495,26 @@ class TelegramBotService:
                         return
                     except Exception:
                         pass
+                elif arg1 in ["admin", "chubot", "bypass"]:
+                    if len(parts) >= 3:
+                        sub = parts[2].lower().strip()
+                        if sub in ["bat", "on", "1", "mo"]:
+                            cc["admin_bypass"] = True
+                            self.save_config()
+                            self.send_telegram_message(str(chat_id), "✅ Đã <b>BẬT</b> chế độ Chủ Bot & Admin bỏ qua giờ khóa (nhận & hủy tin bất kỳ lúc nào).")
+                            return
+                        elif sub in ["tat", "off", "0", "huy", "dong"]:
+                            cc["admin_bypass"] = False
+                            self.save_config()
+                            self.send_telegram_message(str(chat_id), "✅ Đã <b>TẮT</b> chế độ Chủ Bot bỏ qua giờ khóa (Chủ Bot cũng bị giới hạn giờ như khách để tiện test).")
+                            return
+                    else:
+                        cur_bp = cc.get("admin_bypass", False)
+                        cc["admin_bypass"] = not cur_bp
+                        self.save_config()
+                        st_txt = "BẬT (Nhận & hủy tự do)" if cc["admin_bypass"] else "TẮT (Áp dụng giới hạn như khách)"
+                        self.send_telegram_message(str(chat_id), f"✅ Đã chuyển trạng thái Chủ Bot & Admin bỏ qua giờ khóa sang: <b>{st_txt}</b>")
+                        return
                 elif arg1 in ["tat", "off", "0"]:
                     cc["de_enabled"] = False
                     cc["lo_enabled"] = False
@@ -2515,6 +2530,7 @@ class TelegramBotService:
 
             st_de = "BẬT" if cc.get("de_enabled", True) else "TẮT"
             st_lo = "BẬT" if cc.get("lo_enabled", True) else "TẮT"
+            st_bp = "BẬT (Nhận & hủy tự do)" if cc.get("admin_bypass", False) else "TẮT (Áp dụng giới hạn như khách)"
             h_de = cc.get("de_hour", 18)
             m_de = cc.get("de_minute", 25)
             h_lo = cc.get("lo_hour", 18)
@@ -2530,6 +2546,7 @@ class TelegramBotService:
                 f"━━━━━━━━━━━━━━━━━━\n"
                 f"• <b>Khóa Đề:</b> <code>{h_de:02d}:{m_de:02d}</code> ({st_de}) — <i>Hạn hủy: trước <code>{de_dl_str}</code></i>\n"
                 f"• <b>Khóa Lô:</b> <code>{h_lo:02d}:{m_lo:02d}</code> ({st_lo}) — <i>Hạn hủy: trước <code>{lo_dl_str}</code></i>\n"
+                f"• <b>Chủ Bot & Admin:</b> <b>{st_bp}</b>\n"
                 f"• <i>(Khách không thể hủy tin có cược loại hình đó từ trước giờ khóa 1 phút)</i>\n"
                 f"• <i>(Qua 12h đêm tự động mở nhận cược ngày mới từ Tin #1)</i>\n"
                 f"━━━━━━━━━━━━━━━━━━\n"
@@ -2538,6 +2555,7 @@ class TelegramBotService:
                 f"• Đặt giờ Lô: <code>/khoagio lo 18:10</code>\n"
                 f"• Bật/Tắt Đề: <code>/khoagio de bat</code> | <code>/khoagio de tat</code>\n"
                 f"• Bật/Tắt Lô: <code>/khoagio lo bat</code> | <code>/khoagio lo tat</code>\n"
+                f"• Bật/Tắt Chủ Bot bỏ qua: <code>/khoagio admin bat</code> | <code>/khoagio admin tat</code>\n"
                 f"• Đặt cả hai: <code>/khoagio 18:25 18:10</code>"
             )
             self.send_telegram_message(str(chat_id), reply)
@@ -2993,13 +3011,16 @@ class TelegramBotService:
             # Forward tin nhắn không phải cược sang cho Chủ Bot (nếu bật tùy chọn)
             if self.config.get("forward_client_to_owner", False):
                 owner_cid = self.config.get("owner_chat_id")
-                if owner_cid and str(chat_id) != str(owner_cid):
+                if owner_cid:
                     self.send_telegram_message(str(owner_cid), f"📩 Khách {sender_label}: {text}")
             return
 
         # 2a. KIỂM TRA GIỜ KHÓA NHẬN CƯỢC (Đề và Lô riêng biệt)
-        if not user_is_admin:
-            cutoff_cfg = self.config.get("cutoff_config", {})
+        cutoff_cfg = self.config.get("cutoff_config", {})
+        admin_bypass = bool(cutoff_cfg.get("admin_bypass", False))
+        should_check_cutoff = not (user_is_admin and admin_bypass)
+
+        if should_check_cutoff:
             de_enabled = cutoff_cfg.get("de_enabled", True)
             try:
                 de_hour = int(cutoff_cfg.get("de_hour", 18))
@@ -3026,24 +3047,25 @@ class TelegramBotService:
             has_lo = bool(summary.get("lo_count", 0) > 0 or summary.get("xien_count", 0) > 0)
 
             cutoff_rejected = False
-            reject_msg = "Hết giờ không nhận nữa"
+            reject_msg = "Hết giờ"
 
-            if has_de and has_lo:
-                if is_de_expired and is_lo_expired:
-                    cutoff_rejected = True
-                    reject_msg = "Hết giờ không nhận nữa"
-                elif is_lo_expired and not is_de_expired:
-                    cutoff_rejected = True
-                    reject_msg = f"Hết giờ không nhận nữa (Lô đã khóa lúc {lo_hour:02d}:{lo_minute:02d})"
-                elif is_de_expired and not is_lo_expired:
-                    cutoff_rejected = True
-                    reject_msg = f"Hết giờ không nhận nữa (Đề đã khóa lúc {de_hour:02d}:{de_minute:02d})"
-            elif has_de and is_de_expired:
+            all_expired = False
+            if de_enabled and lo_enabled:
+                all_expired = is_de_expired and is_lo_expired
+            elif de_enabled:
+                all_expired = is_de_expired
+            elif lo_enabled:
+                all_expired = is_lo_expired
+
+            if all_expired and (is_de_expired or is_lo_expired):
                 cutoff_rejected = True
-                reject_msg = "Hết giờ không nhận nữa"
+                reject_msg = "Hết giờ"
             elif has_lo and is_lo_expired:
                 cutoff_rejected = True
-                reject_msg = "Hết giờ không nhận nữa"
+                reject_msg = "Hết giờ lô"
+            elif has_de and is_de_expired:
+                cutoff_rejected = True
+                reject_msg = "Hết giờ đề"
 
             if cutoff_rejected:
                 if user_msg_id and chat_id:
@@ -3052,7 +3074,7 @@ class TelegramBotService:
                 self.log(f"Khách {sender_label}: {text} (⛔ {reject_msg})", "WARN")
                 if self.config.get("forward_client_to_owner", False):
                     owner_cid = self.config.get("owner_chat_id")
-                    if owner_cid and str(chat_id) != str(owner_cid):
+                    if owner_cid:
                         self.send_telegram_message(str(owner_cid), f"⛔ [HẾT GIỜ] Khách {sender_label}: {text} -> Bot báo: {reject_msg}")
                 return
 
@@ -3144,7 +3166,7 @@ class TelegramBotService:
         # Forward tin nhắn cược của khách sang cho Chủ Bot (nếu bật tùy chọn)
         if self.config.get("forward_client_to_owner", False):
             owner_cid = self.config.get("owner_chat_id")
-            if owner_cid and str(chat_id) != str(owner_cid):
+            if owner_cid:
                 self.send_telegram_message(str(owner_cid), f"📩 Khách {sender_label} (tin #{msg_idx}): {text}")
 
         # 3. Cân bảng và tính phần cược thừa

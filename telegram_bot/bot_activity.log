@@ -132,3 +132,27 @@ Hủy tin (Lần #1):
 [18:15] [INFO] Khách (@congty987): de 55x50 (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
 [<MagicMock name='mock.strftime()' id='2449683074752'>] [WARN] Khách (@khach1): ⚠️ Không thể hủy tin #2 (cược Đề chỉ được hủy trước 18:24).
 [<MagicMock name='mock.strftime()' id='2449683074752'>] [WARN] ⚠️ Bot đang TẮT: Đã chặn gửi tin nhắn tới @Zeng86.
+[21:36] [WARN] Khách (@Zeng86): de d4x5 (⛔ Hết giờ không nhận nữa)
+[21:37] [INFO] Khách (@Zeng86): huy1 (Yêu cầu hủy tin - target_idx=1, reply_mid=None)
+[21:37] [WARN] Khách (@Zeng86): ⚠️ Không thể hủy tin #1 (cược Đề chỉ được hủy trước 18:24).
+[22:02:14 23/09] [WARN] Khách @Zeng86: ⚠️ Không thể hủy tin #1 (cược Lô chỉ được hủy trước 18:09).
+[22:02:14 23/09] [WARN] ⚠️ Bot đang TẮT: Đã chặn gửi tin nhắn tới @Zeng86.
+[22:02:14 23/09] [WARN] ⚠️ Bot đang TẮT: Đã chặn gửi tin nhắn tới @Zeng86.
+[22:02:14 23/09] [SUCCESS] ✅ Đã hủy thành công tin #1 của khách @Zeng86. Đã cập nhật lại bảng cược.
+[22:02:27 23/09] [INFO] Chủ thầu (@Zeng86): de 55 100k (chưa có Ok ở đầu tin -> tiếp tục đợi Ok)
+[22:02:27 23/09] [INFO] Chủ thầu (@Zeng86): de 55 100k (chưa có Ok ở đầu tin -> tiếp tục đợi Ok)
+[22:02:57 23/09] [WARN] ⚠️ Từ chối tin từ '(@khach1)' (ID: 999888777): Người gửi KHÔNG có trong danh sách Khách chỉ định! (Để nhận từ tất cả, hãy điền dấu * vào ô Khách chỉ định)
+[22:03:05 23/09] [WARN] Khách (@Zeng86): de 55 100k (⛔ Hết giờ không nhận nữa)
+[22:03:15 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 55x85
+[22:03:15 23/09] [INFO] Khách (@Zeng86): de 55 100k (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[18:15:00 23/09] [WARN] Khách (@test_player): lo 10 100d (⛔ Hết giờ lô)
+[18:15:00 23/09] [WARN] Khách (@test_player): lo 10 100d, de 20 50k (⛔ Hết giờ lô)
+[18:15:00 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 20x35
+[18:15:00 23/09] [INFO] Khách (@test_player): de 20 50k (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[18:15:00 23/09] [WARN] Khách (@test_player): de 20 50k (⛔ Hết giờ đề)
+[18:15:00 23/09] [WARN] Khách (@test_player): lo 10 100d, de 20 50k (⛔ Hết giờ đề)
+[18:15:00 23/09] [INFO] Gửi chủ thầu 7715286942: Lô 10x94
+[18:15:00 23/09] [INFO] Khách (@test_player): lo 10 100d (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[21:00:00 23/09] [WARN] Khách (@test_player): lo 10 100d (⛔ Hết giờ)
+[21:00:00 23/09] [WARN] Khách (@test_player): de 20 50k (⛔ Hết giờ)
+[21:00:00 23/09] [WARN] Khách (@test_player): lo 10 100d, de 20 50k (⛔ Hết giờ)

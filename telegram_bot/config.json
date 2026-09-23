@@ -74,6 +74,7 @@
     "de_minute": 25,
     "lo_enabled": true,
     "lo_hour": 18,
-    "lo_minute": 10
+    "lo_minute": 10,
+    "admin_bypass": false
   }
 }
