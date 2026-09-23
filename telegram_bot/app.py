@@ -156,6 +156,8 @@ def update_config():
         current["price_config"] = data["price_config"]
     if "client_prices" in data:
         current["client_prices"] = data["client_prices"]
+    if "cutoff_config" in data:
+        current["cutoff_config"] = data["cutoff_config"]
     if "cleanup_after_hours" in data:
         try:
             h = float(data["cleanup_after_hours"])

@@ -33,5 +33,19 @@
     "username": "alice_uname",
     "first_name": "Alice",
     "updated_at": "13:42:10 18/09"
+  },
+  "12345": {
+    "user_id": "12345",
+    "chat_id": 12345,
+    "username": "khach1",
+    "first_name": "Khach",
+    "updated_at": "18:26"
+  },
+  "99999": {
+    "user_id": "99999",
+    "chat_id": 99999,
+    "username": "congty987",
+    "first_name": "Cong Ty",
+    "updated_at": "18:15"
   }
 }

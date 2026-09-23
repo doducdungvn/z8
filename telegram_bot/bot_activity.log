@@ -118,3 +118,17 @@ Hủy tin (Lần #1):
 [13:42:10 18/09] [SUCCESS] ✅ Đã hủy thành công tin #2 của khách (@alice_uname). Đã cập nhật lại bảng cược.
 [13:42:10 18/09] [INFO] Khách (@alice_uname): hủy 3 (Yêu cầu hủy tin - target_idx=3, reply_mid=None)
 [13:42:10 18/09] [SUCCESS] ✅ Đã hủy thành công tin #3 của khách (@alice_uname). Đã cập nhật lại bảng cược.
+[18:26] [WARN] ⚠️ Từ chối tin từ '(@khach1)' (ID: 12345): Người gửi KHÔNG có trong danh sách Khách chỉ định! (Để nhận từ tất cả, hãy điền dấu * vào ô Khách chỉ định)
+[18:26] [WARN] Khách (@congty987): de 55x50 (⛔ Hết giờ không nhận nữa)
+[18:26] [WARN] Khách (@congty987): de 55x50 (⛔ Hết giờ không nhận nữa)
+[18:26] [WARN] Khách (@congty987): de 55x50 lo 12x10d (⛔ Hết giờ không nhận nữa (Lô đã khóa lúc 18:10))
+[18:26] [WARN] Khách (@congty987): de 55x50 (⛔ Hết giờ không nhận nữa)
+[18:26] [WARN] Khách (@congty987): de 55x50 lo 12x10d (⛔ Hết giờ không nhận nữa (Lô đã khóa lúc 18:10))
+[18:26] [INFO] Gửi chủ thầu 7715286942: Đề 55x35
+[18:26] [INFO] Khách (@congty987): de 55x50 (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[18:15] [INFO] Gửi chủ thầu 7715286942: Đề 55x35
+[18:15] [INFO] Khách (@congty987): de 55x50 (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[18:15] [INFO] Gửi chủ thầu 7715286942: Đề 55x35
+[18:15] [INFO] Khách (@congty987): de 55x50 (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[<MagicMock name='mock.strftime()' id='2449683074752'>] [WARN] Khách (@khach1): ⚠️ Không thể hủy tin #2 (cược Đề chỉ được hủy trước 18:24).
+[<MagicMock name='mock.strftime()' id='2449683074752'>] [WARN] ⚠️ Bot đang TẮT: Đã chặn gửi tin nhắn tới @Zeng86.

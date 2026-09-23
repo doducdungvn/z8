@@ -99,42 +99,54 @@ def fetch_xsmb(date_str: str = None) -> dict:
     # 1. Nếu là ngày hôm nay, thử lấy từ feed trực tiếp trước (phù hợp lúc đang quay thưởng)
     if is_today:
         try:
-            live_url = "https://www.minhngoc.net.vn/getkqxs/mien-bac.js"
+            live_url = f"https://www.minhngoc.net.vn/getkqxs/mien-bac.js?t={int(datetime.now().timestamp())}"
             req = urllib.request.Request(live_url, headers=headers)
             with urllib.request.urlopen(req, timeout=8) as resp:
                 content = resp.read().decode("utf-8", errors="ignore")
 
             appends = re.findall(r"\$\(\"#box_kqxs_minhngoc\"\)\.append\('(.*?)'\);", content)
-            full_html = "".join(appends).replace(r"\'", "'").replace(r'\"', '"').replace(r"\/", "/")
+            
+            # Tìm riêng chunk chứa bảng giải thưởng (bắt buộc bỏ qua appends[0] chứa select box chọn ngày)
+            table_chunk = None
+            for app in appends:
+                clean_app = app.replace(r"\'", "'").replace(r'\"', '"').replace(r"\/", "/")
+                if "giaidb" in clean_app or "bkqtinhmienbac_mini" in clean_app:
+                    table_chunk = clean_app
+                    break
 
-            date_match = re.search(r"(\d{1,2})[-/](\d{1,2})[-/](\d{4})", full_html)
-            if date_match:
-                d_found = f"{int(date_match.group(1)):02d}/{int(date_match.group(2)):02d}/{int(date_match.group(3))}"
-                # BẮT BUỘC: Ngày trong feed trực tiếp phải khớp đúng ngày hôm nay target_date_slash
-                if d_found == target_date_slash:
-                    parser = MinhNgocParser()
-                    parser.feed(full_html)
-                    prizes = parser.prizes
-                    if len(prizes) >= 27:
-                        db = parser.db or prizes[0]
-                        return {
-                            "success": True,
-                            "date": target_date_slash,
-                            "requested_date": target_date_slash,
-                            "special_prize": db,
-                            "special_last2": db[-2:] if len(db) >= 2 else "",
-                            "special_last3": db[-3:] if len(db) >= 3 else "",
-                            "prizes": prizes[:27],
-                            "all_last2": [p[-2:] for p in prizes[:27] if len(p) >= 2],
-                            "is_complete": True,
-                            "error": ""
-                        }
+            if table_chunk:
+                # BẮT BUỘC: Ngày phải được lấy từ trong chính bảng kết quả (thẻ <td class="ngay">)
+                date_match = re.search(r'class=[\'"]ngay[\'"][^>]*>[\s\S]*?(\d{1,2})[-/](\d{1,2})[-/](\d{4})', table_chunk)
+                if not date_match:
+                    date_match = re.search(r"(\d{1,2})[-/](\d{1,2})[-/](\d{4})", table_chunk)
+
+                if date_match:
+                    d_found = f"{int(date_match.group(1)):02d}/{int(date_match.group(2)):02d}/{int(date_match.group(3))}"
+                    # BẮT BUỘC: Ngày in trên bảng kết quả phải khớp đúng ngày hôm nay target_date_slash
+                    if d_found == target_date_slash:
+                        parser = MinhNgocParser()
+                        parser.feed(table_chunk)
+                        prizes = parser.prizes
+                        if len(prizes) >= 27:
+                            db = parser.db or prizes[0]
+                            return {
+                                "success": True,
+                                "date": target_date_slash,
+                                "requested_date": target_date_slash,
+                                "special_prize": db,
+                                "special_last2": db[-2:] if len(db) >= 2 else "",
+                                "special_last3": db[-3:] if len(db) >= 3 else "",
+                                "prizes": prizes[:27],
+                                "all_last2": [p[-2:] for p in prizes[:27] if len(p) >= 2],
+                                "is_complete": True,
+                                "error": ""
+                            }
         except Exception:
             pass
 
     # 2. Lấy từ trang lưu trữ theo ngày (minhngoc.net.vn/ket-qua-xo-so/mien-bac/DD-MM-YYYY.html)
     try:
-        archive_url = f"https://www.minhngoc.net.vn/ket-qua-xo-so/mien-bac/{target_date_dash}.html"
+        archive_url = f"https://www.minhngoc.net.vn/ket-qua-xo-so/mien-bac/{target_date_dash}.html?t={int(datetime.now().timestamp())}"
         req = urllib.request.Request(archive_url, headers=headers)
         with urllib.request.urlopen(req, timeout=10) as resp:
             final_url = resp.geturl()
@@ -159,7 +171,9 @@ def fetch_xsmb(date_str: str = None) -> dict:
         target_chunk = boxes[0] if boxes else html
 
         # KIỂM TRA 2: Xác nhận ngày in trong HTML box có đúng là target_date_slash hay không
-        date_match = re.search(r"(\d{1,2})[-/](\d{1,2})[-/](\d{4})", target_chunk)
+        date_match = re.search(r'class=[\'"](?:t?ngay)[\'"][^>]*>[\s\S]*?(\d{1,2})[-/](\d{1,2})[-/](\d{4})', target_chunk)
+        if not date_match:
+            date_match = re.search(r"(\d{1,2})[-/](\d{1,2})[-/](\d{4})", target_chunk)
         if date_match:
             d_found = f"{int(date_match.group(1)):02d}/{int(date_match.group(2)):02d}/{int(date_match.group(3))}"
             if d_found != target_date_slash:

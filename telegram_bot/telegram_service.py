@@ -104,6 +104,15 @@ class TelegramBotService:
                         cfg["bet_filter_keywords"] = ""
                     if "bot_mode" not in cfg:
                         cfg["bot_mode"] = "auto"
+                    if "cutoff_config" not in cfg:
+                        cfg["cutoff_config"] = {
+                            "de_enabled": True,
+                            "de_hour": 18,
+                            "de_minute": 25,
+                            "lo_enabled": True,
+                            "lo_hour": 18,
+                            "lo_minute": 10
+                        }
                     # Đọc bổ sung từ biến môi trường (nếu có, tiện cho Cloud hosting)
                     if os.environ.get("TELEGRAM_BOT_TOKEN") and not cfg.get("bot_token"):
                         cfg["bot_token"] = os.environ.get("TELEGRAM_BOT_TOKEN")
@@ -141,6 +150,14 @@ class TelegramBotService:
             "cleanup_after_seconds": 86400,
             "cleanup_after_hours": 24.0,
             "history_retention_hours": 36.0,
+            "cutoff_config": {
+                "de_enabled": True,
+                "de_hour": 18,
+                "de_minute": 25,
+                "lo_enabled": True,
+                "lo_hour": 18,
+                "lo_minute": 10
+            },
             "admin_password": "123456",
             "authenticated_admins": []
         }
@@ -489,7 +506,54 @@ class TelegramBotService:
         self.log(f"Đã {status_txt} tin chuyển #{step_idx + 1}. Đã cập nhật lại bảng cược & tiền thầu.", "SUCCESS")
         return {"success": True, "voided": voided}
 
-    def cancel_client_bet_by_index(self, chat_id_str: str, sender_label: str, target_msg_idx: int = None, target_msg_id: int = None, target_raw_text: str = None) -> dict:
+    def _check_cancel_cutoff(self, has_de: bool, has_lo: bool, msg_idx = None) -> tuple[bool, str]:
+        """Kiểm tra điều kiện: Trước 1 phút khi hết giờ nhận cược của loại hình nào
+        thì không cho phép hủy tin có chứa loại hình đó (và khi đã hết giờ cũng không hủy được).
+        """
+        cutoff_cfg = self.config.get("cutoff_config", {})
+        de_enabled = cutoff_cfg.get("de_enabled", True)
+        try:
+            de_hour = int(cutoff_cfg.get("de_hour", 18))
+            de_minute = int(cutoff_cfg.get("de_minute", 25))
+        except Exception:
+            de_hour, de_minute = 18, 25
+
+        lo_enabled = cutoff_cfg.get("lo_enabled", True)
+        try:
+            lo_hour = int(cutoff_cfg.get("lo_hour", 18))
+            lo_minute = int(cutoff_cfg.get("lo_minute", 10))
+        except Exception:
+            lo_hour, lo_minute = 18, 10
+
+        now_v = now_vn()
+        cur_min = now_v.hour * 60 + now_v.minute
+
+        # Thời hạn hủy: trước giờ hết nhận 1 phút
+        lo_cancel_deadline = (lo_hour * 60 + lo_minute) - 1
+        de_cancel_deadline = (de_hour * 60 + de_minute) - 1
+
+        lo_dl_h = (lo_cancel_deadline // 60) % 24
+        lo_dl_m = lo_cancel_deadline % 60
+
+        de_dl_h = (de_cancel_deadline // 60) % 24
+        de_dl_m = de_cancel_deadline % 60
+
+        is_lo_expired = lo_enabled and (cur_min >= lo_cancel_deadline)
+        is_de_expired = de_enabled and (cur_min >= de_cancel_deadline)
+
+        prefix = f"tin #{msg_idx} " if msg_idx else ""
+
+        # Nếu tin có chứa Lô và đã quá hạn hủy Lô (trước giờ khóa 1 phút hoặc đã hết giờ)
+        if has_lo and is_lo_expired:
+            return False, f"⚠️ Không thể hủy {prefix}(cược Lô chỉ được hủy trước {lo_dl_h:02d}:{lo_dl_m:02d})."
+
+        # Nếu tin có chứa Đề và đã quá hạn hủy Đề (trước giờ khóa 1 phút hoặc đã hết giờ)
+        if has_de and is_de_expired:
+            return False, f"⚠️ Không thể hủy {prefix}(cược Đề chỉ được hủy trước {de_dl_h:02d}:{de_dl_m:02d})."
+
+        return True, ""
+
+    def cancel_client_bet_by_index(self, chat_id_str: str, sender_label: str, target_msg_idx: int = None, target_msg_id: int = None, target_raw_text: str = None, is_admin: bool = False) -> dict:
         """Xử lý yêu cầu hủy tin cược từ khách (VD: 'hủy tin 1' hoặc reply tin cược nhắn 'hủy').
         Thực hiện đầy đủ:
         1. Tìm tin cược theo msg_index, message_id (reply), hoặc raw_text của khách đó.
@@ -516,6 +580,28 @@ class TelegramBotService:
                 if match:
                     m_idx = pb.get("msg_idx", target_msg_idx or pb.get("id"))
                     raw_txt = pb.get("raw_text", "").strip()
+
+                    # Kiểm tra quy tắc trước 1 phút khi hết giờ không được hủy
+                    if not is_admin:
+                        pb_parsed = pb.get("parsed") or {}
+                        pb_summary = pb_parsed.get("summary") or pb.get("summary") or {}
+                        has_de = bool(pb_summary.get("de_count", 0) > 0 or pb_summary.get("bacang_count", 0) > 0 or pb_parsed.get("de") or pb_parsed.get("bacang"))
+                        has_lo = bool(pb_summary.get("lo_count", 0) > 0 or pb_summary.get("xien_count", 0) > 0 or pb_parsed.get("lo") or pb_parsed.get("xien2") or pb_parsed.get("xien3") or pb_parsed.get("xien4"))
+                        if not has_de and not has_lo and raw_txt:
+                            p_fb = parse_bet_message(raw_txt)
+                            s_fb = p_fb.get("summary", {})
+                            has_de = bool(s_fb.get("de_count", 0) > 0 or s_fb.get("bacang_count", 0) > 0)
+                            has_lo = bool(s_fb.get("lo_count", 0) > 0 or s_fb.get("xien_count", 0) > 0)
+
+                        can_cancel, err_cancel = self._check_cancel_cutoff(has_de, has_lo, m_idx)
+                        if not can_cancel:
+                            self.log(f"Khách {sender_label}: {err_cancel}", "WARN")
+                            return {
+                                "success": False,
+                                "client_reply": err_cancel,
+                                "cancelled_transfers": 0
+                            }
+
                     self.pending_bets.pop(i)
                     self.save_pending_bets()
                     self.log(f"Đã hủy tin treo #{m_idx} của khách {sender_label}", "SUCCESS")
@@ -605,6 +691,31 @@ class TelegramBotService:
                 "client_reply": f"Tin #{target_msg_idx} đã được hủy trước đó rồi.",
                 "cancelled_transfers": 0
             }
+
+        # Kiểm tra trước 1 phút khi hết giờ không cho hủy tin có loại hình đó
+        if not is_admin:
+            item_parsed = found_item.get("parsed") or {}
+            item_summary = found_item.get("summary") or item_parsed.get("summary") or {}
+            has_de = bool(item_summary.get("de_count", 0) > 0 or item_summary.get("bacang_count", 0) > 0 or item_parsed.get("de") or item_parsed.get("bacang"))
+            has_lo = bool(item_summary.get("lo_count", 0) > 0 or item_summary.get("xien_count", 0) > 0 or item_parsed.get("lo") or item_parsed.get("xien2") or item_parsed.get("xien3") or item_parsed.get("xien4"))
+            if not has_de and not has_lo and found_item.get("raw_text"):
+                p_fb = parse_bet_message(found_item["raw_text"])
+                s_fb = p_fb.get("summary", {})
+                has_de = bool(s_fb.get("de_count", 0) > 0 or s_fb.get("bacang_count", 0) > 0)
+                has_lo = bool(s_fb.get("lo_count", 0) > 0 or s_fb.get("xien_count", 0) > 0)
+
+            can_cancel, err_cancel = self._check_cancel_cutoff(has_de, has_lo, target_msg_idx)
+            if not can_cancel:
+                self.log(f"Khách {sender_label}: {err_cancel}", "WARN")
+                if self.config.get("forward_client_to_owner", False):
+                    owner_cid = self.config.get("owner_chat_id")
+                    if owner_cid and str(chat_id_str) != str(owner_cid):
+                        self.send_telegram_message(str(owner_cid), f"⚠️ [TỪ CHỐI HỦY] Khách {sender_label} xin hủy tin #{target_msg_idx} nhưng: {err_cancel}")
+                return {
+                    "success": False,
+                    "client_reply": err_cancel,
+                    "cancelled_transfers": 0
+                }
 
         # Đánh dấu HỦY tin cược của khách
         found_item["voided"] = True
@@ -1806,6 +1917,7 @@ class TelegramBotService:
                     "🏷️ <b>/gia</b>: Xem & Sửa Bảng Giá & Hoa Hồng\n"
                     "🚀 <b>/chuyen</b>: Bắn Cược Thừa Ngay Lập Tức\n"
                     "👑 <b>/chubot</b>: Cài đặt nick Chủ Bot tự nhận diện\n"
+                    "⏰ <b>/khoagio</b>: Xem & Sửa Giờ Khóa Nhận Cược Đề/Lô\n"
                     "⏰ <b>/timer &lt;giờ&gt;</b>: Đổi số giờ tự động xóa vết cược\n"
                     "🧹 <b>/clean</b>: Xóa ngay các vết tin cược cũ\n"
                     "🗑️ <b>/reset</b>: Xóa bảng cược bắt đầu ngày mới\n"
@@ -1977,6 +2089,7 @@ class TelegramBotService:
                     "📒 <b>/danhba</b>: Xem danh bạ những người đã chat với Bot\n"
                     "🏷️ <b>/gia</b>: Xem & Sửa Bảng Giá Thầu & Chuyển\n"
                     "🚀 <b>/chuyen [bat|tat]</b>: Bật/Tắt hoặc Bắn ngay các cược vượt định mức\n"
+                    "⏰ <b>/khoagio</b>: Xem & Sửa Giờ Khóa Nhận Cược Đề/Lô\n"
                     "⏰ <b>/timer &lt;giờ&gt;</b>: Đổi số giờ tự động xóa vết cược\n"
                     "🧹 <b>/clean</b>: Xóa dấu vết tin cược cũ ngay lập tức\n"
                     "🗑️ <b>/reset</b>: Xóa cược bắt đầu ngày mới\n"
@@ -2307,6 +2420,127 @@ class TelegramBotService:
                 f"👉 Để sửa: <code>/toida &lt;đề&gt; &lt;lô&gt; &lt;3c&gt; &lt;xiên&gt;</code> (VD: <code>/toida 20 5 0 0</code>)\n"
                 f"👉 Hoặc: <code>/toida bat</code> / <code>/toida tat</code>"
             ))
+            return
+
+        # J2. /khoagio hoặc /khoa (Cài đặt giờ khóa nhận cược riêng biệt cho Đề và Lô)
+        if cmd_root in ["/khoagio", "khoagio", "/khoa", "khoa"] or cmd_root.startswith("/khoagio@") or cmd_root.startswith("/khoa@"):
+            if not self.is_admin(chat_id):
+                self.send_telegram_message(str(chat_id), self.msg_need_auth())
+                return
+            cc = self.config.setdefault("cutoff_config", {
+                "de_enabled": True, "de_hour": 18, "de_minute": 25,
+                "lo_enabled": True, "lo_hour": 18, "lo_minute": 10
+            })
+
+            if len(parts) >= 2:
+                arg1 = parts[1].lower().strip()
+                if arg1 in ["de", "đề"]:
+                    if len(parts) >= 3:
+                        sub = parts[2].lower().strip()
+                        if sub in ["tat", "off", "0", "huy", "dong"]:
+                            cc["de_enabled"] = False
+                            self.save_config()
+                            self.send_telegram_message(str(chat_id), "✅ Đã <b>TẮT</b> chặn giờ nhận cược Đề.")
+                            return
+                        elif sub in ["bat", "on", "1", "mo"]:
+                            cc["de_enabled"] = True
+                            self.save_config()
+                            self.send_telegram_message(str(chat_id), "✅ Đã <b>BẬT</b> chặn giờ nhận cược Đề.")
+                            return
+                        elif ":" in sub or "h" in sub:
+                            time_clean = sub.replace("h", ":")
+                            try:
+                                h_str, m_str = time_clean.split(":")[:2]
+                                cc["de_enabled"] = True
+                                cc["de_hour"] = int(h_str)
+                                cc["de_minute"] = int(m_str)
+                                self.save_config()
+                                self.send_telegram_message(str(chat_id), f"✅ Đã đặt giờ khóa nhận <b>ĐỀ</b>: <code>{cc['de_hour']:02d}:{cc['de_minute']:02d}</code> (BẬT)")
+                                return
+                            except Exception:
+                                pass
+                elif arg1 in ["lo", "lô"]:
+                    if len(parts) >= 3:
+                        sub = parts[2].lower().strip()
+                        if sub in ["tat", "off", "0", "huy", "dong"]:
+                            cc["lo_enabled"] = False
+                            self.save_config()
+                            self.send_telegram_message(str(chat_id), "✅ Đã <b>TẮT</b> chặn giờ nhận cược Lô.")
+                            return
+                        elif sub in ["bat", "on", "1", "mo"]:
+                            cc["lo_enabled"] = True
+                            self.save_config()
+                            self.send_telegram_message(str(chat_id), "✅ Đã <b>BẬT</b> chặn giờ nhận cược Lô.")
+                            return
+                        elif ":" in sub or "h" in sub:
+                            time_clean = sub.replace("h", ":")
+                            try:
+                                h_str, m_str = time_clean.split(":")[:2]
+                                cc["lo_enabled"] = True
+                                cc["lo_hour"] = int(h_str)
+                                cc["lo_minute"] = int(m_str)
+                                self.save_config()
+                                self.send_telegram_message(str(chat_id), f"✅ Đã đặt giờ khóa nhận <b>LÔ</b>: <code>{cc['lo_hour']:02d}:{cc['lo_minute']:02d}</code> (BẬT)")
+                                return
+                            except Exception:
+                                pass
+                elif ":" in arg1 or "h" in arg1:
+                    try:
+                        h1, m1 = arg1.replace("h", ":").split(":")[:2]
+                        cc["de_hour"] = int(h1)
+                        cc["de_minute"] = int(m1)
+                        cc["de_enabled"] = True
+                        if len(parts) >= 3 and (":" in parts[2] or "h" in parts[2]):
+                            h2, m2 = parts[2].lower().replace("h", ":").split(":")[:2]
+                            cc["lo_hour"] = int(h2)
+                            cc["lo_minute"] = int(m2)
+                            cc["lo_enabled"] = True
+                        self.save_config()
+                        self.send_telegram_message(str(chat_id), f"✅ Đã cập nhật giờ khóa:\n• <b>Đề:</b> <code>{cc['de_hour']:02d}:{cc['de_minute']:02d}</code>\n• <b>Lô:</b> <code>{cc['lo_hour']:02d}:{cc['lo_minute']:02d}</code>")
+                        return
+                    except Exception:
+                        pass
+                elif arg1 in ["tat", "off", "0"]:
+                    cc["de_enabled"] = False
+                    cc["lo_enabled"] = False
+                    self.save_config()
+                    self.send_telegram_message(str(chat_id), "✅ Đã <b>TẮT</b> toàn bộ chặn giờ nhận cược.")
+                    return
+                elif arg1 in ["bat", "on", "1"]:
+                    cc["de_enabled"] = True
+                    cc["lo_enabled"] = True
+                    self.save_config()
+                    self.send_telegram_message(str(chat_id), "✅ Đã <b>BẬT</b> toàn bộ chặn giờ nhận cược.")
+                    return
+
+            st_de = "BẬT" if cc.get("de_enabled", True) else "TẮT"
+            st_lo = "BẬT" if cc.get("lo_enabled", True) else "TẮT"
+            h_de = cc.get("de_hour", 18)
+            m_de = cc.get("de_minute", 25)
+            h_lo = cc.get("lo_hour", 18)
+            m_lo = cc.get("lo_minute", 10)
+
+            de_dl = (h_de * 60 + m_de) - 1
+            lo_dl = (h_lo * 60 + m_lo) - 1
+            de_dl_str = f"{(de_dl // 60) % 24:02d}:{de_dl % 60:02d}"
+            lo_dl_str = f"{(lo_dl // 60) % 24:02d}:{lo_dl % 60:02d}"
+
+            reply = (
+                f"⏰ <b>GIỜ KHÓA NHẬN CƯỢC &amp; HẠN HỦY TIN:</b>\n"
+                f"━━━━━━━━━━━━━━━━━━\n"
+                f"• <b>Khóa Đề:</b> <code>{h_de:02d}:{m_de:02d}</code> ({st_de}) — <i>Hạn hủy: trước <code>{de_dl_str}</code></i>\n"
+                f"• <b>Khóa Lô:</b> <code>{h_lo:02d}:{m_lo:02d}</code> ({st_lo}) — <i>Hạn hủy: trước <code>{lo_dl_str}</code></i>\n"
+                f"• <i>(Khách không thể hủy tin có cược loại hình đó từ trước giờ khóa 1 phút)</i>\n"
+                f"• <i>(Qua 12h đêm tự động mở nhận cược ngày mới từ Tin #1)</i>\n"
+                f"━━━━━━━━━━━━━━━━━━\n"
+                f"👉 <b>Cú pháp điều chỉnh:</b>\n"
+                f"• Đặt giờ Đề: <code>/khoagio de 18:25</code>\n"
+                f"• Đặt giờ Lô: <code>/khoagio lo 18:10</code>\n"
+                f"• Bật/Tắt Đề: <code>/khoagio de bat</code> | <code>/khoagio de tat</code>\n"
+                f"• Bật/Tắt Lô: <code>/khoagio lo bat</code> | <code>/khoagio lo tat</code>\n"
+                f"• Đặt cả hai: <code>/khoagio 18:25 18:10</code>"
+            )
+            self.send_telegram_message(str(chat_id), reply)
             return
 
         # K1. /nguoinhan hoặc /chuyensang (Xem/Thêm/Sửa/Xóa người nhận cược thừa - Yêu cầu mật khẩu)
@@ -2719,7 +2953,8 @@ class TelegramBotService:
                 sender_label=sender_label,
                 target_msg_idx=target_idx,
                 target_msg_id=reply_mid,
-                target_raw_text=reply_text
+                target_raw_text=reply_text,
+                is_admin=user_is_admin
             )
 
             if res_cancel.get("success"):
@@ -2761,6 +2996,65 @@ class TelegramBotService:
                 if owner_cid and str(chat_id) != str(owner_cid):
                     self.send_telegram_message(str(owner_cid), f"📩 Khách {sender_label}: {text}")
             return
+
+        # 2a. KIỂM TRA GIỜ KHÓA NHẬN CƯỢC (Đề và Lô riêng biệt)
+        if not user_is_admin:
+            cutoff_cfg = self.config.get("cutoff_config", {})
+            de_enabled = cutoff_cfg.get("de_enabled", True)
+            try:
+                de_hour = int(cutoff_cfg.get("de_hour", 18))
+                de_minute = int(cutoff_cfg.get("de_minute", 25))
+            except Exception:
+                de_hour, de_minute = 18, 25
+
+            lo_enabled = cutoff_cfg.get("lo_enabled", True)
+            try:
+                lo_hour = int(cutoff_cfg.get("lo_hour", 18))
+                lo_minute = int(cutoff_cfg.get("lo_minute", 10))
+            except Exception:
+                lo_hour, lo_minute = 18, 10
+
+            now_v = now_vn()
+            cur_min = now_v.hour * 60 + now_v.minute
+            de_cutoff_min = de_hour * 60 + de_minute
+            lo_cutoff_min = lo_hour * 60 + lo_minute
+
+            is_de_expired = de_enabled and (cur_min >= de_cutoff_min)
+            is_lo_expired = lo_enabled and (cur_min >= lo_cutoff_min)
+
+            has_de = bool(summary.get("de_count", 0) > 0 or summary.get("bacang_count", 0) > 0)
+            has_lo = bool(summary.get("lo_count", 0) > 0 or summary.get("xien_count", 0) > 0)
+
+            cutoff_rejected = False
+            reject_msg = "Hết giờ không nhận nữa"
+
+            if has_de and has_lo:
+                if is_de_expired and is_lo_expired:
+                    cutoff_rejected = True
+                    reject_msg = "Hết giờ không nhận nữa"
+                elif is_lo_expired and not is_de_expired:
+                    cutoff_rejected = True
+                    reject_msg = f"Hết giờ không nhận nữa (Lô đã khóa lúc {lo_hour:02d}:{lo_minute:02d})"
+                elif is_de_expired and not is_lo_expired:
+                    cutoff_rejected = True
+                    reject_msg = f"Hết giờ không nhận nữa (Đề đã khóa lúc {de_hour:02d}:{de_minute:02d})"
+            elif has_de and is_de_expired:
+                cutoff_rejected = True
+                reject_msg = "Hết giờ không nhận nữa"
+            elif has_lo and is_lo_expired:
+                cutoff_rejected = True
+                reject_msg = "Hết giờ không nhận nữa"
+
+            if cutoff_rejected:
+                if user_msg_id and chat_id:
+                    self.track_message(chat_id, user_msg_id, tag="incoming_bet")
+                self.send_telegram_message(str(chat_id), reject_msg, track_for_cleanup=True, tag="cutoff_reject")
+                self.log(f"Khách {sender_label}: {text} (⛔ {reject_msg})", "WARN")
+                if self.config.get("forward_client_to_owner", False):
+                    owner_cid = self.config.get("owner_chat_id")
+                    if owner_cid and str(chat_id) != str(owner_cid):
+                        self.send_telegram_message(str(owner_cid), f"⛔ [HẾT GIỜ] Khách {sender_label}: {text} -> Bot báo: {reject_msg}")
+                return
 
         filter_return_msg = ""
         # 2b. Kiểm tra Bộ Lọc cược cấm nhận / trả lại khách

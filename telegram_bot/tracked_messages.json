@@ -34,5 +34,23 @@
     "message_id": 651,
     "created_at": 1789582650.1114614,
     "tag": "receipt"
+  },
+  {
+    "chat_id": "99999",
+    "message_id": 999,
+    "created_at": 1790172733.9760158,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "99999",
+    "message_id": 1000,
+    "created_at": 1790172742.225446,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "99999",
+    "message_id": 1001,
+    "created_at": 1790172742.226738,
+    "tag": "incoming_bet"
   }
 ]

@@ -67,5 +67,13 @@
   "bet_filter_keywords": "",
   "bot_mode": "auto",
   "history_retention_hours": 36.0,
-  "history_retention_days": 1.5
+  "history_retention_days": 1.5,
+  "cutoff_config": {
+    "de_enabled": true,
+    "de_hour": 18,
+    "de_minute": 25,
+    "lo_enabled": true,
+    "lo_hour": 18,
+    "lo_minute": 10
+  }
 }
