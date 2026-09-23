@@ -61,6 +61,17 @@ class TelegramBotService:
         self.last_daily_report_date = None
         self.is_settled_today = False
         self.cached_kqxs = None
+        # Kiểm tra xem hôm nay đã chốt sổ trong daily_history chưa
+        try:
+            today_arch = os.path.join(DAILY_DIR, f"{self.current_date}.json")
+            if os.path.exists(today_arch):
+                with open(today_arch, "r", encoding="utf-8") as af:
+                    ad = json.load(af)
+                    if ad.get("is_settled"):
+                        self.is_settled_today = True
+                        self.last_daily_report_date = now_vn().strftime("%d/%m/%Y")
+        except Exception:
+            pass
         self.logs = []  # Ring buffer log messages (max 200)
         self.client_msg_counters = {}  # Đếm số thứ tự tin của từng khách trong ngày (Ok tin 1, Ok tin 2...)
         self.stats = {
@@ -318,6 +329,7 @@ class TelegramBotService:
                 "invalid_items": parsed.get("invalid_items", []),
                 "parsed": parsed,
                 "voided": False,
+                "is_ok": True,
                 "transfer_text": transfer_text,  # Nội dung cân chuyển sang thầu (nếu có)
                 "retain_text": retain_text,       # Tóm tắt phần giữ lại
                 "user_msg_id": user_msg_id
@@ -345,18 +357,19 @@ class TelegramBotService:
 
         self.save_client_bets()
 
-    def update_last_bet_transfer(self, chat_id_str: str, transfer_text: str = "", retain_text: str = ""):
-        """Cập nhật thông tin cân chuyển/giữ lại vào item lịch sử cuối cùng của khách.
+    def update_last_bet_transfer(self, chat_id_str: str, transfer_text: str = "", retain_text: str = "", is_ok: bool = True):
+        """Cập nhật thông tin cân chuyển/giữ lại và trạng thái Ok vào item lịch sử cuối cùng của khách.
         Được gọi SAU khi đã tính toán excess, để lưu vào Hộp Thư hiển thị cho admin xem."""
         if chat_id_str in self.client_bets:
             hist = self.client_bets[chat_id_str].get("history", [])
             if hist:
                 hist[-1]["transfer_text"] = transfer_text
                 hist[-1]["retain_text"] = retain_text
+                hist[-1]["is_ok"] = is_ok
                 self.save_client_bets()
 
     def recompute_client_totals(self, chat_id_str: str):
-        """Tính toán lại tổng cược tích lũy của 1 khách từ các tin nhắn chưa bị hủy bỏ (voided=False)"""
+        """Tính toán lại tổng cược tích lũy của 1 khách từ các tin nhắn ĐÃ OK và chưa bị hủy bỏ (voided=False, is_ok=True)"""
         if chat_id_str not in self.client_bets:
             return
         c = self.client_bets[chat_id_str]
@@ -365,7 +378,7 @@ class TelegramBotService:
         c["bacang"] = {}
         c["xien"] = []
         for h in c.get("history", []):
-            if h.get("voided", False):
+            if h.get("voided", False) or h.get("is_ok") is False:
                 continue
             p = h.get("parsed")
             if not p and h.get("raw_text"):
@@ -392,7 +405,7 @@ class TelegramBotService:
         self.save_client_bets()
 
     def rebuild_board_from_active_bets(self):
-        """Tái cấu trúc lại bảng cược balancer từ tất cả các tin cược chưa bị hủy bỏ"""
+        """Tái cấu trúc lại bảng cược balancer từ tất cả các tin cược ĐÃ OK và chưa bị hủy bỏ"""
         self.balancer.de_sums = {}
         self.balancer.lo_sums = {}
         self.balancer.bacang_sums = {}
@@ -400,7 +413,7 @@ class TelegramBotService:
 
         for cid_str, cdata in self.client_bets.items():
             for h in cdata.get("history", []):
-                if h.get("voided", False):
+                if h.get("voided", False) or h.get("is_ok") is False:
                     continue
                 p = h.get("parsed")
                 if not p and h.get("raw_text"):
@@ -442,8 +455,8 @@ class TelegramBotService:
                     "voided": item.get("voided", False),
                     "transfer_text": item.get("transfer_text", ""),
                     "retained_text": item.get("retained_text") or item.get("retain_text", ""),
-                    "is_pending": False,
-                    "status": "active"
+                    "is_pending": not item.get("is_ok", True),
+                    "status": "voided" if item.get("voided", False) else ("pending" if not item.get("is_ok", True) else "active")
                 })
 
         for pb in getattr(self, "pending_bets", []):
@@ -1647,8 +1660,8 @@ class TelegramBotService:
 
         # Lưu nội dung cân chuyển và giữ lại vào chi tiết tin khách
         single_transfer_txt = self.balancer.format_transfer_message(excess, include_header=False) if excess_count > 0 else ""
-        single_retained_txt = self.balancer.calculate_retained_from_single_bet(parsed, excess)
-        self.update_last_bet_transfer(chat_id_str, transfer_text=single_transfer_txt, retain_text=single_retained_txt)
+        is_bet_ok = not has_forwarded_excess
+        self.update_last_bet_transfer(chat_id_str, transfer_text=single_transfer_txt, retain_text=single_retained_txt, is_ok=is_bet_ok)
         item["transfer_text"] = single_transfer_txt
         item["retained_text"] = single_retained_txt
 
@@ -1832,6 +1845,10 @@ class TelegramBotService:
                                 s_label = pending.get("sender_label", cid)
                                 orig_text = pending.get("text", "")
                                 m_idx = pending.get("msg_idx", "")
+                                if cid in self.client_bets:
+                                    for h in self.client_bets[cid].get("history", []):
+                                        if h.get("msg_index") == m_idx:
+                                            h["is_ok"] = True
                                 if len(r_text) > 3800:
                                     chunks = [r_text[i:i+3800] for i in range(0, len(r_text), 3800)]
                                     for chunk in chunks:
@@ -1840,6 +1857,8 @@ class TelegramBotService:
                                     self.send_telegram_message(cid, r_text, track_for_cleanup=True, tag="receipt")
                                 self.log(f"Khách {s_label}: {orig_text} (Chủ thầu đã Ok -> Đã nhắn lại Ok tin {m_idx})", "SUCCESS")
                             self.pending_client_receipts.clear()
+                            self.pending_recipient_acks = None
+                            self.save_client_bets()
 
                 elif has_rejection:
                     # TRƯỜNG HỢP 2: CHỦ THẦU TỪ CHỐI / TRẢ LẠI TOÀN BỘ (KHÔNG CÓ OK Ở ĐẦU TIN)
@@ -1857,12 +1876,23 @@ class TelegramBotService:
                     # Cảnh báo chi tiết từng tin cược của khách đang bị treo cho Chủ bot xử lý
                     if hasattr(self, "pending_client_receipts") and self.pending_client_receipts:
                         for pending in list(self.pending_client_receipts):
+                            cid = pending.get("chat_id")
+                            m_idx = pending.get("msg_idx")
                             s_label = pending.get("sender_label", "")
                             orig_text = pending.get("text", "")
-                            m_idx = pending.get("msg_idx", "")
-                            if owner_cid and str(chat_id) != str(owner_cid):
+                            if cid in self.client_bets:
+                                for h in self.client_bets[cid].get("history", []):
+                                    if h.get("msg_index") == m_idx:
+                                        h["is_ok"] = False
+                                        h["voided"] = True
+                                        h["cancel_reason"] = "Chủ thầu từ chối"
+                                self.recompute_client_totals(cid)
+                            if owner_cid:
                                 self.send_telegram_message(str(owner_cid), f"⚠️ Tin #{m_idx} của {s_label} ('{orig_text}') chưa được thầu nhận do bị trả lại.")
                         self.pending_client_receipts.clear()
+                        self.pending_recipient_acks = None
+                        self.rebuild_board_from_active_bets()
+                        self.save_client_bets()
 
                 else:
                     # TRƯỜNG HỢP 3: CHỦ THẦU NHẮN TIN KHÁC (chưa có Ok ở đầu tin)
@@ -2897,6 +2927,10 @@ class TelegramBotService:
             self.client_bets = {}
             self.save_client_bets()
             self.pending_recipient_acks = None
+            self.pending_client_receipts = []
+            self.pending_bets = []
+            self.save_pending_bets()
+            self.is_settled_today = False
             self.log("Đã reset bảng cược, số thứ tự tin và danh sách cược của khách về 0", "INFO")
             self.send_telegram_message(str(chat_id), "🗑️ Đã làm mới (reset) toàn bộ bảng cược, số thứ tự tin và danh sách cược của khách về 0 để bắt đầu ngày mới!")
             return
@@ -3207,7 +3241,8 @@ class TelegramBotService:
         # Lưu nội dung cân chuyển và giữ lại vào chi tiết tin khách
         single_transfer_txt = self.balancer.format_transfer_message(excess, include_header=False) if excess_count > 0 else ""
         single_retained_txt = self.balancer.calculate_retained_from_single_bet(parsed, excess)
-        self.update_last_bet_transfer(chat_id_str, transfer_text=single_transfer_txt, retain_text=single_retained_txt)
+        is_bet_ok = not has_forwarded_excess
+        self.update_last_bet_transfer(chat_id_str, transfer_text=single_transfer_txt, retain_text=single_retained_txt, is_ok=is_bet_ok)
 
         # 5. Phản hồi xác nhận cho khách (nếu bật):
         # - Nếu cược thừa ĐÃ CHUYỂN cho Chủ thầu: Bot chờ Chủ thầu Ok thì mới nhắn Ok lại cho khách!
@@ -3281,6 +3316,48 @@ class TelegramBotService:
         date_str = kqxs.get("date", datetime.now().strftime("%d/%m/%Y"))
         if kqxs:
             self.cached_kqxs = kqxs
+
+        # Trước khi tính tiền chốt sổ: Loại bỏ tất cả các tin cược CHƯA ĐƯỢC OK (chủ thầu chưa Ok lại)
+        # Theo đúng quy tắc: "khi đã chốt xong thủ công hay là tự động thì những tin đã ok thì tính tiền, những tin chưa ok thì không tính , cần chủ thầu ok lại làm gì nữa"
+        unconfirmed_count = 0
+        if hasattr(self, "pending_client_receipts") and self.pending_client_receipts:
+            for pending in list(self.pending_client_receipts):
+                cid = pending.get("chat_id")
+                m_idx = pending.get("msg_idx")
+                if cid in self.client_bets:
+                    for h in self.client_bets[cid].get("history", []):
+                        if h.get("msg_index") == m_idx and not h.get("voided", False):
+                            h["voided"] = True
+                            h["is_ok"] = False
+                            h["cancel_reason"] = "Chưa được thầu Ok trước giờ chốt sổ"
+                            unconfirmed_count += 1
+                    self.recompute_client_totals(cid)
+            self.pending_client_receipts.clear()
+
+        # Kiểm tra thêm trong client_bets nếu còn tin nào is_ok == False mà chưa void
+        for cid_str, cdata in self.client_bets.items():
+            recompute_needed = False
+            for h in cdata.get("history", []):
+                if h.get("is_ok") is False and not h.get("voided", False):
+                    h["voided"] = True
+                    h["cancel_reason"] = "Chưa được xác nhận Ok trước giờ chốt sổ"
+                    recompute_needed = True
+                    unconfirmed_count += 1
+            if recompute_needed:
+                self.recompute_client_totals(cid_str)
+
+        # Xóa triệt để các tin treo và xóa theo dõi phản hồi thầu
+        self.pending_recipient_acks = None
+        if hasattr(self, "pending_bets") and self.pending_bets:
+            self.pending_bets.clear()
+            self.save_pending_bets()
+
+        # Tái cấu trúc lại balancer từ các tin cược ĐÃ OK
+        if unconfirmed_count > 0:
+            self.log(f"📋 Đã loại bỏ {unconfirmed_count} tin cược CHƯA OK ra khỏi danh sách tính tiền chốt sổ.", "INFO")
+            self.rebuild_board_from_active_bets()
+            self.save_client_bets()
+
         price_cfg = self.config.get("price_config", DEFAULT_PRICE_CONFIG)
         acc = calculate_board_accounting(self.balancer, kqxs, price_cfg)
 
@@ -3681,6 +3758,13 @@ class TelegramBotService:
         self.last_settled_time = now_vn().strftime("%H:%M:%S")
         self.last_settle_result = settle_result or {}
 
+        # 3. Xóa triệt để hàng đợi theo dõi thầu và tin treo vì đã chốt xong
+        self.pending_recipient_acks = None
+        self.pending_client_receipts = []
+        if hasattr(self, "pending_bets"):
+            self.pending_bets = []
+            self.save_pending_bets()
+
         self.log(f"🎯 Đã chốt tiền thành công ngày {date_str}. Dữ liệu được bảo lưu và giữ nguyên trên màn hình đối soát đến 12h đêm.", "SUCCESS")
 
     def check_and_rollover_date(self) -> bool:
@@ -3713,6 +3797,7 @@ class TelegramBotService:
             self.pending_bets = []
             self.save_pending_bets()
             self.pending_client_receipts = []
+            self.pending_recipient_acks = None
             self.last_web_bet_hash = None
             self.last_web_bet_text = ""
             self.last_bet_timestamp = None
@@ -3855,7 +3940,8 @@ class TelegramBotService:
                         pass
 
                     # Tự động kiểm tra timeout 3 phút người nhận cược thừa chưa phản hồi (nếu bật Check phản hồi)
-                    if self.config.get("check_recipient_ack", True) and self.pending_recipient_acks and not self.pending_recipient_acks.get("alerted"):
+                    # Tuyệt đối không kiểm tra khi đã chốt tiền xong hôm nay hoặc đã reset bảng
+                    if not getattr(self, "is_settled_today", False) and self.config.get("check_recipient_ack", True) and self.pending_recipient_acks and not self.pending_recipient_acks.get("alerted"):
                         if time.time() - self.pending_recipient_acks["timestamp"] >= 180:
                             self.pending_recipient_acks["alerted"] = True
                             rec_name = self.pending_recipient_acks.get("recipient", "")

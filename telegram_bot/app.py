@@ -524,6 +524,11 @@ def reset_board():
     bot_service.client_bets = {}
     bot_service.save_client_bets()
     bot_service.client_msg_counters = {}
+    bot_service.pending_recipient_acks = None
+    bot_service.pending_client_receipts = []
+    bot_service.pending_bets = []
+    bot_service.save_pending_bets()
+    bot_service.is_settled_today = False
     bot_service.log("Đã làm mới (reset) bảng cược và xóa toàn bộ tin nhắn gốc về 0.", "INFO")
     return jsonify({"success": True})
 

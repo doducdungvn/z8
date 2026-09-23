@@ -76,5 +76,17 @@
     "message_id": 101,
     "created_at": 1790176075.648331,
     "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "98765",
+    "message_id": 201,
+    "created_at": 1790179340.0173159,
+    "tag": "incoming_bet"
+  },
+  {
+    "chat_id": "98765",
+    "message_id": 202,
+    "created_at": 1790179340.0185452,
+    "tag": "incoming_bet"
   }
 ]

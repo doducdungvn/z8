@@ -156,3 +156,36 @@ Hủy tin (Lần #1):
 [21:00:00 23/09] [WARN] Khách (@test_player): lo 10 100d (⛔ Hết giờ)
 [21:00:00 23/09] [WARN] Khách (@test_player): de 20 50k (⛔ Hết giờ)
 [21:00:00 23/09] [WARN] Khách (@test_player): lo 10 100d, de 20 50k (⛔ Hết giờ)
+[23:02:20 23/09] [WARN] Khách (@khach_a): de 10 50k (⛔ Hết giờ)
+[23:02:20 23/09] [WARN] Khách (@khach_a): lo 20 100d (⛔ Hết giờ)
+[23:02:37 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 10x35
+[23:03:04 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 10x35
+[23:03:04 23/09] [INFO] Khách (@khach_a): de 10 50k (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:04 23/09] [INFO] Gửi chủ thầu 7715286942: Lô 20x100
+[23:03:04 23/09] [INFO] Khách (@khach_a): lo 20 100d (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:04 23/09] [INFO] 📋 Đã loại bỏ 3 tin cược CHƯA OK ra khỏi danh sách tính tiền chốt sổ.
+[23:03:04 23/09] [SUCCESS] 💾 Đã lưu trữ an toàn toàn bộ dữ liệu cược & chốt tiền ngày 2026-09-23 để tra cứu đối soát.
+[23:03:04 23/09] [SUCCESS] 🎯 Đã chốt tiền thành công ngày 23/09/2026. Dữ liệu được bảo lưu và giữ nguyên trên màn hình đối soát đến 12h đêm.
+[23:03:22 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 10x15
+[23:03:22 23/09] [INFO] Khách (@khach_a): de 10 50k (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:22 23/09] [INFO] Gửi chủ thầu 7715286942: Lô 20x100
+[23:03:22 23/09] [INFO] Khách (@khach_a): lo 20 100d (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:22 23/09] [INFO] 📋 Đã loại bỏ 2 tin cược CHƯA OK ra khỏi danh sách tính tiền chốt sổ.
+[23:03:22 23/09] [SUCCESS] 💾 Đã lưu trữ an toàn toàn bộ dữ liệu cược & chốt tiền ngày 2026-09-23 để tra cứu đối soát.
+[23:03:22 23/09] [SUCCESS] 🎯 Đã chốt tiền thành công ngày 23/09/2026. Dữ liệu được bảo lưu và giữ nguyên trên màn hình đối soát đến 12h đêm.
+[23:03:37 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 10x35
+[23:03:37 23/09] [INFO] Khách (@khach_a): de 10 50k (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:37 23/09] [INFO] Gửi chủ thầu 7715286942: Lô 20x94
+[23:03:37 23/09] [INFO] Khách (@khach_a): lo 20 100d (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:37 23/09] [INFO] 📋 Đã loại bỏ 2 tin cược CHƯA OK ra khỏi danh sách tính tiền chốt sổ.
+[23:03:37 23/09] [SUCCESS] 💾 Đã lưu trữ an toàn toàn bộ dữ liệu cược & chốt tiền ngày 2026-09-23 để tra cứu đối soát.
+[23:03:37 23/09] [SUCCESS] 🎯 Đã chốt tiền thành công ngày 23/09/2026. Dữ liệu được bảo lưu và giữ nguyên trên màn hình đối soát đến 12h đêm.
+[23:03:51 23/09] [INFO] Gửi chủ thầu 7715286942: Đề 10x35
+[23:03:51 23/09] [INFO] Khách (@khach_a): de 10 50k (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:51 23/09] [SUCCESS] Chủ thầu (@chuthau): Ok (đã xác nhận Ok toàn bộ)
+[23:03:51 23/09] [SUCCESS] Khách (@khach_a): de 10 50k (Chủ thầu đã Ok -> Đã nhắn lại Ok tin 1)
+[23:03:51 23/09] [INFO] Gửi chủ thầu 7715286942: Lô 20x94
+[23:03:51 23/09] [INFO] Khách (@khach_a): lo 20 100d (Đã chuyển thầu 7715286942, chờ thầu Ok mới nhắn khách...)
+[23:03:51 23/09] [INFO] 📋 Đã loại bỏ 1 tin cược CHƯA OK ra khỏi danh sách tính tiền chốt sổ.
+[23:03:51 23/09] [SUCCESS] 💾 Đã lưu trữ an toàn toàn bộ dữ liệu cược & chốt tiền ngày 2026-09-23 để tra cứu đối soát.
+[23:03:51 23/09] [SUCCESS] 🎯 Đã chốt tiền thành công ngày 23/09/2026. Dữ liệu được bảo lưu và giữ nguyên trên màn hình đối soát đến 12h đêm.

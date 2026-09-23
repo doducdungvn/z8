@@ -9,9 +9,9 @@
   "7715286942": {
     "user_id": "7715286942",
     "chat_id": 7715286942,
-    "username": "Zeng86",
-    "first_name": "Zeng",
-    "updated_at": "22:02:27 23/09"
+    "username": "chuthau",
+    "first_name": "Thau",
+    "updated_at": "23:03:51 23/09"
   },
   "8836005980": {
     "user_id": "8836005980",
@@ -68,5 +68,12 @@
     "username": "test_player",
     "first_name": "Player",
     "updated_at": "21:00:00 23/09"
+  },
+  "98765": {
+    "user_id": "98765",
+    "chat_id": 98765,
+    "username": "khach_a",
+    "first_name": "A",
+    "updated_at": "23:03:51 23/09"
   }
 }
