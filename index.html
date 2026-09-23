@@ -8729,16 +8729,18 @@ function resetTable() {
           }
           if (btnToggle) {
             btnToggle.className = "px-2 sm:px-2.5 py-1 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white rounded-xs text-xs font-bold border border-amber-700 flex items-center gap-1 cursor-pointer shadow-xs transition shrink-0";
-            btnToggle.innerHTML = `<i class="fa-solid fa-pause text-[10px]"></i><span id="lblToggleBotRun"><span class="hidden sm:inline">Tắt Bot (Treo tin)</span><span class="sm:hidden">Tắt Bot</span></span>`;
+            btnToggle.title = "Bot đang TỰ ĐỘNG nhận cược và trả Ok cho khách. Bấm để Tạm dừng (Treo tin chờ duyệt tay)";
+            btnToggle.innerHTML = `<i class="fa-solid fa-pause text-[10px]"></i><span id="lblToggleBotRun"><span class="hidden sm:inline">Tạm dừng (Treo tin)</span><span class="sm:hidden">Treo tin</span></span>`;
           }
         } else {
           if (badge) {
             const pendingTxt = pendingCount > 0 ? ` (${pendingCount})` : '';
-            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span><span>TẮT${pendingTxt} (${srvLabel})</span>`;
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span><span>TREO TIN${pendingTxt} (${srvLabel})</span>`;
             badge.className = "flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-xs text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-amber-900/60 text-amber-300 border border-amber-600 shrink-0";
           }
           if (btnToggle) {
             btnToggle.className = "px-2 sm:px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xs text-xs font-bold border border-emerald-700 flex items-center gap-1 cursor-pointer shadow-xs transition shrink-0";
+            btnToggle.title = "Bot đang ở chế độ Treo tin. Bấm để BẬT chế độ TỰ ĐỘNG nhận cược & Ok khách";
             btnToggle.innerHTML = `<i class="fa-solid fa-play text-[10px]"></i><span id="lblToggleBotRun"><span class="hidden sm:inline">Bật Bot (Tự động)</span><span class="sm:hidden">Bật Bot</span></span>`;
           }
         }
@@ -11018,7 +11020,11 @@ function resetTable() {
       const btnToggle = document.getElementById('btnToggleBotRun');
       if (btnToggle) {
         btnToggle.addEventListener('click', async () => {
-          const isTurningOff = btnToggle.innerText.includes("Tắt") || btnToggle.innerText.includes("Dừng");
+          const isTurningOff = btnToggle.innerText.includes("Tắt") || btnToggle.innerText.includes("Dừng") || btnToggle.innerText.includes("Treo");
+          if (isTurningOff) {
+            const ok = confirm("Chuyển Bot sang chế độ TREO TIN (Tạm dừng tự động)?\n\n- Khi ở chế độ này, bot sẽ KHÔNG tự động Ok khách mà lưu tin vào hàng đợi chờ bạn duyệt tay.\n- Bạn có muốn chuyển không?");
+            if (!ok) return;
+          }
           const endpoint = isTurningOff ? "/api/bot/stop" : "/api/bot/start";
           try {
             const res = await callBotApi(endpoint, { method: "POST" });
