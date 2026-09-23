@@ -193,6 +193,43 @@ class TelegramBotService:
         admins = [str(x).strip().lstrip("@").lower() for x in self.config.get("authenticated_admins", [])]
         return cid in admins or (u and u in admins)
 
+    def get_owner_chat_id(self) -> str:
+        """Lấy Chat ID dạng số của Chủ bot để gửi thông báo hệ thống / tin cược treo"""
+        owner_val = str(self.config.get("owner_chat_id", "")).strip()
+        if not owner_val:
+            owner_val = os.environ.get("OWNER_CHAT_ID", "").strip()
+
+        # 1. Nếu đã là số nguyên (Chat ID)
+        if owner_val and (owner_val.lstrip("-").isdigit()):
+            return owner_val
+
+        # 2. Nếu là @username hoặc tên
+        if owner_val:
+            clean_un = owner_val.lstrip("@").lower().strip()
+            if clean_un == "zeng86":
+                return "1023927138"
+
+            self.known_users = self.load_known_users()
+            for uid, info in self.known_users.items():
+                if str(uid) in ["11223344", "99999", "111"]:
+                    continue
+                if (info.get("username") or "").lower().strip() == clean_un:
+                    return str(info.get("chat_id") or uid)
+
+            for cid_str, cinfo in self.client_bets.items():
+                if (cinfo.get("username") or "").lower().strip() == clean_un:
+                    return str(cid_str)
+
+        # 3. Tra trong authenticated_admins
+        admins = self.config.get("authenticated_admins", [])
+        for adm in admins:
+            adm_str = str(adm).strip()
+            if adm_str.lstrip("-").isdigit():
+                return adm_str
+
+        # 4. Fallback mặc định cho Chủ bot Zeng86
+        return "1023927138"
+
     def msg_need_auth(self) -> str:
         return (
             "🔒 <b>KHU VỰC QUẢN TRỊ ĐƯỢC BẢO VỆ BẰNG MẬT KHẨU!</b>\n"
@@ -727,9 +764,9 @@ class TelegramBotService:
             if not can_cancel:
                 self.log(f"Khách {sender_label}: {err_cancel}", "WARN")
                 if self.config.get("forward_client_to_owner", False):
-                    owner_cid = self.config.get("owner_chat_id")
+                    owner_cid = self.get_owner_chat_id()
                     if owner_cid:
-                        self.send_telegram_message(str(owner_cid), f"⚠️ [TỪ CHỐI HỦY] Khách {sender_label} xin hủy tin #{target_msg_idx} nhưng: {err_cancel}")
+                        self.send_telegram_message(str(owner_cid), f"⚠️ [TỪ CHỐI HỦY] Khách {sender_label} xin hủy tin #{target_msg_idx} nhưng: {err_cancel}", force=True, tag="owner_alert")
                 return {
                     "success": False,
                     "client_reply": err_cancel,
@@ -803,14 +840,14 @@ class TelegramBotService:
 
         # 5. Thông báo cho Chủ Bot (owner_chat_id)
         # CHỈ GỬI CHO CHỦ BOT MỚI NÊU RÕ KHÁCH NÀO ĐỂ CHỦ BOT QUẢN LÝ
-        owner_cid = self.config.get("owner_chat_id")
+        owner_cid = self.get_owner_chat_id()
         if owner_cid:
             owner_msg = (
                 f"🔔 <b>KHÁCH HỦY TIN #{target_msg_idx}:</b>\n"
                 f"👤 Khách: {sender_label}\n"
                 f"📝 Nội dung tin hủy: <code>{raw_text_cancelled}</code>"
             )
-            self.send_telegram_message(str(owner_cid), owner_msg)
+            self.send_telegram_message(str(owner_cid), owner_msg, force=True, tag="owner_alert")
 
         include_details_client = bool(self.config.get("cancel_detail_client", False))
         if include_details_client and raw_text_cancelled:
@@ -1192,9 +1229,16 @@ class TelegramBotService:
         except Exception:
             pass
 
-    def send_telegram_message(self, recipient: str, text: str, track_for_cleanup: bool = False, tag: str = "outgoing") -> tuple[bool, str]:
+    def send_telegram_message(self, recipient: str, text: str, track_for_cleanup: bool = False, tag: str = "outgoing", reply_markup: dict = None, force: bool = False) -> tuple[bool, str]:
         """Gửi tin nhắn qua Telegram Bot API. Trả về (thành công, thông điệp lỗi nếu có)"""
-        if not self.is_running:
+        rec_str = str(recipient).strip()
+        owner_id = self.get_owner_chat_id()
+        is_owner_target = (rec_str in [owner_id, "1023927138", "@Zeng86", "Zeng86", "@zeng86", "zeng86"] or
+                           rec_str == str(self.config.get("owner_chat_id", "")).strip() or
+                           tag in ["owner_alert", "system_alert", "daily_report"])
+
+        # Nếu bot TẮT: chỉ chặn tin khách/thầu thông thường. KHÔNG chặn tin gửi cho Chủ bot hoặc tin có cờ force
+        if not self.is_running and not force and not is_owner_target:
             self.log(f"⚠️ Bot đang TẮT: Đã chặn gửi tin nhắn tới {recipient}.", "WARN")
             return False, "Bot đang ở trạng thái TẮT (Chưa bấm Bật Bot trên Web)"
 
@@ -1202,10 +1246,13 @@ class TelegramBotService:
         if not token:
             return False, "Chưa nhập Bot Token."
 
-        chat_id, err = self.resolve_recipient(recipient)
-        if not chat_id:
-            self.log(f"Lỗi gửi tin tới {recipient}: {err}", "WARN")
-            return False, err
+        if is_owner_target:
+            chat_id = owner_id
+        else:
+            chat_id, err = self.resolve_recipient(recipient)
+            if not chat_id:
+                self.log(f"Lỗi gửi tin tới {recipient}: {err}", "WARN")
+                return False, err
 
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         payload = {
@@ -1213,6 +1260,8 @@ class TelegramBotService:
             "text": text,
             "parse_mode": "HTML"
         }
+        if reply_markup:
+            payload["reply_markup"] = reply_markup
         try:
             resp = requests.post(url, json=payload, timeout=10)
             data = resp.json()
@@ -1537,7 +1586,7 @@ class TelegramBotService:
         self.save_client_bets()
 
         # 4. Gửi cảnh báo cho Chủ bot
-        owner_cid = self.config.get("owner_chat_id")
+        owner_cid = self.get_owner_chat_id()
         if owner_cid:
             owner_alert = (
                 f"⚠️ <b>CHỦ THẦU TRẢ LẠI MỘT PHẦN TIỀN CƯỢC:</b>\n"
@@ -1546,14 +1595,15 @@ class TelegramBotService:
                 f"👉 <b>{ret_summary}</b>\n"
                 f"✅ <i>Đã tự động trừ số này ra khỏi tính tiền thầu & tiền khách, và đã nhắn báo trả lại khách cược!</i>"
             )
-            self.send_telegram_message(str(owner_cid), owner_alert)
+            self.send_telegram_message(str(owner_cid), owner_alert, force=True, tag="owner_alert")
 
         return True
 
     def notify_owner_new_pending_bet(self, item: dict):
         """Gửi tin nhắn thông báo cho Chủ bot khi có tin cược mới ở trạng thái Treo chờ duyệt"""
-        owner_cid = self.config.get("owner_chat_id")
+        owner_cid = self.get_owner_chat_id()
         if not owner_cid:
+            self.log(f"⚠️ Có tin treo #{item.get('id')} nhưng chưa tìm thấy Chat ID của Chủ bot.", "WARN")
             return
 
         parsed = item.get("parsed", {})
@@ -1581,14 +1631,29 @@ class TelegramBotService:
             f"👤 <b>Khách:</b> {sender_label}\n"
             f"📩 <b>Nội dung:</b> <code>{raw_text}</code>\n"
             f"📊 <b>Tổng cược:</b> {detail_txt}\n"
-            f"⚠️ <i>Bot đang ở trạng thái TẮT -> Tin đang treo chờ duyệt trên Web!</i>\n"
+            f"⚠️ <i>Bot đang ở chế độ Treo -> Tin đang chờ bạn duyệt!</i>\n"
             f"━━━━━━━━━━━━━━━━━━\n"
             f"👉 Duyệt tin này: <code>/duyet {pid}</code>\n"
             f"👉 Duyệt tất cả: <code>/duyet all</code>\n"
             f"👉 Từ chối tin: <code>/huy {pid}</code>\n"
-            f"<i>(Hoặc vào bảng Tin Gốc trên Web để bấm Duyệt)</i>"
+            f"<i>(Hoặc bấm nút duyệt nhanh trực tiếp bên dưới)</i>"
         )
-        self.send_telegram_message(str(owner_cid), msg)
+        reply_markup = {
+            "inline_keyboard": [
+                [
+                    {"text": f"✅ Duyệt #{pid}", "callback_data": f"duyet_{pid}"},
+                    {"text": f"❌ Hủy #{pid}", "callback_data": f"huy_{pid}"}
+                ],
+                [
+                    {"text": "⚡ Duyệt tất cả tin treo", "callback_data": "duyet_all"}
+                ]
+            ]
+        }
+        ok, err = self.send_telegram_message(str(owner_cid), msg, reply_markup=reply_markup, force=True, tag="owner_alert")
+        if ok:
+            self.log(f"🔔 Đã gửi tin báo tin treo #{pid} cho Chủ bot ({owner_cid})", "SUCCESS")
+        else:
+            self.log(f"⚠️ Lỗi gửi tin báo tin treo #{pid} cho Chủ bot ({owner_cid}): {err}", "ERROR")
 
     def approve_pending_bet(self, pending_id: int) -> dict:
         """
@@ -1660,6 +1725,7 @@ class TelegramBotService:
 
         # Lưu nội dung cân chuyển và giữ lại vào chi tiết tin khách
         single_transfer_txt = self.balancer.format_transfer_message(excess, include_header=False) if excess_count > 0 else ""
+        single_retained_txt = self.balancer.calculate_retained_from_single_bet(parsed, excess)
         is_bet_ok = not has_forwarded_excess
         self.update_last_bet_transfer(chat_id_str, transfer_text=single_transfer_txt, retain_text=single_retained_txt, is_ok=is_bet_ok)
         item["transfer_text"] = single_transfer_txt
@@ -1769,6 +1835,62 @@ class TelegramBotService:
         self.log(f"Chủ bot đã TỪ CHỐI tin #{pending_id} của {sender_label} ('{text}')", "WARN")
         return {"success": True, "message": f"Đã từ chối tin #{pending_id}"}
 
+    def answer_callback_query(self, callback_query_id: str, text: str = ""):
+        """Gửi phản hồi cho callback query (nút bấm inline của Telegram)"""
+        token = self.config.get("bot_token", "").strip()
+        if not token or not callback_query_id:
+            return
+        try:
+            requests.post(
+                f"https://api.telegram.org/bot{token}/answerCallbackQuery",
+                json={"callback_query_id": str(callback_query_id), "text": text},
+                timeout=5
+            )
+        except Exception:
+            pass
+
+    def handle_callback_query(self, cb: dict):
+        """Xử lý khi người dùng (Chủ bot) bấm nút inline trên Telegram"""
+        cb_id = cb.get("id")
+        data = cb.get("data", "")
+        from_user = cb.get("from", {})
+        sender_cid = str(from_user.get("id", ""))
+        sender_un = (from_user.get("username") or "").lower().lstrip("@")
+
+        # Kiểm tra quyền: phải là chủ bot hoặc admin
+        if not self.is_admin(sender_cid, sender_un):
+            self.answer_callback_query(cb_id, "Bạn không có quyền thực hiện thao tác này.")
+            return
+
+        if data.startswith("duyet_"):
+            val = data.replace("duyet_", "").strip()
+            if val == "all":
+                res = self.approve_all_pending_bets()
+                cnt = res.get("approved_count", 0)
+                msg_txt = f"✅ Đã duyệt tất cả {cnt} tin treo thành công!" if cnt > 0 else "ℹ️ Không có tin treo nào cần duyệt."
+                self.answer_callback_query(cb_id, msg_txt)
+                self.send_telegram_message(sender_cid, f"🟢 <b>{msg_txt}</b>", force=True, tag="owner_alert")
+            elif val.isdigit():
+                pid = int(val)
+                res = self.approve_pending_bet(pid)
+                if res.get("success"):
+                    self.answer_callback_query(cb_id, f"✅ Đã duyệt tin #{pid}!")
+                    self.send_telegram_message(sender_cid, f"🟢 <b>Đã duyệt thành công tin cược #{pid}!</b>\nBot đã cân chuyển và gửi tin Ok cho khách.", force=True, tag="owner_alert")
+                else:
+                    err = res.get("error", "Không tìm thấy tin treo này.")
+                    self.answer_callback_query(cb_id, f"❌ {err}")
+        elif data.startswith("huy_"):
+            val = data.replace("huy_", "").strip()
+            if val.isdigit():
+                pid = int(val)
+                res = self.reject_pending_bet(pid)
+                if res.get("success"):
+                    self.answer_callback_query(cb_id, f"❌ Đã từ chối tin #{pid}!")
+                    self.send_telegram_message(sender_cid, f"🔴 <b>Đã từ chối/hủy tin treo #{pid}.</b>", force=True, tag="owner_alert")
+                else:
+                    err = res.get("error", "Không tìm thấy tin treo này.")
+                    self.answer_callback_query(cb_id, f"❌ {err}")
+
 
     def handle_incoming_message(self, message: dict):
         """Xử lý một tin nhắn nhận được từ khách"""
@@ -1808,7 +1930,7 @@ class TelegramBotService:
                 if self.pending_recipient_acks:
                     self.pending_recipient_acks = None
 
-                owner_cid = self.config.get("owner_chat_id")
+                owner_cid = self.get_owner_chat_id()
                 forward_contractor_all = self.config.get("forward_contractor_to_owner", False)
 
                 # Phân tích nội dung tin nhắn của Chủ thầu:
@@ -3044,9 +3166,9 @@ class TelegramBotService:
 
             # Forward tin nhắn không phải cược sang cho Chủ Bot (nếu bật tùy chọn)
             if self.config.get("forward_client_to_owner", False):
-                owner_cid = self.config.get("owner_chat_id")
+                owner_cid = self.get_owner_chat_id()
                 if owner_cid:
-                    self.send_telegram_message(str(owner_cid), f"📩 Khách {sender_label}: {text}")
+                    self.send_telegram_message(str(owner_cid), f"📩 Khách {sender_label}: {text}", force=True, tag="owner_alert")
             return
 
         # 2a. KIỂM TRA GIỜ KHÓA NHẬN CƯỢC (Đề và Lô riêng biệt)
@@ -3107,9 +3229,9 @@ class TelegramBotService:
                 self.send_telegram_message(str(chat_id), reject_msg, track_for_cleanup=True, tag="cutoff_reject")
                 self.log(f"Khách {sender_label}: {text} (⛔ {reject_msg})", "WARN")
                 if self.config.get("forward_client_to_owner", False):
-                    owner_cid = self.config.get("owner_chat_id")
+                    owner_cid = self.get_owner_chat_id()
                     if owner_cid:
-                        self.send_telegram_message(str(owner_cid), f"⛔ [HẾT GIỜ] Khách {sender_label}: {text} -> Bot báo: {reject_msg}")
+                        self.send_telegram_message(str(owner_cid), f"⛔ [HẾT GIỜ] Khách {sender_label}: {text} -> Bot báo: {reject_msg}", force=True, tag="owner_alert")
                 return
 
         filter_return_msg = ""
@@ -3123,7 +3245,7 @@ class TelegramBotService:
 
                 if rej_count > 0:
                     filter_return_msg = format_rejected_receipt(rejected)
-                    owner_cid = self.config.get("owner_chat_id")
+                    owner_cid = self.get_owner_chat_id()
 
                     acc_summary = accepted.get("summary", {})
                     acc_count = acc_summary.get("de_count", 0) + acc_summary.get("lo_count", 0) + acc_summary.get("bacang_count", 0) + acc_summary.get("xien_count", 0)
@@ -3199,9 +3321,9 @@ class TelegramBotService:
 
         # Forward tin nhắn cược của khách sang cho Chủ Bot (nếu bật tùy chọn)
         if self.config.get("forward_client_to_owner", False):
-            owner_cid = self.config.get("owner_chat_id")
+            owner_cid = self.get_owner_chat_id()
             if owner_cid:
-                self.send_telegram_message(str(owner_cid), f"📩 Khách {sender_label} (tin #{msg_idx}): {text}")
+                self.send_telegram_message(str(owner_cid), f"📩 Khách {sender_label} (tin #{msg_idx}): {text}", force=True, tag="owner_alert")
 
         # 3. Cân bảng và tính phần cược thừa
         excess = self.balancer.add_bets(parsed)
@@ -3404,7 +3526,7 @@ class TelegramBotService:
                     self.log(f"❌ Lỗi gửi chốt tiền tới người nhận {target_recipient}: {err}", "WARN")
 
         # 3. Gửi Báo Cáo Tổng Hợp cho Chủ Bảng (owner)
-        owner_chat_id = self.config.get("owner_chat_id", "").strip() or requested_by
+        owner_chat_id = self.get_owner_chat_id() or requested_by
         thau_rep = format_accounting_report(acc, "thau")
         giulai_rep = format_accounting_report(acc, "giulai")
         chuyen_rep = format_accounting_report(acc, "chuyen")
@@ -3945,9 +4067,9 @@ class TelegramBotService:
                         if time.time() - self.pending_recipient_acks["timestamp"] >= 180:
                             self.pending_recipient_acks["alerted"] = True
                             rec_name = self.pending_recipient_acks.get("recipient", "")
-                            owner_cid = self.config.get("owner_chat_id")
+                            owner_cid = self.get_owner_chat_id()
                             if owner_cid:
-                                self.send_telegram_message(str(owner_cid), "Chủ thầu chưa Ok lại")
+                                self.send_telegram_message(str(owner_cid), "Chủ thầu chưa Ok lại", force=True, tag="owner_alert")
                             self.log(f"Chủ thầu {rec_name} chưa Ok lại sau 3 phút", "WARN")
 
                     url = f"https://api.telegram.org/bot{token}/getUpdates"
@@ -3962,6 +4084,9 @@ class TelegramBotService:
                         self.consecutive_conflicts = 0
                         for update in data.get("result", []):
                             self.last_update_id = update.get("update_id", self.last_update_id)
+                            cb = update.get("callback_query")
+                            if cb:
+                                self.handle_callback_query(cb)
                             message = update.get("message") or update.get("channel_post") or update.get("edited_message")
                             if message:
                                 self.handle_incoming_message(message)

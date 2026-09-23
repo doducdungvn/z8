@@ -44,7 +44,7 @@ def add_cors_headers(response):
 
 
 # Tự động khởi động bot nếu trên Cloud/Render hoặc cấu hình bot_mode == auto
-if os.environ.get("AUTO_START_BOT", "").lower() in ["true", "1"] or os.environ.get("RENDER"):
+if os.environ.get("AUTO_START_BOT", "").lower() in ["true", "1"] or os.environ.get("RENDER") or os.environ.get("PORT"):
     if bot_service.config.get("bot_token") and not bot_service.is_running:
         try:
             bot_service.start()
