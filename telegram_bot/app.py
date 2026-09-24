@@ -75,7 +75,8 @@ def get_status():
         "settled_date": settle_st.get("settled_date", ""),
         "settled_at": settle_st.get("settled_at", ""),
         "settled_time": settle_st.get("settled_time", ""),
-        "settle_status": settle_st
+        "settle_status": settle_st,
+        "last_contractor_settlement": getattr(bot_service, "last_contractor_settlement", None)
     })
 
 

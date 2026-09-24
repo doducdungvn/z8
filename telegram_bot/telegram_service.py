@@ -51,6 +51,7 @@ class TelegramBotService:
         self.pending_bets = self.load_pending_bets()
         self.pending_recipient_acks = None  # Theo dõi phản hồi của người nhận cược thừa (timeout 5p)
         self.pending_client_receipts = []  # Danh sách tin xác nhận khách cược đang chờ chủ thầu Ok
+        self.last_contractor_settlement = None  # Lưu bảng chốt tiền gần nhất nhận từ chủ thầu
         self.last_cleanup_ts = 0
         self.last_bet_timestamp = None
         self.balancer = BoardBalancer(self.config.get("retain_config", {}))
@@ -229,6 +230,30 @@ class TelegramBotService:
 
         # 4. Fallback mặc định cho Chủ bot Zeng86
         return "1023927138"
+
+    def is_contractor_settlement_report(self, text: str) -> bool:
+        """Kiểm tra tin nhắn có phải là bảng chốt tiền / đối soát công nợ từ chủ thầu hay không"""
+        if not text:
+            return False
+        t = text.lower().strip()
+        # 1. Các từ khóa chốt tiền / đối soát phổ biến
+        settle_keywords = [
+            "tong nhan", "tổng nhận", "tong thu", "tổng thu", "tong tra", "tổng trả",
+            "chot tien", "chốt tiền", "chot so", "chốt sổ", "bang chot", "bảng chốt",
+            "tong ket", "tổng kết", "thanh toan", "thanh toán", "doi soat", "đối soát",
+            "tong ket ngay", "tổng kết ngày"
+        ]
+        if any(k in t for k in settle_keywords):
+            return True
+
+        # 2. Định dạng tổng kết số liệu có đề / lô và dấu bằng kết quả âm/dương (= -... hoặc = +...)
+        # Ví dụ: "24/09/2026: De: 491(4)=-112 Lo: 88(13)=-887 Tong nhan:-999"
+        has_de_or_lo = bool(re.search(r"\b(de|đề|lo|lô)\s*:\s*\d+", t))
+        has_calc_equals = bool(re.search(r"=\s*[-+]?\d+", t))
+        if has_de_or_lo and has_calc_equals:
+            return True
+
+        return False
 
     def msg_need_auth(self) -> str:
         return (
@@ -1944,7 +1969,30 @@ class TelegramBotService:
                 # 2. Kiểm tra có chữ Ok, ok, OK ở đầu tin
                 has_ok_start = bool(re.match(r"^\s*(ok|ок)\b", text_clean, re.IGNORECASE))
 
-                if has_ok_start:
+                # 3. Kiểm tra xem bot có đang có tin cược nào chuyển thầu chờ thầu Ok hay không
+                has_pending_receipts = bool(hasattr(self, "pending_client_receipts") and self.pending_client_receipts)
+
+                # 4. Kiểm tra có phải là tin nhắn chốt tiền / đối soát công nợ từ chủ thầu gửi sang hay không
+                is_settle_report = self.is_contractor_settlement_report(text_clean)
+
+                if is_settle_report:
+                    # TRƯỜNG HỢP: CHỦ THẦU GỬI BẢNG CHỐT TIỀN / ĐỐI SOÁT CÔNG NỢ
+                    self.last_contractor_settlement = {
+                        "timestamp": now_vn().strftime("%H:%M:%S %d/%m"),
+                        "text": text_clean,
+                        "sender": sender_label
+                    }
+                    self.log(f"Chủ thầu {sender_label} gửi bảng chốt tiền: {text}", "SUCCESS")
+                    if owner_cid and str(chat_id) != str(owner_cid):
+                        self.send_telegram_message(
+                            str(owner_cid),
+                            f"📊 <b>CHỦ THẦU GỬI BẢNG CHỐT TIỀN:</b>\n"
+                            f"👤 Chủ thầu: {sender_label}\n"
+                            f"📝 Nội dung:\n<code>{text_clean}</code>",
+                            force=True, tag="contractor_settlement"
+                        )
+
+                elif has_ok_start:
                     if has_rejection:
                         # TRƯỜNG HỢP 1A: CHỦ THẦU CÓ OK Ở ĐẦU TIN KÈM THEO TRẢ LẠI MỘT PHẦN
                         # Ví dụ: "Ok tin 1 Đề 12.32.52.62x10 trả lại Đề 98x10"
@@ -1955,12 +2003,12 @@ class TelegramBotService:
                                 self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
                     else:
                         # TRƯỜNG HỢP 1B: CHỦ THẦU OK TOÀN BỘ
-                        self.log(f"Chủ thầu {sender_label}: {text} (đã xác nhận Ok toàn bộ)", "SUCCESS")
-                        if forward_contractor_all and owner_cid and str(chat_id) != str(owner_cid):
-                            self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
+                        if has_pending_receipts:
+                            self.log(f"Chủ thầu {sender_label}: {text} (đã xác nhận Ok toàn bộ)", "SUCCESS")
+                            if forward_contractor_all and owner_cid and str(chat_id) != str(owner_cid):
+                                self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
 
-                        # Giải phóng hàng đợi: Nhắn Ok tin X cho các khách đang chờ
-                        if hasattr(self, "pending_client_receipts") and self.pending_client_receipts:
+                            # Giải phóng hàng đợi: Nhắn Ok tin X cho các khách đang chờ
                             for pending in list(self.pending_client_receipts):
                                 cid = pending["chat_id"]
                                 r_text = pending["receipt_text"]
@@ -1981,22 +2029,25 @@ class TelegramBotService:
                             self.pending_client_receipts.clear()
                             self.pending_recipient_acks = None
                             self.save_client_bets()
+                        else:
+                            # Không có tin cược nào đang chờ thầu Ok (ví dụ thầu nhắn trò chuyện "Ok em")
+                            self.log(f"Chủ thầu {sender_label}: {text}", "INFO")
+                            if forward_contractor_all and owner_cid and str(chat_id) != str(owner_cid):
+                                self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
 
                 elif has_rejection:
                     # TRƯỜNG HỢP 2: CHỦ THẦU TỪ CHỐI / TRẢ LẠI TOÀN BỘ (KHÔNG CÓ OK Ở ĐẦU TIN)
-                    # Bắt buộc forward tin nhắn này cho Chủ Bot cho dù KHÔNG chọn chức năng forward tất cả!
-                    self.log(f"⚠️ Chủ thầu {sender_label} TỪ CHỐI/TRẢ LẠI TOÀN BỘ: '{text}' -> Bot KHÔNG gửi Ok cho khách!", "WARN")
-                    if owner_cid and str(chat_id) != str(owner_cid):
-                        reject_alert = (
-                            f"🚨 <b>CẢNH BÁO: CHỦ THẦU TỪ CHỐI / TRẢ LẠI TIN CƯỢC!</b>\n"
-                            f"━━━━━━━━━━━━━━━━━━\n"
-                            f"📩 Chủ thầu {sender_label}: <i>{text}</i>\n"
-                            f"👉 <b>Bot KHÔNG gửi Ok cho khách cược!</b>"
-                        )
-                        self.send_telegram_message(str(owner_cid), reject_alert)
+                    if has_pending_receipts:
+                        self.log(f"⚠️ Chủ thầu {sender_label} TỪ CHỐI/TRẢ LẠI TOÀN BỘ: '{text}' -> Bot KHÔNG gửi Ok cho khách!", "WARN")
+                        if owner_cid and str(chat_id) != str(owner_cid):
+                            reject_alert = (
+                                f"🚨 <b>CẢNH BÁO: CHỦ THẦU TỪ CHỐI / TRẢ LẠI TIN CƯỢC!</b>\n"
+                                f"━━━━━━━━━━━━━━━━━━\n"
+                                f"📩 Chủ thầu {sender_label}: <i>{text}</i>\n"
+                                f"👉 <b>Bot KHÔNG gửi Ok cho khách cược!</b>"
+                            )
+                            self.send_telegram_message(str(owner_cid), reject_alert)
 
-                    # Cảnh báo chi tiết từng tin cược của khách đang bị treo cho Chủ bot xử lý
-                    if hasattr(self, "pending_client_receipts") and self.pending_client_receipts:
                         for pending in list(self.pending_client_receipts):
                             cid = pending.get("chat_id")
                             m_idx = pending.get("msg_idx")
@@ -2015,10 +2066,18 @@ class TelegramBotService:
                         self.pending_recipient_acks = None
                         self.rebuild_board_from_active_bets()
                         self.save_client_bets()
+                    else:
+                        self.log(f"Chủ thầu {sender_label}: {text} (từ chối/trả lại)", "WARN")
+                        if forward_contractor_all and owner_cid and str(chat_id) != str(owner_cid):
+                            self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
 
                 else:
-                    # TRƯỜNG HỢP 3: CHỦ THẦU NHẮN TIN KHÁC (chưa có Ok ở đầu tin)
-                    self.log(f"Chủ thầu {sender_label}: {text} (chưa có Ok ở đầu tin -> tiếp tục đợi Ok)", "INFO")
+                    # TRƯỜNG HỢP 3: TIN NHẮN KHÁC CỦA CHỦ THẦU
+                    if has_pending_receipts:
+                        self.log(f"Chủ thầu {sender_label}: {text} (chưa có Ok ở đầu tin -> tiếp tục đợi Ok cho tin cược đang chờ)", "INFO")
+                    else:
+                        # Bot không gửi cược nào và không chờ gì từ chủ thầu
+                        self.log(f"Chủ thầu {sender_label}: {text}", "INFO")
                     if forward_contractor_all and owner_cid and str(chat_id) != str(owner_cid):
                         self.send_telegram_message(str(owner_cid), f"📩 Chủ thầu {sender_label}: {text}")
 
