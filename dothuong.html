@@ -252,6 +252,8 @@
 // Predefined shorthands map from thau_lode.html
 const shorthands = {
   "k": "00.11.22.33.44.55.66.77.88.99",
+  "kep": "00.11.22.33.44.55.66.77.88.99",
+  "lip": "00.11.22.33.44.55.66.77.88.99",
   "kl": "050.161.272.383.494",
   "apkep": "010.121.232.343.454.565.676.787.898",
   "kepam": "070.141.292.363.585",
@@ -440,17 +442,19 @@ function normalizeBetLine(line) {
   normalized = normalized.replace(/[’‘ʼ＇]/g, "'");
   normalized = normalized.replace(/(\d)\s*,\s*(\d)/g, '$1.$2');
   normalized = normalized.replace(/(\d)\s*\.\s*(\d)/g, '$1.$2');
-  normalized = normalized.replace(/\b(?:dau\s+dit|dau\s+duoi)\s*(\d)(?![0-9])/gi, 'dau$1, dit$1');
-  normalized = normalized.replace(/\b(?:dd)\s*(\d)(?![0-9])/gi, 'dau$1, dit$1');
-  normalized = normalized.replace(/\b(?:kep lech)\b/gi, 'kl');
-  normalized = normalized.replace(/\b(?:lip|kep)\b/gi, 'k');
+  const END_BOUND = '(?=[x=+*\\d\\s.,;:\\-]|$)';
+  normalized = normalized.replace(/\b(?:dau\s+dit|dau\s+duoi|daud'|dd)\s*(\d)(?![0-9])/gi, 'dau$1, dit$1 ');
+  normalized = normalized.replace(new RegExp('\\b(?:sat\\s*kep|satkep|ap\\s*kep|apkep|apk)' + END_BOUND, 'gi'), 'apkep ');
+  normalized = normalized.replace(new RegExp('\\b(?:kep\\s*am|kepam|kepa)' + END_BOUND, 'gi'), 'kepam ');
+  normalized = normalized.replace(new RegExp('\\b(?:kep\\s*lech|keplech|kep\\s*lec|keplec|kl)' + END_BOUND, 'gi'), 'kl ');
+  normalized = normalized.replace(new RegExp('\\b(?:kep\\s*bang|kepbang|lip|kep)' + END_BOUND, 'gi'), 'k ');
   normalized = normalized.replace(/\b(?:dau)\s*(\d)(?![0-9])/gi, 'dau$1');
   normalized = normalized.replace(/\b(?:dit|duoi)\s*(\d)(?![0-9])/gi, 'dit$1');
-  normalized = normalized.replace(/\b(?:cham)\s*(\d)(?![0-9])/gi, 'cham$1');
+  normalized = normalized.replace(/\b(?:cham|c)\s*(\d)(?![0-9])/gi, 'cham$1');
   normalized = normalized.replace(/\b(?:tong)\s*(\d)(?![0-9])/gi, 't$1');
   normalized = normalized.replace(/\b(?:d)\s*(\d)(?![0-9])/gi, 'd$1');
   normalized = normalized.replace(/\b(?:t)\s*(\d)(?![0-9])/gi, 't$1');
-  normalized = normalized.replace(/\b(?:bo|he)\s*(\d{1,2})(?![0-9])/gi, 'bo$1');
+  normalized = normalized.replace(/\b(?:bo|he|b|h)\s*(\d{1,2})(?![0-9])/gi, 'bo$1');
   normalized = normalized.replace(/\b(?:moi con bang|moi con)\b/gi, 'mc');
   normalized = normalized.replace(/\s*[,.]\s*(?==|x|mc|moi\s+con|\+|\*)/gi, ' ');
   normalized = normalized.replace(/([a-z0-9])\s*(mỗi\s+con\s*=?|moi\s+con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*(\d+(?:\.\d+)?)(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?(?![a-z0-9])/gi, '$1x$3');
@@ -1819,6 +1823,7 @@ function calculateSum(isFromRunBalancing = false) {
   }
 
   saveShortcuts();
+  saveAppState();
 
   const inputEl = document.getElementById("combinedBetInput") || document.getElementById("numbers");
   if (!inputEl) return;
@@ -2876,11 +2881,16 @@ function saveAppState() {
   const excludeInput = document.getElementById('excludeInput');
   const twentySevenNumbers = document.getElementById('twentySevenNumbers');
   const specialPrizeInput = document.getElementById('specialPrizeInput');
+  const retainNumber = document.getElementById('retainNumber');
 
   if (numbers) localStorage.setItem('z8_combined_bet', getRawTextFromElement(numbers));
   if (excludeInput) localStorage.setItem('z8_exclude_input', getRawTextFromElement(excludeInput));
   if (twentySevenNumbers) localStorage.setItem('z8_all_prizes', twentySevenNumbers.value || '');
   if (specialPrizeInput) localStorage.setItem('z8_special_prize', specialPrizeInput.value || '');
+  if (retainNumber) localStorage.setItem('z8_retain_number', retainNumber.value || '0');
+  if (window.balanceState) {
+    localStorage.setItem('z8_dothuong_balance_state', JSON.stringify(window.balanceState));
+  }
 }
 
 function loadAppState() {
@@ -2888,11 +2898,14 @@ function loadAppState() {
   const excludeInput = document.getElementById('excludeInput');
   const twentySevenNumbers = document.getElementById('twentySevenNumbers');
   const specialPrizeInput = document.getElementById('specialPrizeInput');
+  const retainNumber = document.getElementById('retainNumber');
 
   const savedBet = localStorage.getItem('z8_combined_bet');
   const savedExclude = localStorage.getItem('z8_exclude_input');
   const savedPrizes = localStorage.getItem('z8_all_prizes');
   const savedSpecial = localStorage.getItem('z8_special_prize');
+  const savedRetainNumber = localStorage.getItem('z8_retain_number');
+  const savedBalanceState = localStorage.getItem('z8_dothuong_balance_state');
 
   let hasData = false;
 
@@ -2909,6 +2922,20 @@ function loadAppState() {
   if (savedExclude !== null && excludeInput) {
     setRawTextToContentEditable(excludeInput, savedExclude, true);
     updateExcludeDisplay();
+  }
+  if (savedRetainNumber !== null && retainNumber) {
+    retainNumber.value = savedRetainNumber;
+  }
+  if (savedBalanceState !== null) {
+    try {
+      const parsed = JSON.parse(savedBalanceState);
+      window.balanceState.step = parsed.step;
+      window.balanceState.isPendingCalculated = parsed.isPendingCalculated;
+      const counterLabel = document.getElementById('balanceCounterLabel');
+      if (counterLabel) counterLabel.textContent = `Số Lần Đã Cân Chuyển = ${window.balanceState.step}`;
+    } catch (e) {
+      console.error("Error parsing balanceState:", e);
+    }
   }
   if (hasData) {
     calculateSum();

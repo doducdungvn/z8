@@ -953,22 +953,56 @@ let balanceState = {
   xienBets: []
 };
 
-function normalizeShorthandToken(token) {
-  let t = token.trim().toLowerCase().replace(/[’‘ʼ＇`]/g, "'");
+function getCustomShortcutsMap() {
+  const shortcutsInput = document.getElementById("shortcuts")?.value || "";
+  const customShortcuts = {};
+  if (!shortcutsInput.trim()) return customShortcuts;
+  const shortcutsArray = shortcutsInput.split("\n");
+  for (let i = 0; i < shortcutsArray.length; i++) {
+    const line = shortcutsArray[i].trim();
+    if (!line || line.startsWith("#") || line.indexOf("=") === -1) continue;
+    const eqIdx = line.indexOf("=");
+    const shortcutName = line.substring(0, eqIdx).trim().toLowerCase();
+    const shortcutValue = line.substring(eqIdx + 1).trim();
+    if (shortcutName && shortcutValue) {
+      const keys = shortcutName.split(",");
+      keys.forEach(k => {
+        const cleanedKey = k.trim().replace(/[’‘ʼ＇`]/g, "'");
+        if (cleanedKey) {
+          customShortcuts[cleanedKey] = shortcutValue;
+          const unaccentedKey = stripAccents(cleanedKey);
+          if (unaccentedKey) {
+            customShortcuts[unaccentedKey] = shortcutValue;
+          }
+        }
+      });
+    }
+  }
+  return customShortcuts;
+}
+
+function normalizeShorthandToken(token, customShortcuts = null) {
+  let t = stripAccents(token.trim().toLowerCase()).replace(/[’‘ʼ＇`]/g, "'");
+  if (customShortcuts && customShortcuts[t]) return t;
+  const hasCustom = customShortcuts && Object.keys(customShortcuts).length > 0;
+  const activeDict = hasCustom ? customShortcuts : shorthands;
   const dauditMatch = t.match(/^daudit(\d)$/);
   if (dauditMatch) {
+    if (activeDict[t]) return t;
     const d = dauditMatch[1];
     const dauKey = 'd' + d;
     const ditKey = "d'" + d;
-    if (shorthands[dauKey] && shorthands[ditKey]) {
-      return shorthands[dauKey] + '.' + shorthands[ditKey];
+    if (activeDict[dauKey] && activeDict[ditKey]) {
+      return activeDict[dauKey] + '.' + activeDict[ditKey];
     }
   }
+  const cMatch = t.match(/^c(\d)$/);
+  if (cMatch) return 'cham' + cMatch[1];
   const dauMatch = t.match(/^dau(\d)$/);
   if (dauMatch) return 'd' + dauMatch[1];
   const ditMatch = t.match(/^dit(\d)$/);
   if (ditMatch) return "d'" + ditMatch[1];
-  const heBoMatch = t.match(/^(he|bo)(\d{1,2})$/);
+  const heBoMatch = t.match(/^(he|bo|b|h)(\d{1,2})$/);
   if (heBoMatch) {
     let num = heBoMatch[2];
     if (num.length === 1) num = '0' + num;
@@ -982,60 +1016,83 @@ function normalizeShorthandToken(token) {
     'dc': 'dauchan',
     'dl': 'daule',
     'dt': 'dauto',
+    'dto': 'dauto',
     'db': 'daube',
+    'dbe': 'daube',
+    'dle': 'daule',
     'tb': 'tobe',
     'tt': 'toto',
     'bt': 'beto',
     'bb': 'bebe',
     'tc': 'tongchan',
     'tl': 'tongle',
+    'tle': 'tongle',
+    'tto': 'tongto',
+    'tbe': 'tongbe',
     'chan': 'ditchan',
     'le': 'ditle',
+    'duoichan': 'ditchan',
+    'duoile': 'ditle',
+    'duoibe': 'ditbe',
+    'duoito': 'ditto',
+    "d'c": 'ditchan',
+    "d'l": 'ditle',
+    'keplech': 'kl',
+    'keplec': 'kl',
+    'apk': 'apkep',
+    'satkep': 'apkep',
+    'kepa': 'kepam',
     'lip': 'k',
     'kep': 'k'
   };
   return aliases[t] || t;
 }
 
-function resolveShorthands(numbersString) {
+function resolveShorthands(numbersString, _depth = 0) {
   let s = numbersString;
-  const shortcutsInput = document.getElementById("shortcuts")?.value || "";
-  const shortcutsArray = shortcutsInput.split("\n");
-  const customShortcuts = {};
-  for (let i = 0; i < shortcutsArray.length; i++) {
-    const shortcutParts = shortcutsArray[i].split("=");
-    const shortcutName = shortcutParts[0]?.trim().toLowerCase();
-    const shortcutValue = shortcutParts[1]?.trim();
-    if (shortcutName && shortcutValue) {
-      const keys = shortcutName.split(",");
-      keys.forEach(k => {
-        const cleanedKey = k.trim();
-        if (cleanedKey) {
-          customShortcuts[cleanedKey] = shortcutValue;
-        }
-      });
+  const customShortcuts = getCustomShortcutsMap();
+  const hasCustom = Object.keys(customShortcuts).length > 0;
+
+  // Mở rộng các từ khóa có khoảng trắng (như "kep lech", "ap kep", "kep am", hoặc từ khóa nhiều từ tự thêm) trước khi tách theo khoảng trắng
+  const multiWordKeys = Object.keys(customShortcuts)
+    .filter(k => /\s/.test(k))
+    .sort((a, b) => b.length - a.length);
+  if (multiWordKeys.length > 0) {
+    for (let i = 0; i < multiWordKeys.length; i++) {
+      const mKey = multiWordKeys[i];
+      const escapedKey = mKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+      const mwRegex = new RegExp('(^|[.,\\-\\s])' + escapedKey + '(?=[.,\\-\\s]|$)', 'gi');
+      s = s.replace(mwRegex, (match, prefix) => prefix + customShortcuts[mKey]);
     }
   }
 
-  const combinedRegex = /(dau|dit|daudit|d'|d|he|bo|t|cham)([0-9]{1,2})((?:[.,\-\s]+[0-9]{1,2})+)/gi;
+  const combinedRegex = /(dau|dit|daudit|d'|d|he|bo|b|h|t|cham|c)([0-9]{1,2})((?:[.,\-\s]+[0-9]{1,2})+)/gi;
   s = s.replace(combinedRegex, (match, prefix, firstDigit, rest) => {
+    const pLower = prefix.toLowerCase();
+    const normPrefix = pLower === 'c' ? 'cham' : ((pLower === 'b' || pLower === 'h') ? 'bo' : prefix);
     const digits = rest.split(/[^0-9]+/).filter(Boolean);
-    const expanded = [prefix + firstDigit, ...digits.map(d => prefix + d)];
+    const expanded = [normPrefix + firstDigit, ...digits.map(d => normPrefix + d)];
     return expanded.join(',');
   });
 
   const parts = s.split(/([.,\-\s]+)/);
   const resolvedParts = parts.map(part => {
-    const trimmed = part.trim().toLowerCase();
+    const trimmed = part.trim().toLowerCase().replace(/[’‘ʼ＇`]/g, "'");
     if (!trimmed) return part;
     if (customShortcuts[trimmed]) return customShortcuts[trimmed];
-    const normalized = normalizeShorthandToken(part);
+    const unaccented = stripAccents(trimmed);
+    if (customShortcuts[unaccented]) return customShortcuts[unaccented];
+    const normalized = normalizeShorthandToken(part, customShortcuts);
     if (customShortcuts[normalized]) return customShortcuts[normalized];
-    if (shorthands[normalized]) return shorthands[normalized];
+    if (!hasCustom && shorthands[normalized]) return shorthands[normalized];
     if (/^[\d.]+$/.test(normalized)) return normalized;
     return part;
   });
-  return resolvedParts.join('');
+  const resStr = resolvedParts.join('');
+  if (_depth < 2 && resStr !== numbersString && /[a-zA-Z]/.test(resStr)) {
+    return resolveShorthands(resStr, _depth + 1);
+  }
+  return resStr;
 }
 
 function parseNumbersFromBetString(numbersString, betType) {
@@ -1279,28 +1336,6 @@ function updateExcludeDisplay() {
   displayEl.innerHTML = html;
 }
 
-function getCustomShortcutsMap() {
-  const shortcutsInput = document.getElementById("shortcuts")?.value || "";
-  if (!shortcutsInput.trim()) return {};
-  const shortcutsArray = shortcutsInput.split("\n");
-  const customShortcuts = {};
-  for (let i = 0; i < shortcutsArray.length; i++) {
-    const shortcutParts = shortcutsArray[i].split("=");
-    const shortcutName = shortcutParts[0]?.trim().toLowerCase();
-    const shortcutValue = shortcutParts[1]?.trim();
-    if (shortcutName && shortcutValue) {
-      const keys = shortcutName.split(",");
-      keys.forEach(k => {
-        const cleanedKey = k.trim();
-        if (cleanedKey) {
-          customShortcuts[cleanedKey] = shortcutValue;
-        }
-      });
-    }
-  }
-  return customShortcuts;
-}
-
 function isTokenRecognized(token, activeCategory, customShortcuts = {}) {
   const trimmed = token.trim();
   if (!trimmed) return true;
@@ -1309,19 +1344,18 @@ function isTokenRecognized(token, activeCategory, customShortcuts = {}) {
   if (/^(mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?$/i.test(trimmed)) return true;
   if (/^\d+(?:\.\d+)?(?:d|đ|₫|k|n)$/i.test(trimmed)) return true;
 
-  const norm = normalizeBetLine(trimmed);
+  const norm = normalizeBetLine(trimmed).trim();
   const normLower = trimmed.toLowerCase();
 
   const categoryRegex = /^(xienquay|xq|xienq|quay|q|xquay|lo\s*xien|l\s*xien|de|lo|xien|x|x2|x3|x4|3cang|3c|d|l|c|bc|cang|3\s*cang)$/i;
   if (categoryRegex.test(norm)) return true;
 
+  const hasCustom = Object.keys(customShortcuts).length > 0;
   if (customShortcuts[normLower] || customShortcuts[norm]) return true;
 
-  const normShorthand = normalizeShorthandToken(trimmed);
-  if (shorthands[normShorthand] || shorthands[normLower] || shorthands[norm]) return true;
-
-  if (/^(dau|dit|daudit|cham|tong|t|d|d'|bo|he)\d{1,2}$/i.test(norm)) return true;
-  if (/^(daube|dauto|dauchan|daule|ditbe|ditto|ditchan|ditle|tobe|toto|tochan|tole|bebe|beto|bechan|bele|tongchan|tongle|chanchan|chanle|lechan|lele|kl|k|lip|kep)$/i.test(norm)) return true;
+  const normShorthand = normalizeShorthandToken(trimmed, customShortcuts);
+  if (customShortcuts[normShorthand]) return true;
+  if (!hasCustom && (shorthands[normShorthand] || shorthands[normLower] || shorthands[norm])) return true;
 
   const resolved = resolveShorthands(trimmed);
   const parsedNums = parseNumbersFromBetString(resolved, activeCategory || 'de');
@@ -1349,6 +1383,7 @@ function formatExcludeLineWithHighlights(line, currentCat) {
   };
 
   const customShortcuts = getCustomShortcutsMap();
+  const hasCustom = Object.keys(customShortcuts).length > 0;
 
   tokens.forEach(token => {
     const trimmed = token.trim();
@@ -1358,7 +1393,7 @@ function formatExcludeLineWithHighlights(line, currentCat) {
     }
 
     // Check if it's a category
-    const norm = normalizeBetLine(trimmed);
+    const norm = normalizeBetLine(trimmed).trim();
     const spaceMatch = norm.match(/^(xienquay|xq|xienq|quay|q|xquay|lo\s*xien|de|lo|xien|x|x2|x3|x4|3cang|3c|d|l|c|bc|cang|3\s*cang)$/i);
     if (spaceMatch) {
       const rawType = spaceMatch[1].toLowerCase();
@@ -1384,11 +1419,11 @@ function formatExcludeLineWithHighlights(line, currentCat) {
       const sub = subTokens[i].trim();
       if (!sub) continue;
 
-      const normSub = normalizeShorthandToken(sub);
+      const normSub = normalizeShorthandToken(sub, customShortcuts);
 
       if (customShortcuts[sub.toLowerCase()]) continue;
       if (customShortcuts[normSub]) continue;
-      if (shorthands[normSub]) continue;
+      if (!hasCustom && shorthands[normSub]) continue;
 
       if (!activeCat) {
         allValid = false;
@@ -1430,7 +1465,7 @@ function verifyNonGroupText(text, currentCat) {
       return;
     }
     
-    const norm = normalizeBetLine(trimmed);
+    const norm = normalizeBetLine(trimmed).trim();
     const spaceMatch = norm.match(/^(xienquay|xq|xienq|quay|q|xquay|lo\s*xien|l\s*xien|de|lo|xien|x2|x3|x4|3cang|3c|d|l|c|bc|cang|3\s*cang|bo|he)(?:\b|[.:;\-\s])$/i);
     if (spaceMatch) {
       const rawType = spaceMatch[1].toLowerCase();
@@ -1516,7 +1551,15 @@ function verifyGroupText(groupText, currentCat) {
     return parsedNums.length > 0;
   }
 
-  const tokenRegex = /(xienquay|xq|xienq|quay|q|xquay|xien|xiên|x[234]|\s+|[.,;/\-\+=\*x]+|(?:dau\s*dit|đầu\s*đít|dau\s*duoi|đầu\s*đuôi|đau\s*đit|đau\s*đít|dd|đđ)\s*\d(?![0-9])|(?:kep\s+lech|kép\s+lệch)|(?:chẵn|chan|chăn)\s+(?:chẵn|chan|chăn)|(?:chẵn|chan|chăn)\s+(?:lẻ|le)|(?:lẻ|le)\s+(?:chẵn|chan|chăn)|(?:lẻ|le)\s+(?:lẻ|le)|(?:dau|đầu|đau|đàu|dit|đít|đit|duoi|đuôi|cham|chạm|tong|tổng|bo|bộ|he|hệ|d|đ|t)\s*\d{1,2}(?![0-9])|[a-zA-Z0-9'’‘ʼ＇`\u00C0-\u024F\u1E00-\u1EFF\u0300-\u036f]+|.)/gi;
+  const customShortcuts = getCustomShortcutsMap();
+  const customMwAlternation = Object.keys(customShortcuts)
+    .filter(k => /\s/.test(k))
+    .sort((a, b) => b.length - a.length)
+    .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'))
+    .join('|');
+  const customMwPart = customMwAlternation ? `(?:${customMwAlternation})|` : '';
+
+  const tokenRegex = new RegExp(`(${customMwPart}xienquay|xq|xienq|quay|q|xquay|xien|xiên|x[234]|\\s+|[.,;/\\-\\+=\\*x]+|(?:dau\\s*dit|đầu\\s*đít|dau\\s*duoi|đầu\\s*đuôi|đau\\s*đit|đau\\s*đít|daud'|dd|đđ)\\s*\\d(?![0-9])|(?:kep\\s+lech|kép\\s+lệch|kep\\s+lec|kép\\s+lệc|ap\\s+kep|áp\\s+kép|sat\\s+kep|sát\\s+kép|kep\\s+am|kép\\s+âm|kep\\s+bang|kép\\s+bằng)|(?:chẵn|chan|chăn)\\s+(?:chẵn|chan|chăn)|(?:chẵn|chan|chăn)\\s+(?:lẻ|le)|(?:lẻ|le)\\s+(?:chẵn|chan|chăn)|(?:lẻ|le)\\s+(?:lẻ|le)|(?:to|lớn|lon)\\s+(?:to|lớn|lon|bé|be|nhỏ|nho)|(?:bé|be|nhỏ|nho)\\s+(?:to|lớn|lon|bé|be|nhỏ|nho)|(?:dau|đầu|đau|đàu|dit|đít|đit|duoi|đuôi|tong|tổng|d|đ|t)\\s+(?:to|lớn|lon|bé|be|nhỏ|nho|chẵn|chan|chăn|lẻ|le)|(?:dau|đầu|đau|đàu|dit|đít|đit|duoi|đuôi|cham|chạm|tong|tổng|bo|bộ|he|hệ|d|đ|t|c|b|h)\\s*\\d{1,2}(?![0-9])|[a-zA-Z0-9'’‘ʼ＇\`\\u00C0-\\u024F\\u1E00-\\u1EFF\\u0300-\\u036f]+|.)`, 'gi');
   const tokens = numbersPart.match(tokenRegex) || [];
   let html = "";
   let validTokensCount = 0;
@@ -1535,7 +1578,7 @@ function verifyGroupText(groupText, currentCat) {
       }
 
       let newCat = '';
-      const normTokenForCat = normalizeBetLine(trimmed);
+      const normTokenForCat = normalizeBetLine(trimmed).trim();
       if (typeRegex.de.test(normTokenForCat)) newCat = 'de';
       else if (typeRegex.lo.test(normTokenForCat)) newCat = 'lo';
       else if (typeRegex.xienquay.test(normTokenForCat)) newCat = 'xienquay';
@@ -1548,7 +1591,7 @@ function verifyGroupText(groupText, currentCat) {
         html += escapeHtml(t);
         activeShorthandPrefix = "";
       } else {
-        const normToken = normalizeBetLine(trimmed);
+        const normToken = normalizeBetLine(trimmed).trim();
         const isValid = isTokenValid(normToken, activeCat, activeShorthandPrefix);
         
         if (isValid) {
@@ -1569,14 +1612,15 @@ function verifyGroupText(groupText, currentCat) {
           if (/(?:dau\s*dit|đầu\s*đít|dau\s*duoi|đầu\s*đuôi|đau\s*đit|đau\s*đít|dd|đđ)/i.test(t)) {
             activeShorthandPrefix = "daudit";
           } else {
-            const m = normToken.match(/^(dau|dit|duoi|cham|tong|t|d|d'|bo|he)(\d{1,2})$/i);
+            const m = normToken.match(/^(dau|dit|duoi|cham|tong|t|d|d'|bo|he|c|b|h)(\d{1,2})$/i);
             if (m) {
               activeShorthandPrefix = m[1].toLowerCase();
               if (activeShorthandPrefix === 'd') activeShorthandPrefix = 'dau';
               if (activeShorthandPrefix === 'd\'') activeShorthandPrefix = 'dit';
               if (activeShorthandPrefix === 'duoi') activeShorthandPrefix = 'dit';
               if (activeShorthandPrefix === 't') activeShorthandPrefix = 'tong';
-              if (activeShorthandPrefix === 'he') activeShorthandPrefix = 'bo';
+              if (activeShorthandPrefix === 'c') activeShorthandPrefix = 'cham';
+              if (activeShorthandPrefix === 'he' || activeShorthandPrefix === 'b' || activeShorthandPrefix === 'h') activeShorthandPrefix = 'bo';
             } else if (/^\d+$/.test(normToken)) {
               let isShorthandListItem = false;
               if (activeShorthandPrefix === 'bo') {
@@ -1674,16 +1718,36 @@ function normalizeBetLine(line) {
   normalized = normalized.replace(/[’‘ʼ＇]/g, "'");
   normalized = normalized.replace(/(\d)\s*,\s*(\d)/g, '$1.$2');
   normalized = normalized.replace(/(\d)\s*\.\s*(\d)/g, '$1.$2');
-  normalized = normalized.replace(/\b(?:chan\s+chan|chanchan)\b/g, 'chanchan');
-  normalized = normalized.replace(/\b(?:chan\s+le|chanle)\b/g, 'chanle');
-  normalized = normalized.replace(/\b(?:le\s+chan|lechan)\b/g, 'lechan');
-  normalized = normalized.replace(/\b(?:le\s+le|lele)\b/g, 'lele');
+  const END_BOUND = '(?=[x=+*\\d\\s.,;:\\-]|$)';
+  normalized = normalized.replace(new RegExp('\\b(?:chan\\s+chan|chanchan)' + END_BOUND, 'g'), 'chanchan ');
+  normalized = normalized.replace(new RegExp('\\b(?:chan\\s+le|chanle)' + END_BOUND, 'g'), 'chanle ');
+  normalized = normalized.replace(new RegExp('\\b(?:le\\s+chan|lechan)' + END_BOUND, 'g'), 'lechan ');
+  normalized = normalized.replace(new RegExp('\\b(?:le\\s+le|lele)' + END_BOUND, 'g'), 'lele ');
+  normalized = normalized.replace(new RegExp('\\b(?:to\\s+to|toto)' + END_BOUND, 'g'), 'toto ');
+  normalized = normalized.replace(new RegExp('\\b(?:to\\s+be|tobe)' + END_BOUND, 'g'), 'tobe ');
+  normalized = normalized.replace(new RegExp('\\b(?:be\\s+to|beto)' + END_BOUND, 'g'), 'beto ');
+  normalized = normalized.replace(new RegExp('\\b(?:be\\s+be|bebe)' + END_BOUND, 'g'), 'bebe ');
+  normalized = normalized.replace(new RegExp('\\b(?:dau\\s+to|dauto)' + END_BOUND, 'g'), 'dauto ');
+  normalized = normalized.replace(new RegExp('\\b(?:dau\\s+be|daube)' + END_BOUND, 'g'), 'daube ');
+  normalized = normalized.replace(new RegExp('\\b(?:dau\\s+chan|dauchan)' + END_BOUND, 'g'), 'dauchan ');
+  normalized = normalized.replace(new RegExp('\\b(?:dau\\s+le|daule)' + END_BOUND, 'g'), 'daule ');
+  normalized = normalized.replace(new RegExp('\\b(?:dit\\s+to|duoi\\s+to|ditto)' + END_BOUND, 'g'), 'ditto ');
+  normalized = normalized.replace(new RegExp('\\b(?:dit\\s+be|duoi\\s+be|ditbe)' + END_BOUND, 'g'), 'ditbe ');
+  normalized = normalized.replace(new RegExp('\\b(?:dit\\s+chan|duoi\\s+chan|ditchan)' + END_BOUND, 'g'), 'ditchan ');
+  normalized = normalized.replace(new RegExp('\\b(?:dit\\s+le|duoi\\s+le|ditle)' + END_BOUND, 'g'), 'ditle ');
+  normalized = normalized.replace(new RegExp('\\b(?:tong\\s+to|tongto)' + END_BOUND, 'g'), 'tongto ');
+  normalized = normalized.replace(new RegExp('\\b(?:tong\\s+be|tongbe)' + END_BOUND, 'g'), 'tongbe ');
+  normalized = normalized.replace(new RegExp('\\b(?:tong\\s+chan|tongchan)' + END_BOUND, 'g'), 'tongchan ');
+  normalized = normalized.replace(new RegExp('\\b(?:tong\\s+le|tongle)' + END_BOUND, 'g'), 'tongle ');
   normalized = normalized.replace(/\b(?:daudit|dau\s+dit|dau\s+duoi|dd|đđ)\s*(\d)(?![0-9])/g, 'daudit$1');
-  normalized = normalized.replace(/\b(?:kep lech)\b/g, 'kl');
-  normalized = normalized.replace(/\b(?:kep\s*bang|kepbang|lip|kep)(?=[x=+*\d\s]|$)/g, 'k ');
+  normalized = normalized.replace(new RegExp('\\b(?:sat\\s*kep|satkep|ap\\s*kep|apkep|apk)' + END_BOUND, 'g'), 'apkep ');
+  normalized = normalized.replace(new RegExp('\\b(?:kep\\s*am|kepam|kepa)' + END_BOUND, 'g'), 'kepam ');
+  normalized = normalized.replace(new RegExp('\\b(?:kep\\s*lech|keplech|kep\\s*lec|keplec|kl)' + END_BOUND, 'g'), 'kl ');
+  normalized = normalized.replace(new RegExp('\\b(?:kep\\s*bang|kepbang|lip|kep)' + END_BOUND, 'g'), 'k ');
   normalized = normalized.replace(/\b(?:dau)\s*(\d)(?![0-9])/g, 'dau$1');
   normalized = normalized.replace(/\b(?:dit|duoi)\s*(\d)(?![0-9])/g, 'dit$1');
   normalized = normalized.replace(/\b(?:cham)\s*(\d)(?![0-9])/g, 'cham$1');
+  normalized = normalized.replace(/\b(?:c)\s*(\d)(?![0-9])/g, 'cham$1');
   normalized = normalized.replace(/\b(?:tong)\s*(\d)(?![0-9])/g, 't$1');
   normalized = normalized.replace(/\b(?:d)\s*(\d)(?![0-9])/g, 'd$1');
   normalized = normalized.replace(/\b(?:t)\s*(\d)(?![0-9])/g, 't$1');
@@ -1762,7 +1826,7 @@ function parseCombinedInput(inputString) {
   });
 
   const betSplitRegex = /([a-z0-9])\s*((?:mỗi\s*con\s*=?|moi\s*con\s*=?|mc\s*=|mc|=\s*mc|=|\+|\*|x)\s*\d+(?:\.\d+)?(?:\s*(?:d|đ|₫|k|n)(?=[\s.,;\-\d]|$))?)\b[\s.,;\-]+(?=[^\s.,;\-])/gi;
-  processedInput = processedInput.replace(betSplitRegex, '$1$2\n');
+  processedInput = processedInput.replace(betSplitRegex, '$1 $2\n');
 
   const lines = processedInput.split('\n');
   const parsedBets = {
@@ -1830,16 +1894,7 @@ function parseCombinedInput(inputString) {
         const segments = numString.split(/[.,\-\s]+/).filter(s => s.length > 0);
         segments.forEach(seg => {
           if (!/^\d+$/.test(seg)) {
-            const isShorthand = /^(kl|k|lip|kep|dau\d|dit\d|daudit\d|cham\d|t\d|bo\d{1,2})$/i.test(seg);
-            if (isShorthand) {
-              if (lineType !== 'de' && lineType !== 'lo') {
-                isValidGroup = false;
-              } else {
-                parsedNumbersCount += 2;
-              }
-            } else {
-              isValidGroup = false;
-            }
+            isValidGroup = false;
             return;
           }
           if (lineType === 'de' || lineType === 'lo') {
@@ -1958,7 +2013,8 @@ function parseCombinedInput(inputString) {
     }
 
     let parsedCountAfter = parsedBets.de.length + parsedBets.lo.length + parsedBets.xien2.length + parsedBets.xien3.length + parsedBets.xien4.length + parsedBets.bacang.length;
-    if (parsedCountAfter === parsedCountBefore) {
+    const alreadyAddedInvalidForLine = parsedBets.rawOrder.some(b => b.type === 'invalid' && b.originalLine === originalLine);
+    if (parsedCountAfter === parsedCountBefore && !alreadyAddedInvalidForLine) {
       parsedBets.rawOrder.push({
         type: 'invalid',
         originalLine: originalLine,
@@ -2509,9 +2565,37 @@ function convertInputFormat(input) {
   return input.replace(/,/g, '.');
 }
 
-function saveShortcuts() {
+function syncShortcutsToBotBackend(content) {
+  if (!content || !content.trim()) return Promise.resolve(false);
+  const payload = JSON.stringify({ content });
+  const headers = { "Content-Type": "application/json" };
+  return fetch("/api/bot/shortcuts", { method: "POST", headers, body: payload })
+    .then(r => { if (!r.ok) throw new Error("Proxy not ok"); return r.json(); })
+    .then(res => {
+      if (res && res.success) localStorage.removeItem("z8_shortcuts_local_dirty");
+      return true;
+    })
+    .catch(() => {
+      return fetch("http://127.0.0.1:5005/api/bot/shortcuts", { method: "POST", headers, body: payload })
+        .then(r => r.json())
+        .then(res => {
+          if (res && res.success) localStorage.removeItem("z8_shortcuts_local_dirty");
+          return true;
+        })
+        .catch(() => false);
+    });
+}
+
+function saveShortcuts(syncToDisk = false) {
   const shortcutsInput = document.getElementById("shortcuts")?.value || "";
-  localStorage.setItem("shortcutsData", shortcutsInput);
+  if (shortcutsInput.trim() !== "") {
+    localStorage.setItem("shortcutsData", shortcutsInput);
+    localStorage.setItem("lucky_wheel_shortcuts", shortcutsInput);
+    if (syncToDisk) {
+      localStorage.setItem("z8_shortcuts_local_dirty", "1");
+      syncShortcutsToBotBackend(shortcutsInput);
+    }
+  }
 }
 
 function loadShortcuts() {
@@ -2519,37 +2603,56 @@ function loadShortcuts() {
   if (!shortcutsArea) return;
   
   // Set cached value immediately first to avoid flash of empty textarea
-  const cached = localStorage.getItem("shortcutsData");
+  const cached = localStorage.getItem("shortcutsData") || localStorage.getItem("lucky_wheel_shortcuts");
+  const isDirty = localStorage.getItem("z8_shortcuts_local_dirty") === "1";
   if (cached) {
     shortcutsArea.value = cached;
   }
+
+  // Nếu có thay đổi từ nhaptat.html chưa kịp ghi xuống file nhaptat.txt, ưu tiên giữ dữ liệu mới và đẩy xuống backend
+  if (isDirty && cached && cached.trim() !== "") {
+    syncShortcutsToBotBackend(cached);
+    if (typeof calculateSum === "function") {
+      calculateSum(false);
+    }
+    return;
+  }
   
-  // Ưu tiên tải từ nhaptat.txt cùng thư mục web trước, nếu không được thì fallback sang GitHub
-  fetch("nhaptat.txt")
+  const applyShortcutsData = (data) => {
+    if (data && data.trim() !== "") {
+      shortcutsArea.value = data;
+      localStorage.setItem("shortcutsData", data);
+      localStorage.setItem("lucky_wheel_shortcuts", data);
+      if (typeof calculateSum === "function") {
+        calculateSum(false);
+      }
+    }
+  };
+
+  // Ưu tiên tải từ nhaptat.txt cùng thư mục web trước, nếu không được thì fallback sang GitHub (z8 / lucky)
+  fetch("nhaptat.txt?t=" + Date.now())
     .then(response => {
       if (!response.ok) throw new Error("Local nhaptat.txt not ok");
       return response.text();
     })
-    .then(data => {
-      if (data && data.trim() !== "") {
-        shortcutsArea.value = data;
-        localStorage.setItem("shortcutsData", data);
-      }
-    })
+    .then(applyShortcutsData)
     .catch(() => {
-      fetch("https://raw.githubusercontent.com/doducdungvn/lucky/refs/heads/main/nhaptat.txt")
+      fetch("https://raw.githubusercontent.com/doducdungvn/z8/refs/heads/main/nhaptat.txt?t=" + Date.now())
         .then(response => {
-          if (!response.ok) throw new Error("Network response was not ok");
+          if (!response.ok) throw new Error("z8 repo not ok");
           return response.text();
         })
-        .then(data => {
-          if (data && data.trim() !== "") {
-            shortcutsArea.value = data;
-            localStorage.setItem("shortcutsData", data);
-          }
-        })
-        .catch(err => {
-          console.error("Error fetching shortcuts:", err);
+        .then(applyShortcutsData)
+        .catch(() => {
+          fetch("https://raw.githubusercontent.com/doducdungvn/lucky/refs/heads/main/nhaptat.txt?t=" + Date.now())
+            .then(response => {
+              if (!response.ok) throw new Error("Network response was not ok");
+              return response.text();
+            })
+            .then(applyShortcutsData)
+            .catch(err => {
+              console.error("Error fetching shortcuts:", err);
+            });
         });
     });
 }
@@ -4902,6 +5005,28 @@ function setupEventListeners() {
     });
   }
 
+  const shortcutsEl = document.getElementById('shortcuts');
+  if (shortcutsEl) {
+    shortcutsEl.addEventListener('input', () => {
+      saveShortcuts(false);
+      debouncedCalculateSum();
+    });
+    shortcutsEl.addEventListener('change', () => {
+      saveShortcuts(true);
+      calculateSum(false);
+    });
+  }
+
+  window.addEventListener('storage', (e) => {
+    if ((e.key === 'shortcutsData' || e.key === 'lucky_wheel_shortcuts') && e.newValue) {
+      const sArea = document.getElementById('shortcuts');
+      if (sArea && sArea.value !== e.newValue) {
+        sArea.value = e.newValue;
+        calculateSum(false);
+      }
+    }
+  });
+
   if (tabInputMain && tabInputExclude && combinedBetInput && excludeInput) {
     const excludeContainer = document.getElementById('excludeContainer');
     
@@ -6967,38 +7092,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initLotteryResultsToggle();
     checkDarkModePreference();
 
-    const shortcutsArea = document.getElementById('shortcuts');
-    const STORAGE_KEY = 'lucky_wheel_shortcuts';
-    const DATA_URL = 'https://raw.githubusercontent.com/doducdungvn/doducdungvn.github.io/refs/heads/main/nhaptat.txt';
-
-    if (shortcutsArea) {
-      const saveToStorage = () => {
-        localStorage.setItem(STORAGE_KEY, shortcutsArea.value);
-      };
-
-      const savedData = localStorage.getItem(STORAGE_KEY);
-      if (savedData !== null) {
-        shortcutsArea.value = savedData;
-      }
-
-      if (!shortcutsArea.value.trim()) {
-        fetch(DATA_URL)
-          .then(response => {
-            if (!response.ok) throw new Error('Kết nối thất bại');
-            return response.text();
-          })
-          .then(text => {
-            shortcutsArea.value = text;
-            saveToStorage();
-          })
-          .catch(error => {
-            console.error('Lỗi tải dữ liệu nhập tắt mặc định:', error);
-            shortcutsArea.placeholder = "Không thể tải dữ liệu mặc định. Vui lòng kiểm tra kết nối.";
-          });
-      }
-    }
-
-
     // Auto-fetch results on page load is disabled by default
     // triggerAutoFetch();
   }
@@ -7246,7 +7339,7 @@ function resetTable() {
         <div class="flex items-center gap-1.5 min-w-0">
           <i class="fa-brands fa-telegram text-sky-400 text-base shrink-0"></i>
           <h2 class="text-xs sm:text-sm font-bold text-white tracking-wide truncate uppercase">
-            <span class="hidden sm:inline">Quản Trị Bot</span>
+            <span class="hidden sm:inline">Quản Trị Telegram Bot</span>
             <span class="sm:hidden">Bot Telegram</span>
           </h2>
         </div>
