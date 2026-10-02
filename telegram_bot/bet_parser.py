@@ -102,45 +102,81 @@ SHORTHANDS = {
     "ditto": "05.06.07.08.09.15.16.17.18.19.25.26.27.28.29.35.36.37.38.39.45.46.47.48.49.55.56.57.58.59.65.66.67.68.69.75.76.77.78.79.85.86.87.88.89.95.96.97.98.99"
 }
 
-def load_shorthands_from_file(file_path: str = None) -> bool:
-    """Nạp động các từ viết tắt từ file nhaptat.txt"""
-    candidates = [file_path] if file_path else [
-        os.path.join(os.path.dirname(__file__), "..", "nhaptat.txt"),
-        os.path.join(os.path.dirname(__file__), "nhaptat.txt"),
-        r"c:\inetpub\wwwroot\lk\nhaptat.txt"
-    ]
-    for p in candidates:
-        if p and os.path.exists(p):
-            try:
-                with open(p, "r", encoding="utf-8", errors="ignore") as f:
-                    count = 0
-                    for line in f:
-                        line = line.strip()
-                        if not line or "=" not in line or line.startswith("#"):
-                            continue
-                        parts = line.split("=", 1)
-                        k = parts[0].strip().lower()
-                        v = parts[1].strip()
-                        if k and v:
-                            SHORTHANDS[k] = v
-                            count += 1
-                return True
-            except Exception:
-                pass
-    return False
-
-# Tự động nạp khi module khởi động
-load_shorthands_from_file()
-
-def reload_shorthands() -> int:
-    load_shorthands_from_file()
-    return len(SHORTHANDS)
+_DEFAULT_SHORTHANDS = dict(SHORTHANDS)
+_SHORTHANDS_LAST_PATH = None
+_SHORTHANDS_LAST_MTIME = None
+_MULTI_WORD_SHORTHANDS = []
 
 def strip_accents(s: str) -> str:
     s = s.replace("đ", "d").replace("Đ", "D")
     s = unicodedata.normalize("NFD", s)
     s = re.sub(r'[\u0300-\u036f]', '', s)
     return s
+
+def _rebuild_multi_word_shorthands():
+    global _MULTI_WORD_SHORTHANDS
+    mw_keys = [k for k in SHORTHANDS.keys() if re.search(r'\s', k)]
+    mw_keys.sort(key=len, reverse=True)
+    compiled = []
+    for k in mw_keys:
+        escaped = r'\s+'.join(re.escape(part) for part in k.split())
+        pattern = re.compile(r'(^|[.,\-\s])' + escaped + r'(?=[.,\-\s]|$)', re.I)
+        compiled.append((pattern, SHORTHANDS[k]))
+    _MULTI_WORD_SHORTHANDS = compiled
+
+def load_shorthands_from_file(file_path: str = None, force: bool = True) -> bool:
+    """Nạp động các từ viết tắt từ file nhaptat.txt (hỗ trợ Thêm / Sửa / Xóa và tách dấu phẩy)"""
+    global _SHORTHANDS_LAST_PATH, _SHORTHANDS_LAST_MTIME
+    candidates = [file_path] if file_path else (
+        ([_SHORTHANDS_LAST_PATH] if _SHORTHANDS_LAST_PATH else []) + [
+            os.path.join(os.path.dirname(__file__), "..", "nhaptat.txt"),
+            os.path.join(os.path.dirname(__file__), "nhaptat.txt"),
+            r"c:\inetpub\wwwroot\lk\nhaptat.txt"
+        ]
+    )
+    for p in candidates:
+        if p and os.path.exists(p):
+            try:
+                mtime = os.path.getmtime(p)
+                if not force and _SHORTHANDS_LAST_PATH == p and _SHORTHANDS_LAST_MTIME == mtime:
+                    return True
+                new_map = {}
+                with open(p, "r", encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or "=" not in line or line.startswith("#"):
+                            continue
+                        parts = line.split("=", 1)
+                        k_part = parts[0].strip().lower()
+                        v = parts[1].strip()
+                        if k_part and v:
+                            for raw_k in k_part.split(","):
+                                ck = raw_k.strip().replace("’", "'").replace("‘", "'").replace("ʼ", "'").replace("＇", "'").replace("`", "'")
+                                if ck:
+                                    new_map[ck] = v
+                                    unacc = strip_accents(ck)
+                                    if unacc:
+                                        new_map[unacc] = v
+                if new_map:
+                    SHORTHANDS.clear()
+                    SHORTHANDS.update(new_map)
+                else:
+                    SHORTHANDS.clear()
+                    SHORTHANDS.update(_DEFAULT_SHORTHANDS)
+                _SHORTHANDS_LAST_PATH = p
+                _SHORTHANDS_LAST_MTIME = mtime
+                _rebuild_multi_word_shorthands()
+                return True
+            except Exception:
+                pass
+    return False
+
+# Tự động nạp khi module khởi động
+load_shorthands_from_file(force=True)
+
+def reload_shorthands() -> int:
+    load_shorthands_from_file(force=True)
+    return len(SHORTHANDS)
 
 def normalize_bet_line(line: str) -> str:
     norm = strip_accents(line.strip().lower())
@@ -149,31 +185,32 @@ def normalize_bet_line(line: str) -> str:
     norm = re.sub(r'[’‘ʼ＇]', "'", norm)
     norm = re.sub(r'(\d)\s*,\s*(\d)', r'\1.\2', norm)
     norm = re.sub(r'(\d)\s*\.\s*(\d)', r'\1.\2', norm)
-    norm = re.sub(r'\b(?:chan\s+chan|chanchan)\b', 'chanchan', norm)
-    norm = re.sub(r'\b(?:chan\s+le|chanle)\b', 'chanle', norm)
-    norm = re.sub(r'\b(?:le\s+chan|lechan)\b', 'lechan', norm)
-    norm = re.sub(r'\b(?:le\s+le|lele)\b', 'lele', norm)
-    norm = re.sub(r'\b(?:to\s+to|toto)\b', 'toto', norm)
-    norm = re.sub(r'\b(?:to\s+be|tobe)\b', 'tobe', norm)
-    norm = re.sub(r'\b(?:be\s+to|beto)\b', 'beto', norm)
-    norm = re.sub(r'\b(?:be\s+be|bebe)\b', 'bebe', norm)
-    norm = re.sub(r'\b(?:dau\s+to|dauto)\b', 'dauto', norm)
-    norm = re.sub(r'\b(?:dau\s+be|daube)\b', 'daube', norm)
-    norm = re.sub(r'\b(?:dau\s+chan|dauchan)\b', 'dauchan', norm)
-    norm = re.sub(r'\b(?:dau\s+le|daule)\b', 'daule', norm)
-    norm = re.sub(r'\b(?:dit\s+to|duoi\s+to|ditto)\b', 'ditto', norm)
-    norm = re.sub(r'\b(?:dit\s+be|duoi\s+be|ditbe)\b', 'ditbe', norm)
-    norm = re.sub(r'\b(?:dit\s+chan|duoi\s+chan|ditchan)\b', 'ditchan', norm)
-    norm = re.sub(r'\b(?:dit\s+le|duoi\s+le|ditle)\b', 'ditle', norm)
-    norm = re.sub(r'\b(?:tong\s+to|tongto)\b', 'tongto', norm)
-    norm = re.sub(r'\b(?:tong\s+be|tongbe)\b', 'tongbe', norm)
-    norm = re.sub(r'\b(?:tong\s+chan|tongchan)\b', 'tongchan', norm)
-    norm = re.sub(r'\b(?:tong\s+le|tongle)\b', 'tongle', norm)
+    end_b = r'(?=[x=+*\d\s.,;:\-]|$)'
+    norm = re.sub(r'\b(?:chan\s+chan|chanchan)' + end_b, 'chanchan ', norm)
+    norm = re.sub(r'\b(?:chan\s+le|chanle)' + end_b, 'chanle ', norm)
+    norm = re.sub(r'\b(?:le\s+chan|lechan)' + end_b, 'lechan ', norm)
+    norm = re.sub(r'\b(?:le\s+le|lele)' + end_b, 'lele ', norm)
+    norm = re.sub(r'\b(?:to\s+to|toto)' + end_b, 'toto ', norm)
+    norm = re.sub(r'\b(?:to\s+be|tobe)' + end_b, 'tobe ', norm)
+    norm = re.sub(r'\b(?:be\s+to|beto)' + end_b, 'beto ', norm)
+    norm = re.sub(r'\b(?:be\s+be|bebe)' + end_b, 'bebe ', norm)
+    norm = re.sub(r'\b(?:dau\s+to|dauto)' + end_b, 'dauto ', norm)
+    norm = re.sub(r'\b(?:dau\s+be|daube)' + end_b, 'daube ', norm)
+    norm = re.sub(r'\b(?:dau\s+chan|dauchan)' + end_b, 'dauchan ', norm)
+    norm = re.sub(r'\b(?:dau\s+le|daule)' + end_b, 'daule ', norm)
+    norm = re.sub(r'\b(?:dit\s+to|duoi\s+to|ditto)' + end_b, 'ditto ', norm)
+    norm = re.sub(r'\b(?:dit\s+be|duoi\s+be|ditbe)' + end_b, 'ditbe ', norm)
+    norm = re.sub(r'\b(?:dit\s+chan|duoi\s+chan|ditchan)' + end_b, 'ditchan ', norm)
+    norm = re.sub(r'\b(?:dit\s+le|duoi\s+le|ditle)' + end_b, 'ditle ', norm)
+    norm = re.sub(r'\b(?:tong\s+to|tongto)' + end_b, 'tongto ', norm)
+    norm = re.sub(r'\b(?:tong\s+be|tongbe)' + end_b, 'tongbe ', norm)
+    norm = re.sub(r'\b(?:tong\s+chan|tongchan)' + end_b, 'tongchan ', norm)
+    norm = re.sub(r'\b(?:tong\s+le|tongle)' + end_b, 'tongle ', norm)
     norm = re.sub(r'\b(?:daudit|dau\s+dit|dau\s+duoi|dd|đđ)\s*(\d)(?![0-9])', r'daudit\1', norm)
-    norm = re.sub(r'\b(?:sat\s*kep|satkep|ap\s*kep|apkep)\b', 'apkep', norm)
-    norm = re.sub(r'\b(?:kep\s*am|kepam)\b', 'kepam', norm)
-    norm = re.sub(r'\b(?:kep\s*lech|keplech)\b', 'kl', norm)
-    norm = re.sub(r'\b(?:kep\s*bang|kepbang|lip|kep)(?=[x=+*\d\s]|$)', 'k ', norm)
+    norm = re.sub(r'\b(?:sat\s*kep|satkep|ap\s*kep|apkep|apk)' + end_b, 'apkep ', norm)
+    norm = re.sub(r'\b(?:kep\s*am|kepam|kepa)' + end_b, 'kepam ', norm)
+    norm = re.sub(r'\b(?:kep\s*lech|keplech|kep\s*lec|keplec|kl)' + end_b, 'kl ', norm)
+    norm = re.sub(r'\b(?:kep\s*bang|kepbang|lip|kep)(?=[x=+*\d\s.,;:\-]|$)', 'k ', norm)
     norm = re.sub(r'\b(?:dau)\s*(\d)(?![0-9])', r'dau\1', norm)
     norm = re.sub(r'\b(?:dit|duoi)\s*(\d)(?![0-9])', r'dit\1', norm)
     norm = re.sub(r'\b(?:cham)\s*(\d)(?![0-9])', r'cham\1', norm)
@@ -200,7 +237,9 @@ def normalize_bet_line(line: str) -> str:
     return norm
 
 def normalize_shorthand_token(token: str) -> str:
-    t = token.strip().lower().replace("’", "'").replace("‘", "'")
+    t = token.strip().lower().replace("’", "'").replace("‘", "'").replace("ʼ", "'").replace("＇", "'").replace("`", "'")
+    if t in SHORTHANDS:
+        return t
     m_dd = re.match(r'^daudit(\d)$', t)
     if m_dd:
         d = m_dd.group(1)
@@ -217,7 +256,7 @@ def normalize_shorthand_token(token: str) -> str:
     m_dit = re.match(r'^dit(\d)$', t)
     if m_dit:
         return "d'" + m_dit.group(1)
-    m_he = re.match(r'^(he|bo)(\d{1,2})$', t)
+    m_he = re.match(r'^(he|bo|b|h)(\d{1,2})$', t)
     if m_he:
         num = m_he.group(2)
         if len(num) == 1:
@@ -225,34 +264,53 @@ def normalize_shorthand_token(token: str) -> str:
         return 'h' + num
     aliases = {
         'chanle': 'cl', 'lechan': 'lc', 'chanchan': 'cc', 'lele': 'll',
-        'dc': 'dauchan', 'dl': 'daule', 'dt': 'dauto', 'db': 'daube',
+        'dc': 'dauchan', 'dl': 'daule', 'dt': 'dauto', 'dto': 'dauto', 'db': 'daube', 'dbe': 'daube', 'dle': 'daule',
         'tb': 'tobe', 'tt': 'toto', 'bt': 'beto', 'bb': 'bebe',
-        'tc': 'tongchan', 'tl': 'tongle', 'chan': 'ditchan', 'le': 'ditle',
+        'tc': 'tongchan', 'tl': 'tongle', 'tle': 'tongle', 'tto': 'tongto', 'tbe': 'tongbe',
+        'chan': 'ditchan', 'le': 'ditle', 'duoichan': 'ditchan', 'duoile': 'ditle', 'duoibe': 'ditbe', 'duoito': 'ditto',
+        "d'c": 'ditchan', "d'l": 'ditle',
+        'keplech': 'kl', 'keplec': 'kl', 'apk': 'apkep', 'satkep': 'apkep', 'kepa': 'kepam',
         'lip': 'k', 'kep': 'k'
     }
     return aliases.get(t, t)
 
-def resolve_shorthands(numbers_str: str) -> str:
+def resolve_shorthands(numbers_str: str, _depth: int = 0) -> str:
+    # Tự động kiểm tra mtime của nhaptat.txt để nạp lại ngay nếu file vừa được sửa
+    if _depth == 0:
+        load_shorthands_from_file(force=False)
     s = numbers_str
+
+    # Mở rộng các từ khóa có khoảng trắng (như "kep lech", "ap kep", hoặc từ khóa nhiều từ tự thêm trong nhaptat.txt)
+    if _MULTI_WORD_SHORTHANDS:
+        for pattern, val in _MULTI_WORD_SHORTHANDS:
+            s = pattern.sub(lambda m, v=val: m.group(1) + v, s)
+
     # Mở rộng dau0,8 -> dau0, dau8 hoặc c1,2,3 -> cham1, cham2, cham3
     def expand_prefix_multi(m):
         raw_prefix = m.group(1).lower()
-        prefix = "cham" if raw_prefix == "c" else raw_prefix
+        prefix = "cham" if raw_prefix == "c" else ("bo" if raw_prefix in ("b", "h") else raw_prefix)
         first = m.group(2)
         rest = m.group(3)
         digits = [d for d in re.split(r'[^0-9]+', rest) if d]
         expanded = [prefix + first] + [prefix + d for d in digits]
         return ','.join(expanded)
 
-    combined_regex = re.compile(r'(dau|dit|daudit|d\'|d|he|bo|t|cham|c)([0-9]{1,2})((?:[.,\-\s]+[0-9]{1,2})+)', re.I)
+    combined_regex = re.compile(r'(dau|dit|daudit|d\'|d|he|bo|b|h|t|cham|c)([0-9]{1,2})((?:[.,\-\s]+[0-9]{1,2})+)', re.I)
     s = combined_regex.sub(expand_prefix_multi, s)
 
     parts = re.split(r'([.,\-\s]+)', s)
     resolved = []
     for part in parts:
-        trimmed = part.strip().lower()
+        trimmed = part.strip().lower().replace("’", "'").replace("‘", "'").replace("ʼ", "'").replace("＇", "'").replace("`", "'")
         if not trimmed:
             resolved.append(part)
+            continue
+        if trimmed in SHORTHANDS:
+            resolved.append(SHORTHANDS[trimmed])
+            continue
+        unacc = strip_accents(trimmed)
+        if unacc in SHORTHANDS:
+            resolved.append(SHORTHANDS[unacc])
             continue
         norm = normalize_shorthand_token(part)
         if norm in SHORTHANDS:
@@ -261,7 +319,11 @@ def resolve_shorthands(numbers_str: str) -> str:
             resolved.append(norm)
         else:
             resolved.append(part)
-    return ''.join(resolved)
+    res_str = ''.join(resolved)
+    # Hỗ trợ định nghĩa lồng nhau (ví dụ: dd5=dau5.dit5)
+    if _depth < 2 and res_str != numbers_str and re.search(r'[a-zA-Z]', res_str):
+        return resolve_shorthands(res_str, _depth + 1)
+    return res_str
 
 
 def parse_numbers_from_bet_string(numbers_str: str, bet_type: str) -> list[str]:

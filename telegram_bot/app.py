@@ -815,6 +815,42 @@ def settle_now():
 
 
 
+@app.route("/api/bot/shortcuts", methods=["GET", "POST"])
+def manage_shortcuts():
+    import bet_parser
+    shortcuts_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "nhaptat.txt"))
+    if request.method == "GET":
+        content = ""
+        if os.path.exists(shortcuts_path):
+            try:
+                with open(shortcuts_path, "r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
+            except Exception:
+                pass
+        count = bet_parser.reload_shorthands()
+        return jsonify({
+            "success": True,
+            "content": content,
+            "count": count,
+            "path": shortcuts_path
+        })
+
+    data = request.json or {}
+    content = data.get("content")
+    if content is not None and isinstance(content, str):
+        try:
+            with open(shortcuts_path, "w", encoding="utf-8") as f:
+                f.write(content)
+            count = bet_parser.reload_shorthands()
+            bot_service.log(f"Đã cập nhật file nhaptat.txt và nạp lại {count} từ khóa viết tắt.", "SUCCESS")
+            return jsonify({"success": True, "count": count, "path": shortcuts_path})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+    else:
+        count = bet_parser.reload_shorthands()
+        return jsonify({"success": True, "count": count, "path": shortcuts_path})
+
+
 if __name__ == "__main__":
     if bot_service.config.get("bot_token") and bot_service.config.get("bot_mode", "auto") == "auto":
         try:
