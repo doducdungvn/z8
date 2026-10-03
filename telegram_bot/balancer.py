@@ -237,8 +237,8 @@ class BoardBalancer:
 
             match = False
             if cid_str and h_cid == cid_str:
-                if client_history_idx is not None and h_idx == client_history_idx:
-                    match = True
+                if client_history_idx is not None and h_idx is not None:
+                    match = (h_idx == client_history_idx)
                 elif client_msg_idx is not None and m_idx == client_msg_idx:
                     match = True
 
@@ -264,8 +264,8 @@ class BoardBalancer:
 
             match = False
             if cid_str and h_cid == cid_str:
-                if client_history_idx is not None and h_idx == client_history_idx:
-                    match = True
+                if client_history_idx is not None and h_idx is not None:
+                    match = (h_idx == client_history_idx)
                 elif client_msg_idx is not None and m_idx == client_msg_idx:
                     match = True
 
@@ -278,6 +278,20 @@ class BoardBalancer:
             self.transfer_history = new_hist
             self.recalculate_cumulative_transfers()
         return deleted
+
+    def shift_history_idx_after_delete(self, client_chat_id: str, removed_idx: int) -> int:
+        """Khi xóa 1 tin khỏi history của khách, các tin phía sau bị dồn lên 1 vị trí.
+        Cập nhật lại client_history_idx của các bước chuyển để không trỏ nhầm sang tin khác."""
+        cid_str = str(client_chat_id or "").strip()
+        shifted = 0
+        for h in self.transfer_history:
+            if str(h.get("client_chat_id", "")).strip() != cid_str:
+                continue
+            idx = h.get("client_history_idx")
+            if idx is not None and idx > removed_idx:
+                h["client_history_idx"] = idx - 1
+                shifted += 1
+        return shifted
 
     def _format_grouped_numbers(self, items: dict) -> str:
         """Gom nhóm các con số có cùng số tiền: ví dụ 12.34x20, 56x50"""

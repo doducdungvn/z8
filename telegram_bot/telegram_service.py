@@ -514,11 +514,12 @@ class TelegramBotService:
                     "history_idx": h_idx,
                     "summary": item.get("summary", {}),
                     "invalid_items": item.get("invalid_items", []),
-                    "voided": item.get("voided", False),
+                    "voided": item.get("voided", False) and not item.get("rejected", False),
+                    "reject_reason": item.get("cancel_reason", "") if item.get("rejected", False) else "",
                     "transfer_text": item.get("transfer_text", ""),
                     "retained_text": item.get("retained_text") or item.get("retain_text", ""),
-                    "is_pending": not item.get("is_ok", True),
-                    "status": "voided" if item.get("voided", False) else ("pending" if not item.get("is_ok", True) else "active")
+                    "is_pending": (not item.get("is_ok", True)) and not item.get("voided", False),
+                    "status": "rejected" if item.get("rejected", False) else ("voided" if item.get("voided", False) else ("pending" if not item.get("is_ok", True) else "active"))
                 })
 
         for pb in getattr(self, "pending_bets", []):
@@ -543,12 +544,31 @@ class TelegramBotService:
 
         return all_msgs
 
+    @staticmethod
+    def _next_counter_base(hist: list) -> int:
+        """Tính cơ số thứ tự tin của khách dựa trên tin HỢP LỆ (chưa hủy/từ chối) có số thứ tự lớn nhất:
+        - Chỉ có tin 1 mà hủy tin 1 -> không còn tin hợp lệ nào -> base = 0 -> tin mới sẽ là tin 1.
+        - Có tin 1, tin 2 mà hủy tin 2 -> tin hợp lệ lớn nhất là tin 1 -> base = 1 -> tin mới sẽ là tin 2.
+        - Có tin 1, tin 2 mà hủy tin 1 -> tin hợp lệ lớn nhất là tin 2 -> base = 2 -> tin mới sẽ là tin 3.
+        """
+        best = 0
+        for h in hist:
+            if h.get("voided", False) or h.get("rejected", False):
+                continue
+            try:
+                best = max(best, int(h.get("msg_index") or 0))
+            except (TypeError, ValueError):
+                pass
+        return best
+
     def toggle_client_message_void(self, chat_id_str: str, history_idx: int) -> dict:
         """Bật/tắt trạng thái bỏ qua tin nhắn cược của khách, đồng thời tự động hủy/khôi phục cược chuyển thầu tương ứng"""
         if chat_id_str in self.client_bets:
             hist = self.client_bets[chat_id_str].get("history", [])
             if 0 <= history_idx < len(hist):
                 item = hist[history_idx]
+                if item.get("rejected", False):
+                    return {"success": False, "error": "Tin này đã bị từ chối / thầu trả lại (không nhận), không thể khôi phục"}
                 item["voided"] = not item.get("voided", False)
                 is_voided = item["voided"]
 
@@ -567,8 +587,7 @@ class TelegramBotService:
 
                 # 3. Đồng bộ lại số thứ tự tin hợp lệ của khách
                 # Nếu tin bị bỏ qua, số tin hợp lệ lùi lại để tin tiếp theo khách gửi sẽ nhận đúng số thứ tự
-                valid_count = len([h for h in hist if not h.get("voided", False)])
-                self.client_msg_counters[chat_id_str] = valid_count
+                self.client_msg_counters[chat_id_str] = self._next_counter_base(hist)
 
                 status_txt = "BỎ QUA (không tính tiền)" if is_voided else "KHÔI PHỤC tính tiền"
                 tf_note = f" (Đã tự động hủy {affected_transfers} bước chuyển thầu tương ứng)" if (is_voided and affected_transfers > 0) else ""
@@ -717,13 +736,21 @@ class TelegramBotService:
         found_hist_idx = None
         found_item = None
 
-        # Ưu tiên 1: Theo target_msg_idx (nếu có chỉ định)
+        # Ưu tiên 1: Theo target_msg_idx (nếu có chỉ định) - ưu tiên tin đang hợp lệ (chưa hủy) mới nhất trước
         if target_msg_idx is not None:
-            for idx, item in enumerate(hist):
-                if item.get("msg_index") == target_msg_idx:
+            for idx in range(len(hist) - 1, -1, -1):
+                item = hist[idx]
+                if item.get("msg_index") == target_msg_idx and not item.get("voided", False):
                     found_hist_idx = idx
                     found_item = item
                     break
+            if found_item is None:
+                for idx in range(len(hist) - 1, -1, -1):
+                    item = hist[idx]
+                    if item.get("msg_index") == target_msg_idx:
+                        found_hist_idx = idx
+                        found_item = item
+                        break
             # Fallback theo vị trí index nếu phù hợp
             if found_item is None and 0 <= (target_msg_idx - 1) < len(hist):
                 found_hist_idx = target_msg_idx - 1
@@ -811,9 +838,9 @@ class TelegramBotService:
 
             match = False
             if h_cid == target_client_key:
-                if m_idx is not None and m_idx == target_msg_idx:
-                    match = True
-                elif found_hist_idx is not None and h_idx == found_hist_idx:
+                if found_hist_idx is not None and h_idx is not None:
+                    match = (h_idx == found_hist_idx)
+                elif m_idx is not None and m_idx == target_msg_idx:
                     match = True
 
             if match and not h.get("voided", False):
@@ -828,9 +855,9 @@ class TelegramBotService:
         self.rebuild_board_from_active_bets()
         self.save_client_bets()
 
-        # Đồng bộ lại số thứ tự tin của khách
-        valid_count = len([h for h in hist if not h.get("voided", False)])
-        self.client_msg_counters[target_client_key] = valid_count
+        # Đồng bộ lại số thứ tự tin của khách theo quy tắc:
+        # chỉ có tin 1 mà hủy -> tin mới là 1; có >=2 tin hủy tin cuối -> lùi về số đó; hủy tin đầu -> giữ tiếp sau số lớn nhất
+        self.client_msg_counters[target_client_key] = self._next_counter_base(hist)
 
         # 4. Gửi tin nhắn thông báo HỦY SANG CHỦ THẦU (target_recipient)
         # BẢO MẬT TUYỆT ĐỐI: KHÔNG NHẮC ĐẾN TÊN HOẶC TIN CỦA KHÁCH KHI GỬI CHỦ THẦU
@@ -945,11 +972,11 @@ class TelegramBotService:
                     client_msg_idx=m_idx
                 )
                 hist.pop(target_h_idx)
+                self.balancer.shift_history_idx_after_delete(target_cid, target_h_idx)
                 self.save_client_bets()
                 self.recompute_client_totals(target_cid)
                 self.rebuild_board_from_active_bets()
-                valid_count = len([h for h in hist if not h.get("voided", False)])
-                self.client_msg_counters[target_cid] = valid_count
+                self.client_msg_counters[target_cid] = self._next_counter_base(hist)
                 self.log(f"Đã xóa vĩnh viễn tin nhắn gốc #{target_h_idx + 1} của khách {target_cid}", "SUCCESS")
                 return True
 
@@ -963,10 +990,11 @@ class TelegramBotService:
                         m_idx = h.get("msg_index")
                         self.balancer.delete_transfers_for_client_bet(client_chat_id=k, client_history_idx=idx, client_msg_idx=m_idx)
                         hist.pop(idx)
+                        self.balancer.shift_history_idx_after_delete(k, idx)
                         self.save_client_bets()
                         self.recompute_client_totals(k)
                         self.rebuild_board_from_active_bets()
-                        self.client_msg_counters[k] = len([x for x in hist if not x.get("voided", False)])
+                        self.client_msg_counters[k] = self._next_counter_base(hist)
                         self.log(f"Đã tìm thấy và xóa vĩnh viễn tin nhắn theo nội dung của khách {k}", "SUCCESS")
                         return True
 
@@ -1528,7 +1556,7 @@ class TelegramBotService:
                     cdata = self.client_bets[cid]
                     h_target = None
                     for h in reversed(cdata.get("history", [])):
-                        if h.get("msg_index") == m_idx:
+                        if h.get("msg_index") == m_idx and not h.get("voided", False):
                             h_target = h
                             break
                     if not h_target and cdata.get("history"):
@@ -1597,6 +1625,9 @@ class TelegramBotService:
 
                         update_parsed_summary(p_hist)
                         h_target["summary"] = p_hist.get("summary", {})
+                        h_target["is_ok"] = True
+                        if last_transfer is not None:
+                            h_target["transfer_text"] = last_transfer.get("transfer_text", "")
 
                     self.recompute_client_totals(cid)
 
@@ -1836,10 +1867,10 @@ class TelegramBotService:
         sender_label = item.get("sender_label", chat_id_str)
         text = item["raw_text"]
 
-        # Tăng counter ngay cả khi reject để giữ đúng thứ tự tin (Ok tin 1, Ok tin 2, ...)
-        # Nếu không tăng, tin tiếp theo của cùng khách sẽ bị đánh sai số thứ tự
-        self.client_msg_counters[chat_id_str] = self.client_msg_counters.get(chat_id_str, 0) + 1
-        item["msg_idx"] = self.client_msg_counters[chat_id_str]
+        # Đồng bộ lại bộ đếm theo các tin hợp lệ đang có (không tăng counter khi tin bị từ chối)
+        hist_cur = self.client_bets.get(chat_id_str, {}).get("history", [])
+        self.client_msg_counters[chat_id_str] = self._next_counter_base(hist_cur)
+        item["msg_idx"] = self.client_msg_counters[chat_id_str] + 1
 
         # Xóa các receipt đang chờ thầu OK cho khách này khỏi hàng đợi
         # (tránh trường hợp tin cũ được gửi nhầm cho khách khi thầu OK sau đó)
@@ -1859,6 +1890,81 @@ class TelegramBotService:
 
         self.log(f"Chủ bot đã TỪ CHỐI tin #{pending_id} của {sender_label} ('{text}')", "WARN")
         return {"success": True, "message": f"Đã từ chối tin #{pending_id}"}
+
+    def _void_history_bet_with_transfers(self, chat_id_str: str, h_idx: int, reason: str = "", rejected: bool = False) -> int:
+        """Loại 1 tin cược trong history khỏi tính tiền và HỦY các bước chuyển thầu sinh ra từ tin đó.
+        rejected=True: tin bị thầu TRẢ LẠI / KHÔNG NHẬN (chưa từng được nhận) -> đánh dấu 'rejected'
+        và XÓA hẳn bước chuyển (không còn dấu vết 'đã bán').
+        Trả về số bước chuyển đã xử lý."""
+        hist = self.client_bets.get(chat_id_str, {}).get("history", [])
+        if not (0 <= h_idx < len(hist)):
+            return 0
+        h = hist[h_idx]
+        h["voided"] = True
+        h["is_ok"] = False
+        if rejected:
+            h["rejected"] = True
+        if reason:
+            h["cancel_reason"] = reason
+        if rejected:
+            affected = self.balancer.delete_transfers_for_client_bet(
+                client_chat_id=chat_id_str,
+                client_history_idx=h_idx,
+                client_msg_idx=h.get("msg_index")
+            )
+        else:
+            affected = self.balancer.void_transfers_for_client_bet(
+                client_chat_id=chat_id_str,
+                client_history_idx=h_idx,
+                client_msg_idx=h.get("msg_index"),
+                voided=True
+            )
+        self.recompute_client_totals(chat_id_str)
+        self.client_msg_counters[chat_id_str] = self._next_counter_base(hist)
+        return affected
+
+    def confirm_history_bet(self, chat_id_str: str, history_idx: int) -> dict:
+        """Chủ bot bấm Duyệt cho tin đã chuyển thầu nhưng đang chờ thầu Ok (tin nằm trong history)"""
+        hist = self.client_bets.get(chat_id_str, {}).get("history", [])
+        if not (0 <= history_idx < len(hist)):
+            return {"success": False, "error": "Không tìm thấy tin cược"}
+        h = hist[history_idx]
+        if h.get("voided", False):
+            return {"success": False, "error": "Tin này đã bị hủy/từ chối, không thể duyệt"}
+        m_idx = h.get("msg_index")
+        h["is_ok"] = True
+        for pending in list(self.pending_client_receipts):
+            if pending.get("chat_id") == chat_id_str and pending.get("msg_idx") == m_idx:
+                r_text = pending.get("receipt_text", "")
+                if r_text:
+                    self.send_telegram_message(chat_id_str, r_text, track_for_cleanup=True, tag="receipt")
+                self.pending_client_receipts.remove(pending)
+        self.save_client_bets()
+        self.log(f"Chủ bot đã DUYỆT tin #{m_idx} của khách {chat_id_str}", "SUCCESS")
+        return {"success": True, "message": f"Đã duyệt tin #{m_idx}"}
+
+    def reject_history_bet(self, chat_id_str: str, history_idx: int, notify_client: bool = False, reason: str = "") -> dict:
+        """Chủ bot bấm Từ chối cho tin đang chờ thầu Ok (tin nằm trong history): hủy tin + hủy bước chuyển thầu"""
+        hist = self.client_bets.get(chat_id_str, {}).get("history", [])
+        if not (0 <= history_idx < len(hist)):
+            return {"success": False, "error": "Không tìm thấy tin cược"}
+        h = hist[history_idx]
+        m_idx = h.get("msg_index")
+        text = h.get("raw_text", "")
+        self._void_history_bet_with_transfers(chat_id_str, history_idx, "Chủ bot từ chối", rejected=True)
+        self.pending_client_receipts = [
+            r for r in self.pending_client_receipts
+            if not (r.get("chat_id") == chat_id_str and r.get("msg_idx") == m_idx)
+        ]
+        self.rebuild_board_from_active_bets()
+        self.save_client_bets()
+        if notify_client:
+            msg = f"Bot không nhận tin cược này:\n{text}"
+            if reason:
+                msg += f"\n(Lý do: {reason})"
+            self.send_telegram_message(chat_id_str, msg)
+        self.log(f"Chủ bot đã TỪ CHỐI tin #{m_idx} của khách {chat_id_str} ('{text}')", "WARN")
+        return {"success": True, "message": f"Đã từ chối tin #{m_idx}"}
 
     def answer_callback_query(self, callback_query_id: str, text: str = ""):
         """Gửi phản hồi cho callback query (nút bấm inline của Telegram)"""
@@ -2017,7 +2123,7 @@ class TelegramBotService:
                                 m_idx = pending.get("msg_idx", "")
                                 if cid in self.client_bets:
                                     for h in self.client_bets[cid].get("history", []):
-                                        if h.get("msg_index") == m_idx:
+                                        if h.get("msg_index") == m_idx and not h.get("voided", False):
                                             h["is_ok"] = True
                                 if len(r_text) > 3800:
                                     chunks = [r_text[i:i+3800] for i in range(0, len(r_text), 3800)]
@@ -2054,11 +2160,9 @@ class TelegramBotService:
                             s_label = pending.get("sender_label", "")
                             orig_text = pending.get("text", "")
                             if cid in self.client_bets:
-                                for h in self.client_bets[cid].get("history", []):
-                                    if h.get("msg_index") == m_idx:
-                                        h["is_ok"] = False
-                                        h["voided"] = True
-                                        h["cancel_reason"] = "Chủ thầu từ chối"
+                                for h_i, h in enumerate(self.client_bets[cid].get("history", [])):
+                                    if h.get("msg_index") == m_idx and not h.get("voided", False):
+                                        self._void_history_bet_with_transfers(cid, h_i, "Thầu trả lại - không nhận", rejected=True)
                                 self.recompute_client_totals(cid)
                             if owner_cid:
                                 self.send_telegram_message(str(owner_cid), f"⚠️ Tin #{m_idx} của {s_label} ('{orig_text}') chưa được thầu nhận do bị trả lại.")
@@ -3506,24 +3610,28 @@ class TelegramBotService:
                 cid = pending.get("chat_id")
                 m_idx = pending.get("msg_idx")
                 if cid in self.client_bets:
-                    for h in self.client_bets[cid].get("history", []):
+                    for h_i, h in enumerate(self.client_bets[cid].get("history", [])):
                         if h.get("msg_index") == m_idx and not h.get("voided", False):
-                            h["voided"] = True
-                            h["is_ok"] = False
-                            h["cancel_reason"] = "Chưa được thầu Ok trước giờ chốt sổ"
+                            self._void_history_bet_with_transfers(cid, h_i, "Chưa được thầu Ok trước giờ chốt sổ", rejected=True)
                             unconfirmed_count += 1
                     self.recompute_client_totals(cid)
             self.pending_client_receipts.clear()
 
         # Kiểm tra thêm trong client_bets nếu còn tin nào is_ok == False mà chưa void
+        # + đảm bảo mọi tin đã bị hủy/từ chối đều hủy luôn bước chuyển thầu tương ứng (idempotent)
         for cid_str, cdata in self.client_bets.items():
             recompute_needed = False
-            for h in cdata.get("history", []):
+            for h_i, h in enumerate(cdata.get("history", [])):
                 if h.get("is_ok") is False and not h.get("voided", False):
-                    h["voided"] = True
-                    h["cancel_reason"] = "Chưa được xác nhận Ok trước giờ chốt sổ"
+                    self._void_history_bet_with_transfers(cid_str, h_i, "Chưa được xác nhận Ok trước giờ chốt sổ", rejected=True)
                     recompute_needed = True
                     unconfirmed_count += 1
+                elif h.get("voided", False):
+                    if self.balancer.void_transfers_for_client_bet(
+                        client_chat_id=cid_str, client_history_idx=h_i,
+                        client_msg_idx=h.get("msg_index"), voided=True
+                    ) > 0:
+                        recompute_needed = True
             if recompute_needed:
                 self.recompute_client_totals(cid_str)
 

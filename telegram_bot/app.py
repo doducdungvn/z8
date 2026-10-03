@@ -279,11 +279,20 @@ def get_pending_bets_route():
     })
 
 
+def _is_blank_id(v):
+    return v in (None, "", "null", "undefined")
+
+
 @app.route("/api/bot/approve_bet", methods=["POST"])
 def approve_bet_route():
     data = request.json or {}
     pid = data.get("pending_id")
-    if pid is None:
+    if _is_blank_id(pid):
+        chat_id = data.get("chat_id")
+        h_idx = data.get("history_idx")
+        if not _is_blank_id(chat_id) and not _is_blank_id(h_idx):
+            res = bot_service.confirm_history_bet(str(chat_id), int(h_idx))
+            return jsonify(res), (200 if res.get("success") else 400)
         return jsonify({"success": False, "error": "Thiếu mã tin cược pending_id"}), 400
     res = bot_service.approve_pending_bet(int(pid))
     status_code = 200 if res.get("success") else 400
@@ -302,7 +311,12 @@ def reject_bet_route():
     pid = data.get("pending_id")
     notify = bool(data.get("notify_client", False))
     reason = str(data.get("reason", "")).strip()
-    if pid is None:
+    if _is_blank_id(pid):
+        chat_id = data.get("chat_id")
+        h_idx = data.get("history_idx")
+        if not _is_blank_id(chat_id) and not _is_blank_id(h_idx):
+            res = bot_service.reject_history_bet(str(chat_id), int(h_idx), notify_client=notify, reason=reason)
+            return jsonify(res), (200 if res.get("success") else 400)
         return jsonify({"success": False, "error": "Thiếu mã tin cược pending_id"}), 400
     res = bot_service.reject_pending_bet(int(pid), notify_client=notify, reason=reason)
     status_code = 200 if res.get("success") else 400
