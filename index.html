@@ -9556,9 +9556,9 @@ function resetTable() {
 
         let statusBadge = '';
         if (isPending) {
-          statusBadge = `<span class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 text-[10px] font-bold border border-amber-300 dark:border-amber-800 animate-pulse">🟡 CHỜ DUYỆT (TIN TREO #${m.pending_id})</span>`;
+          statusBadge = `<span class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 text-[10px] font-bold border border-amber-300 dark:border-amber-800 animate-pulse">🟡 CHỜ DUYỆT (${m.pending_id !== undefined ? 'TIN TREO #' + m.pending_id : 'CHỜ THẦU OK'})</span>`;
         } else if (isRejected) {
-          statusBadge = `<span class="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-dark-700 text-slate-600 dark:text-slate-400 text-[10px] font-bold border border-slate-300 dark:border-slate-600">❌ ĐÃ TỪ CHỐI</span>`;
+          statusBadge = `<span class="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-dark-700 text-slate-600 dark:text-slate-400 text-[10px] font-bold border border-slate-300 dark:border-slate-600">❌ ${m.reject_reason ? 'THẦU TRẢ LẠI - KHÔNG NHẬN' : 'ĐÃ TỪ CHỐI'}</span>`;
         } else if (isVoided) {
           statusBadge = `<span class="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 text-[10px] font-bold border border-rose-300 dark:border-rose-800">🚫 ĐÃ BỎ QUA</span>`;
         } else {
@@ -9573,10 +9573,10 @@ function resetTable() {
         let actionBtns = '';
         if (isPending) {
           actionBtns = `
-            <button type="button" onclick="approveTgPendingBet(${m.pending_id})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xs text-[11px] font-bold shadow-xs flex items-center gap-1 cursor-pointer active:scale-95" title="Duyệt tin cược này">
+            <button type="button" onclick="approveTgPendingBet(${m.pending_id !== undefined && m.pending_id !== null ? m.pending_id : 'null'}, '${m.chat_id}', ${m.history_idx !== undefined && m.history_idx !== null ? m.history_idx : 'null'})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xs text-[11px] font-bold shadow-xs flex items-center gap-1 cursor-pointer active:scale-95" title="Duyệt tin cược này">
               ✅ Duyệt tin
             </button>
-            <button type="button" onclick="rejectTgPendingBet(${m.pending_id})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-300 dark:border-rose-800 flex items-center gap-1 cursor-pointer" title="Từ chối">
+            <button type="button" onclick="rejectTgPendingBet(${m.pending_id !== undefined && m.pending_id !== null ? m.pending_id : 'null'}, '${m.chat_id}', ${m.history_idx !== undefined && m.history_idx !== null ? m.history_idx : 'null'})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-300 dark:border-rose-800 flex items-center gap-1 cursor-pointer" title="Từ chối">
               ❌ Từ chối
             </button>
           `;
@@ -9646,7 +9646,7 @@ function resetTable() {
                     tfNote = '<div class="mt-1 text-[10px] text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1"><i class="fa-solid fa-ban"></i> Đã tự động hủy cược này bên bảng thầu (không tính nợ thầu)</div>';
                   }
                 } else if (isRejected) {
-                  tfBadge = '<span class="text-[10px] px-1.5 py-0.5 bg-slate-200 dark:bg-dark-700 text-slate-600 dark:text-slate-400 rounded font-bold border border-slate-300">❌ ĐÃ TỪ CHỐI</span>';
+                  tfBadge = '<span class="text-[10px] px-1.5 py-0.5 bg-slate-200 dark:bg-dark-700 text-slate-600 dark:text-slate-400 rounded font-bold border border-slate-300">❌ ' + (m.reject_reason ? 'THẦU TRẢ LẠI - KHÔNG NHẬN' : 'ĐÃ TỪ CHỐI') + '</span>';
                   tfBoxClass = 'bg-slate-50 dark:bg-dark-900 border-slate-300 dark:border-slate-700 opacity-60';
                   tfTextStyle = 'line-through text-slate-400 dark:text-slate-500 font-normal';
                 } else if (m.transfer_text) {
@@ -9672,7 +9672,7 @@ function resetTable() {
                     retNote = '<div class="mt-1 text-[10px] text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1"><i class="fa-solid fa-ban"></i> Đã hủy không ôm các con số này</div>';
                   }
                 } else if (isRejected) {
-                  retBadge = '<span class="text-[10px] px-1.5 py-0.5 bg-slate-200 dark:bg-dark-700 text-slate-600 dark:text-slate-400 rounded font-bold border border-slate-300">❌ ĐÃ TỪ CHỐI</span>';
+                  retBadge = '<span class="text-[10px] px-1.5 py-0.5 bg-slate-200 dark:bg-dark-700 text-slate-600 dark:text-slate-400 rounded font-bold border border-slate-300">❌ ' + (m.reject_reason ? 'THẦU TRẢ LẠI - KHÔNG NHẬN' : 'ĐÃ TỪ CHỐI') + '</span>';
                   retBoxClass = 'bg-slate-50 dark:bg-dark-900 border-slate-300 dark:border-slate-700 opacity-60';
                   retTextStyle = 'line-through text-slate-400 dark:text-slate-500 font-normal';
                 } else if (m.retained_text) {
@@ -10104,7 +10104,7 @@ function resetTable() {
         // 1. CẬP NHẬT 4 THẺ KPI THÔNG MINH TRÊN HEADER (GIÀU THÔNG TIN, GỌN GÀNG)
         const rawList = b.raw_messages || [];
         window.tgRawMessagesCache = rawList;
-        const pendingBets = rawList.filter(m => m.is_pending || m.status === 'pending');
+        const pendingBets = rawList.filter(m => !m.voided && (m.is_pending || m.status === 'pending'));
         const approvedBets = rawList.filter(m => !m.voided && !m.is_pending && m.status !== 'rejected' && m.status !== 'pending');
         const voidedBets = rawList.filter(m => m.voided);
         const uniqueClients = new Set(rawList.map(m => m.chat_id || m.sender_name || m.username || m.name || '')).size;
@@ -10378,17 +10378,17 @@ function resetTable() {
                 <div class="p-2.5 bg-white dark:bg-dark-900 border border-amber-300 dark:border-amber-700/80 rounded-xs space-y-1.5 text-xs shadow-2xs">
                   <div class="flex items-center justify-between gap-1 pb-1 border-b border-slate-200 dark:border-slate-800">
                     <div class="flex items-center gap-1.5 truncate">
-                      <span class="font-bold text-amber-800 dark:text-amber-300">#${m.pending_id} 👤 ${m.name || m.sender_name || 'Khách'}</span>
+                      <span class="font-bold text-amber-800 dark:text-amber-300">${m.pending_id !== undefined ? '#' + m.pending_id : '⏳ Tin #' + (m.msg_index || '')} 👤 ${m.name || m.sender_name || 'Khách'}</span>
                       <span class="text-[11px] font-mono text-slate-400">(${m.chat_id || m.sender || ''})</span>
                     </div>
                     <span class="text-[10px] text-slate-400 font-mono">${m.timestamp || m.time || ''}</span>
                   </div>
                   <pre class="whitespace-pre-wrap font-mono text-[11px] p-1.5 rounded-xs bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-950 dark:text-amber-200 max-h-24 overflow-y-auto leading-relaxed">${(m.text || m.raw_text || '').trim()}</pre>
                   <div class="flex items-center justify-end gap-1.5 pt-0.5">
-                    <button type="button" onclick="approveTgPendingBet(${m.pending_id})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xs text-[11px] font-bold shadow-xs flex items-center gap-1 cursor-pointer active:scale-95">
+                    <button type="button" onclick="approveTgPendingBet(${m.pending_id !== undefined && m.pending_id !== null ? m.pending_id : 'null'}, '${m.chat_id}', ${m.history_idx !== undefined && m.history_idx !== null ? m.history_idx : 'null'})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xs text-[11px] font-bold shadow-xs flex items-center gap-1 cursor-pointer active:scale-95">
                       <i class="fa-solid fa-check"></i> Duyệt tin
                     </button>
-                    <button type="button" onclick="rejectTgPendingBet(${m.pending_id})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-300 dark:border-rose-800 flex items-center gap-1 cursor-pointer">
+                    <button type="button" onclick="rejectTgPendingBet(${m.pending_id !== undefined && m.pending_id !== null ? m.pending_id : 'null'}, '${m.chat_id}', ${m.history_idx !== undefined && m.history_idx !== null ? m.history_idx : 'null'})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-300 dark:border-rose-800 flex items-center gap-1 cursor-pointer">
                       <i class="fa-solid fa-xmark"></i> Từ chối
                     </button>
                   </div>
@@ -10778,13 +10778,13 @@ function resetTable() {
     }
     window.deleteTgClientMessage = deleteTgClientMessage;
 
-    async function approveTgPendingBet(pendingId) {
-      if (!confirm(`Bạn có chắc muốn DUYỆT tin cược #${pendingId}?\nBot sẽ cân chuyển (nếu có cược thừa) và gửi tin 'Ok' xác nhận cho khách!`)) return;
+    async function approveTgPendingBet(pendingId, chatId = null, historyIdx = null) {
+      if (!confirm(`Bạn có chắc muốn DUYỆT tin cược ${pendingId !== null && pendingId !== undefined ? '#' + pendingId : 'này'}?\nBot sẽ cân chuyển (nếu có cược thừa) và gửi tin 'Ok' xác nhận cho khách!`)) return;
       try {
         const res = await callBotApi("/api/bot/approve_bet", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pending_id: pendingId })
+          body: JSON.stringify({ pending_id: pendingId, chat_id: chatId, history_idx: historyIdx })
         });
         const data = await res.json();
         if (data && data.success) {
@@ -10824,7 +10824,7 @@ function resetTable() {
     }
     window.approveAllTgPendingBets = approveAllTgPendingBets;
 
-    async function rejectTgPendingBet(pendingId) {
+    async function rejectTgPendingBet(pendingId, chatId = null, historyIdx = null) {
       const notify = confirm(`Bạn có muốn gửi tin nhắn thông báo TỪ CHỐI KHÔNG NHẬN cho khách không?\n- Bấm OK: Có nhắn từ chối khách\n- Bấm Cancel: Từ chối âm thầm (không nhắn khách)`);
       let reason = "";
       if (notify) {
@@ -10834,7 +10834,7 @@ function resetTable() {
         const res = await callBotApi("/api/bot/reject_bet", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pending_id: pendingId, notify_client: notify, reason: reason })
+          body: JSON.stringify({ pending_id: pendingId, chat_id: chatId, history_idx: historyIdx, notify_client: notify, reason: reason })
         });
         const data = await res.json();
         if (data && data.success) {
