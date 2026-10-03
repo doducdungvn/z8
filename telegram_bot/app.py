@@ -151,6 +151,8 @@ def update_config():
         current["ok_detail_contractor"] = bool(data["ok_detail_contractor"])
     if "mode" in data:
         current["mode"] = data["mode"]
+    if "bot_mode" in data and data["bot_mode"] in ["auto", "manual"]:
+        current["bot_mode"] = data["bot_mode"]
     if "retain_config" in data:
         current["retain_config"] = data["retain_config"]
     if "price_config" in data:
@@ -284,6 +286,7 @@ def _is_blank_id(v):
 
 
 @app.route("/api/bot/approve_bet", methods=["POST"])
+@app.route("/api/bot/approve_pending", methods=["POST"])
 def approve_bet_route():
     data = request.json or {}
     pid = data.get("pending_id")
@@ -300,12 +303,14 @@ def approve_bet_route():
 
 
 @app.route("/api/bot/approve_all_bets", methods=["POST"])
+@app.route("/api/bot/approve_all_pending", methods=["POST"])
 def approve_all_bets_route():
     res = bot_service.approve_all_pending_bets()
     return jsonify(res)
 
 
 @app.route("/api/bot/reject_bet", methods=["POST"])
+@app.route("/api/bot/reject_pending", methods=["POST"])
 def reject_bet_route():
     data = request.json or {}
     pid = data.get("pending_id")
@@ -453,6 +458,7 @@ def get_board():
                 "de_sums": b_data.get("de_sums", {}),
                 "lo_sums": b_data.get("lo_sums", {}),
                 "bacang_sums": b_data.get("bacang_sums", {}),
+                "xien_list": b_data.get("xien_bets", []),
                 "xien_count": len(b_data.get("xien_bets", [])),
                 "history": archive.get("transfer_history", []),
                 "retained": b_data.get("retained", {}),
@@ -486,6 +492,7 @@ def get_board():
         "de_sums": b.de_sums,
         "lo_sums": b.lo_sums,
         "bacang_sums": b.bacang_sums,
+        "xien_list": b.xien_bets,
         "xien_count": len(b.xien_bets),
         "history": b.transfer_history,
         "retained": retained,
@@ -549,6 +556,7 @@ def reset_board():
 
 
 @app.route("/api/bot/delete_message", methods=["POST"])
+@app.route("/api/bot/delete_client_message", methods=["POST"])
 def delete_message():
     data = request.json or {}
     chat_id = str(data.get("chat_id", "")).strip()
@@ -578,10 +586,17 @@ def delete_message():
 
 
 @app.route("/api/bot/void_message", methods=["POST"])
+@app.route("/api/bot/void_client_message", methods=["POST"])
+@app.route("/api/bot/void_transfer", methods=["POST"])
 def void_message():
     """Bỏ qua (hủy) hoặc khôi phục tin nhắn cược của khách hoặc tin chuyển của chủ thầu"""
     data = request.json or {}
-    msg_type = data.get("type", "client")
+    msg_type = data.get("type")
+    if not msg_type:
+        if request.path.endswith("/void_transfer") or "step_idx" in data:
+            msg_type = "transfer"
+        else:
+            msg_type = "client"
     if msg_type == "client":
         chat_id = str(data.get("chat_id", "")).strip()
         history_idx = data.get("history_idx")
@@ -746,6 +761,7 @@ def get_report():
 
 
 @app.route("/api/bot/client_prices", methods=["GET", "POST", "DELETE"])
+@app.route("/api/bot/client_price", methods=["GET", "POST", "DELETE"])
 def manage_client_prices():
     prices = bot_service.config.get("client_prices", {})
     if request.method == "GET":
@@ -756,7 +772,7 @@ def manage_client_prices():
     if not client_key:
         return jsonify({"success": False, "error": "Chưa chỉ định ID hoặc Username khách cược"}), 400
 
-    if request.method == "DELETE" or data.get("action") == "delete":
+    if request.method == "DELETE" or data.get("action") == "delete" or ("price" in data and data.get("price") is None):
         if client_key in prices:
             del prices[client_key]
         alt_key = client_key.lstrip("@")
@@ -770,7 +786,7 @@ def manage_client_prices():
         return jsonify({"success": True, "client_prices": prices})
 
     # POST: Update/Set custom price
-    rate_cfg = data.get("rates") or data.get("price_config") or {}
+    rate_cfg = data.get("rates") or data.get("price_config") or data.get("price") or {}
     if not rate_cfg:
         return jsonify({"success": False, "error": "Chưa có thông số bảng giá"}), 400
 
