@@ -2863,15 +2863,19 @@ function loadAppState() {
     }
   }
   
-  if (autoFetchToggle && autoFetchToggle.checked) {
-    if (resultDateInput) {
-      const localDate = new Date(Date.now() - (new Date().getTimezoneOffset()*60*1000)).toISOString().split('T')[0];
+  if (resultDateInput) {
+    const localDate = new Date(Date.now() - (new Date().getTimezoneOffset() * 60 * 1000)).toISOString().split('T')[0];
+    const lastActiveDate = localStorage.getItem('z8_last_active_date');
+    if (autoFetchToggle && autoFetchToggle.checked) {
       resultDateInput.value = localDate;
-    }
-  } else {
-    if (savedDate !== null && resultDateInput) {
+    } else if (!savedDate || lastActiveDate !== localDate || savedDate < localDate) {
+      // Sang ngày mới sau 12h đêm -> tự động lấy ngày mới nhất hôm nay
+      resultDateInput.value = localDate;
+      localStorage.setItem('z8_result_date', localDate);
+    } else {
       resultDateInput.value = savedDate;
     }
+    localStorage.setItem('z8_last_active_date', localDate);
   }
 
   if (savedSpecial !== null && specialPrizeInput) {
@@ -7526,9 +7530,9 @@ function resetTable() {
         <!-- ==================== TAB 1: TRUNG TÂM TÁC NGHIỆP & DUYỆT TIN ==================== -->
         <div id="tgTabContentInbox" class="space-y-2.5">
           
-          <!-- Thanh chuyển 2 Sub-Tabs con trong Tab 1: Hộp Thư & Duyệt Tin ⇄ Nhật Ký Live -->
+          <!-- Thanh chuyển 3 Sub-Tabs con trong Tab 1: Hộp Thư & Duyệt Tin ⇄ Nhật Ký Live ⇄ Giao Tiếp Trực Tiếp (Chat) -->
           <div class="flex items-center justify-between flex-wrap gap-2 pb-1.5 border-b border-slate-300 dark:border-slate-700">
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 flex-wrap">
               <button type="button" id="tgSubTabBtnInboxMail" onclick="switchTgInboxSubTab('mail')" class="px-3 py-1.5 bg-[#1e293b] text-white font-bold text-xs rounded-xs border border-slate-700 flex items-center gap-1.5 cursor-pointer shadow-2xs">
                 <i class="fa-solid fa-envelope-open-text text-sky-400"></i>
                 <span>1. Hộp Thư &amp; Duyệt Tin</span>
@@ -7538,7 +7542,17 @@ function resetTable() {
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>2. Nhật Ký Hoạt Động Live</span>
               </button>
+              <button type="button" id="tgSubTabBtnInboxChat" onclick="switchTgInboxSubTab('chat')" class="px-3 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700">
+                <i class="fa-solid fa-comments text-amber-500"></i>
+                <span>3. Giao Tiếp Trực Tiếp (Chủ / Khách)</span>
+                <span id="tgSubTabInboxChatCountBadge" class="px-1.5 py-0.2 bg-sky-600 text-white text-[10px] font-bold rounded-full ml-0.5">0</span>
+              </button>
             </div>
+            <label class="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/80 rounded-xs text-xs font-bold text-amber-900 dark:text-amber-200 cursor-pointer select-none shadow-2xs" title="Bật/tắt tự động lấy KQXS và chốt tiền lúc 18h35 hàng ngày">
+              <input type="checkbox" id="tgChkAutoSettle1835" onchange="toggleTgAutoSettle1835(this.checked)" checked class="form-checkbox text-amber-600 rounded-xs w-3.5 h-3.5 cursor-pointer">
+              <i class="fa-solid fa-clock text-amber-600"></i>
+              <span>Tự động chốt sau 18h35</span>
+            </label>
           </div>
 
           <!-- SUB-TAB 1: HỘP THƯ & DUYỆT TIN (MAILBOX & PENDING QUEUE) -->
@@ -7661,6 +7675,70 @@ function resetTable() {
               <p class="text-slate-500 italic">Đang tải nhật ký...</p>
             </div>
           </div>
+
+          <!-- SUB-TAB 3: GIAO TIẾP TRỰC TIẾP VỚI CHỦ / THẦU / KHÁCH (2-WAY LIVE CHAT AS BOT) -->
+          <div id="tgInboxSubContentChat" class="hidden bg-white dark:bg-dark-800 p-3 rounded-xs border border-slate-300 dark:border-slate-700 space-y-2.5 flex flex-col">
+            <!-- Thanh tiêu đề + các tab con của từng đối tượng đang giao tiếp -->
+            <div class="flex flex-col gap-2 pb-2 border-b border-slate-200 dark:border-slate-700">
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <span class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm uppercase flex items-center gap-1.5">
+                  <i class="fa-solid fa-comments text-amber-500"></i>
+                  <span>Khung Giao Tiếp Trực Tiếp Với Chủ / Khách Dưới Danh Nghĩa Bot</span>
+                </span>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 border border-slate-300 dark:border-slate-600 rounded-xs px-1.5 py-0.5">
+                    <input type="text" id="tgChatNewRecipientInput" placeholder="Nhập ID / @username mới..." class="bg-transparent text-xs outline-none w-36 sm:w-44 text-slate-800 dark:text-slate-200 font-mono">
+                    <button type="button" onclick="openOrCreateTgChatTab()" class="px-2 py-0.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xs text-[11px] font-bold cursor-pointer" title="Mở tab chat với người này">
+                      + Mở Chat
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dải Sub-Tabs ngang: Mỗi tab con là 1 đối tượng (Chủ Thầu, Chủ Bot, Khách Cược) -->
+              <div id="tgChatContactTabs" class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5">
+                <span class="text-xs text-slate-400 italic">Đang tải danh sách đối tượng giao tiếp...</span>
+              </div>
+            </div>
+
+            <!-- Thông tin đối tượng đang chọn -->
+            <div id="tgChatActiveHeader" class="flex items-center justify-between flex-wrap gap-2 px-3 py-2 bg-slate-100 dark:bg-dark-900 rounded-xs border border-slate-200 dark:border-slate-700 text-xs">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span id="tgChatActiveRoleBadge" class="px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 font-bold text-[11px] border border-sky-300 dark:border-sky-800">👤 Đối tượng</span>
+                <span id="tgChatActiveName" class="font-bold text-slate-800 dark:text-slate-100 text-sm">Chưa chọn đối tượng</span>
+                <span id="tgChatActiveMeta" class="font-mono text-slate-500 text-[11px]"></span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="clearActiveTgChatHistory()" class="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-200 dark:border-rose-800 cursor-pointer" title="Xóa lịch sử hiển thị trong khung chat này">
+                  <i class="fa-solid fa-broom"></i> Xóa khung chat
+                </button>
+              </div>
+            </div>
+
+            <!-- Khung hội thoại 2 chiều giữa Bot và đối tượng -->
+            <div id="tgChatMessagesList" class="bg-[#0f172a] text-slate-100 p-3.5 rounded-xs border border-slate-700 h-[48vh] overflow-y-auto space-y-2.5 flex flex-col select-text">
+              <p class="text-slate-400 italic text-center my-auto text-xs">Hãy chọn một đối tượng ở thanh tab phía trên để xem cuộc trò chuyện và nhắn tin.</p>
+            </div>
+
+            <!-- Các câu trả lời nhanh 1 chạm + Khung nhập nội dung gửi dưới danh nghĩa Bot -->
+            <div class="space-y-1.5 pt-1">
+              <div class="flex items-center gap-1.5 flex-wrap text-[11px]">
+                <span class="text-slate-500 font-semibold"><i class="fa-solid fa-bolt text-amber-500"></i> Mẫu nhanh:</span>
+                <button type="button" onclick="insertTgQuickChatText('Ok')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs border border-slate-300 dark:border-slate-600 font-mono cursor-pointer">Ok</button>
+                <button type="button" onclick="insertTgQuickChatText('Ok tin 1')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs border border-slate-300 dark:border-slate-600 font-mono cursor-pointer">Ok tin 1</button>
+                <button type="button" onclick="insertTgQuickChatText('Đợi chút mình kiểm tra lại nhé')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs border border-slate-300 dark:border-slate-600 cursor-pointer">Đợi chút kiểm tra</button>
+                <button type="button" onclick="insertTgQuickChatText('Hết giờ nhận cược rồi nhé')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs border border-slate-300 dark:border-slate-600 cursor-pointer">Hết giờ nhận</button>
+                <button type="button" onclick="insertTgQuickChatText('Gửi lại bảng chốt giúp mình nhé')" class="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs border border-slate-300 dark:border-slate-600 cursor-pointer">Xin bảng chốt</button>
+              </div>
+              <div class="flex items-stretch gap-2">
+                <textarea id="tgChatInputText" rows="2" onkeydown="handleTgChatInputKeydown(event)" placeholder="Nhập nội dung giao tiếp với đối tượng này dưới danh nghĩa là Bot... (Nhấn Enter để gửi, Shift+Enter để xuống dòng)" class="flex-1 border-2 border-slate-300 dark:border-slate-600 focus:border-sky-500 rounded-xs px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-100 outline-none resize-none"></textarea>
+                <button type="button" id="btnTgSendChat" onclick="sendTgDirectChatMessage()" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-bold rounded-xs text-xs sm:text-sm shadow-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition">
+                  <i class="fa-solid fa-paper-plane"></i>
+                  <span>Gửi (Tư cách Bot)</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- ==================== TAB 2: BẢNG CƯỢC & CÂN BẢNG TRỰC QUAN ==================== -->
@@ -7680,6 +7758,10 @@ function resetTable() {
             </div>
             
             <div class="flex items-center gap-1 flex-wrap">
+              <label class="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 rounded-xs px-2 py-1 text-xs font-bold text-amber-900 dark:text-amber-200 cursor-pointer select-none" title="Bật/tắt tự động lấy KQXS và chốt tiền lúc 18h35 hàng ngày">
+                <input type="checkbox" id="tgChkAutoSettle1835Board" onchange="toggleTgAutoSettle1835(this.checked)" checked class="form-checkbox text-amber-600 rounded-xs w-3.5 h-3.5 cursor-pointer">
+                <span>Tự chốt 18h35</span>
+              </label>
               <div class="flex items-center gap-1 bg-white dark:bg-dark-800 border border-slate-300 dark:border-slate-600 rounded-xs px-1.5 py-0.5" title="Chọn ngày để thực hiện Chốt tiền, Báo Cáo hoặc xem KQXS">
                 <span class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1"><i class="fa-regular fa-calendar-days text-sky-600"></i> Ngày:</span>
                 <input type="date" id="tgActionDate" class="bg-transparent text-xs font-mono font-bold text-slate-800 dark:text-slate-200 outline-none border-none cursor-pointer">
@@ -8656,24 +8738,31 @@ function resetTable() {
     }
     window.toggleTgQuickSync = toggleTgQuickSync;
 
-    // Chuyển Sub-Tab trong Tab 1: Hộp Thư & Duyệt Tin ⇄ Nhật Ký Live
+    // Chuyển Sub-Tab trong Tab 1: Hộp Thư & Duyệt Tin ⇄ Nhật Ký Live ⇄ Giao Tiếp Trực Tiếp (Chat)
     function switchTgInboxSubTab(subName) {
       const mailContent = document.getElementById('tgInboxSubContentMail');
       const logsContent = document.getElementById('tgInboxSubContentLogs');
+      const chatContent = document.getElementById('tgInboxSubContentChat');
       const btnMail = document.getElementById('tgSubTabBtnInboxMail');
       const btnLogs = document.getElementById('tgSubTabBtnInboxLogs');
+      const btnChat = document.getElementById('tgSubTabBtnInboxChat');
+
+      const activeCls = "px-3 py-1.5 bg-[#1e293b] text-white font-bold text-xs rounded-xs border border-slate-700 flex items-center gap-1.5 cursor-pointer shadow-2xs";
+      const inactiveCls = "px-3 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700";
+
+      if (mailContent) mailContent.classList.toggle('hidden', subName !== 'mail');
+      if (logsContent) logsContent.classList.toggle('hidden', subName !== 'logs');
+      if (chatContent) chatContent.classList.toggle('hidden', subName !== 'chat');
+
+      if (btnMail) btnMail.className = (subName === 'mail') ? activeCls : inactiveCls;
+      if (btnLogs) btnLogs.className = (subName === 'logs') ? activeCls : inactiveCls;
+      if (btnChat) btnChat.className = (subName === 'chat') ? activeCls : inactiveCls;
 
       if (subName === 'logs') {
-        if (mailContent) mailContent.classList.add('hidden');
-        if (logsContent) logsContent.classList.remove('hidden');
-        if (btnLogs) btnLogs.className = "px-3 py-1.5 bg-[#1e293b] text-white font-bold text-xs rounded-xs border border-slate-700 flex items-center gap-1.5 cursor-pointer shadow-2xs";
-        if (btnMail) btnMail.className = "px-3 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700";
         fetchTgLogs();
+      } else if (subName === 'chat') {
+        fetchTgChatConversations(true);
       } else {
-        if (mailContent) mailContent.classList.remove('hidden');
-        if (logsContent) logsContent.classList.add('hidden');
-        if (btnMail) btnMail.className = "px-3 py-1.5 bg-[#1e293b] text-white font-bold text-xs rounded-xs border border-slate-700 flex items-center gap-1.5 cursor-pointer shadow-2xs";
-        if (btnLogs) btnLogs.className = "px-3 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700";
         fetchTgBoard();
       }
     }
@@ -8683,6 +8772,9 @@ function resetTable() {
       if (tabName === 'logs') {
         tabName = 'inbox';
         setTimeout(() => switchTgInboxSubTab('logs'), 50);
+      } else if (tabName === 'chat') {
+        tabName = 'inbox';
+        setTimeout(() => switchTgInboxSubTab('chat'), 50);
       } else if (tabName === 'config' || tabName === 'retain') {
         tabName = 'settings';
       }
@@ -8742,8 +8834,11 @@ function resetTable() {
         fetchTgBoard();
       } else if (tabName === 'inbox') {
         const logsTab = document.getElementById('tgInboxSubContentLogs');
+        const chatTab = document.getElementById('tgInboxSubContentChat');
         if (logsTab && !logsTab.classList.contains('hidden')) {
           fetchTgLogs();
+        } else if (chatTab && !chatTab.classList.contains('hidden')) {
+          fetchTgChatConversations(true);
         } else {
           fetchTgBoard();
         }
@@ -8860,17 +8955,14 @@ function resetTable() {
         const searchInp = document.getElementById('tgInboxSearchInput');
         const isSearching = searchInp && (document.activeElement === searchInp || searchInp.value.trim() !== '');
 
-        if (window.tgInboxDateMode !== 'yesterday' && window.tgInboxDateMode !== 'custom') {
-          // Tự động cập nhật tgActionDate sang ngày mới nếu bước qua nửa đêm
-          const actionDateInp = document.getElementById('tgActionDate');
-          if (actionDateInp) {
-            const now = new Date();
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            if (actionDateInp.value !== todayStr) {
-              actionDateInp.value = todayStr;
-            }
-          }
+        // Tự động kiểm tra chuyển sang ngày mới sau 12h đêm (00:00:00) cho toàn bộ các ô chọn ngày
+        const rolledOverNewDay = (typeof syncAndRolloverTgDates === 'function')
+          ? syncAndRolloverTgDates(false, data.current_date || '')
+          : false;
 
+        if (rolledOverNewDay) {
+          fetchTgBoard('');
+        } else if (window.tgInboxDateMode !== 'yesterday' && window.tgInboxDateMode !== 'custom') {
           // Tự làm mới ngay khi có tin cược mới, hoặc chu kỳ thường xuyên khi đang mở Hộp Thư
           if (hasBetChanges || (isInboxActive && !isSearching)) {
             fetchTgBoard();
@@ -9268,15 +9360,1086 @@ function resetTable() {
         if (r.branch_x !== undefined) document.getElementById('tgBranchX').value = r.branch_x;
         if (typeof updateTgRetainLabels === 'function') updateTgRetainLabels();
 
+        // Auto settle 18h35 daily
+        const autoSettle1835 = (cfg.auto_fetch_kqxs_daily !== false);
+        const chk1835Inbox = document.getElementById('tgChkAutoSettle1835');
+        const chk1835Board = document.getElementById('tgChkAutoSettle1835Board');
+        if (chk1835Inbox) chk1835Inbox.checked = autoSettle1835;
+        if (chk1835Board) chk1835Board.checked = autoSettle1835;
+
         // Custom Client Prices
         if (cfg.client_prices) {
           renderTgClientPricesList(cfg.client_prices);
         }
 
+        // Cập nhật số lượng đối tượng giao tiếp trên badge tab Chat
+        fetchTgChatConversations(false);
+
       } catch (e) {
         console.warn("Không tải được config bot:", e);
       }
     }
+
+    async function toggleTgAutoSettle1835(checked) {
+      const val = !!checked;
+      const chk1 = document.getElementById('tgChkAutoSettle1835');
+      const chk2 = document.getElementById('tgChkAutoSettle1835Board');
+      if (chk1) chk1.checked = val;
+      if (chk2) chk2.checked = val;
+      try {
+        await callBotApi("/api/bot/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ auto_fetch_kqxs_daily: val })
+        });
+      } catch (e) {
+        console.warn("Lỗi lưu cài đặt tự động chốt 18h35:", e);
+      }
+    }
+    window.toggleTgAutoSettle1835 = toggleTgAutoSettle1835;
+
+    // ==================== HỆ THỐNG GIAO TIẾP TRỰC TIẾP VỚI CHỦ / KHÁCH DƯỚI DANH NGHĨA BOT ====================
+    window.tgChatConversations = [];
+    window.tgActiveChatContactId = "";
+    const TG_LOCAL_CHAT_STORAGE_KEY = "tg_local_chat_history_v1";
+
+    function escapeHtmlChat(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function normChatKey(val) {
+      return String(val || "").trim().replace(/^@/, "").toLowerCase();
+    }
+
+    function getLocalSavedChatMessages() {
+      try {
+        return JSON.parse(localStorage.getItem(TG_LOCAL_CHAT_STORAGE_KEY) || "{}") || {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function appendLocalSavedChatMessage(chatId, msgObj) {
+      try {
+        const store = getLocalSavedChatMessages();
+        const key = String(chatId || "").trim();
+        if (!key) return;
+        if (!Array.isArray(store[key])) store[key] = [];
+        store[key].push(msgObj);
+        if (store[key].length > 100) store[key] = store[key].slice(-100);
+        localStorage.setItem(TG_LOCAL_CHAT_STORAGE_KEY, JSON.stringify(store));
+      } catch (_) {}
+    }
+
+    function clearLocalSavedChatMessages(chatId) {
+      try {
+        const store = getLocalSavedChatMessages();
+        const key = String(chatId || "").trim();
+        delete store[key];
+        localStorage.setItem(TG_LOCAL_CHAT_STORAGE_KEY, JSON.stringify(store));
+      } catch (_) {}
+    }
+
+    function parseChatTimeMs(tStr) {
+      const s = String(tStr || "").trim();
+      const m = s.match(/^(\d{1,2}):(\d{2}):(\d{2})(?:\s+(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?)?/);
+      if (!m) return 0;
+      const hh = parseInt(m[1], 10) || 0;
+      const mm = parseInt(m[2], 10) || 0;
+      const ss = parseInt(m[3], 10) || 0;
+      const now = new Date();
+      const day = m[4] ? parseInt(m[4], 10) : now.getDate();
+      const mon = m[5] ? (parseInt(m[5], 10) - 1) : now.getMonth();
+      const yr = m[6] ? parseInt(m[6], 10) : now.getFullYear();
+      return new Date(yr, mon, day, hh, mm, ss).getTime();
+    }
+
+    async function buildCloudFallbackChatConversations() {
+      const nowMs = Date.now();
+      const useCachedMeta = window._tgChatMetaCacheTs && (nowMs - window._tgChatMetaCacheTs < 20000) && window._tgChatCachedCfg && window._tgChatCachedUsers;
+
+      const [cfgRes, usersRes, logsRes, boardRes] = await Promise.all([
+        useCachedMeta ? Promise.resolve(null) : callBotApi("/api/bot/config").catch(() => null),
+        useCachedMeta ? Promise.resolve(null) : callBotApi("/api/bot/known_users").catch(() => null),
+        callBotApi("/api/bot/logs").catch(() => null),
+        (tgCachedBoardData ? Promise.resolve(null) : callBotApi("/api/bot/board").catch(() => null))
+      ]);
+
+      const cfg = useCachedMeta
+        ? window._tgChatCachedCfg
+        : ((cfgRes && cfgRes.ok) ? await cfgRes.json().catch(() => ({})) : (window._tgChatCachedCfg || {}));
+      const uRaw = useCachedMeta
+        ? window._tgChatCachedUsers
+        : ((usersRes && usersRes.ok) ? await usersRes.json().catch(() => ({})) : (window._tgChatCachedUsers || {}));
+      if (!useCachedMeta && cfg && Object.keys(cfg).length > 0) {
+        window._tgChatCachedCfg = cfg;
+        window._tgChatCachedUsers = uRaw;
+        window._tgChatMetaCacheTs = nowMs;
+      }
+
+      const lRaw = (logsRes && logsRes.ok) ? await logsRes.json().catch(() => ({})) : {};
+      const bData = tgCachedBoardData || ((boardRes && boardRes.ok) ? await boardRes.json().catch(() => ({})) : {});
+
+      if (cfg.bot_token) window._tgCachedBotToken = cfg.bot_token;
+
+      // 1. Tạo bảng ánh xạ username <-> numeric chat_id từ known_users
+      const unameToCid = {};
+      const cidToUser = {};
+      const usersEntries = Array.isArray(uRaw)
+        ? uRaw
+        : (uRaw && typeof uRaw === 'object' ? Object.values(uRaw.users || uRaw) : []);
+
+      usersEntries.forEach(u => {
+        if (!u || typeof u !== 'object') return;
+        const cid = String(u.chat_id || u.user_id || "").trim();
+        if (!cid || ["11223344", "99999", "111", "web_sync"].includes(cid)) return;
+        const un = String(u.username || "").trim().replace(/^@/, "");
+        const fn = String(u.first_name || "").trim();
+        cidToUser[cid] = { chat_id: cid, username: un, first_name: fn, updated_at: u.updated_at || "" };
+        if (un) unameToCid[normChatKey(un)] = cid;
+        if (fn) unameToCid[normChatKey(fn)] = unameToCid[normChatKey(fn)] || cid;
+      });
+
+      const resolveCanonicalId = (rawTarget) => {
+        const s = String(rawTarget || "").trim();
+        if (!s) return "";
+        if (/^-?\d+$/.test(s)) return s;
+        const k = normChatKey(s);
+        return unameToCid[k] || s;
+      };
+
+      const ownerResolved = resolveCanonicalId(cfg.owner_chat_id);
+      const contractorResolved = resolveCanonicalId(cfg.target_recipient);
+      const contractorIds = new Set(contractorResolved ? [contractorResolved] : []);
+
+      // Quét thêm ID chủ thầu xuất hiện trong logs (VD: "Gửi chủ thầu 8836005980" hoặc "Chủ thầu (@congty368)")
+      const logs = Array.isArray(lRaw.logs) ? lRaw.logs : [];
+      logs.forEach(l => {
+        const msg = String(l.message || "");
+        const m1 = msg.match(/chủ thầu\s+(\d+|@[A-Za-z0-9_]+)/i);
+        if (m1) contractorIds.add(resolveCanonicalId(m1[1]));
+        const m2 = msg.match(/Chủ thầu\s*\(([^)]+)\)/i);
+        if (m2) contractorIds.add(resolveCanonicalId(m2[1]));
+        const m3 = msg.match(/người nhận\s+(\d+|@[A-Za-z0-9_]+)/i);
+        if (m3) contractorIds.add(resolveCanonicalId(m3[1]));
+      });
+
+      const getRoleInfo = (cid, un) => {
+        const cStr = String(cid || "").trim();
+        const uKey = normChatKey(un);
+        if (contractorIds.has(cStr) || (uKey && contractorIds.has(unameToCid[uKey]))) {
+          return { role: "contractor", role_label: "🛸 Chủ Thầu" };
+        }
+        if (ownerResolved && (cStr === ownerResolved || (uKey && unameToCid[uKey] === ownerResolved))) {
+          return { role: "owner", role_label: "👑 Chủ Bot" };
+        }
+        return { role: "client", role_label: "👤 Khách Cược" };
+      };
+
+      const convMap = {};
+      const ensureContact = (rawId, nameHint = "", unameHint = "") => {
+        const cid = resolveCanonicalId(rawId);
+        if (!cid || ["11223344", "99999", "111", "web_sync"].includes(cid)) return null;
+        const uInfo = cidToUser[cid] || {};
+        const un = unameHint.replace(/^@/, "") || uInfo.username || (String(rawId).startsWith("@") ? String(rawId).slice(1) : "");
+        const dispName = uInfo.first_name
+          ? (un ? `${uInfo.first_name} (@${un})` : uInfo.first_name)
+          : (nameHint && nameHint !== cid ? nameHint : (un ? `@${un}` : cid));
+        const rInfo = getRoleInfo(cid, un);
+
+        if (!convMap[cid]) {
+          convMap[cid] = {
+            chat_id: cid,
+            name: dispName,
+            username: un ? `@${un}` : "",
+            role: rInfo.role,
+            role_label: rInfo.role_label,
+            last_updated: uInfo.updated_at || "",
+            last_ts: 0,
+            messages: []
+          };
+        } else {
+          if (dispName && (convMap[cid].name === cid || convMap[cid].name.startsWith("@"))) {
+            convMap[cid].name = dispName;
+          }
+          if (un && !convMap[cid].username) convMap[cid].username = `@${un}`;
+          convMap[cid].role = rInfo.role;
+          convMap[cid].role_label = rInfo.role_label;
+        }
+        return convMap[cid];
+      };
+
+      // Khởi tạo từ known_users, target_recipient, owner_chat_id, allowed_senders
+      Object.keys(cidToUser).forEach(cid => ensureContact(cid));
+      if (cfg.target_recipient) ensureContact(cfg.target_recipient, `Chủ thầu (${cfg.target_recipient})`);
+      if (cfg.owner_chat_id) ensureContact(cfg.owner_chat_id, `Chủ Bot (${cfg.owner_chat_id})`);
+      (Array.isArray(cfg.allowed_senders) ? cfg.allowed_senders : []).forEach(s => {
+        if (s && s !== "*") ensureContact(s, s);
+      });
+
+      const pushMsgUnique = (conv, direction, text, timeStr, tag = "auto", seqIdx = 0) => {
+        if (!conv || !text) return;
+        const cleanTxt = String(text).trim();
+        if (!cleanTxt) return;
+        const tStr = String(timeStr || "").trim();
+        const parsedMs = parseChatTimeMs(tStr);
+        const isDup = conv.messages.some(m => {
+          if (m.direction !== direction || m.text !== cleanTxt) return false;
+          if (!tStr || !m.time || m.time === tStr) return true;
+          // Nếu cùng tin cược gốc (chênh nhau vài giây giữa lúc nhận và lúc thầu Ok) thì không nhân đôi
+          if (direction === "in" && parsedMs > 0 && m._sortTs > 0 && Math.abs(parsedMs - m._sortTs) <= 15000) return true;
+          return false;
+        });
+        if (isDup) return;
+        const sortTs = parsedMs || (nowMs - (100000 - seqIdx * 10));
+        conv.messages.push({
+          id: `fb_${conv.chat_id}_${conv.messages.length + 1}`,
+          direction: direction,
+          sender_name: direction === "out" ? "🤖 Bot" : (conv.name || conv.chat_id),
+          text: cleanTxt,
+          time: tStr,
+          timestamp: tStr,
+          ts: sortTs,
+          _sortTs: sortTs,
+          _seq: seqIdx,
+          tag: tag
+        });
+        if (sortTs > (conv.last_ts || 0)) conv.last_ts = sortTs;
+      };
+
+      const formatChatBetBreakdown = (rawBetText) => {
+        const cleanRaw = String(rawBetText || "").trim();
+        if (!cleanRaw) return "";
+        try {
+          if (typeof parseCombinedInput === "function") {
+            const parsed = parseCombinedInput(cleanRaw);
+            const outLines = [];
+            const formatGrouped2D = (arr, label) => {
+              if (!Array.isArray(arr) || arr.length === 0) return;
+              const sums = {};
+              arr.forEach(b => {
+                const n = String(b.number).padStart(2, "0");
+                sums[n] = (sums[n] || 0) + (parseFloat(b.amount) || 0);
+              });
+              const groups = {};
+              Object.entries(sums).forEach(([n, amt]) => {
+                const amtKey = Number.isInteger(amt) ? amt : Math.round(amt * 100) / 100;
+                if (!groups[amtKey]) groups[amtKey] = [];
+                groups[amtKey].push(n);
+              });
+              const parts = Object.keys(groups)
+                .map(Number)
+                .sort((a, b) => a - b)
+                .map(amt => {
+                  const nums = groups[amt].sort((a, b) => Number(a) - Number(b));
+                  return `${nums.join(".")}x${amt}`;
+                });
+              if (parts.length > 0) outLines.push(`${label} ${parts.join(", ")}`);
+            };
+            formatGrouped2D(parsed.de, "Đề");
+            formatGrouped2D(parsed.lo, "Lô");
+            if (Array.isArray(parsed.bacang) && parsed.bacang.length > 0) {
+              const sums = {};
+              parsed.bacang.forEach(b => {
+                const n = String(b.number).padStart(3, "0");
+                sums[n] = (sums[n] || 0) + (parseFloat(b.amount) || 0);
+              });
+              const groups = {};
+              Object.entries(sums).forEach(([n, amt]) => {
+                const amtKey = Number.isInteger(amt) ? amt : Math.round(amt * 100) / 100;
+                if (!groups[amtKey]) groups[amtKey] = [];
+                groups[amtKey].push(n);
+              });
+              const parts = Object.keys(groups)
+                .map(Number)
+                .sort((a, b) => a - b)
+                .map(amt => {
+                  const nums = groups[amt].sort((a, b) => Number(a) - Number(b));
+                  return `${nums.join(".")}x${amt}`;
+                });
+              if (parts.length > 0) outLines.push(`3c ${parts.join(", ")}`);
+            }
+            const allX = [...(parsed.xien2 || []), ...(parsed.xien3 || []), ...(parsed.xien4 || [])];
+            if (allX.length > 0) {
+              const sums = {};
+              allX.forEach(b => {
+                const k = (b.numbers || []).join("-");
+                if (k) sums[k] = (sums[k] || 0) + (parseFloat(b.amount) || 0);
+              });
+              const groups = {};
+              Object.entries(sums).forEach(([pair, amt]) => {
+                const amtKey = Number.isInteger(amt) ? amt : Math.round(amt * 100) / 100;
+                if (!groups[amtKey]) groups[amtKey] = [];
+                groups[amtKey].push(pair);
+              });
+              const parts = Object.keys(groups)
+                .map(Number)
+                .sort((a, b) => a - b)
+                .map(amt => `${groups[amt].join(", ")}x${amt}`);
+              if (parts.length > 0) outLines.push(`Xiên ${parts.join("; ")}`);
+            }
+            if (outLines.length > 0) return outLines.join("\n");
+          }
+        } catch (_) {}
+        return cleanRaw;
+      };
+
+      const cMsgs = Array.isArray(bData?.raw_messages)
+        ? bData.raw_messages
+        : (Array.isArray(bData?.client_messages) ? bData.client_messages : []);
+      cMsgs.forEach((m, idx) => {
+        const cid = m.chat_id || m.sender || "";
+        const c = ensureContact(cid, m.name || m.sender_name || "");
+        if (!c) return;
+        const txt = (m.text || m.raw_text || m.content || "").trim();
+        const mIdx = Number(m.msg_index || (idx + 1));
+        if (txt && mIdx > 0) {
+          if (!c._betByTin) c._betByTin = {};
+          c._betByTin[mIdx] = txt;
+        }
+      });
+
+      const showOkDetailClient = Boolean(document.getElementById('tgCheckOkDetailClient')?.checked ?? cfg?.ok_detail_client);
+      const showOkDetailContractor = Boolean(document.getElementById('tgCheckOkDetailContractor')?.checked ?? cfg?.ok_detail_contractor);
+      const showCancelDetailClient = Boolean(document.getElementById('tgCheckCancelDetailClient')?.checked ?? cfg?.cancel_detail_client);
+      const showCancelDetailContractor = Boolean(document.getElementById('tgCheckCancelDetailContractor')?.checked ?? cfg?.cancel_detail_contractor);
+
+      // 2. Đồng bộ từ Nhật Ký Hoạt Động (logs) theo đúng thứ tự thời gian
+      logs.forEach((l, idx) => {
+        const msg = String(l.message || "").trim();
+        const ts = l.timestamp || "";
+        let m;
+
+        // 2a. Gửi chủ thầu <id>: <nội dung>
+        if ((m = msg.match(/^Gửi chủ thầu\s+(\S+):\s*([\s\S]+)$/i))) {
+          const c = ensureContact(m[1]);
+          const formattedTransfer = m[2].replace(/\s+;\s+/g, "\n").trim();
+          if (c) {
+            if (!c._transferByStep) c._transferByStep = [];
+            c._transferByStep.push(formattedTransfer);
+          }
+          pushMsgUnique(c, "out", formattedTransfer, ts, "transfer", idx * 2);
+          return;
+        }
+        // 2b. Đã gửi tin báo HỦY CƯỢC sang chủ thầu <id>: <nội dung>
+        if ((m = msg.match(/Đã gửi tin báo HỦY CƯỢC sang chủ thầu\s+(\S+):\s*([\s\S]+)$/i))) {
+          const c = ensureContact(m[1]);
+          let cancelTransferTxt = m[2].trim();
+          if (showCancelDetailContractor && !cancelTransferTxt.includes("\n")) {
+            const stepM = cancelTransferTxt.match(/Hủy\s+tin\s+(\d+)/i);
+            const stepIdx = stepM ? Number(stepM[1]) : 0;
+            const stepTransfer = (c?._transferByStep && stepIdx > 0) ? c._transferByStep[stepIdx - 1] : "";
+            if (stepTransfer) {
+              cancelTransferTxt = `${cancelTransferTxt}:\n${stepTransfer}`;
+            }
+          }
+          pushMsgUnique(c, "out", cancelTransferTxt, ts, "cancel_transfer", idx * 2);
+          return;
+        }
+        // 2c. Chủ thầu (@user): <nội dung>
+        if ((m = msg.match(/^Chủ thầu\s*\(([^)]+)\):\s*([\s\S]+)$/i))) {
+          const c = ensureContact(m[1]);
+          const cleanIn = m[2]
+            .replace(/\s*\((?:đã xác nhận|chưa có Ok|từ chối\/trả lại|Ok có trả lại)[^)]*\)\s*$/i, "")
+            .trim();
+          pushMsgUnique(c, "in", cleanIn, ts, "contractor_reply", idx * 2);
+          return;
+        }
+        if ((m = msg.match(/Chủ thầu\s*\(([^)]+)\)\s*TỪ CHỐI\/TRẢ LẠI TOÀN BỘ:\s*'([\s\S]+?)'\s*->/i))) {
+          const c = ensureContact(m[1]);
+          pushMsgUnique(c, "in", m[2].trim(), ts, "contractor_reply", idx * 2);
+          return;
+        }
+        // 2d. Khách (@user): <nội dung>
+        if ((m = msg.match(/^Khách\s*\(([^)]+)\):\s*([\s\S]+)$/i))) {
+          const c = ensureContact(m[1]);
+          const body = m[2];
+          const okMatch = body.match(/\((?:Chủ thầu đã Ok|Giữ lại 100%)\s*->\s*Đã nhắn lại\s+([^)]+)\)\s*$/i);
+          if (okMatch) {
+            const rawBet = body.replace(/\s*\((?:Chủ thầu đã Ok|Giữ lại 100%)[\s\S]*$/i, "").trim();
+            let okReplyTxt = okMatch[1].trim();
+            const tinNumMatch = okReplyTxt.match(/Ok\s+tin\s+(\d+)/i);
+            const tinNum = tinNumMatch ? Number(tinNumMatch[1]) : 0;
+            if (c && tinNum > 0 && rawBet) {
+              if (!c._betByTin) c._betByTin = {};
+              c._betByTin[tinNum] = rawBet;
+            }
+            const shouldAddOkDetail = (c?.role === "contractor") ? showOkDetailContractor : showOkDetailClient;
+            if (shouldAddOkDetail && !okReplyTxt.includes("\n") && rawBet) {
+              const breakdown = formatChatBetBreakdown(rawBet);
+              if (breakdown) okReplyTxt = `${okReplyTxt}\n${breakdown}`;
+            }
+            pushMsgUnique(c, "in", rawBet, ts, "bet", idx * 2);
+            pushMsgUnique(c, "out", okReplyTxt, ts, "reply", idx * 2 + 1);
+          } else {
+            const cutoffMatch = body.match(/\(⛔\s*([^)]+)\)\s*$/i);
+            const returnMatch = body.match(/\((?:Bộ lọc:\s*Đã trả lại|trả lại)\s+([^)]+)\)\s*$/i);
+            const cleanBet = body
+              .replace(/\s*\((?:Đã chuyển thầu|⚠️\s*Bot đang TẮT|Treo chờ duyệt|Yêu cầu hủy tin|⛔|Bộ lọc:|trả lại)[^)]*\)\s*$/i, "")
+              .trim();
+            pushMsgUnique(c, "in", cleanBet, ts, "bet", idx * 2);
+            if (cutoffMatch) {
+              pushMsgUnique(c, "out", cutoffMatch[1].trim(), ts, "reply", idx * 2 + 1);
+            } else if (returnMatch) {
+              const retTxt = returnMatch[1].trim();
+              pushMsgUnique(c, "out", retTxt.toLowerCase().startsWith("trả lại") ? retTxt : `Trả lại ${retTxt}`, ts, "reply", idx * 2 + 1);
+            }
+          }
+          return;
+        }
+        // 2e. Đã hủy thành công tin #N của khách (@user)
+        if ((m = msg.match(/Đã hủy thành công tin #(\d+) của khách\s*\(([^)]+)\)(?:\s*[:.]\s*([\s\S]+))?/i))) {
+          const cancelIdx = Number(m[1]);
+          const c = ensureContact(m[2]);
+          const loggedExtra = (m[3] || "").replace(/^Đã cập nhật lại bảng cược\.?$/i, "").trim();
+          let cancelBubble = `✅ Đã hủy thành công tin #${cancelIdx}`;
+          if (showCancelDetailClient) {
+            let detailStr = "";
+            if (loggedExtra && loggedExtra.includes("\n")) {
+              detailStr = loggedExtra.split("\n").slice(1).join("\n").trim();
+            }
+            if (!detailStr && c) {
+              let rawCanceledBet = (c._betByTin && c._betByTin[cancelIdx]) || "";
+              if (!rawCanceledBet && Array.isArray(c.messages)) {
+                const betMsgs = c.messages.filter(x => x.direction === "in" && x.tag === "bet" && !/^(?:huy|hủy|xoa|xóa|bo|bỏ|cancel)\b/i.test(x.text));
+                if (betMsgs[cancelIdx - 1]) rawCanceledBet = betMsgs[cancelIdx - 1].text;
+                else if (betMsgs.length > 0) rawCanceledBet = betMsgs[betMsgs.length - 1].text;
+              }
+              if (rawCanceledBet) {
+                detailStr = formatChatBetBreakdown(rawCanceledBet);
+              }
+            }
+            if (detailStr) {
+              cancelBubble = `✅ Đã hủy thành công tin #${cancelIdx}:\n${detailStr}`;
+            }
+          }
+          pushMsgUnique(c, "out", cancelBubble, ts, "cancel_reply", idx * 2);
+          return;
+        }
+        // 2f. Đã gửi chốt tiền tới khách (@user) (id): <nội dung>
+        if ((m = msg.match(/Đã gửi chốt tiền tới khách\s*\(([^)]+)\)\s*(?:\((\d+)\))?:\s*([\s\S]+)$/i))) {
+          const c = ensureContact(m[2] || m[1], m[1]);
+          pushMsgUnique(c, "out", m[3], ts, "settle", idx * 2);
+          return;
+        }
+        // 2g. Đã gửi chốt tiền bảng Chuyển tới người nhận <id>: <nội dung>
+        if ((m = msg.match(/Đã gửi chốt tiền bảng Chuyển tới người nhận\s+(\S+):\s*([\s\S]+)$/i))) {
+          const c = ensureContact(m[1]);
+          pushMsgUnique(c, "out", m[2], ts, "settle_transfer", idx * 2);
+          return;
+        }
+        // 2h. Đã gửi báo cáo tổng kết ... tới chủ bảng (<id>)
+        if ((m = msg.match(/^(Đã gửi báo cáo tổng kết[\s\S]*?tới chủ bảng)\s*\(([^)]+)\)/i))) {
+          const c = ensureContact(m[2]);
+          pushMsgUnique(c, "out", `📊 ${m[1]}`, ts, "owner_report", idx * 2);
+          return;
+        }
+        // 2i. Chat trực tiếp
+        if ((m = msg.match(/\[Chat Trực Tiếp\]\s*Bot\s*->\s*(\S+):\s*([\s\S]+)$/i))) {
+          const c = ensureContact(m[1]);
+          pushMsgUnique(c, "out", m[2], ts, "manual_chat", idx * 2);
+        }
+      });
+
+      // 3. Bổ sung thêm từ dữ liệu bảng cược (raw_messages) nếu khách chưa có tin trong logs
+      cMsgs.forEach((m, idx) => {
+        const cid = m.chat_id || m.sender || "";
+        const c = ensureContact(cid, m.name || m.sender_name || "");
+        if (!c) return;
+        const txt = (m.text || m.raw_text || m.content || "").trim();
+        if (!txt || c.messages.some(existing => existing.direction === "in" && existing.text === txt)) return;
+        const ts = m.timestamp || m.time || "";
+        const mIdx = m.msg_index || (idx + 1);
+        pushMsgUnique(c, "in", txt, ts, "bet", 500 + idx * 2);
+        if (m.status === "rejected" || m.rejected) {
+          pushMsgUnique(c, "out", `❌ Từ chối nhận tin cược`, ts, "reply", 500 + idx * 2 + 1);
+        } else if (m.status === "voided" || m.voided) {
+          const detailTxt = showCancelDetailClient ? formatChatBetBreakdown(txt) : "";
+          pushMsgUnique(c, "out", detailTxt ? `🚫 Đã hủy tin #${mIdx}:\n${detailTxt}` : `🚫 Đã hủy tin #${mIdx}`, ts, "reply", 500 + idx * 2 + 1);
+        } else if (m.status !== "pending" && !m.is_pending) {
+          const detailTxt = showOkDetailClient ? formatChatBetBreakdown(txt) : "";
+          pushMsgUnique(c, "out", detailTxt ? `Ok tin ${mIdx}\n${detailTxt}` : `Ok tin ${mIdx}`, ts, "reply", 500 + idx * 2 + 1);
+        }
+      });
+
+      // 4. Gộp thêm tin nhắn chat trực tiếp đã lưu trong trình duyệt (localStorage)
+      const localStore = getLocalSavedChatMessages();
+      Object.keys(localStore).forEach(rawKey => {
+        const c = ensureContact(rawKey);
+        if (!c) return;
+        const arr = Array.isArray(localStore[rawKey]) ? localStore[rawKey] : [];
+        arr.forEach((lm, idx) => {
+          pushMsgUnique(c, lm.direction || "out", lm.text || "", lm.time || lm.timestamp || "", lm.tag || "manual_chat", 900 + idx);
+        });
+      });
+
+      // 5. Sắp xếp lại tin nhắn trong mỗi hội thoại theo đúng thứ tự thời gian thực tế
+      Object.values(convMap).forEach(c => {
+        if (Array.isArray(c.messages) && c.messages.length > 1) {
+          c.messages.sort((a, b) => ((a._sortTs || 0) - (b._sortTs || 0)) || ((a._seq || 0) - (b._seq || 0)));
+          const lastM = c.messages[c.messages.length - 1];
+          if (lastM && lastM._sortTs) c.last_ts = lastM._sortTs;
+        }
+      });
+
+      const rolePriority = { contractor: 0, owner: 1, client: 2 };
+      return Object.values(convMap).sort((a, b) => {
+        const aHas = (a.messages && a.messages.length > 0) ? 0 : 1;
+        const bHas = (b.messages && b.messages.length > 0) ? 0 : 1;
+        if (aHas !== bHas) return aHas - bHas;
+        const rDiff = (rolePriority[a.role] ?? 2) - (rolePriority[b.role] ?? 2);
+        if (rDiff !== 0) return rDiff;
+        return (b.last_ts || 0) - (a.last_ts || 0);
+      });
+    }
+
+    async function fetchTgChatConversations(forceRenderMessages = false) {
+      try {
+        let list = null;
+        const base = (TG_BOT_API || CLOUD_DEFAULT_API).replace(/\/+$/, "");
+        const nowMs = Date.now();
+        const skipDirectChatsApi = window._tgChatsApi404Base === base && (nowMs - (window._tgChatsApi404Ts || 0) < 60000);
+
+        // 1. Thử gọi trực tiếp endpoint /api/bot/chats trên máy chủ hiện hành (nếu chưa bị đánh dấu 404)
+        if (!skipDirectChatsApi) {
+          try {
+            const controller = new AbortController();
+            const tId = setTimeout(() => controller.abort(), 4500);
+            const directRes = await fetch(base + "/api/bot/chats", { signal: controller.signal });
+            clearTimeout(tId);
+            if (directRes.status === 404) {
+              window._tgChatsApi404Base = base;
+              window._tgChatsApi404Ts = nowMs;
+            } else if (directRes.ok) {
+              window._tgChatsApi404Base = "";
+              const directData = await directRes.json();
+              if (directData && directData.success && Array.isArray(directData.conversations)) {
+                list = directData.conversations;
+              }
+            }
+          } catch (_) {}
+        }
+
+        // 2. Nếu máy chủ Cloud chưa có endpoint /api/bot/chats (404) -> Tự động tổng hợp đầy đủ từ /config, /known_users, /logs, /board
+        if (!list) {
+          list = await buildCloudFallbackChatConversations();
+        } else {
+          // Gộp thêm tin nhắn lưu cục bộ nếu có
+          const localStore = getLocalSavedChatMessages();
+          list.forEach(c => {
+            const cid = String(c.chat_id || "");
+            const savedArr = localStore[cid] || [];
+            if (!Array.isArray(c.messages)) c.messages = [];
+            savedArr.forEach(lm => {
+              const dup = c.messages.some(m => m.direction === lm.direction && m.text === lm.text && (m.time || m.timestamp) === (lm.time || lm.timestamp));
+              if (!dup) c.messages.push(lm);
+            });
+          });
+        }
+
+        // 3. Giữ lại các tab đối tượng mà người dùng vừa chủ động bấm "+ Mở Chat" nhưng chưa gửi tin nhắn
+        const prevList = window.tgChatConversations || [];
+        prevList.forEach(prevConv => {
+          if (!prevConv || !prevConv.chat_id) return;
+          const pCid = String(prevConv.chat_id);
+          const pKey = normChatKey(prevConv.username || pCid);
+          const existsInNew = list.some(c =>
+            String(c.chat_id) === pCid ||
+            (pKey && (normChatKey(c.username) === pKey || normChatKey(c.chat_id) === pKey))
+          );
+          if (!existsInNew && (prevConv._isCustomOpened || pCid === String(window.tgActiveChatContactId))) {
+            list.unshift(prevConv);
+          }
+        });
+
+        // 4. Lọc bỏ các tab mà người dùng đã bấm nút X đóng đi
+        const closedSet = getClosedTgChatTabsSet();
+        list = list.filter(c => {
+          if (!c || !c.chat_id) return false;
+          const cidStr = String(c.chat_id).trim();
+          const uKey = normChatKey(c.username || "");
+          const cKey = normChatKey(cidStr);
+          return !closedSet.has(cidStr) && !(cKey && closedSet.has(cKey)) && !(uKey && closedSet.has(uKey));
+        });
+
+        window.tgChatConversations = list;
+
+        const countBadge = document.getElementById('tgSubTabInboxChatCountBadge');
+        if (countBadge) {
+          countBadge.textContent = list.length;
+        }
+
+        if (!window.tgActiveChatContactId && list.length > 0) {
+          window.tgActiveChatContactId = String(list[0].chat_id);
+        } else if (window.tgActiveChatContactId) {
+          // Tự động khớp theo cả chat_id hoặc @username
+          const activeKey = normChatKey(window.tgActiveChatContactId);
+          const matched = list.find(c =>
+            String(c.chat_id) === String(window.tgActiveChatContactId) ||
+            (activeKey && normChatKey(c.username) === activeKey)
+          );
+          if (matched) {
+            window.tgActiveChatContactId = String(matched.chat_id);
+          } else if (list.length > 0 && !window._tgCustomPendingContactId) {
+            window.tgActiveChatContactId = String(list[0].chat_id);
+          } else if (list.length === 0) {
+            window.tgActiveChatContactId = "";
+          }
+        }
+
+        renderTgChatContactTabs();
+        const chatContent = document.getElementById('tgInboxSubContentChat');
+        if (forceRenderMessages || (chatContent && !chatContent.classList.contains('hidden'))) {
+          renderTgActiveChatPanel();
+        }
+      } catch (e) {
+        console.warn("Không tải được danh sách hội thoại:", e);
+      }
+    }
+    window.fetchTgChatConversations = fetchTgChatConversations;
+
+    const CLOSED_CHAT_TABS_KEY = "z8_closed_chat_tabs_v1";
+    function getClosedTgChatTabsSet() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(CLOSED_CHAT_TABS_KEY) || "[]");
+        return new Set(Array.isArray(arr) ? arr.map(x => String(x)) : []);
+      } catch (_) {
+        return new Set();
+      }
+    }
+    function saveClosedTgChatTabsSet(setObj) {
+      try {
+        localStorage.setItem(CLOSED_CHAT_TABS_KEY, JSON.stringify([...setObj]));
+      } catch (_) {}
+    }
+    function unmarkClosedTgChatTab(rawId, uname = "") {
+      const closedSet = getClosedTgChatTabsSet();
+      const s1 = String(rawId || "").trim();
+      const k1 = normChatKey(s1);
+      const k2 = normChatKey(uname || "");
+      let changed = false;
+      [s1, k1, k2].forEach(k => {
+        if (k && closedSet.has(k)) {
+          closedSet.delete(k);
+          changed = true;
+        }
+      });
+      if (changed) saveClosedTgChatTabsSet(closedSet);
+    }
+
+    function closeTgChatTab(chatId, ev) {
+      if (ev && typeof ev.stopPropagation === "function") ev.stopPropagation();
+      const targetCid = String(chatId || "").trim();
+      if (!targetCid) return;
+
+      const list = window.tgChatConversations || [];
+      const conv = list.find(c => String(c.chat_id) === targetCid);
+      const closedSet = getClosedTgChatTabsSet();
+      closedSet.add(targetCid);
+      const cKey = normChatKey(targetCid);
+      if (cKey) closedSet.add(cKey);
+      if (conv && conv.username) {
+        const uKey = normChatKey(conv.username);
+        if (uKey) closedSet.add(uKey);
+      }
+      saveClosedTgChatTabsSet(closedSet);
+
+      window.tgChatConversations = list.filter(c => String(c.chat_id) !== targetCid);
+      const countBadge = document.getElementById('tgSubTabInboxChatCountBadge');
+      if (countBadge) countBadge.textContent = window.tgChatConversations.length;
+
+      if (String(window.tgActiveChatContactId) === targetCid) {
+        window.tgActiveChatContactId = window.tgChatConversations.length > 0
+          ? String(window.tgChatConversations[0].chat_id)
+          : "";
+      }
+      renderTgChatContactTabs();
+      renderTgActiveChatPanel(true);
+    }
+    window.closeTgChatTab = closeTgChatTab;
+
+    function renderTgChatContactTabs() {
+      const tabsEl = document.getElementById('tgChatContactTabs');
+      if (!tabsEl) return;
+      const list = window.tgChatConversations || [];
+
+      if (list.length === 0) {
+        tabsEl.innerHTML = `<span class="text-xs text-slate-400 italic py-1">Chưa có đối tượng giao tiếp nào. Hãy nhập ID / @username ở ô bên phải rồi bấm "+ Mở Chat".</span>`;
+        return;
+      }
+
+      tabsEl.innerHTML = list.map(c => {
+        const cid = String(c.chat_id || "");
+        const isActive = (cid === String(window.tgActiveChatContactId));
+        const role = c.role || "client";
+        let roleIcon = "👤";
+        let roleColorActive = "bg-sky-600 text-white border-sky-700 shadow-xs";
+        let roleColorInactive = "bg-white dark:bg-dark-900 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-dark-700";
+
+        if (role === "contractor") {
+          roleIcon = "🛸";
+          roleColorActive = "bg-indigo-600 text-white border-indigo-700 shadow-xs";
+          roleColorInactive = "bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200 border-indigo-300 dark:border-indigo-800 hover:bg-indigo-100";
+        } else if (role === "owner") {
+          roleIcon = "👑";
+          roleColorActive = "bg-amber-600 text-white border-amber-700 shadow-xs";
+          roleColorInactive = "bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-800 hover:bg-amber-100";
+        }
+
+        const msgCount = (c.messages || []).length;
+        const safeCidAttr = cid.replace(/'/g, "\\'");
+        const displayName = escapeHtmlChat(c.name || cid);
+        const roleTag = role === "contractor" ? "Chủ Thầu" : (role === "owner" ? "Chủ Bot" : "Khách");
+
+        return `
+          <div onclick="selectTgChatContact('${safeCidAttr}')" class="pl-2.5 pr-1.5 py-1 rounded-xs border text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer transition select-none ${isActive ? roleColorActive : roleColorInactive}">
+            <span>${roleIcon}</span>
+            <span>${displayName}</span>
+            <span class="text-[10px] px-1 py-0.2 rounded ${isActive ? 'bg-black/25 text-white' : 'bg-slate-200 dark:bg-dark-700 text-slate-600 dark:text-slate-300'} font-mono">${roleTag} (${msgCount})</span>
+            <span onclick="closeTgChatTab('${safeCidAttr}', event)" title="Đóng tab này" class="ml-0.5 w-4 h-4 rounded-xs inline-flex items-center justify-center text-[11px] leading-none transition ${isActive ? 'text-white/80 hover:text-white hover:bg-black/30' : 'text-slate-400 hover:text-white hover:bg-rose-500'}">✕</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectTgChatContact(chatId) {
+      window.tgActiveChatContactId = String(chatId || "");
+      window._tgCustomPendingContactId = false;
+      renderTgChatContactTabs();
+      renderTgActiveChatPanel(true);
+    }
+    window.selectTgChatContact = selectTgChatContact;
+
+    function openTgChatWithContact(chatId, nameHint = "") {
+      const rawCid = String(chatId || "").trim();
+      if (!rawCid) return;
+      unmarkClosedTgChatTab(rawCid, nameHint);
+      switchTgTab('inbox');
+      switchTgInboxSubTab('chat');
+      const key = normChatKey(rawCid);
+      const existing = (window.tgChatConversations || []).find(c =>
+        String(c.chat_id) === rawCid ||
+        (key && (normChatKey(c.username) === key || normChatKey(c.name) === key))
+      );
+      if (existing) {
+        selectTgChatContact(existing.chat_id);
+      } else {
+        window.tgChatConversations.unshift({
+          chat_id: rawCid,
+          name: nameHint || rawCid,
+          username: rawCid.startsWith("@") ? rawCid : "",
+          role: "client",
+          role_label: "👤 Khách Cược",
+          _isCustomOpened: true,
+          messages: []
+        });
+        window._tgCustomPendingContactId = true;
+        selectTgChatContact(rawCid);
+        fetchTgChatConversations(true);
+      }
+      setTimeout(() => document.getElementById('tgChatInputText')?.focus(), 100);
+    }
+    window.openTgChatWithContact = openTgChatWithContact;
+
+    function openOrCreateTgChatTab() {
+      const inp = document.getElementById('tgChatNewRecipientInput');
+      const target = (inp?.value || "").trim();
+      if (!target) {
+        alert("Vui lòng nhập Chat ID hoặc @username của đối tượng muốn trò chuyện!");
+        inp?.focus();
+        return;
+      }
+      if (inp) inp.value = "";
+      openTgChatWithContact(target, target);
+    }
+    window.openOrCreateTgChatTab = openOrCreateTgChatTab;
+
+    function renderTgActiveChatPanel(forceScrollBottom = false) {
+      const roleBadge = document.getElementById('tgChatActiveRoleBadge');
+      const nameEl = document.getElementById('tgChatActiveName');
+      const metaEl = document.getElementById('tgChatActiveMeta');
+      const msgListEl = document.getElementById('tgChatMessagesList');
+      if (!msgListEl) return;
+
+      const cid = String(window.tgActiveChatContactId || "");
+      const conv = (window.tgChatConversations || []).find(c => String(c.chat_id) === cid);
+
+      if (!conv) {
+        if (roleBadge) roleBadge.textContent = "👤 Đối tượng";
+        if (nameEl) nameEl.textContent = "Chưa chọn đối tượng";
+        if (metaEl) metaEl.textContent = "";
+        msgListEl.innerHTML = `<p class="text-slate-400 italic text-center my-auto text-xs">Hãy chọn một đối tượng ở thanh tab phía trên để xem cuộc trò chuyện và nhắn tin.</p>`;
+        return;
+      }
+
+      if (roleBadge) {
+        roleBadge.textContent = conv.role_label || "👤 Khách Cược";
+        if (conv.role === "contractor") {
+          roleBadge.className = "px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] border border-indigo-300 dark:border-indigo-800";
+        } else if (conv.role === "owner") {
+          roleBadge.className = "px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-bold text-[11px] border border-amber-300 dark:border-amber-800";
+        } else {
+          roleBadge.className = "px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 font-bold text-[11px] border border-sky-300 dark:border-sky-800";
+        }
+      }
+      if (nameEl) nameEl.textContent = conv.name || cid;
+      if (metaEl) {
+        const uname = conv.username ? (conv.username.startsWith('@') ? conv.username : '@' + conv.username) : '';
+        metaEl.textContent = `ID: ${cid}${uname && uname !== cid ? ' • ' + uname : ''}`;
+      }
+
+      const msgs = Array.isArray(conv.messages) ? conv.messages : [];
+      const isNearBottom = (msgListEl.scrollHeight - msgListEl.scrollTop - msgListEl.clientHeight) < 100;
+
+      if (msgs.length === 0) {
+        msgListEl.innerHTML = `<p class="text-slate-400 italic text-center my-auto text-xs">Chưa có tin nhắn trao đổi nào với <b>${escapeHtmlChat(conv.name || cid)}</b>. Hãy nhập nội dung bên dưới để gửi tin nhắn dưới danh nghĩa Bot.</p>`;
+        return;
+      }
+
+      msgListEl.innerHTML = msgs.map(m => {
+        const isOut = (m.direction === "out");
+        const timeStr = escapeHtmlChat(m.time || m.timestamp || "");
+        const textHtml = escapeHtmlChat(m.text || "").replace(/\n/g, "<br>");
+        const senderTitle = isOut
+          ? `🤖 Bot gửi (${m.tag === 'manual_chat' ? 'Nhắn trực tiếp' : 'Tự động'})`
+          : `${conv.role === 'contractor' ? '🛸' : (conv.role === 'owner' ? '👑' : '👤')} ${escapeHtmlChat(m.sender_name || conv.name || cid)}`;
+
+        if (isOut) {
+          return `
+            <div class="flex flex-col items-end">
+              <div class="max-w-[85%] sm:max-w-[75%] rounded-xs px-3 py-2 bg-sky-700/90 border border-sky-500/80 text-white shadow-xs">
+                <div class="flex items-center justify-between gap-3 text-[10px] text-sky-200 pb-1 mb-1 border-b border-sky-600/60">
+                  <span class="font-bold">${senderTitle}</span>
+                  <span class="font-mono">${timeStr}</span>
+                </div>
+                <div class="font-mono text-xs leading-relaxed break-words">${textHtml}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="flex flex-col items-start">
+              <div class="max-w-[85%] sm:max-w-[75%] rounded-xs px-3 py-2 bg-slate-800 border border-slate-600 text-slate-100 shadow-xs">
+                <div class="flex items-center justify-between gap-3 text-[10px] text-amber-300 pb-1 mb-1 border-b border-slate-700">
+                  <span class="font-bold">${senderTitle}</span>
+                  <span class="font-mono text-slate-400">${timeStr}</span>
+                </div>
+                <div class="font-mono text-xs leading-relaxed break-words">${textHtml}</div>
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
+
+      if (forceScrollBottom || isNearBottom) {
+        msgListEl.scrollTop = msgListEl.scrollHeight;
+      }
+    }
+
+    function insertTgQuickChatText(txt) {
+      const inp = document.getElementById('tgChatInputText');
+      if (!inp) return;
+      inp.value = txt;
+      inp.focus();
+    }
+    window.insertTgQuickChatText = insertTgQuickChatText;
+
+    function handleTgChatInputKeydown(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendTgDirectChatMessage();
+      }
+    }
+    window.handleTgChatInputKeydown = handleTgChatInputKeydown;
+
+    async function resolveTargetToNumericChatId(target) {
+      const raw = String(target || "").trim();
+      if (!raw) return "";
+      if (/^-?\d+$/.test(raw)) return raw;
+      const key = normChatKey(raw);
+
+      // 1. Tìm trong danh sách hội thoại hiện tại
+      const matchConv = (window.tgChatConversations || []).find(c =>
+        /^-?\d+$/.test(String(c.chat_id || "")) &&
+        (normChatKey(c.username) === key || normChatKey(c.name).includes(key))
+      );
+      if (matchConv) return String(matchConv.chat_id);
+
+      // 2. Tìm trong /api/bot/known_users từ máy chủ
+      try {
+        const res = await callBotApi("/api/bot/known_users");
+        if (res.ok) {
+          const uRaw = await res.json();
+          const list = Array.isArray(uRaw) ? uRaw : Object.values(uRaw.users || uRaw || {});
+          for (const u of list) {
+            if (!u || typeof u !== 'object') continue;
+            const uCid = String(u.chat_id || u.user_id || "").trim();
+            if (/^-?\d+$/.test(uCid) && (normChatKey(u.username) === key || normChatKey(u.first_name) === key)) {
+              return uCid;
+            }
+          }
+        }
+      } catch (_) {}
+
+      return raw;
+    }
+
+    async function sendTgDirectChatMessage() {
+      const cid = String(window.tgActiveChatContactId || "").trim();
+      if (!cid) {
+        alert("Vui lòng chọn một đối tượng (Chủ hoặc Khách) ở thanh tab phía trên trước khi gửi tin nhắn!");
+        return;
+      }
+      const inp = document.getElementById('tgChatInputText');
+      const text = (inp?.value || "").trim();
+      if (!text) {
+        inp?.focus();
+        return;
+      }
+
+      const btn = document.getElementById('btnTgSendChat');
+      const oldHtml = btn ? btn.innerHTML : "";
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang gửi...</span>`;
+      }
+
+      try {
+        let sentOk = false;
+        let errMessage = "";
+        const resolvedCid = await resolveTargetToNumericChatId(cid);
+        const base = (TG_BOT_API || CLOUD_DEFAULT_API).replace(/\/+$/, "");
+        const skipDirectSend = window._tgChatsApi404Base === base && (Date.now() - (window._tgChatsApi404Ts || 0) < 60000);
+
+        // 1. Thử gửi qua endpoint /api/bot/chats/send của Backend hiện hành (nếu máy chủ hỗ trợ)
+        if (!skipDirectSend) {
+          try {
+            const controller = new AbortController();
+            const tId = setTimeout(() => controller.abort(), 5000);
+            const directRes = await fetch(base + "/api/bot/chats/send", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ target: resolvedCid, text: text }),
+              signal: controller.signal
+            });
+            clearTimeout(tId);
+            if (directRes.status === 404) {
+              window._tgChatsApi404Base = base;
+              window._tgChatsApi404Ts = Date.now();
+            } else if (directRes.ok) {
+              const data = await directRes.json();
+              if (data && data.success) {
+                sentOk = true;
+                if (Array.isArray(data.conversations)) {
+                  window.tgChatConversations = data.conversations;
+                }
+                if (data.chat_id) {
+                  window.tgActiveChatContactId = String(data.chat_id);
+                }
+              } else if (data && data.error) {
+                errMessage = data.error;
+              }
+            }
+          } catch (_) {}
+        }
+
+        // 2. Dự phòng trực tiếp: Nếu máy chủ Render Cloud chưa có /api/bot/chats/send (404) -> Gửi trực tiếp bằng Bot Token qua Telegram API
+        if (!sentOk) {
+          let botToken = (document.getElementById('tgInputBotToken')?.value || window._tgCachedBotToken || "").trim();
+          if (!botToken) {
+            const cfgRes = await callBotApi("/api/bot/config");
+            if (cfgRes && cfgRes.ok) {
+              const cfg = await cfgRes.json();
+              botToken = (cfg.bot_token || "").trim();
+              if (botToken) window._tgCachedBotToken = botToken;
+            }
+          }
+          if (!botToken) {
+            throw new Error("Chưa tìm thấy Bot Token để gửi tin nhắn. Hãy kiểm tra mục Cài Đặt!");
+          }
+
+          const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: resolvedCid, text: text })
+          });
+          const tgData = await tgRes.json();
+          if (!tgData || !tgData.ok) {
+            throw new Error(tgData?.description || errMessage || "Telegram từ chối gửi tin nhắn (kiểm tra lại Chat ID)");
+          }
+          sentOk = true;
+        }
+
+        if (sentOk) {
+          if (inp) inp.value = "";
+          const now = new Date();
+          const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}`;
+          const newMsg = {
+            id: `local_${Date.now()}`,
+            direction: "out",
+            sender_name: "🤖 Bot",
+            text: text,
+            time: timeStr,
+            timestamp: timeStr,
+            ts: Date.now(),
+            _sortTs: Date.now(),
+            _seq: 9999,
+            tag: "manual_chat"
+          };
+
+          const finalCid = String(resolvedCid || cid);
+          appendLocalSavedChatMessage(finalCid, newMsg);
+          window.tgActiveChatContactId = finalCid;
+
+          let conv = (window.tgChatConversations || []).find(c => String(c.chat_id) === finalCid || String(c.chat_id) === cid);
+          if (conv) {
+            conv.chat_id = finalCid;
+            if (!Array.isArray(conv.messages)) conv.messages = [];
+            const alreadyIn = conv.messages.some(m => m.direction === "out" && m.text === text && (m.time || m.timestamp) === timeStr);
+            if (!alreadyIn) conv.messages.push(newMsg);
+          }
+          window._tgCustomPendingContactId = false;
+          renderTgChatContactTabs();
+          renderTgActiveChatPanel(true);
+        }
+      } catch (e) {
+        alert("❌ Không gửi được tin nhắn: " + e.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = oldHtml || `<i class="fa-solid fa-paper-plane"></i><span>Gửi (Tư cách Bot)</span>`;
+        }
+        inp?.focus();
+      }
+    }
+    window.sendTgDirectChatMessage = sendTgDirectChatMessage;
+
+    async function clearActiveTgChatHistory() {
+      const cid = String(window.tgActiveChatContactId || "").trim();
+      if (!cid) return;
+      if (!confirm(`Bạn có chắc muốn xóa lịch sử hiển thị trong khung chat với đối tượng (${cid}) không?`)) return;
+      clearLocalSavedChatMessages(cid);
+      const base = (TG_BOT_API || CLOUD_DEFAULT_API).replace(/\/+$/, "");
+      if (window._tgChatsApi404Base !== base) {
+        try {
+          await fetch(base + "/api/bot/chats/clear", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: cid })
+          }).catch(() => null);
+        } catch (_) {}
+      }
+      const conv = (window.tgChatConversations || []).find(c => String(c.chat_id) === cid);
+      if (conv) conv.messages = [];
+      renderTgChatContactTabs();
+      renderTgActiveChatPanel(true);
+    }
+    window.clearActiveTgChatHistory = clearActiveTgChatHistory;
 
     function syncTgRetentionInputs(val) {
       const v = Math.max(0, parseFloat(val) || 0);
@@ -9352,6 +10515,7 @@ function resetTable() {
         mode: document.getElementById('tgModeBatch').checked ? "batch" : "instant",
         auto_reply_client: document.getElementById('tgCheckAutoReply').checked,
         auto_forward_excess: document.getElementById('tgCheckAutoForward').checked,
+        auto_fetch_kqxs_daily: document.getElementById('tgChkAutoSettle1835') ? document.getElementById('tgChkAutoSettle1835').checked : true,
         check_recipient_ack: document.getElementById('tgCheckRecipientAck') ? document.getElementById('tgCheckRecipientAck').checked : true,
         forward_contractor_to_owner: document.getElementById('tgCheckForwardContractor')?.checked || false,
         forward_client_to_owner: document.getElementById('tgCheckForwardClient')?.checked || false,
@@ -9408,6 +10572,27 @@ function resetTable() {
       }
     }
 
+    ['tgCheckOkDetailClient', 'tgCheckOkDetailContractor', 'tgCheckCancelDetailClient', 'tgCheckCancelDetailContractor'].forEach(chkId => {
+      document.getElementById(chkId)?.addEventListener('change', async () => {
+        const partialCfg = {
+          ok_detail_client: document.getElementById('tgCheckOkDetailClient')?.checked || false,
+          ok_detail_contractor: document.getElementById('tgCheckOkDetailContractor')?.checked || false,
+          cancel_detail_client: document.getElementById('tgCheckCancelDetailClient')?.checked || false,
+          cancel_detail_contractor: document.getElementById('tgCheckCancelDetailContractor')?.checked || false
+        };
+        try {
+          await callBotApi("/api/bot/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(partialCfg)
+          });
+        } catch (_) {}
+        if (window.tgActiveInboxSubTab === 'chat') {
+          fetchTgChatConversations(true);
+        }
+      });
+    });
+
     document.getElementById('btnSyncPriceToBot')?.addEventListener('click', async () => {
       saveRates();
       try {
@@ -9435,7 +10620,7 @@ function resetTable() {
         const data = await res.json();
         const logs = data.logs || [];
         if (logs.length === 0) {
-          consoleEl.innerHTML = '<p class="text-slate-400 italic text-sm sm:text-base">Chưa có nhật ký hoạt động nào.</p>';
+          consoleEl.innerHTML = '<p class="text-slate-400 italic text-xs sm:text-sm">Chưa có nhật ký hoạt động nào.</p>';
           return;
         }
 
@@ -9448,7 +10633,7 @@ function resetTable() {
           if (l.level === "SUCCESS") color = "text-emerald-400 font-semibold";
           if (l.level === "WARN") color = "text-amber-300 font-semibold";
           if (l.level === "ERROR") color = "text-rose-400 font-bold";
-          return `<div class="${color} py-0.5 leading-relaxed break-words text-sm sm:text-base"><span class="text-slate-400 font-normal">[${l.timestamp}]</span> <span class="font-bold">[${l.level}]</span> ${l.message.replace(/\\n/g, '<br>')}</div>`;
+          return `<div class="${color} py-0.5 leading-relaxed break-words text-xs sm:text-sm"><span class="text-slate-400 font-normal">[${l.timestamp}]</span> <span class="font-bold">[${l.level}]</span> ${l.message.replace(/\\n/g, '<br>')}</div>`;
         }).join('');
 
         // CHỈ CUỘN NẾU BẬT "TỰ CUỘN CUỐI" VÀ NGƯỜI DÙNG ĐANG Ở SÁT ĐÁY (không đang cuộn lên xem lịch sử)
@@ -9611,6 +10796,9 @@ function resetTable() {
               </div>
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-[11px] text-slate-500 font-mono">${m.timestamp || m.time || ''}</span>
+                <button type="button" onclick="openTgChatWithContact('${(m.chat_id || m.sender || '').toString().replace(/'/g, "\\'")}', '${(m.name || m.sender_name || m.sender || '').toString().replace(/'/g, "\\'")}')" class="px-2 py-0.5 bg-sky-50 hover:bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 rounded-xs text-[11px] font-semibold border border-sky-200 dark:border-sky-800 cursor-pointer" title="Mở khung chat trực tiếp với người này dưới danh nghĩa Bot">
+                  💬 Chat
+                </button>
                 <button type="button" onclick="openClientPriceModal('${m.chat_id || m.sender || ''}')" class="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 rounded-xs text-[11px] font-semibold border border-purple-200 dark:border-purple-800 cursor-pointer" title="Cài đặt bảng giá riêng">
                   🏷️ Giá riêng
                 </button>
@@ -9796,6 +10984,9 @@ function resetTable() {
               <td class="p-2">${roleBadge}</td>
               <td class="p-2 text-right">
                 <div class="flex items-center justify-end gap-1.5">
+                  <button type="button" onclick="openTgChatWithContact('${chatIdStr}', '${(u.name || u.first_name || u.username || chatIdStr).toString().replace(/'/g, "\\'")}')" class="px-2 py-1 bg-sky-50 hover:bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 rounded-xs text-[11px] font-semibold border border-sky-200 dark:border-sky-800 cursor-pointer flex items-center gap-1" title="Mở khung chat trực tiếp với người này">
+                    <i class="fa-solid fa-comments"></i> Chat
+                  </button>
                   <button type="button" onclick="openClientPriceModal('${chatIdStr}')" class="px-2 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 rounded-xs text-[11px] font-semibold border border-purple-200 dark:border-purple-800 cursor-pointer flex items-center gap-1" title="Cài đặt giá riêng">
                     <i class="fa-solid fa-tags"></i> Sửa giá
                   </button>
@@ -9846,20 +11037,83 @@ function resetTable() {
 
     window.tgInboxDateMode = 'today';
 
-    function updateTgInboxDateLabels() {
+    function getVnTodayStr() {
+      try {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Ho_Chi_Minh',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).formatToParts(new Date());
+        const y = parts.find(p => p.type === 'year')?.value;
+        const m = parts.find(p => p.type === 'month')?.value;
+        const d = parts.find(p => p.type === 'day')?.value;
+        if (y && m && d) return `${y}-${m}-${d}`;
+      } catch (_) {}
       const now = new Date();
-      const dd = String(now.getDate()).padStart(2, '0');
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    }
+    window.getVnTodayStr = getVnTodayStr;
+
+    function updateTgInboxDateLabels() {
+      const todayStr = getVnTodayStr();
+      const [yyyy, mm, dd] = todayStr.split('-');
       const lblToday = document.getElementById('lblTgInboxViewToday');
       if (lblToday) lblToday.textContent = `📅 Hôm nay (${dd}/${mm})`;
 
-      const dPrev = new Date();
+      const dPrev = new Date(`${todayStr}T12:00:00`);
       dPrev.setDate(dPrev.getDate() - 1);
       const prevD = String(dPrev.getDate()).padStart(2, '0');
       const prevM = String(dPrev.getMonth() + 1).padStart(2, '0');
       const lblYesterday = document.getElementById('lblTgInboxViewYesterday');
       if (lblYesterday) lblYesterday.textContent = `⏮️ Hôm trước (${prevD}/${prevM})`;
     }
+
+    function syncAndRolloverTgDates(forceToday = false, serverDateStr = '') {
+      const todayStr = (serverDateStr && /^\d{4}-\d{2}-\d{2}$/.test(serverDateStr)) ? serverDateStr : getVnTodayStr();
+      const prevTracked = window._lastTrackedTodayStr;
+      const isMidnightRollover = !!(prevTracked && prevTracked !== todayStr);
+      window._lastTrackedTodayStr = todayStr;
+      localStorage.setItem('z8_last_active_date', todayStr);
+
+      const actionDateInp = document.getElementById('tgActionDate');
+      const customPicker = document.getElementById('tgInboxCustomDatePicker');
+      const resultDateInp = document.getElementById('resultDateInput');
+      const banner = document.getElementById('tgInboxArchiveBanner');
+
+      if (isMidnightRollover || forceToday) {
+        window.tgInboxDateMode = 'today';
+        window.tgTodaySettledInfo = null;
+        window.tgCachedKQXS = null;
+        if (banner) banner.classList.add('hidden');
+        if (actionDateInp) actionDateInp.value = todayStr;
+        if (customPicker) customPicker.value = todayStr;
+        if (resultDateInp && (isMidnightRollover || !resultDateInp.value || resultDateInp.value < todayStr)) {
+          resultDateInp.value = todayStr;
+          localStorage.setItem('z8_result_date', todayStr);
+        }
+        updateTgInboxDateLabels();
+        return isMidnightRollover;
+      }
+
+      if (window.tgInboxDateMode !== 'yesterday' && window.tgInboxDateMode !== 'custom') {
+        if (actionDateInp && document.activeElement !== actionDateInp && actionDateInp.value !== todayStr) {
+          actionDateInp.value = todayStr;
+        }
+        if (customPicker && document.activeElement !== customPicker && customPicker.value !== todayStr) {
+          customPicker.value = todayStr;
+        }
+      }
+      if (resultDateInp && document.activeElement !== resultDateInp && (!resultDateInp.value || resultDateInp.value < todayStr)) {
+        const autoFetchToggle = document.getElementById('autoFetchToggle');
+        if (autoFetchToggle && autoFetchToggle.checked) {
+          resultDateInp.value = todayStr;
+          localStorage.setItem('z8_result_date', todayStr);
+        }
+      }
+      return false;
+    }
+    window.syncAndRolloverTgDates = syncAndRolloverTgDates;
 
     function switchTgInboxDate(mode, customDateVal = null) {
       window.tgInboxDateMode = mode;
@@ -9870,14 +11124,10 @@ function resetTable() {
       const bannerText = document.getElementById('tgInboxArchiveBannerText');
       const customPicker = document.getElementById('tgInboxCustomDatePicker');
 
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      const todayStr = `${y}-${m}-${d}`;
+      const todayStr = getVnTodayStr();
 
       if (mode === 'yesterday') {
-        const dPrev = new Date();
+        const dPrev = new Date(`${todayStr}T12:00:00`);
         dPrev.setDate(dPrev.getDate() - 1);
         const yyyy = dPrev.getFullYear();
         const mm = String(dPrev.getMonth() + 1).padStart(2, '0');
@@ -9913,6 +11163,7 @@ function resetTable() {
 
         const actionDateInp = document.getElementById('tgActionDate');
         if (actionDateInp) actionDateInp.value = customDateVal;
+        if (customPicker) customPicker.value = customDateVal;
 
         fetchTgBoard(customDateVal);
       } else {
@@ -9939,7 +11190,7 @@ function resetTable() {
     }
     window.switchTgInboxDate = switchTgInboxDate;
     window.updateTgInboxDateLabels = updateTgInboxDateLabels;
-    updateTgInboxDateLabels();
+    syncAndRolloverTgDates(true);
 
     function clearTgInboxSearch() {
       const searchInp = document.getElementById('tgInboxSearchInput');
@@ -9956,11 +11207,7 @@ function resetTable() {
     function getTgSelectedDate() {
       const inp = document.getElementById('tgActionDate');
       if (inp && inp.value) return inp.value;
-      const now = new Date();
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      const todayStr = `${yyyy}-${mm}-${dd}`;
+      const todayStr = getVnTodayStr();
       if (inp) inp.value = todayStr;
       return todayStr;
     }
@@ -9976,11 +11223,8 @@ function resetTable() {
 
     async function fetchTgBoard(customDate = null) {
       try {
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = String(now.getMonth() + 1).padStart(2, '0');
-        const d = String(now.getDate()).padStart(2, '0');
-        const todayStr = `${y}-${m}-${d}`;
+        const todayStr = getVnTodayStr();
+        const [y, m, d] = todayStr.split('-');
 
         let queryDate = '';
         if (customDate !== null && customDate !== undefined && customDate !== '') {
@@ -9988,7 +11232,7 @@ function resetTable() {
             queryDate = customDate;
           }
         } else if (window.tgInboxDateMode === 'yesterday') {
-          const yd = new Date();
+          const yd = new Date(`${todayStr}T12:00:00`);
           yd.setDate(yd.getDate() - 1);
           queryDate = `${yd.getFullYear()}-${String(yd.getMonth() + 1).padStart(2, '0')}-${String(yd.getDate()).padStart(2, '0')}`;
         } else if (window.tgInboxDateMode === 'custom') {
@@ -9996,6 +11240,12 @@ function resetTable() {
           if (cp && cp.value && cp.value !== todayStr) {
             queryDate = cp.value;
           }
+        } else {
+          // Chế độ xem hôm nay: luôn đồng bộ cả 2 ô chọn ngày sang ngày mới nhất hôm nay
+          const cp = document.getElementById('tgInboxCustomDatePicker');
+          if (cp && document.activeElement !== cp && cp.value !== todayStr) cp.value = todayStr;
+          const actInp = document.getElementById('tgActionDate');
+          if (actInp && document.activeElement !== actInp && actInp.value !== todayStr) actInp.value = todayStr;
         }
 
         // Nếu xem hôm nay thì gọi trực tiếp /api/bot/board (bảng live thời gian thực)
@@ -10934,22 +12184,10 @@ function resetTable() {
         window.location.hash = 'bot';
       }
 
-      // Khởi tạo ngày hành động mặc định là hôm nay nếu chưa có
-      const actionDateInp = document.getElementById('tgActionDate');
-      if (actionDateInp && !actionDateInp.value) {
-        const now = new Date();
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
-        actionDateInp.value = `${yyyy}-${mm}-${dd}`;
-      }
-      const customPicker = document.getElementById('tgInboxCustomDatePicker');
-      if (customPicker && !customPicker.value) {
-        const now = new Date();
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
-        customPicker.value = `${yyyy}-${mm}-${dd}`;
+      // Đồng bộ ngày mới nhất hôm nay cho các ô chọn ngày khi mở trang Bot
+      if (typeof syncAndRolloverTgDates === 'function') {
+        const shouldForceToday = (window.tgInboxDateMode !== 'yesterday' && window.tgInboxDateMode !== 'custom');
+        syncAndRolloverTgDates(shouldForceToday);
       }
 
       // Đồng bộ ô input URL máy chủ trên màn hình khóa & tab cài đặt
@@ -10989,10 +12227,15 @@ function resetTable() {
       if (tgLogsInterval) clearInterval(tgLogsInterval);
       tgLogsInterval = setInterval(() => {
         const logsTab = document.getElementById('tgInboxSubContentLogs');
+        const chatTab = document.getElementById('tgInboxSubContentChat');
         const inboxTab = document.getElementById('tgTabContentInbox');
-        const isLogsVisible = inboxTab && !inboxTab.classList.contains('hidden') && logsTab && !logsTab.classList.contains('hidden');
-        if (isLogsVisible && sessionStorage.getItem('tg_admin_unlocked') === 'true') {
-          fetchTgLogs();
+        const isUnlockedNow = sessionStorage.getItem('tg_admin_unlocked') === 'true';
+        if (isUnlockedNow && inboxTab && !inboxTab.classList.contains('hidden')) {
+          if (logsTab && !logsTab.classList.contains('hidden')) {
+            fetchTgLogs();
+          } else if (chatTab && !chatTab.classList.contains('hidden')) {
+            fetchTgChatConversations(false);
+          }
         }
       }, 3000);
     }
@@ -11910,11 +13153,7 @@ function resetTable() {
       function getTgSelectedDate() {
         const inp = document.getElementById('tgActionDate');
         if (inp && inp.value) return inp.value;
-        const now = new Date();
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
-        const todayStr = `${yyyy}-${mm}-${dd}`;
+        const todayStr = (typeof getVnTodayStr === 'function') ? getVnTodayStr() : new Date().toISOString().split('T')[0];
         if (inp) inp.value = todayStr;
         return todayStr;
       }
@@ -11926,11 +13165,15 @@ function resetTable() {
         return dateStr;
       }
 
-      // Khi người dùng chọn một ngày khác: tự động nạp bảng cược và lịch sử lưu trữ của ngày đó
+      // Khi người dùng chọn một ngày khác: đồng bộ cả 2 ô ngày và tự động nạp bảng cược của ngày đó
       document.getElementById('tgActionDate')?.addEventListener('change', (e) => {
         const targetDate = e.target.value;
         if (targetDate) {
-          fetchTgBoard(targetDate);
+          if (typeof switchTgInboxDate === 'function') {
+            switchTgInboxDate('custom', targetDate);
+          } else {
+            fetchTgBoard(targetDate);
+          }
         }
       });
 
@@ -12323,6 +13566,20 @@ function resetTable() {
           }
         }
       });
+
+      // Khởi tạo ngày hôm nay ngay khi tải trang và tự động chuyển ngày mới khi quay lại tab sau 12h đêm
+      if (typeof syncAndRolloverTgDates === 'function') {
+        syncAndRolloverTgDates(true);
+      }
+      const handleWakeupDateCheck = () => {
+        if (typeof syncAndRolloverTgDates === 'function' && syncAndRolloverTgDates(false)) {
+          fetchTgBoard('');
+        }
+      };
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') handleWakeupDateCheck();
+      });
+      window.addEventListener('focus', handleWakeupDateCheck);
 
       // Định kỳ kiểm tra trạng thái Bot & Tự làm mới Hộp Thư mỗi 2.5 giây
       checkTgBotStatus();

@@ -155,9 +155,15 @@
         <span>7. Nhật Ký Hoạt Động (Live)</span>
       </button>
 
+      <button onclick="switchTab('chat')" id="tabBtn-chat" class="tab-item w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-300 hover:bg-slate-800/80 flex items-center gap-2.5 transition text-left shrink-0">
+        <i class="fa-solid fa-comments text-amber-400 w-4 text-center"></i>
+        <span>8. Giao Tiếp Trực Tiếp (Chat)</span>
+        <span id="botChatCountBadge" class="ml-auto px-1.5 py-0.5 bg-sky-600 text-white text-[10px] font-bold rounded-full">0</span>
+      </button>
+
       <button onclick="switchTab('commands')" id="tabBtn-commands" class="tab-item w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-slate-300 hover:bg-slate-800/80 flex items-center gap-2.5 transition text-left shrink-0">
         <i class="fa-solid fa-mobile-screen-button text-amber-300 w-4 text-center"></i>
-        <span>8. Lệnh Telegram (Điện thoại)</span>
+        <span>9. Lệnh Telegram (Điện thoại)</span>
       </button>
     </aside>
 
@@ -216,9 +222,16 @@
               </h3>
               <p class="text-xs text-slate-400">Bật/Tắt chế độ tự động tính toán cược vượt định mức và chuyển sang thầu trên.</p>
             </div>
-            <button type="button" id="btnManualTransferNow" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-2 shadow cursor-pointer active:scale-95">
-              <i class="fa-solid fa-paper-plane"></i> Bắn Cược Thừa Ngay Bây Giờ
-            </button>
+            <div class="flex items-center gap-2 flex-wrap">
+              <label class="flex items-center gap-2 px-3 py-1.5 bg-amber-950/60 border border-amber-600/80 rounded-lg text-xs font-bold text-amber-200 cursor-pointer select-none" title="Bật/tắt tự động lấy KQXS và chốt tiền lúc 18h35 hàng ngày">
+                <input type="checkbox" id="chkAutoSettle1835Overview" onchange="toggleBotAutoSettle1835(this.checked)" checked class="form-checkbox text-amber-500 rounded w-3.5 h-3.5 cursor-pointer">
+                <i class="fa-solid fa-clock text-amber-400"></i>
+                <span>Tự động chốt sau 18h35</span>
+              </label>
+              <button type="button" id="btnManualTransferNow" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-2 shadow cursor-pointer active:scale-95">
+                <i class="fa-solid fa-paper-plane"></i> Bắn Cược Thừa Ngay Bây Giờ
+              </button>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
@@ -795,6 +808,11 @@
                 <span class="text-xs text-slate-400"><i class="fa-regular fa-calendar"></i></span>
                 <input type="date" id="inpSettleDate" class="bg-transparent text-white text-xs font-bold focus:outline-none cursor-pointer">
               </div>
+              <label class="flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-950/60 border border-amber-600/80 rounded-lg text-xs font-bold text-amber-200 cursor-pointer select-none" title="Bật/tắt tự động lấy KQXS và chốt tiền lúc 18h35 hàng ngày">
+                <input type="checkbox" id="chkAutoSettle1835Board" onchange="toggleBotAutoSettle1835(this.checked)" checked class="form-checkbox text-amber-500 rounded w-3.5 h-3.5 cursor-pointer">
+                <i class="fa-solid fa-clock text-amber-400"></i>
+                <span>Tự chốt 18h35</span>
+              </label>
               <button type="button" id="btnFetchKQXS" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer">
                 <i class="fa-solid fa-trophy"></i> Xem KQXS
               </button>
@@ -996,7 +1014,64 @@
         </div>
       </section>
 
-      <!-- ==================== TAB 8: LỆNH TELEGRAM ==================== -->
+      <!-- ==================== TAB 8: GIAO TIẾP TRỰC TIẾP VỚI CHỦ / KHÁCH (CHAT) ==================== -->
+      <section id="tabContent-chat" class="tab-page hidden space-y-4">
+        <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-5 shadow-sm space-y-4">
+          <div class="flex flex-col gap-3 border-b border-slate-700 pb-3">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                <i class="fa-solid fa-comments text-amber-400"></i>
+                Giao Tiếp Trực Tiếp Với Chủ / Khách Dưới Danh Nghĩa Bot
+              </h3>
+              <div class="flex items-center gap-2 flex-wrap">
+                <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1">
+                  <input type="text" id="botChatNewRecipientInput" placeholder="Nhập ID / @username mới..." class="bg-transparent text-xs outline-none w-40 text-slate-100 font-mono">
+                  <button type="button" onclick="openOrCreateBotChatTab()" class="px-2.5 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded text-xs font-bold cursor-pointer">+ Mở Chat</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Thanh Sub-Tabs từng đối tượng -->
+            <div id="botChatContactTabs" class="flex items-center gap-2 overflow-x-auto pb-1">
+              <span class="text-xs text-slate-400 italic">Đang tải danh sách đối tượng giao tiếp...</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between flex-wrap gap-2 px-3 py-2 bg-slate-900 rounded-lg border border-slate-800 text-xs">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span id="botChatActiveRoleBadge" class="px-2.5 py-0.5 rounded-full bg-sky-950 text-sky-300 font-bold text-[11px] border border-sky-800">👤 Đối tượng</span>
+              <span id="botChatActiveName" class="font-bold text-white text-sm">Chưa chọn đối tượng</span>
+              <span id="botChatActiveMeta" class="font-mono text-slate-400 text-[11px]"></span>
+            </div>
+            <button type="button" onclick="clearActiveBotChatHistory()" class="px-2.5 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded text-xs font-semibold border border-rose-800 cursor-pointer">
+              <i class="fa-solid fa-broom"></i> Xóa khung chat
+            </button>
+          </div>
+
+          <div id="botChatMessagesList" class="bg-black/90 text-slate-100 p-4 rounded-xl border border-slate-800 h-[50vh] overflow-y-auto space-y-2.5 flex flex-col select-text">
+            <p class="text-slate-500 italic text-center my-auto text-xs">Hãy chọn một đối tượng ở thanh tab phía trên để xem cuộc trò chuyện và nhắn tin.</p>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex items-center gap-1.5 flex-wrap text-xs">
+              <span class="text-slate-400 font-semibold"><i class="fa-solid fa-bolt text-amber-400"></i> Mẫu nhanh:</span>
+              <button type="button" onclick="insertBotQuickChatText('Ok')" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-slate-200 rounded border border-slate-700 font-mono cursor-pointer">Ok</button>
+              <button type="button" onclick="insertBotQuickChatText('Ok tin 1')" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-slate-200 rounded border border-slate-700 font-mono cursor-pointer">Ok tin 1</button>
+              <button type="button" onclick="insertBotQuickChatText('Đợi chút mình kiểm tra lại nhé')" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-slate-200 rounded border border-slate-700 cursor-pointer">Đợi chút kiểm tra</button>
+              <button type="button" onclick="insertBotQuickChatText('Hết giờ nhận cược rồi nhé')" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-slate-200 rounded border border-slate-700 cursor-pointer">Hết giờ nhận</button>
+            </div>
+            <div class="flex items-stretch gap-2">
+              <textarea id="botChatInputText" rows="2" onkeydown="handleBotChatInputKeydown(event)" placeholder="Nhập nội dung giao tiếp với đối tượng này dưới danh nghĩa là Bot... (Enter để gửi, Shift+Enter xuống dòng)" class="flex-1 bg-slate-900 border border-slate-700 focus:border-sky-500 rounded-xl px-3 py-2 text-xs sm:text-sm text-white outline-none resize-none"></textarea>
+              <button type="button" id="btnBotSendChat" onclick="sendBotDirectChatMessage()" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs sm:text-sm shadow flex items-center justify-center gap-1.5 cursor-pointer shrink-0">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Gửi (Tư cách Bot)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 9: LỆNH TELEGRAM ==================== -->
       <section id="tabContent-commands" class="tab-page hidden space-y-4">
         <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-5 shadow-sm space-y-4">
           <h3 class="font-bold text-sm text-white flex items-center gap-2 border-b border-slate-700 pb-3">
@@ -1232,6 +1307,7 @@
       if (page) page.classList.remove('hidden');
 
       if (tabName === 'logs') fetchLogs();
+      if (tabName === 'chat') fetchBotChatConversations(true);
       if (tabName === 'board' || tabName === 'overview') fetchBoard();
       if (tabName === 'users' || tabName === 'prices') fetchUsersAndSenders();
     }
@@ -1333,6 +1409,10 @@
         document.getElementById('statTransfersSent').textContent = `${data.step_count !== undefined ? data.step_count : (data.stats?.transfers_sent || 0)} lần`;
         document.getElementById('statLastActive').textContent = data.stats?.last_active ? `Lần cuối: ${data.stats.last_active}` : "Chưa có tin hôm nay";
 
+        // Tự động chuyển ngày mới sau 12h đêm (00:00:00)
+        if (typeof syncBotDateAfterMidnight === 'function' && syncBotDateAfterMidnight(false, data.current_date || '')) {
+          fetchBoard();
+        }
       } catch (e) {
         badge.className = "flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-rose-950/60 text-rose-400 border border-rose-800";
         badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Mất kết nối Server';
@@ -1362,6 +1442,13 @@
 
         // Bot Mode (Auto vs Manual pending queue)
         updateBotModeButtons(data.bot_mode || "auto");
+
+        // Auto settle 18h35
+        const autoSettle1835 = (data.auto_fetch_kqxs_daily !== false);
+        if (document.getElementById('chkAutoSettle1835Overview')) document.getElementById('chkAutoSettle1835Overview').checked = autoSettle1835;
+        if (document.getElementById('chkAutoSettle1835Board')) document.getElementById('chkAutoSettle1835Board').checked = autoSettle1835;
+
+        fetchBotChatConversations(false);
 
         // Recipient & Forwarding / Detail checkboxes
         const rec = data.target_recipient || "";
@@ -2196,16 +2283,792 @@
       }
     }
 
+    function getVnTodayStr() {
+      try {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Ho_Chi_Minh',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).formatToParts(new Date());
+        const y = parts.find(p => p.type === 'year')?.value;
+        const m = parts.find(p => p.type === 'month')?.value;
+        const d = parts.find(p => p.type === 'day')?.value;
+        if (y && m && d) return `${y}-${m}-${d}`;
+      } catch (_) {}
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function syncBotDateAfterMidnight(forceToday = false, serverDateStr = '') {
+      const todayStr = (serverDateStr && /^\d{4}-\d{2}-\d{2}$/.test(serverDateStr)) ? serverDateStr : getVnTodayStr();
+      const prevTracked = window._lastBotTodayStr;
+      const isRollover = !!(prevTracked && prevTracked !== todayStr);
+      window._lastBotTodayStr = todayStr;
+
+      const dateInp = document.getElementById('inpSettleDate');
+      if (dateInp && (isRollover || forceToday || !dateInp.value)) {
+        dateInp.value = todayStr;
+        return isRollover;
+      }
+      return false;
+    }
+
+    async function toggleBotAutoSettle1835(checked) {
+      const val = !!checked;
+      const c1 = document.getElementById('chkAutoSettle1835Overview');
+      const c2 = document.getElementById('chkAutoSettle1835Board');
+      if (c1) c1.checked = val;
+      if (c2) c2.checked = val;
+      try {
+        await apiPost("/api/bot/config", { auto_fetch_kqxs_daily: val });
+      } catch (e) {
+        console.warn("Lỗi lưu cài đặt tự chốt 18h35:", e);
+      }
+    }
+    window.toggleBotAutoSettle1835 = toggleBotAutoSettle1835;
+
+    // ==================== HỆ THỐNG GIAO TIẾP TRỰC TIẾP VỚI CHỦ / KHÁCH (BOT.HTML) ====================
+    window.botChatConversations = [];
+    window.botActiveChatContactId = "";
+    const BOT_LOCAL_CHAT_STORAGE_KEY = "tg_local_chat_history_v1";
+
+    function escapeBotChatHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function normBotChatKey(val) {
+      return String(val || "").trim().replace(/^@/, "").toLowerCase();
+    }
+
+    function getBotLocalSavedChatMessages() {
+      try {
+        return JSON.parse(localStorage.getItem(BOT_LOCAL_CHAT_STORAGE_KEY) || "{}") || {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function appendBotLocalSavedChatMessage(chatId, msgObj) {
+      try {
+        const store = getBotLocalSavedChatMessages();
+        const key = String(chatId || "").trim();
+        if (!key) return;
+        if (!Array.isArray(store[key])) store[key] = [];
+        store[key].push(msgObj);
+        if (store[key].length > 100) store[key] = store[key].slice(-100);
+        localStorage.setItem(BOT_LOCAL_CHAT_STORAGE_KEY, JSON.stringify(store));
+      } catch (_) {}
+    }
+
+    function clearBotLocalSavedChatMessages(chatId) {
+      try {
+        const store = getBotLocalSavedChatMessages();
+        const key = String(chatId || "").trim();
+        delete store[key];
+        localStorage.setItem(BOT_LOCAL_CHAT_STORAGE_KEY, JSON.stringify(store));
+      } catch (_) {}
+    }
+
+    function parseBotChatTimeMs(tStr) {
+      const s = String(tStr || "").trim();
+      const m = s.match(/^(\d{1,2}):(\d{2}):(\d{2})(?:\s+(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?)?/);
+      if (!m) return 0;
+      const hh = parseInt(m[1], 10) || 0;
+      const mm = parseInt(m[2], 10) || 0;
+      const ss = parseInt(m[3], 10) || 0;
+      const now = new Date();
+      const day = m[4] ? parseInt(m[4], 10) : now.getDate();
+      const mon = m[5] ? (parseInt(m[5], 10) - 1) : now.getMonth();
+      const yr = m[6] ? parseInt(m[6], 10) : now.getFullYear();
+      return new Date(yr, mon, day, hh, mm, ss).getTime();
+    }
+
+    async function buildBotCloudFallbackConversations() {
+      const nowMs = Date.now();
+      const useCachedMeta = window._botChatMetaCacheTs && (nowMs - window._botChatMetaCacheTs < 20000) && window._botChatCachedCfg && window._botChatCachedUsers;
+
+      const [cfg, uRaw, lRaw] = await Promise.all([
+        useCachedMeta ? Promise.resolve(window._botChatCachedCfg) : apiGet("/api/bot/config").catch(() => (window._botChatCachedCfg || {})),
+        useCachedMeta ? Promise.resolve(window._botChatCachedUsers) : apiGet("/api/bot/known_users").catch(() => (window._botChatCachedUsers || {})),
+        apiGet("/api/bot/logs").catch(() => ({}))
+      ]);
+      if (!useCachedMeta && cfg && Object.keys(cfg).length > 0) {
+        window._botChatCachedCfg = cfg;
+        window._botChatCachedUsers = uRaw;
+        window._botChatMetaCacheTs = nowMs;
+      }
+      if (cfg && cfg.bot_token) window._botCachedToken = cfg.bot_token;
+
+      const unameToCid = {};
+      const cidToUser = {};
+      const usersEntries = Array.isArray(uRaw)
+        ? uRaw
+        : (uRaw && typeof uRaw === 'object' ? Object.values(uRaw.users || uRaw) : []);
+
+      usersEntries.forEach(u => {
+        if (!u || typeof u !== 'object') return;
+        const cid = String(u.chat_id || u.user_id || "").trim();
+        if (!cid || ["11223344", "99999", "111", "web_sync"].includes(cid)) return;
+        const un = String(u.username || "").trim().replace(/^@/, "");
+        const fn = String(u.first_name || "").trim();
+        cidToUser[cid] = { chat_id: cid, username: un, first_name: fn, updated_at: u.updated_at || "" };
+        if (un) unameToCid[normBotChatKey(un)] = cid;
+        if (fn) unameToCid[normBotChatKey(fn)] = unameToCid[normBotChatKey(fn)] || cid;
+      });
+
+      const resolveCanonicalId = (rawTarget) => {
+        const s = String(rawTarget || "").trim();
+        if (!s) return "";
+        if (/^-?\d+$/.test(s)) return s;
+        const k = normBotChatKey(s);
+        return unameToCid[k] || s;
+      };
+
+      const ownerResolved = resolveCanonicalId(cfg?.owner_chat_id);
+      const contractorResolved = resolveCanonicalId(cfg?.target_recipient);
+      const contractorIds = new Set(contractorResolved ? [contractorResolved] : []);
+
+      const logs = Array.isArray(lRaw?.logs) ? lRaw.logs : [];
+      logs.forEach(l => {
+        const msg = String(l.message || "");
+        const m1 = msg.match(/chủ thầu\s+(\d+|@[A-Za-z0-9_]+)/i);
+        if (m1) contractorIds.add(resolveCanonicalId(m1[1]));
+        const m2 = msg.match(/Chủ thầu\s*\(([^)]+)\)/i);
+        if (m2) contractorIds.add(resolveCanonicalId(m2[1]));
+        const m3 = msg.match(/người nhận\s+(\d+|@[A-Za-z0-9_]+)/i);
+        if (m3) contractorIds.add(resolveCanonicalId(m3[1]));
+      });
+
+      const getRoleInfo = (cid, un) => {
+        const cStr = String(cid || "").trim();
+        const uKey = normBotChatKey(un);
+        if (contractorIds.has(cStr) || (uKey && contractorIds.has(unameToCid[uKey]))) {
+          return { role: "contractor", role_label: "🛸 Chủ Thầu" };
+        }
+        if (ownerResolved && (cStr === ownerResolved || (uKey && unameToCid[uKey] === ownerResolved))) {
+          return { role: "owner", role_label: "👑 Chủ Bot" };
+        }
+        return { role: "client", role_label: "👤 Khách Cược" };
+      };
+
+      const convMap = {};
+      const ensureContact = (rawId, nameHint = "", unameHint = "") => {
+        const cid = resolveCanonicalId(rawId);
+        if (!cid || ["11223344", "99999", "111", "web_sync"].includes(cid)) return null;
+        const uInfo = cidToUser[cid] || {};
+        const un = unameHint.replace(/^@/, "") || uInfo.username || (String(rawId).startsWith("@") ? String(rawId).slice(1) : "");
+        const dispName = uInfo.first_name
+          ? (un ? `${uInfo.first_name} (@${un})` : uInfo.first_name)
+          : (nameHint && nameHint !== cid ? nameHint : (un ? `@${un}` : cid));
+        const rInfo = getRoleInfo(cid, un);
+
+        if (!convMap[cid]) {
+          convMap[cid] = {
+            chat_id: cid,
+            name: dispName,
+            username: un ? `@${un}` : "",
+            role: rInfo.role,
+            role_label: rInfo.role_label,
+            last_updated: uInfo.updated_at || "",
+            last_ts: 0,
+            messages: []
+          };
+        } else {
+          if (dispName && (convMap[cid].name === cid || convMap[cid].name.startsWith("@"))) {
+            convMap[cid].name = dispName;
+          }
+          if (un && !convMap[cid].username) convMap[cid].username = `@${un}`;
+          convMap[cid].role = rInfo.role;
+          convMap[cid].role_label = rInfo.role_label;
+        }
+        return convMap[cid];
+      };
+
+      Object.keys(cidToUser).forEach(cid => ensureContact(cid));
+      if (cfg?.target_recipient) ensureContact(cfg.target_recipient, `Chủ thầu (${cfg.target_recipient})`);
+      if (cfg?.owner_chat_id) ensureContact(cfg.owner_chat_id, `Chủ Bot (${cfg.owner_chat_id})`);
+      (Array.isArray(cfg?.allowed_senders) ? cfg.allowed_senders : []).forEach(s => {
+        if (s && s !== "*") ensureContact(s, s);
+      });
+
+      const pushMsgUnique = (conv, direction, text, timeStr, tag = "auto", seqIdx = 0) => {
+        if (!conv || !text) return;
+        const cleanTxt = String(text).trim();
+        if (!cleanTxt) return;
+        const tStr = String(timeStr || "").trim();
+        const parsedMs = parseBotChatTimeMs(tStr);
+        const isDup = conv.messages.some(m => {
+          if (m.direction !== direction || m.text !== cleanTxt) return false;
+          if (!tStr || !m.time || m.time === tStr) return true;
+          if (direction === "in" && parsedMs > 0 && m._sortTs > 0 && Math.abs(parsedMs - m._sortTs) <= 15000) return true;
+          return false;
+        });
+        if (isDup) return;
+        const sortTs = parsedMs || (nowMs - (100000 - seqIdx * 10));
+        conv.messages.push({
+          id: `fb_${conv.chat_id}_${conv.messages.length + 1}`,
+          direction: direction,
+          sender_name: direction === "out" ? "🤖 Bot" : (conv.name || conv.chat_id),
+          text: cleanTxt,
+          time: tStr,
+          timestamp: tStr,
+          ts: sortTs,
+          _sortTs: sortTs,
+          _seq: seqIdx,
+          tag: tag
+        });
+        if (sortTs > (conv.last_ts || 0)) conv.last_ts = sortTs;
+      };
+
+      const showCancelDetailClient = Boolean(cfg?.cancel_detail_client);
+
+      logs.forEach((l, idx) => {
+        const msg = String(l.message || "").trim();
+        const ts = l.timestamp || "";
+        let m;
+        if ((m = msg.match(/^Gửi chủ thầu\s+(\S+):\s*([\s\S]+)$/i))) {
+          pushMsgUnique(ensureContact(m[1]), "out", m[2].replace(/\s+;\s+/g, "\n").trim(), ts, "transfer", idx * 2);
+          return;
+        }
+        if ((m = msg.match(/Đã gửi tin báo HỦY CƯỢC sang chủ thầu\s+(\S+):\s*([\s\S]+)$/i))) {
+          pushMsgUnique(ensureContact(m[1]), "out", m[2], ts, "cancel_transfer", idx * 2);
+          return;
+        }
+        if ((m = msg.match(/^Chủ thầu\s*\(([^)]+)\):\s*([\s\S]+)$/i))) {
+          const cleanIn = m[2].replace(/\s*\((?:đã xác nhận|chưa có Ok|từ chối\/trả lại|Ok có trả lại)[^)]*\)\s*$/i, "").trim();
+          pushMsgUnique(ensureContact(m[1]), "in", cleanIn, ts, "contractor_reply", idx * 2);
+          return;
+        }
+        if ((m = msg.match(/^Khách\s*\(([^)]+)\):\s*([\s\S]+)$/i))) {
+          const c = ensureContact(m[1]);
+          const body = m[2];
+          const okMatch = body.match(/\((?:Chủ thầu đã Ok|Giữ lại 100%)\s*->\s*Đã nhắn lại\s+([^)]+)\)\s*$/i);
+          if (okMatch) {
+            const rawBet = body.replace(/\s*\((?:Chủ thầu đã Ok|Giữ lại 100%)[\s\S]*$/i, "").trim();
+            const okReplyTxt = okMatch[1].trim();
+            const tinNumMatch = okReplyTxt.match(/Ok\s+tin\s+(\d+)/i);
+            const tinNum = tinNumMatch ? Number(tinNumMatch[1]) : 0;
+            if (c && tinNum > 0 && rawBet) {
+              if (!c._betByTin) c._betByTin = {};
+              c._betByTin[tinNum] = rawBet;
+            }
+            pushMsgUnique(c, "in", rawBet, ts, "bet", idx * 2);
+            pushMsgUnique(c, "out", okReplyTxt, ts, "reply", idx * 2 + 1);
+          } else {
+            const cleanBet = body.replace(/\s*\((?:Đã chuyển thầu|⚠️\s*Bot đang TẮT|Treo chờ duyệt|Yêu cầu hủy tin|⛔|Bộ lọc:|trả lại)[^)]*\)\s*$/i, "").trim();
+            pushMsgUnique(c, "in", cleanBet, ts, "bet", idx * 2);
+          }
+          return;
+        }
+        if ((m = msg.match(/Đã hủy thành công tin #(\d+) của khách\s*\(([^)]+)\)(?:\s*[:.]\s*([\s\S]+))?/i))) {
+          const cancelIdx = Number(m[1]);
+          const c = ensureContact(m[2]);
+          const loggedExtra = (m[3] || "").replace(/^Đã cập nhật lại bảng cược\.?$/i, "").trim();
+          let cancelBubble = `✅ Đã hủy thành công tin #${cancelIdx}`;
+          if (showCancelDetailClient && c) {
+            let detailStr = "";
+            if (loggedExtra && loggedExtra.includes("\n")) {
+              detailStr = loggedExtra.split("\n").slice(1).join("\n").trim();
+            }
+            if (!detailStr) {
+              detailStr = (c._betByTin && c._betByTin[cancelIdx]) || "";
+            }
+            if (detailStr) {
+              cancelBubble = `✅ Đã hủy thành công tin #${cancelIdx}:\n${detailStr}`;
+            }
+          }
+          pushMsgUnique(c, "out", cancelBubble, ts, "cancel_reply", idx * 2);
+          return;
+        }
+        if ((m = msg.match(/Đã gửi chốt tiền tới khách\s*\(([^)]+)\)\s*(?:\((\d+)\))?:\s*([\s\S]+)$/i))) {
+          pushMsgUnique(ensureContact(m[2] || m[1], m[1]), "out", m[3], ts, "settle", idx * 2);
+          return;
+        }
+        if ((m = msg.match(/Đã gửi chốt tiền bảng Chuyển tới người nhận\s+(\S+):\s*([\s\S]+)$/i))) {
+          pushMsgUnique(ensureContact(m[1]), "out", m[2], ts, "settle_transfer", idx * 2);
+          return;
+        }
+        if ((m = msg.match(/^(Đã gửi báo cáo tổng kết[\s\S]*?tới chủ bảng)\s*\(([^)]+)\)/i))) {
+          pushMsgUnique(ensureContact(m[2]), "out", `📊 ${m[1]}`, ts, "owner_report", idx * 2);
+          return;
+        }
+        if ((m = msg.match(/\[Chat Trực Tiếp\]\s*Bot\s*->\s*(\S+):\s*([\s\S]+)$/i))) {
+          pushMsgUnique(ensureContact(m[1]), "out", m[2], ts, "manual_chat", idx * 2);
+        }
+      });
+
+      const localStore = getBotLocalSavedChatMessages();
+      Object.keys(localStore).forEach(rawKey => {
+        const c = ensureContact(rawKey);
+        if (!c) return;
+        const arr = Array.isArray(localStore[rawKey]) ? localStore[rawKey] : [];
+        arr.forEach((lm, idx) => {
+          pushMsgUnique(c, lm.direction || "out", lm.text || "", lm.time || lm.timestamp || "", lm.tag || "manual_chat", 900 + idx);
+        });
+      });
+
+      Object.values(convMap).forEach(c => {
+        if (Array.isArray(c.messages) && c.messages.length > 1) {
+          c.messages.sort((a, b) => ((a._sortTs || 0) - (b._sortTs || 0)) || ((a._seq || 0) - (b._seq || 0)));
+          const lastM = c.messages[c.messages.length - 1];
+          if (lastM && lastM._sortTs) c.last_ts = lastM._sortTs;
+        }
+      });
+
+      const rolePriority = { contractor: 0, owner: 1, client: 2 };
+      return Object.values(convMap).sort((a, b) => {
+        const aHas = (a.messages && a.messages.length > 0) ? 0 : 1;
+        const bHas = (b.messages && b.messages.length > 0) ? 0 : 1;
+        if (aHas !== bHas) return aHas - bHas;
+        const rDiff = (rolePriority[a.role] ?? 2) - (rolePriority[b.role] ?? 2);
+        if (rDiff !== 0) return rDiff;
+        return (b.last_ts || 0) - (a.last_ts || 0);
+      });
+    }
+
+    async function fetchBotChatConversations(forceRender = false) {
+      try {
+        let list = null;
+        const nowMs = Date.now();
+        const skipDirectChats = window._botChatsApi404 && (nowMs - (window._botChatsApi404Ts || 0) < 60000);
+        if (!skipDirectChats) {
+          try {
+            const data = await apiGet("/api/bot/chats");
+            if (data && data.success && Array.isArray(data.conversations)) {
+              list = data.conversations;
+              window._botChatsApi404 = false;
+            }
+          } catch (_) {
+            window._botChatsApi404 = true;
+            window._botChatsApi404Ts = nowMs;
+          }
+        }
+
+        if (!list) {
+          list = await buildBotCloudFallbackConversations();
+        } else {
+          const localStore = getBotLocalSavedChatMessages();
+          list.forEach(c => {
+            const cid = String(c.chat_id || "");
+            const savedArr = localStore[cid] || [];
+            if (!Array.isArray(c.messages)) c.messages = [];
+            savedArr.forEach(lm => {
+              const dup = c.messages.some(m => m.direction === lm.direction && m.text === lm.text && (m.time || m.timestamp) === (lm.time || lm.timestamp));
+              if (!dup) c.messages.push(lm);
+            });
+          });
+        }
+
+        const prevList = window.botChatConversations || [];
+        prevList.forEach(prevConv => {
+          if (!prevConv || !prevConv.chat_id) return;
+          const pCid = String(prevConv.chat_id);
+          const pKey = normBotChatKey(prevConv.username || pCid);
+          const existsInNew = list.some(c =>
+            String(c.chat_id) === pCid ||
+            (pKey && (normBotChatKey(c.username) === pKey || normBotChatKey(c.chat_id) === pKey))
+          );
+          if (!existsInNew && (prevConv._isCustomOpened || pCid === String(window.botActiveChatContactId))) {
+            list.unshift(prevConv);
+          }
+        });
+
+        const closedSet = getClosedBotChatTabsSet();
+        list = list.filter(c => {
+          if (!c || !c.chat_id) return false;
+          const cidStr = String(c.chat_id).trim();
+          const uKey = normBotChatKey(c.username || "");
+          const cKey = normBotChatKey(cidStr);
+          return !closedSet.has(cidStr) && !(cKey && closedSet.has(cKey)) && !(uKey && closedSet.has(uKey));
+        });
+
+        window.botChatConversations = list;
+
+        const badge = document.getElementById('botChatCountBadge');
+        if (badge) badge.textContent = list.length;
+
+        if (!window.botActiveChatContactId && list.length > 0) {
+          window.botActiveChatContactId = String(list[0].chat_id);
+        } else if (window.botActiveChatContactId) {
+          const activeKey = normBotChatKey(window.botActiveChatContactId);
+          const matched = list.find(c =>
+            String(c.chat_id) === String(window.botActiveChatContactId) ||
+            (activeKey && normBotChatKey(c.username) === activeKey)
+          );
+          if (matched) {
+            window.botActiveChatContactId = String(matched.chat_id);
+          } else if (list.length > 0 && !window._botCustomPendingContactId) {
+            window.botActiveChatContactId = String(list[0].chat_id);
+          } else if (list.length === 0) {
+            window.botActiveChatContactId = "";
+          }
+        }
+
+        renderBotChatContactTabs();
+        if (forceRender || activeTab === 'chat') {
+          renderBotActiveChatPanel();
+        }
+      } catch (e) {}
+    }
+
+    const BOT_CLOSED_CHAT_TABS_KEY = "z8_closed_chat_tabs_v1";
+    function getClosedBotChatTabsSet() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(BOT_CLOSED_CHAT_TABS_KEY) || "[]");
+        return new Set(Array.isArray(arr) ? arr.map(x => String(x)) : []);
+      } catch (_) {
+        return new Set();
+      }
+    }
+    function saveClosedBotChatTabsSet(setObj) {
+      try {
+        localStorage.setItem(BOT_CLOSED_CHAT_TABS_KEY, JSON.stringify([...setObj]));
+      } catch (_) {}
+    }
+    function unmarkClosedBotChatTab(rawId, uname = "") {
+      const closedSet = getClosedBotChatTabsSet();
+      const s1 = String(rawId || "").trim();
+      const k1 = normBotChatKey(s1);
+      const k2 = normBotChatKey(uname || "");
+      let changed = false;
+      [s1, k1, k2].forEach(k => {
+        if (k && closedSet.has(k)) {
+          closedSet.delete(k);
+          changed = true;
+        }
+      });
+      if (changed) saveClosedBotChatTabsSet(closedSet);
+    }
+
+    function closeBotChatTab(chatId, ev) {
+      if (ev && typeof ev.stopPropagation === "function") ev.stopPropagation();
+      const targetCid = String(chatId || "").trim();
+      if (!targetCid) return;
+
+      const list = window.botChatConversations || [];
+      const conv = list.find(c => String(c.chat_id) === targetCid);
+      const closedSet = getClosedBotChatTabsSet();
+      closedSet.add(targetCid);
+      const cKey = normBotChatKey(targetCid);
+      if (cKey) closedSet.add(cKey);
+      if (conv && conv.username) {
+        const uKey = normBotChatKey(conv.username);
+        if (uKey) closedSet.add(uKey);
+      }
+      saveClosedBotChatTabsSet(closedSet);
+
+      window.botChatConversations = list.filter(c => String(c.chat_id) !== targetCid);
+      const badge = document.getElementById('botChatCountBadge');
+      if (badge) badge.textContent = window.botChatConversations.length;
+
+      if (String(window.botActiveChatContactId) === targetCid) {
+        window.botActiveChatContactId = window.botChatConversations.length > 0
+          ? String(window.botChatConversations[0].chat_id)
+          : "";
+      }
+      renderBotChatContactTabs();
+      renderBotActiveChatPanel(true);
+    }
+    window.closeBotChatTab = closeBotChatTab;
+
+    function renderBotChatContactTabs() {
+      const tabsEl = document.getElementById('botChatContactTabs');
+      if (!tabsEl) return;
+      const list = window.botChatConversations || [];
+      if (list.length === 0) {
+        tabsEl.innerHTML = `<span class="text-xs text-slate-400 italic py-1">Chưa có đối tượng giao tiếp nào. Hãy nhập ID / @username ở ô bên phải rồi bấm "+ Mở Chat".</span>`;
+        return;
+      }
+
+      tabsEl.innerHTML = list.map(c => {
+        const cid = String(c.chat_id || "");
+        const isActive = (cid === String(window.botActiveChatContactId));
+        const role = c.role || "client";
+        const roleIcon = role === "contractor" ? "🛸" : (role === "owner" ? "👑" : "👤");
+        const roleTag = role === "contractor" ? "Chủ Thầu" : (role === "owner" ? "Chủ Bot" : "Khách");
+        const msgCount = (c.messages || []).length;
+        const safeCidAttr = cid.replace(/'/g, "\\'");
+        const activeCls = role === "contractor"
+          ? "bg-indigo-600 text-white border-indigo-500 shadow"
+          : (role === "owner" ? "bg-amber-600 text-white border-amber-500 shadow" : "bg-sky-600 text-white border-sky-500 shadow");
+        const inactiveCls = "bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800";
+
+        return `
+          <div onclick="selectBotChatContact('${safeCidAttr}')" class="pl-3 pr-2 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer transition select-none ${isActive ? activeCls : inactiveCls}">
+            <span>${roleIcon}</span>
+            <span>${escapeBotChatHtml(c.name || cid)}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded ${isActive ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-400'} font-mono">${roleTag} (${msgCount})</span>
+            <span onclick="closeBotChatTab('${safeCidAttr}', event)" title="Đóng tab này" class="ml-0.5 w-4 h-4 rounded inline-flex items-center justify-center text-[11px] leading-none transition ${isActive ? 'text-white/80 hover:text-white hover:bg-black/30' : 'text-slate-400 hover:text-white hover:bg-rose-600'}">✕</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectBotChatContact(chatId) {
+      window.botActiveChatContactId = String(chatId || "");
+      window._botCustomPendingContactId = false;
+      renderBotChatContactTabs();
+      renderBotActiveChatPanel(true);
+    }
+    window.selectBotChatContact = selectBotChatContact;
+
+    function openOrCreateBotChatTab() {
+      const inp = document.getElementById('botChatNewRecipientInput');
+      const target = (inp?.value || "").trim();
+      if (!target) {
+        alert("Vui lòng nhập Chat ID hoặc @username của đối tượng muốn trò chuyện!");
+        inp?.focus();
+        return;
+      }
+      if (inp) inp.value = "";
+      unmarkClosedBotChatTab(target, target);
+      const key = normBotChatKey(target);
+      const existing = (window.botChatConversations || []).find(c =>
+        String(c.chat_id) === target ||
+        (key && (normBotChatKey(c.username) === key || normBotChatKey(c.name) === key))
+      );
+      if (existing) {
+        selectBotChatContact(existing.chat_id);
+      } else {
+        window.botChatConversations.unshift({
+          chat_id: target,
+          name: target,
+          username: target.startsWith("@") ? target : "",
+          role: "client",
+          role_label: "👤 Khách Cược",
+          _isCustomOpened: true,
+          messages: []
+        });
+        window._botCustomPendingContactId = true;
+        selectBotChatContact(target);
+        fetchBotChatConversations(true);
+      }
+      setTimeout(() => document.getElementById('botChatInputText')?.focus(), 100);
+    }
+    window.openOrCreateBotChatTab = openOrCreateBotChatTab;
+
+    function renderBotActiveChatPanel(forceScrollBottom = false) {
+      const roleBadge = document.getElementById('botChatActiveRoleBadge');
+      const nameEl = document.getElementById('botChatActiveName');
+      const metaEl = document.getElementById('botChatActiveMeta');
+      const msgListEl = document.getElementById('botChatMessagesList');
+      if (!msgListEl) return;
+
+      const cid = String(window.botActiveChatContactId || "");
+      const conv = (window.botChatConversations || []).find(c => String(c.chat_id) === cid);
+      if (!conv) {
+        if (roleBadge) roleBadge.textContent = "👤 Đối tượng";
+        if (nameEl) nameEl.textContent = "Chưa chọn đối tượng";
+        if (metaEl) metaEl.textContent = "";
+        msgListEl.innerHTML = `<p class="text-slate-500 italic text-center my-auto text-xs">Hãy chọn một đối tượng ở thanh tab phía trên để xem cuộc trò chuyện và nhắn tin.</p>`;
+        return;
+      }
+
+      if (roleBadge) roleBadge.textContent = conv.role_label || "👤 Khách Cược";
+      if (nameEl) nameEl.textContent = conv.name || cid;
+      if (metaEl) metaEl.textContent = `ID: ${cid}${conv.username && conv.username !== cid ? ' • ' + conv.username : ''}`;
+
+      const msgs = Array.isArray(conv.messages) ? conv.messages : [];
+      const isNearBottom = (msgListEl.scrollHeight - msgListEl.scrollTop - msgListEl.clientHeight) < 100;
+
+      if (msgs.length === 0) {
+        msgListEl.innerHTML = `<p class="text-slate-500 italic text-center my-auto text-xs">Chưa có tin nhắn trao đổi nào với <b>${escapeBotChatHtml(conv.name || cid)}</b>. Hãy nhập nội dung bên dưới để gửi tin nhắn dưới danh nghĩa Bot.</p>`;
+        return;
+      }
+
+      msgListEl.innerHTML = msgs.map(m => {
+        const isOut = (m.direction === "out");
+        const timeStr = escapeBotChatHtml(m.time || m.timestamp || "");
+        const textHtml = escapeBotChatHtml(m.text || "").replace(/\n/g, "<br>");
+        const senderTitle = isOut
+          ? `🤖 Bot gửi (${m.tag === 'manual_chat' ? 'Nhắn trực tiếp' : 'Tự động'})`
+          : `${conv.role === 'contractor' ? '🛸' : (conv.role === 'owner' ? '👑' : '👤')} ${escapeBotChatHtml(m.sender_name || conv.name || cid)}`;
+
+        if (isOut) {
+          return `
+            <div class="flex flex-col items-end">
+              <div class="max-w-[85%] sm:max-w-[75%] rounded-xl px-3.5 py-2 bg-sky-700/90 border border-sky-500/80 text-white shadow">
+                <div class="flex items-center justify-between gap-3 text-[10px] text-sky-200 pb-1 mb-1 border-b border-sky-600/60">
+                  <span class="font-bold">${senderTitle}</span>
+                  <span class="font-mono">${timeStr}</span>
+                </div>
+                <div class="font-mono text-xs leading-relaxed break-words">${textHtml}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="flex flex-col items-start">
+              <div class="max-w-[85%] sm:max-w-[75%] rounded-xl px-3.5 py-2 bg-slate-800 border border-slate-700 text-slate-100 shadow">
+                <div class="flex items-center justify-between gap-3 text-[10px] text-amber-300 pb-1 mb-1 border-b border-slate-700">
+                  <span class="font-bold">${senderTitle}</span>
+                  <span class="font-mono text-slate-400">${timeStr}</span>
+                </div>
+                <div class="font-mono text-xs leading-relaxed break-words">${textHtml}</div>
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
+
+      if (forceScrollBottom || isNearBottom) {
+        msgListEl.scrollTop = msgListEl.scrollHeight;
+      }
+    }
+
+    function insertBotQuickChatText(txt) {
+      const inp = document.getElementById('botChatInputText');
+      if (!inp) return;
+      inp.value = txt;
+      inp.focus();
+    }
+    window.insertBotQuickChatText = insertBotQuickChatText;
+
+    function handleBotChatInputKeydown(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendBotDirectChatMessage();
+      }
+    }
+    window.handleBotChatInputKeydown = handleBotChatInputKeydown;
+
+    async function sendBotDirectChatMessage() {
+      const cid = String(window.botActiveChatContactId || "").trim();
+      if (!cid) {
+        alert("Vui lòng chọn một đối tượng ở thanh tab phía trên trước khi gửi tin nhắn!");
+        return;
+      }
+      const inp = document.getElementById('botChatInputText');
+      const text = (inp?.value || "").trim();
+      if (!text) {
+        inp?.focus();
+        return;
+      }
+      const btn = document.getElementById('btnBotSendChat');
+      const oldHtml = btn ? btn.innerHTML : "";
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Đang gửi...</span>`;
+      }
+      try {
+        let sentOk = false;
+        let errMessage = "";
+        let resolvedCid = cid;
+        if (!/^-?\d+$/.test(resolvedCid)) {
+          const key = normBotChatKey(resolvedCid);
+          const mConv = (window.botChatConversations || []).find(c => /^-?\d+$/.test(String(c.chat_id || "")) && (normBotChatKey(c.username) === key || normBotChatKey(c.name).includes(key)));
+          if (mConv) resolvedCid = String(mConv.chat_id);
+        }
+
+        const skipDirectSend = window._botChatsApi404 && (Date.now() - (window._botChatsApi404Ts || 0) < 60000);
+        if (!skipDirectSend) {
+          try {
+            const data = await apiPost("/api/bot/chats/send", { target: resolvedCid, text: text });
+            if (data && data.success) {
+              sentOk = true;
+              if (Array.isArray(data.conversations)) window.botChatConversations = data.conversations;
+              if (data.chat_id) window.botActiveChatContactId = String(data.chat_id);
+            } else if (data && data.error) {
+              errMessage = data.error;
+            }
+          } catch (_) {
+            window._botChatsApi404 = true;
+            window._botChatsApi404Ts = Date.now();
+          }
+        }
+
+        if (!sentOk) {
+          let botToken = (document.getElementById('inputBotToken')?.value || currentConfig?.bot_token || window._botCachedToken || "").trim();
+          if (!botToken) {
+            const cfg = await apiGet("/api/bot/config").catch(() => ({}));
+            botToken = (cfg?.bot_token || "").trim();
+          }
+          if (!botToken) throw new Error("Chưa tìm thấy Bot Token để gửi tin nhắn!");
+
+          const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: resolvedCid, text: text })
+          });
+          const tgData = await tgRes.json();
+          if (!tgData || !tgData.ok) {
+            throw new Error(tgData?.description || errMessage || "Telegram từ chối gửi tin nhắn");
+          }
+          sentOk = true;
+        }
+
+        if (sentOk) {
+          if (inp) inp.value = "";
+          const now = new Date();
+          const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}`;
+          const newMsg = {
+            id: `local_${Date.now()}`,
+            direction: "out",
+            sender_name: "🤖 Bot",
+            text: text,
+            time: timeStr,
+            timestamp: timeStr,
+            ts: Date.now(),
+            _sortTs: Date.now(),
+            _seq: 9999,
+            tag: "manual_chat"
+          };
+          const finalCid = String(resolvedCid || cid);
+          appendBotLocalSavedChatMessage(finalCid, newMsg);
+          window.botActiveChatContactId = finalCid;
+
+          let conv = (window.botChatConversations || []).find(c => String(c.chat_id) === finalCid || String(c.chat_id) === cid);
+          if (conv) {
+            conv.chat_id = finalCid;
+            if (!Array.isArray(conv.messages)) conv.messages = [];
+            const alreadyIn = conv.messages.some(m => m.direction === "out" && m.text === text && (m.time || m.timestamp) === timeStr);
+            if (!alreadyIn) conv.messages.push(newMsg);
+          }
+          window._botCustomPendingContactId = false;
+          renderBotChatContactTabs();
+          renderBotActiveChatPanel(true);
+        }
+      } catch (e) {
+        alert("❌ Không gửi được tin nhắn: " + e.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = oldHtml || `<i class="fa-solid fa-paper-plane"></i><span>Gửi (Tư cách Bot)</span>`;
+        }
+        inp?.focus();
+      }
+    }
+    window.sendBotDirectChatMessage = sendBotDirectChatMessage;
+
+    async function clearActiveBotChatHistory() {
+      const cid = String(window.botActiveChatContactId || "").trim();
+      if (!cid) return;
+      if (!confirm(`Bạn có chắc muốn xóa lịch sử hiển thị trong khung chat với (${cid}) không?`)) return;
+      clearBotLocalSavedChatMessages(cid);
+      if (!window._botChatsApi404) {
+        try {
+          await apiPost("/api/bot/chats/clear", { chat_id: cid }).catch(() => null);
+        } catch (_) {}
+      }
+      const conv = (window.botChatConversations || []).find(c => String(c.chat_id) === cid);
+      if (conv) conv.messages = [];
+      renderBotChatContactTabs();
+      renderBotActiveChatPanel(true);
+    }
+    window.clearActiveBotChatHistory = clearActiveBotChatHistory;
+
     // Setup Event Listeners
     document.addEventListener('DOMContentLoaded', () => {
       // Khởi tạo ngày hôm nay cho bộ chọn ngày chốt tiền trước khi gọi fetchBoard
+      syncBotDateAfterMidnight(true);
       const dateInp = document.getElementById('inpSettleDate');
       if (dateInp) {
-        const d = new Date();
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        dateInp.value = `${yyyy}-${mm}-${dd}`;
         dateInp.addEventListener('change', () => {
           fetchBoard();
           if (!document.getElementById('accountingReportBox')?.classList.contains('hidden')) {
@@ -2213,6 +3076,16 @@
           }
         });
       }
+
+      const handleWakeupDateCheck = () => {
+        if (syncBotDateAfterMidnight(false)) {
+          fetchBoard();
+        }
+      };
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') handleWakeupDateCheck();
+      });
+      window.addEventListener('focus', handleWakeupDateCheck);
 
       switchTab('overview');
 
@@ -2232,6 +3105,7 @@
         if (sessionStorage.getItem('tg_admin_unlocked') === 'true') {
           checkStatus();
           if (activeTab === 'logs') fetchLogs();
+          if (activeTab === 'chat') fetchBotChatConversations(false);
           if (activeTab === 'overview' || activeTab === 'board') fetchBoard();
         }
       }, 3500);
