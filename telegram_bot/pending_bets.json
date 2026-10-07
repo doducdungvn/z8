@@ -26,5 +26,18 @@
     "user_msg_id": null,
     "status": "pending",
     "created_at": 1790181414.9554038
+  },
+  {
+    "id": 999123,
+    "status": "rejected",
+    "chat_id": "999999",
+    "sender_name": "Khách Test",
+    "raw_text": "de 12 100n",
+    "timestamp": "17:00:00",
+    "summary": {
+      "de_count": 1,
+      "de_sum": 100
+    },
+    "rejected_at": "22:27:08 03/10"
   }
 ]

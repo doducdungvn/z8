@@ -1,0 +1,119 @@
+{
+  "7715286942": {
+    "chat_id": "7715286942",
+    "name": "Thau",
+    "username": "chuthau",
+    "role": "contractor",
+    "role_label": "🛸 Chủ Thầu",
+    "last_updated": "23:03:51 23/09",
+    "last_ts": 1791385676.5502298,
+    "messages": []
+  },
+  "1023927138": {
+    "chat_id": "1023927138",
+    "name": "@Zeng86 (1023927138)",
+    "username": "Zeng86",
+    "role": "owner",
+    "role_label": "👑 Chủ Bot",
+    "last_updated": "23:07:56 07/10",
+    "last_ts": 1791387476.5502603,
+    "messages": [
+      {
+        "id": "sync_in_1023927138_0",
+        "direction": "in",
+        "sender_name": "@Zeng86 (1023927138)",
+        "text": "de 00x5",
+        "timestamp": "23:36:54 23/09",
+        "ts": 1791388976.5502646,
+        "tag": "bet"
+      },
+      {
+        "id": "sync_out_1023927138_0",
+        "direction": "out",
+        "sender_name": "🤖 Bot",
+        "text": "Ok tin 1",
+        "timestamp": "23:36:54 23/09",
+        "ts": 1791388977.5502675,
+        "tag": "reply"
+      },
+      {
+        "id": "sync_in_1023927138_1",
+        "direction": "in",
+        "sender_name": "@Zeng86 (1023927138)",
+        "text": "de 00x5",
+        "timestamp": "23:37:22 23/09",
+        "ts": 1791388977.5502698,
+        "tag": "bet"
+      },
+      {
+        "id": "sync_out_1023927138_1",
+        "direction": "out",
+        "sender_name": "🤖 Bot",
+        "text": "Ok tin 1",
+        "timestamp": "23:37:22 23/09",
+        "ts": 1791388978.5502725,
+        "tag": "reply"
+      }
+    ]
+  },
+  "8836005980": {
+    "chat_id": "8836005980",
+    "name": "Congty368",
+    "username": "congty368",
+    "role": "client",
+    "role_label": "👤 Khách Cược",
+    "last_updated": "21:53:30 24/09",
+    "last_ts": 0,
+    "messages": []
+  },
+  "6569119253": {
+    "chat_id": "6569119253",
+    "name": "Pl",
+    "username": "congty987",
+    "role": "client",
+    "role_label": "👤 Khách Cược",
+    "last_updated": "03:27:00 13/09",
+    "last_ts": 0,
+    "messages": []
+  },
+  "12345": {
+    "chat_id": "12345",
+    "name": "Khach",
+    "username": "khach1",
+    "role": "client",
+    "role_label": "👤 Khách Cược",
+    "last_updated": "18:26",
+    "last_ts": 0,
+    "messages": []
+  },
+  "999888777": {
+    "chat_id": "999888777",
+    "name": "Khach",
+    "username": "khach1",
+    "role": "client",
+    "role_label": "👤 Khách Cược",
+    "last_updated": "22:02:57 23/09",
+    "last_ts": 0,
+    "messages": []
+  },
+  "123456": {
+    "chat_id": "123456",
+    "name": "Player",
+    "username": "test_player",
+    "role": "client",
+    "role_label": "👤 Khách Cược",
+    "last_updated": "21:00:00 23/09",
+    "last_ts": 0,
+    "messages": []
+  },
+  "98765": {
+    "chat_id": "98765",
+    "name": "A",
+    "username": "khach_a",
+    "role": "client",
+    "role_label": "👤 Khách Cược",
+    "last_updated": "23:03:51 23/09",
+    "last_ts": 0,
+    "messages": []
+  }
+}

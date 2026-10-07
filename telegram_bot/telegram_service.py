@@ -40,6 +40,7 @@ KNOWN_USERS_PATH = os.path.join(os.path.dirname(__file__), "known_users.json")
 TRACKED_MESSAGES_PATH = os.path.join(os.path.dirname(__file__), "tracked_messages.json")
 CLIENT_BETS_PATH = os.path.join(os.path.dirname(__file__), "client_bets.json")
 PENDING_BETS_PATH = os.path.join(os.path.dirname(__file__), "pending_bets.json")
+CHAT_CONVERSATIONS_PATH = os.path.join(os.path.dirname(__file__), "chat_conversations.json")
 
 
 class TelegramBotService:
@@ -49,6 +50,7 @@ class TelegramBotService:
         self.tracked_messages = self.load_tracked_messages()
         self.client_bets = self.load_client_bets()
         self.pending_bets = self.load_pending_bets()
+        self.chat_conversations = self.load_chat_conversations()
         self.pending_recipient_acks = None  # Theo dõi phản hồi của người nhận cược thừa (timeout 5p)
         self.pending_client_receipts = []  # Danh sách tin xác nhận khách cược đang chờ chủ thầu Ok
         self.last_contractor_settlement = None  # Lưu bảng chốt tiền gần nhất nhận từ chủ thầu
@@ -338,6 +340,338 @@ class TelegramBotService:
                 json.dump(self.pending_bets, f, ensure_ascii=False, indent=2)
         except Exception:
             pass
+
+    def load_chat_conversations(self) -> dict:
+        if os.path.exists(CHAT_CONVERSATIONS_PATH):
+            try:
+                with open(CHAT_CONVERSATIONS_PATH, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        return data
+            except Exception:
+                pass
+        return {}
+
+    def save_chat_conversations(self):
+        try:
+            with open(CHAT_CONVERSATIONS_PATH, "w", encoding="utf-8") as f:
+                json.dump(self.chat_conversations, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+    def get_contact_role_info(self, chat_id_str: str, username: str = "") -> tuple[str, str]:
+        """Xác định vai trò của đối tượng giao tiếp với Bot: owner, contractor, hoặc client"""
+        cid_clean = str(chat_id_str or "").strip()
+        un_clean = str(username or "").strip().lstrip("@").lower()
+
+        owner_cid = str(self.get_owner_chat_id() or "").strip()
+        owner_cfg = str(self.config.get("owner_chat_id", "")).strip().lstrip("@").lower()
+
+        target_rec = str(self.config.get("target_recipient", "")).strip()
+        target_rec_clean = target_rec.lstrip("@").lower()
+        target_resolved_cid = ""
+        if target_rec:
+            try:
+                rcid, _ = self.resolve_recipient(target_rec)
+                if rcid:
+                    target_resolved_cid = str(rcid).strip()
+            except Exception:
+                pass
+
+        # Ưu tiên nhận diện Chủ thầu (Người nhận cược thừa) nếu khớp target_recipient
+        if target_rec_clean and (
+            cid_clean == target_rec_clean or
+            cid_clean == target_resolved_cid or
+            (un_clean and un_clean == target_rec_clean)
+        ):
+            return "contractor", "🛸 Chủ Thầu"
+
+        # Nhận diện Chủ Bot
+        if (owner_cid and cid_clean == owner_cid) or (owner_cfg and (cid_clean.lower() == owner_cfg or (un_clean and un_clean == owner_cfg))):
+            return "owner", "👑 Chủ Bot"
+
+        return "client", "👤 Khách Cược"
+
+    def record_chat_message(self, chat_id_str: str, direction: str, text: str, sender_name: str = "", username: str = "", tag: str = "message"):
+        """Ghi nhận 1 tin nhắn trao đổi 2 chiều giữa Bot và đối tượng (Chủ / Thầu / Khách)"""
+        cid = str(chat_id_str or "").strip()
+        if not cid or cid in ["11223344", "99999", "111", "web_sync"]:
+            return
+        if not hasattr(self, "chat_conversations") or not isinstance(self.chat_conversations, dict):
+            self.chat_conversations = self.load_chat_conversations()
+
+        # Tra cứu thông tin tên & username từ known_users / client_bets nếu chưa có
+        u_info = self.known_users.get(cid) or {}
+        c_info = self.client_bets.get(cid) or {}
+        resolved_un = username or u_info.get("username") or c_info.get("username") or ""
+        resolved_name = (
+            (sender_name if direction == "in" and sender_name and sender_name != "Bot" else "") or
+            u_info.get("first_name") or
+            c_info.get("name") or
+            (f"@{resolved_un}" if resolved_un else cid)
+        )
+        role, role_label = self.get_contact_role_info(cid, resolved_un)
+
+        conv = self.chat_conversations.get(cid)
+        if not conv:
+            conv = {
+                "chat_id": cid,
+                "name": resolved_name,
+                "username": resolved_un,
+                "role": role,
+                "role_label": role_label,
+                "last_updated": now_vn().strftime("%H:%M:%S %d/%m"),
+                "last_ts": time.time(),
+                "messages": []
+            }
+            self.chat_conversations[cid] = conv
+        else:
+            if resolved_name and (not conv.get("name") or conv.get("name") == cid):
+                conv["name"] = resolved_name
+            if resolved_un:
+                conv["username"] = resolved_un
+            conv["role"] = role
+            conv["role_label"] = role_label
+            conv["last_updated"] = now_vn().strftime("%H:%M:%S %d/%m")
+            conv["last_ts"] = time.time()
+
+        # Làm sạch HTML cơ bản để hiển thị đẹp trong bong bóng chat
+        clean_display = re.sub(r"<br\s*/?>", "\n", str(text or ""), flags=re.IGNORECASE)
+        clean_display = re.sub(r"</?b>|</?i>|</?u>|</?code>|</?pre>", "", clean_display, flags=re.IGNORECASE)
+        clean_display = html_lib_unescape(clean_display) if "html_lib_unescape" in globals() else clean_display.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
+
+        msg_entry = {
+            "id": f"{int(time.time() * 1000)}_{len(conv.get('messages', [])) + 1}",
+            "direction": direction,  # "in" (Đối tượng -> Bot) | "out" (Bot -> Đối tượng)
+            "sender_name": "🤖 Bot" if direction == "out" else (sender_name or conv.get("name") or cid),
+            "text": clean_display.strip(),
+            "timestamp": now_vn().strftime("%H:%M:%S %d/%m"),
+            "ts": time.time(),
+            "tag": tag
+        }
+        msgs = conv.setdefault("messages", [])
+        msgs.append(msg_entry)
+        # Giữ tối đa 150 tin nhắn gần nhất mỗi đối tượng
+        if len(msgs) > 150:
+            conv["messages"] = msgs[-150:]
+        self.save_chat_conversations()
+
+    def get_chat_conversations_list(self) -> list:
+        """Lấy danh sách tất cả các đối tượng đang giao tiếp với Bot (Chủ, Thầu, Khách) kèm lịch sử chat"""
+        if not hasattr(self, "chat_conversations") or not isinstance(self.chat_conversations, dict):
+            self.chat_conversations = self.load_chat_conversations()
+
+        self.known_users = self.load_known_users()
+        changed = False
+
+        # 1. Đảm bảo Chủ thầu (target_recipient) luôn xuất hiện nếu đã cấu hình
+        target_rec = str(self.config.get("target_recipient", "")).strip()
+        target_cid = None
+        if target_rec:
+            rcid, _ = self.resolve_recipient(target_rec)
+            target_cid = str(rcid).strip() if rcid else target_rec
+            if target_cid and target_cid not in ["11223344", "99999", "111"]:
+                if target_cid not in self.chat_conversations:
+                    u_info = self.known_users.get(target_cid) or {}
+                    un = u_info.get("username") or (target_rec.lstrip("@") if target_rec.startswith("@") else "")
+                    nm = u_info.get("first_name") or (f"@{un}" if un else f"Chủ thầu ({target_rec})")
+                    self.chat_conversations[target_cid] = {
+                        "chat_id": target_cid,
+                        "name": nm,
+                        "username": un,
+                        "role": "contractor",
+                        "role_label": "🛸 Chủ Thầu",
+                        "last_updated": u_info.get("updated_at") or now_vn().strftime("%H:%M:%S %d/%m"),
+                        "last_ts": time.time() - 3600,
+                        "messages": []
+                    }
+                    changed = True
+                # Nếu chưa có lịch sử chat của Chủ thầu nhưng hôm nay đã có các bước chuyển thầu -> đồng bộ vào khung chat
+                conv_thau = self.chat_conversations[target_cid]
+                if not conv_thau.get("messages") and getattr(self, "balancer", None) and self.balancer.transfer_history:
+                    for st in self.balancer.transfer_history:
+                        t_txt = st.get("transfer_text") or st.get("message") or ""
+                        if t_txt:
+                            conv_thau["messages"].append({
+                                "id": f"sync_tf_{st.get('step', 0)}",
+                                "direction": "out",
+                                "sender_name": "🤖 Bot",
+                                "text": t_txt,
+                                "timestamp": st.get("timestamp") or now_vn().strftime("%H:%M:%S"),
+                                "ts": time.time() - 60,
+                                "tag": "transfer"
+                            })
+                    changed = True
+
+        # 2. Đồng bộ từ client_bets (Khách cược trong ngày)
+        for cid_str, cdata in (self.client_bets or {}).items():
+            cid = str(cid_str).strip()
+            if not cid or cid in ["11223344", "99999", "111", "web_sync"]:
+                continue
+            un = cdata.get("username") or (self.known_users.get(cid) or {}).get("username") or ""
+            nm = cdata.get("name") or (self.known_users.get(cid) or {}).get("first_name") or cid
+            role, role_label = self.get_contact_role_info(cid, un)
+            if cid not in self.chat_conversations:
+                self.chat_conversations[cid] = {
+                    "chat_id": cid,
+                    "name": nm,
+                    "username": un,
+                    "role": role,
+                    "role_label": role_label,
+                    "last_updated": now_vn().strftime("%H:%M:%S %d/%m"),
+                    "last_ts": time.time() - 1800,
+                    "messages": []
+                }
+                changed = True
+            conv_c = self.chat_conversations[cid]
+            # Nếu đối tượng chưa có tin nhắn trong khung chat nhưng có lịch sử cược hôm nay -> nạp vào khung chat
+            if not conv_c.get("messages") and cdata.get("history"):
+                for idx, h in enumerate(cdata.get("history", [])):
+                    raw_t = h.get("raw_text") or ""
+                    ts_str = h.get("timestamp") or ""
+                    m_idx = h.get("msg_index") or (idx + 1)
+                    if raw_t:
+                        conv_c["messages"].append({
+                            "id": f"sync_in_{cid}_{idx}",
+                            "direction": "in",
+                            "sender_name": nm,
+                            "text": raw_t,
+                            "timestamp": ts_str,
+                            "ts": time.time() - 300 + idx,
+                            "tag": "bet"
+                        })
+                        if h.get("rejected"):
+                            reply_txt = f"❌ Từ chối nhận Tin {m_idx} (Thầu trả lại / Không nhận)"
+                        elif h.get("voided"):
+                            if self.config.get("cancel_detail_client", False) and (h.get("parsed") or raw_t):
+                                p_void = h.get("parsed") or parse_bet_message(raw_t)
+                                d_lines = format_ok_receipt_detailed(p_void, m_idx).splitlines()[1:] if p_void else []
+                                d_str = "\n".join(d_lines).strip() or raw_t
+                                reply_txt = f"🚫 Đã hủy Tin {m_idx}:\n{d_str}"
+                            else:
+                                reply_txt = f"🚫 Đã hủy Tin {m_idx}"
+                        elif h.get("is_ok", True):
+                            if self.config.get("ok_detail_client", False) and (h.get("parsed") or raw_t):
+                                p_ok = h.get("parsed") or parse_bet_message(raw_t)
+                                reply_txt = format_ok_receipt_detailed(p_ok, m_idx)
+                            else:
+                                reply_txt = f"Ok tin {m_idx}"
+                        else:
+                            reply_txt = ""
+                        if reply_txt:
+                            conv_c["messages"].append({
+                                "id": f"sync_out_{cid}_{idx}",
+                                "direction": "out",
+                                "sender_name": "🤖 Bot",
+                                "text": reply_txt,
+                                "timestamp": ts_str,
+                                "ts": time.time() - 299 + idx,
+                                "tag": "reply"
+                            })
+                changed = True
+
+        # 3. Đồng bộ từ pending_bets (Khách đang có tin treo)
+        for pb in getattr(self, "pending_bets", []):
+            if pb.get("status") != "pending":
+                continue
+            cid = str(pb.get("chat_id") or "").strip()
+            if not cid or cid in ["11223344", "99999", "111", "web_sync"]:
+                continue
+            un = pb.get("username") or ""
+            nm = (pb.get("sender_label") or "").strip("()") or cid
+            role, role_label = self.get_contact_role_info(cid, un)
+            if cid not in self.chat_conversations:
+                self.chat_conversations[cid] = {
+                    "chat_id": cid,
+                    "name": nm,
+                    "username": un,
+                    "role": role,
+                    "role_label": role_label,
+                    "last_updated": pb.get("timestamp") or now_vn().strftime("%H:%M:%S %d/%m"),
+                    "last_ts": pb.get("created_at") or time.time(),
+                    "messages": [{
+                        "id": f"sync_pb_{pb.get('id')}",
+                        "direction": "in",
+                        "sender_name": nm,
+                        "text": pb.get("raw_text") or "",
+                        "timestamp": pb.get("timestamp") or "",
+                        "ts": pb.get("created_at") or time.time(),
+                        "tag": "pending_bet"
+                    }]
+                }
+                changed = True
+
+        # 4. Đồng bộ từ known_users (Tất cả người dùng đã từng tương tác với Bot: Chủ, Thầu, Khách)
+        for uid, uinfo in (self.known_users or {}).items():
+            cid = str(uinfo.get("chat_id") or uid).strip()
+            if not cid or cid in ["11223344", "99999", "111", "web_sync"]:
+                continue
+            un = uinfo.get("username") or ""
+            nm = uinfo.get("first_name") or (f"@{un}" if un else cid)
+            role, role_label = self.get_contact_role_info(cid, un)
+            if cid not in self.chat_conversations:
+                self.chat_conversations[cid] = {
+                    "chat_id": cid,
+                    "name": nm,
+                    "username": un,
+                    "role": role,
+                    "role_label": role_label,
+                    "last_updated": uinfo.get("updated_at") or "",
+                    "last_ts": 0,
+                    "messages": []
+                }
+                changed = True
+            else:
+                self.chat_conversations[cid]["role"] = role
+                self.chat_conversations[cid]["role_label"] = role_label
+                if nm and (not self.chat_conversations[cid].get("name") or self.chat_conversations[cid].get("name") == cid):
+                    self.chat_conversations[cid]["name"] = nm
+                if un:
+                    self.chat_conversations[cid]["username"] = un
+
+        if changed:
+            self.save_chat_conversations()
+
+        # Lọc bỏ các tài khoản test ảo và sắp xếp theo thứ tự ưu tiên: Chủ Thầu -> Chủ Bot -> Khách có tin nhắn mới nhất
+        result = []
+        role_priority = {"contractor": 0, "owner": 1, "client": 2}
+        for cid, conv in self.chat_conversations.items():
+            if str(cid) in ["11223344", "99999", "111", "web_sync"]:
+                continue
+            role, role_label = self.get_contact_role_info(cid, conv.get("username", ""))
+            conv["role"] = role
+            conv["role_label"] = role_label
+            result.append(conv)
+
+        result.sort(key=lambda c: (
+            0 if len(c.get("messages", [])) > 0 else 1,
+            role_priority.get(c.get("role", "client"), 2),
+            -(c.get("last_ts") or 0)
+        ))
+        return result
+
+    def send_direct_chat_message(self, target: str, text: str) -> dict:
+        """Gửi tin nhắn trực tiếp từ giao diện Web tới đối tượng (Chủ / Thầu / Khách) dưới danh nghĩa là Bot"""
+        clean_target = str(target or "").strip()
+        clean_text = str(text or "").strip()
+        if not clean_target:
+            return {"success": False, "error": "Chưa chọn đối tượng nhận tin nhắn"}
+        if not clean_text:
+            return {"success": False, "error": "Nội dung tin nhắn không được để trống"}
+
+        ok, err = self.send_telegram_message(clean_target, clean_text, force=True, tag="manual_chat")
+        if ok:
+            self.log(f"💬 [Chat Trực Tiếp] Bot -> {clean_target}: {clean_text}", "SUCCESS")
+            return {"success": True, "chat_id": clean_target}
+        return {"success": False, "error": err or "Không thể gửi tin nhắn"}
+
+    def clear_chat_conversation(self, chat_id_str: str) -> bool:
+        cid = str(chat_id_str or "").strip()
+        if cid in self.chat_conversations:
+            self.chat_conversations[cid]["messages"] = []
+            self.save_chat_conversations()
+            return True
+        return False
 
     def get_next_pending_id(self) -> int:
         if not hasattr(self, "pending_bets") or not self.pending_bets:
@@ -902,12 +1236,15 @@ class TelegramBotService:
             self.send_telegram_message(str(owner_cid), owner_msg, force=True, tag="owner_alert")
 
         include_details_client = bool(self.config.get("cancel_detail_client", False))
-        if include_details_client and raw_text_cancelled:
-            client_reply_msg = f"Đã hủy tin {target_msg_idx}:\n{raw_text_cancelled}"
+        if include_details_client and (item_parsed or raw_text_cancelled):
+            p_cancel = item_parsed if (item_parsed and any(item_parsed.get(k) for k in ("de", "lo", "bacang", "xien2", "xien3", "xien4"))) else (parse_bet_message(raw_text_cancelled) if raw_text_cancelled else {})
+            d_lines = format_ok_receipt_detailed(p_cancel, target_msg_idx).splitlines()[1:] if p_cancel else []
+            d_txt = "\n".join(d_lines).strip() or raw_text_cancelled
+            client_reply_msg = f"Đã hủy tin {target_msg_idx}:\n{d_txt}"
         else:
             client_reply_msg = f"Đã hủy tin {target_msg_idx}"
 
-        self.log(f"✅ Đã hủy thành công tin #{target_msg_idx} của khách {sender_label}. Đã cập nhật lại bảng cược.", "SUCCESS")
+        self.log(f"✅ Đã hủy thành công tin #{target_msg_idx} của khách {sender_label}: {client_reply_msg}", "SUCCESS")
         return {
             "success": True,
             "client_reply": client_reply_msg,
@@ -1331,12 +1668,18 @@ class TelegramBotService:
                 return False, friendly_err
 
             # Nếu bật theo dõi để tự động xóa sau 24h
+            sent_msg = data.get("result", {})
+            sent_cid = sent_msg.get("chat", {}).get("id") or chat_id
             if track_for_cleanup:
-                sent_msg = data.get("result", {})
                 sent_mid = sent_msg.get("message_id")
-                sent_cid = sent_msg.get("chat", {}).get("id") or chat_id
                 if sent_mid and sent_cid:
                     self.track_message(sent_cid, sent_mid, tag=tag)
+
+            # Lưu vào lịch sử khung chat 2 chiều
+            try:
+                self.record_chat_message(str(sent_cid), "out", text, sender_name="Bot", tag=tag)
+            except Exception:
+                pass
 
             return True, ""
         except Exception as e:
@@ -2045,6 +2388,19 @@ class TelegramBotService:
 
         # Lưu người dùng vào known_users
         self.record_user(from_user, chat_id)
+
+        # Lưu tin nhắn đến vào lịch sử khung chat 2 chiều
+        try:
+            self.record_chat_message(
+                str(chat_id),
+                "in",
+                text,
+                sender_name=first_name or (f"@{username}" if username else str(user_id)),
+                username=username,
+                tag="incoming"
+            )
+        except Exception:
+            pass
 
         sender_label = f"(@{username})" if username else (f"({first_name})" if first_name else f"({user_id})")
 

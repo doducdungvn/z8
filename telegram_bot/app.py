@@ -54,6 +54,7 @@ if os.environ.get("AUTO_START_BOT", "").lower() in ["true", "1"] or os.environ.g
 
 @app.route("/api/bot/status", methods=["GET"])
 def get_status():
+    bot_service.check_and_rollover_date()
     b_mode = bot_service.config.get("bot_mode", "auto")
     pending_cnt = len([b for b in getattr(bot_service, "pending_bets", []) if b.get("status") == "pending"])
     settle_st = bot_service.get_settle_status()
@@ -63,6 +64,7 @@ def get_status():
         "is_running": bot_service.is_running,
         "bot_mode": b_mode,
         "is_active": (b_mode == "auto"),
+        "current_date": getattr(bot_service, "current_date", ""),
         "pending_count": pending_cnt,
         "total_messages": len(raw_msgs),
         "last_bet_timestamp": bot_service.last_bet_timestamp,
@@ -343,6 +345,37 @@ def test_message():
         return jsonify({"success": True})
     else:
         return jsonify({"success": False, "error": err}), 400
+
+
+@app.route("/api/bot/chats", methods=["GET"])
+def get_chats_route():
+    conversations = bot_service.get_chat_conversations_list()
+    return jsonify({
+        "success": True,
+        "conversations": conversations
+    })
+
+
+@app.route("/api/bot/chats/send", methods=["POST"])
+def send_chat_message_route():
+    data = request.json or {}
+    target = str(data.get("chat_id") or data.get("recipient") or "").strip()
+    text = str(data.get("text") or "").strip()
+    res = bot_service.send_direct_chat_message(target, text)
+    status_code = 200 if res.get("success") else 400
+    res["conversations"] = bot_service.get_chat_conversations_list()
+    return jsonify(res), status_code
+
+
+@app.route("/api/bot/chats/clear", methods=["POST"])
+def clear_chat_history_route():
+    data = request.json or {}
+    target = str(data.get("chat_id") or "").strip()
+    ok = bot_service.clear_chat_conversation(target)
+    return jsonify({
+        "success": ok,
+        "conversations": bot_service.get_chat_conversations_list()
+    })
 
 
 @app.route("/api/bot/known_users", methods=["GET"])

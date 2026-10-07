@@ -76,5 +76,6 @@
     "lo_hour": 18,
     "lo_minute": 10,
     "admin_bypass": false
-  }
+  },
+  "auto_fetch_kqxs_daily": true
 }
