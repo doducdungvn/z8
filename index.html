@@ -2569,21 +2569,15 @@ function syncShortcutsToBotBackend(content) {
   if (!content || !content.trim()) return Promise.resolve(false);
   const payload = JSON.stringify({ content });
   const headers = { "Content-Type": "application/json" };
-  return fetch("/api/bot/shortcuts", { method: "POST", headers, body: payload })
-    .then(r => { if (!r.ok) throw new Error("Proxy not ok"); return r.json(); })
+  const botBase = (window.TG_BOT_API || localStorage.getItem('tg_bot_api_url') || "").replace(/\/+$/, '');
+  const targetUrl = (botBase && (botBase.includes('onrender.com') || botBase.startsWith('https://'))) ? `${botBase}/api/bot/shortcuts` : "/api/bot/shortcuts";
+  return fetch(targetUrl, { method: "POST", headers, body: payload })
+    .then(r => { if (!r.ok) throw new Error("not ok"); return r.json(); })
     .then(res => {
       if (res && res.success) localStorage.removeItem("z8_shortcuts_local_dirty");
       return true;
     })
-    .catch(() => {
-      return fetch("http://127.0.0.1:5005/api/bot/shortcuts", { method: "POST", headers, body: payload })
-        .then(r => r.json())
-        .then(res => {
-          if (res && res.success) localStorage.removeItem("z8_shortcuts_local_dirty");
-          return true;
-        })
-        .catch(() => false);
-    });
+    .catch(() => false);
 }
 
 function saveShortcuts(syncToDisk = false) {
@@ -7531,24 +7525,22 @@ function resetTable() {
         <!-- ==================== TAB 1: TRUNG TÂM TÁC NGHIỆP & DUYỆT TIN ==================== -->
         <div id="tgTabContentInbox" class="space-y-2.5">
           
-          <!-- Thanh chuyển 3 Sub-Tabs con trong Tab 1: Hộp Thư & Duyệt Tin ⇄ Nhật Ký Live ⇄ Giao Tiếp Với Bot -->
-          <div class="flex items-center justify-between flex-wrap gap-2 pb-1.5 border-b border-slate-300 dark:border-slate-700">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" id="tgSubTabBtnInboxMail" onclick="switchTgInboxSubTab('mail')" class="px-3 py-1.5 bg-[#1e293b] text-white font-bold text-xs rounded-xs border border-slate-700 flex items-center gap-1.5 cursor-pointer shadow-2xs">
-                <i class="fa-solid fa-envelope-open-text text-sky-400"></i>
-                <span>1.1. Inbox</span>
-                <span id="tgSubTabInboxPendingBadge" class="hidden px-1.5 py-0.2 bg-amber-500 text-white text-[10px] font-black rounded-full animate-pulse ml-1">0</span>
-              </button>
-              <button type="button" id="tgSubTabBtnInboxLogs" onclick="switchTgInboxSubTab('logs')" class="px-3 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>1.2. Nhật Ký</span>
-              </button>
-              <button type="button" id="tgSubTabBtnInboxChat" onclick="switchTgInboxSubTab('chat')" class="px-3 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700">
-                <i class="fa-solid fa-comments text-amber-500"></i>
-                <span>1.3. Giao Tiếp</span>
-                <span id="tgSubTabInboxChatCountBadge" class="px-1.5 py-0.2 bg-sky-600 text-white text-[10px] font-bold rounded-full ml-0.5">0</span>
-              </button>
-            </div>
+          <!-- Thanh chuyển 3 Sub-Tabs con trong Tab 1: 1.1 Inbox | 1.2 Nhật Ký | 1.3 Giao Tiếp (3 mục cùng 1 hàng) -->
+          <div class="grid grid-cols-3 gap-1 w-full pb-1.5 border-b border-slate-300 dark:border-slate-700">
+            <button type="button" id="tgSubTabBtnInboxMail" onclick="switchTgInboxSubTab('mail')" class="px-1 sm:px-2 py-1.5 bg-[#1e293b] text-white font-bold text-xs rounded-xs border border-slate-700 flex items-center justify-center gap-1 cursor-pointer shadow-2xs">
+              <i class="fa-solid fa-envelope-open-text text-sky-400 text-xs shrink-0"></i>
+              <span class="truncate">1.1. Inbox</span>
+              <span id="tgSubTabInboxPendingBadge" class="hidden px-1 py-0.2 bg-amber-500 text-white text-[9px] font-black rounded-full animate-pulse ml-0.5">0</span>
+            </button>
+            <button type="button" id="tgSubTabBtnInboxLogs" onclick="switchTgInboxSubTab('logs')" class="px-1 sm:px-2 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-1 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+              <span class="truncate">1.2. Nhật Ký</span>
+            </button>
+            <button type="button" id="tgSubTabBtnInboxChat" onclick="switchTgInboxSubTab('chat')" class="px-1 sm:px-2 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-1 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700">
+              <i class="fa-solid fa-comments text-amber-500 text-xs shrink-0"></i>
+              <span class="truncate">1.3. Giao Tiếp</span>
+              <span id="tgSubTabInboxChatCountBadge" class="px-1.5 py-0.2 bg-sky-600 text-white text-[10px] font-bold rounded-full ml-0.5 shrink-0">0</span>
+            </button>
           </div>
 
           <!-- SUB-TAB 1: HỘP THƯ & DUYỆT TIN (MAILBOX & PENDING QUEUE) -->
@@ -7578,34 +7570,35 @@ function resetTable() {
 
             <!-- KHU VỰC 2: HỘP THƯ TIN CƯỢC TRONG NGÀY (INBOX FEED) -->
             <div class="bg-white dark:bg-dark-800 p-3 rounded-xs border border-slate-300 dark:border-slate-700 space-y-2.5">
-              <div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-200 dark:border-slate-700">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm uppercase flex items-center gap-1.5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-slate-200 dark:border-slate-700">
+                <!-- Dòng 1: Chữ Hộp Thư + Nút Làm Mới + Ô Chọn Ngày CÙNG 1 DÒNG -->
+                <div class="flex items-center gap-1.5 flex-nowrap shrink-0 overflow-x-auto select-none">
+                  <span class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm uppercase flex items-center gap-1 shrink-0">
                     <i class="fa-solid fa-envelope-open-text text-sky-600"></i>
-                    <span>Hộp Thư (<span id="tgCountClientMsgs">0</span> tin)</span>
+                    <span class="whitespace-nowrap">Hộp Thư (<span id="tgCountClientMsgs">0</span> tin)</span>
                   </span>
                   <!-- Nút Làm Mới (Chỉ Biểu Tượng) ngay sau tiêu đề Hộp Thư -->
-                  <button type="button" onclick="fetchTgBoard()" class="p-1 px-1.5 bg-white hover:bg-slate-100 active:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs text-sky-600 hover:text-sky-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs cursor-pointer shadow-2xs transition" title="Làm mới Hộp Thư">
+                  <button type="button" onclick="fetchTgBoard()" class="p-1 px-1.5 bg-white hover:bg-slate-100 active:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs text-sky-600 hover:text-sky-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs cursor-pointer shadow-2xs transition shrink-0" title="Làm mới Hộp Thư">
                     <i class="fa-solid fa-rotate"></i>
                   </button>
 
-                  <!-- Ô Chọn Ngày (Gọn gàng, tiết kiệm diện tích) -->
-                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 px-2 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs" title="Chọn ngày xem tin cược &amp; đối soát">
+                  <!-- Ô Chọn Ngày (Nằm CÙNG DÒNG với Hộp Thư) -->
+                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 px-1.5 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs shrink-0" title="Chọn ngày xem tin cược &amp; đối soát">
                     <i class="fa-regular fa-calendar-days text-sky-600 text-[11px]"></i>
                     <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none px-0.5">
                   </div>
                 </div>
 
-                <!-- Bộ Lọc Tìm Kiếm Tin Cược -->
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <div class="relative flex items-center">
-                    <input type="text" id="tgInboxSearchInput" oninput="filterTgClientMessages()" placeholder="Tìm khách, ID, nội dung..." class="border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-1 text-xs bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 pl-6 pr-6 w-36 sm:w-48 outline-none focus:border-sky-500">
+                <!-- Dòng 2: Tìm Khách & Bộ Lọc Trạng Thái CÙNG 1 DÒNG VỚI NHAU -->
+                <div class="flex items-center gap-1.5 flex-nowrap w-full sm:w-auto">
+                  <div class="relative flex-1 sm:flex-initial flex items-center min-w-0">
+                    <input type="text" id="tgInboxSearchInput" oninput="filterTgClientMessages()" placeholder="Tìm khách, ID, nội dung..." class="w-full sm:w-44 border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-1 text-xs bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 pl-6 pr-6 outline-none focus:border-sky-500">
                     <i class="fa-solid fa-magnifying-glass absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
                     <button type="button" id="btnClearTgInboxSearch" onclick="clearTgInboxSearch()" class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-xs cursor-pointer p-0.5" title="Xóa tìm kiếm">
                       <i class="fa-solid fa-circle-xmark"></i>
                     </button>
                   </div>
-                  <select id="tgInboxStatusFilter" onchange="filterTgClientMessages()" class="border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-1 text-xs bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
+                  <select id="tgInboxStatusFilter" onchange="filterTgClientMessages()" class="shrink-0 border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-1 text-xs bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
                     <option value="all">Tất cả trạng thái</option>
                     <option value="pending">🟡 Đang chờ duyệt</option>
                     <option value="approved">✅ Đã nhận</option>
@@ -7663,20 +7656,12 @@ function resetTable() {
           <!-- SUB-TAB 3: GIAO TIẾP TRỰC TIẾP VỚI CHỦ / THẦU / KHÁCH (2-WAY LIVE CHAT AS BOT) -->
           <div id="tgInboxSubContentChat" class="hidden bg-white dark:bg-dark-800 p-3 rounded-xs border border-slate-300 dark:border-slate-700 space-y-2.5 flex flex-col">
             <!-- Thanh tiêu đề + các tab con của từng đối tượng đang giao tiếp -->
-            <div class="flex flex-col gap-2 pb-2 border-b border-slate-200 dark:border-slate-700">
-              <div class="flex items-center justify-between flex-wrap gap-2">
-                <span class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm uppercase flex items-center gap-1.5">
-                  <i class="fa-solid fa-comments text-amber-500"></i>
-                  <span>GIAO TIẾP VỚI BOT</span>
-                </span>
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 border border-slate-300 dark:border-slate-600 rounded-xs px-1.5 py-0.5">
-                    <input type="text" id="tgChatNewRecipientInput" placeholder="Nhập ID / @username mới..." class="bg-transparent text-xs outline-none w-36 sm:w-44 text-slate-800 dark:text-slate-200 font-mono">
-                    <button type="button" onclick="openOrCreateTgChatTab()" class="px-2 py-0.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xs text-[11px] font-bold cursor-pointer" title="Mở tab chat với người này">
-                      + Mở Chat
-                    </button>
-                  </div>
-                </div>
+            <div class="flex flex-col gap-1.5 pb-2 border-b border-slate-200 dark:border-slate-700">
+              <div class="flex items-center gap-1.5 w-full max-w-sm bg-slate-100 dark:bg-dark-900 border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-1">
+                <input type="text" id="tgChatNewRecipientInput" placeholder="Nhập ID / @username mới..." class="flex-1 bg-transparent text-xs outline-none min-w-0 text-slate-800 dark:text-slate-200 font-mono">
+                <button type="button" onclick="openOrCreateTgChatTab()" class="px-2.5 py-1 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-xs text-xs font-bold cursor-pointer shrink-0 transition" title="Mở tab chat với người này">
+                  + Mở Chat
+                </button>
               </div>
 
               <!-- Dải Sub-Tabs ngang: Mỗi tab con là 1 đối tượng, tự động xếp tầng/vảy cá khi hết khung mobile -->
@@ -7685,18 +7670,16 @@ function resetTable() {
               </div>
             </div>
 
-            <!-- Thông tin đối tượng đang chọn -->
-            <div id="tgChatActiveHeader" class="flex items-center justify-between flex-wrap gap-2 px-3 py-2 bg-slate-100 dark:bg-dark-900 rounded-xs border border-slate-200 dark:border-slate-700 text-xs">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span id="tgChatActiveRoleBadge" class="px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 font-bold text-[11px] border border-sky-300 dark:border-sky-800">👤 Đối tượng</span>
-                <span id="tgChatActiveName" class="font-bold text-slate-800 dark:text-slate-100 text-sm">Chưa chọn đối tượng</span>
-                <span id="tgChatActiveMeta" class="font-mono text-slate-500 text-[11px]"></span>
+            <!-- Thông tin đối tượng đang chọn: [Thầu] ID... @... và [Xóa] nằm CÙNG 1 DÒNG -->
+            <div id="tgChatActiveHeader" class="flex items-center justify-between gap-1.5 px-2.5 py-1.5 bg-slate-100 dark:bg-dark-900 rounded-xs border border-slate-200 dark:border-slate-700 text-xs select-none">
+              <div class="flex items-center gap-1.5 min-w-0 flex-nowrap">
+                <span id="tgChatActiveRoleBadge" class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] border border-indigo-300 dark:border-indigo-800 shrink-0">🛸 Thầu</span>
+                <span id="tgChatActiveName" class="hidden"></span>
+                <span id="tgChatActiveMeta" class="font-mono text-slate-600 dark:text-slate-300 text-xs font-semibold truncate"></span>
               </div>
-              <div class="flex items-center gap-1.5">
-                <button type="button" onclick="clearActiveTgChatHistory()" class="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-200 dark:border-rose-800 cursor-pointer" title="Xóa lịch sử hiển thị trong khung chat này">
-                  <i class="fa-solid fa-broom"></i> Xóa khung chat
-                </button>
-              </div>
+              <button type="button" onclick="clearActiveTgChatHistory()" class="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-200 dark:border-rose-800 cursor-pointer shrink-0 transition flex items-center gap-1" title="Xóa lịch sử hiển thị trong khung chat này">
+                <i class="fa-solid fa-broom"></i> Xóa
+              </button>
             </div>
 
             <!-- Khung hội thoại 2 chiều giữa Bot và đối tượng -->
@@ -8464,23 +8447,36 @@ function resetTable() {
       // 1. URL người dùng đã cấu hình lưu trong trình duyệt
       const stored = localStorage.getItem('tg_bot_api_url');
       if (stored && stored.trim()) {
-        const s = stored.trim();
+        const s = stored.trim().replace(/\/+$/, '');
+        // Nếu người dùng đã chọn Render Cloud hoặc URL https: CHỈ dùng máy chủ này, tuyệt đối không gọi localhost
+        if (s.includes('onrender.com') || s.startsWith('https://')) {
+          return [s];
+        }
         if (!(isRemote && (s.includes('127.0.0.1') || s.includes('localhost')))) {
           candidates.push(s);
         }
       }
 
       // 2. Render Cloud (luôn là ứng viên ưu tiên cao vì backend chạy trên Render)
-      candidates.push(CLOUD_DEFAULT_API);
+      if (CLOUD_DEFAULT_API) {
+        const cUrl = CLOUD_DEFAULT_API.replace(/\/+$/, '');
+        // Nếu là Render Cloud: ưu tiên tuyệt đối, không gọi localhost
+        if (cUrl.includes('onrender.com') || cUrl.startsWith('https://')) {
+          return [cUrl];
+        }
+        candidates.push(cUrl);
+      }
 
       // 3. IP mạng LAN nếu mở từ xa
       if (isRemote) {
         candidates.push('http://' + host + ':5005');
       }
 
-      // 4. Localhost fallback
-      candidates.push('http://127.0.0.1:5005');
-      candidates.push('http://localhost:5005');
+      // 4. Localhost fallback (chỉ dùng khi đang chạy cục bộ offline trên máy cá nhân)
+      if (!isRemote) {
+        candidates.push('http://127.0.0.1:5005');
+        candidates.push('http://localhost:5005');
+      }
 
       return [...new Set(candidates.filter(Boolean))];
     }
@@ -8502,7 +8498,7 @@ function resetTable() {
           clearTimeout(timeoutId);
 
           const contentType = res.headers.get("content-type") || "";
-          if (!contentType.includes("application/json") && !res.ok) {
+          if (!contentType.includes("application/json") && !res.ok && res.status >= 500) {
             throw new Error(`Máy chủ ${cleanBase} trả về lỗi HTTP ${res.status}`);
           }
 
@@ -9509,12 +9505,12 @@ function resetTable() {
         const cStr = String(cid || "").trim();
         const uKey = normChatKey(un);
         if (contractorIds.has(cStr) || (uKey && contractorIds.has(unameToCid[uKey]))) {
-          return { role: "contractor", role_label: "🛸 Chủ Thầu" };
+          return { role: "contractor", role_label: "🛸 Thầu" };
         }
         if (ownerResolved && (cStr === ownerResolved || (uKey && unameToCid[uKey] === ownerResolved))) {
           return { role: "owner", role_label: "👑 Chủ Bot" };
         }
-        return { role: "client", role_label: "👤 Khách Cược" };
+        return { role: "client", role_label: "👤 Khách" };
       };
 
       const convMap = {};
@@ -10176,16 +10172,23 @@ function resetTable() {
       }
 
       if (roleBadge) {
-        roleBadge.textContent = conv.role_label || "👤 Khách Cược";
+        let rLabel = conv.role_label || "👤 Khách";
         if (conv.role === "contractor") {
-          roleBadge.className = "px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] border border-indigo-300 dark:border-indigo-800";
+          rLabel = "🛸 Thầu";
+          roleBadge.className = "px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] border border-indigo-300 dark:border-indigo-800 shrink-0";
         } else if (conv.role === "owner") {
-          roleBadge.className = "px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-bold text-[11px] border border-amber-300 dark:border-amber-800";
+          rLabel = "👑 Chủ Bot";
+          roleBadge.className = "px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-bold text-[11px] border border-amber-300 dark:border-amber-800 shrink-0";
         } else {
-          roleBadge.className = "px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 font-bold text-[11px] border border-sky-300 dark:border-sky-800";
+          rLabel = "👤 Khách";
+          roleBadge.className = "px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 font-bold text-[11px] border border-sky-300 dark:border-sky-800 shrink-0";
         }
+        roleBadge.textContent = rLabel;
       }
-      if (nameEl) nameEl.textContent = conv.name || cid;
+      if (nameEl) {
+        nameEl.textContent = "";
+        nameEl.classList.add("hidden");
+      }
       if (metaEl) {
         const uname = conv.username ? (conv.username.startsWith('@') ? conv.username : '@' + conv.username) : '';
         metaEl.textContent = `ID: ${cid}${uname && uname !== cid ? ' • ' + uname : ''}`;
