@@ -7571,21 +7571,21 @@ function resetTable() {
             <!-- KHU VỰC 2: HỘP THƯ TIN CƯỢC TRONG NGÀY (INBOX FEED) -->
             <div class="bg-white dark:bg-dark-800 p-3 rounded-xs border border-slate-300 dark:border-slate-700 space-y-2.5">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-slate-200 dark:border-slate-700">
-                <!-- Dòng 1: Chữ Hộp Thư + Nút Làm Mới + Ô Chọn Ngày CÙNG 1 DÒNG -->
-                <div class="flex items-center gap-1.5 flex-nowrap shrink-0 overflow-x-auto select-none">
-                  <span class="font-bold text-slate-800 dark:text-slate-100 text-xs sm:text-sm uppercase flex items-center gap-1 shrink-0">
+                <!-- Dòng 1: Chữ Hộp Thư + Nút Làm Mới + Ô Chọn Ngày CÙNG 1 DÒNG (gọn gàng không trượt ngang) -->
+                <div class="flex items-center gap-1.5 flex-nowrap select-none min-w-0">
+                  <span class="font-bold text-slate-800 dark:text-slate-100 text-xs uppercase flex items-center gap-1 shrink-0">
                     <i class="fa-solid fa-envelope-open-text text-sky-600"></i>
-                    <span class="whitespace-nowrap">Hộp Thư (<span id="tgCountClientMsgs">0</span> tin)</span>
+                    <span class="whitespace-nowrap">Hộp Thư (<span id="tgCountClientMsgs">0</span>)</span>
                   </span>
                   <!-- Nút Làm Mới (Chỉ Biểu Tượng) ngay sau tiêu đề Hộp Thư -->
                   <button type="button" onclick="fetchTgBoard()" class="p-1 px-1.5 bg-white hover:bg-slate-100 active:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs text-sky-600 hover:text-sky-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs cursor-pointer shadow-2xs transition shrink-0" title="Làm mới Hộp Thư">
                     <i class="fa-solid fa-rotate"></i>
                   </button>
 
-                  <!-- Ô Chọn Ngày (Nằm CÙNG DÒNG với Hộp Thư) -->
-                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 px-1.5 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs shrink-0" title="Chọn ngày xem tin cược &amp; đối soát">
-                    <i class="fa-regular fa-calendar-days text-sky-600 text-[11px]"></i>
-                    <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none px-0.5">
+                  <!-- Ô Chọn Ngày (Gọn gàng, vừa vặn không tràn khung) -->
+                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 px-1 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs shrink-0" title="Chọn ngày xem tin cược &amp; đối soát">
+                    <i class="fa-regular fa-calendar-days text-sky-600 text-[10px]"></i>
+                    <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[10px] sm:text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none p-0 w-[92px] sm:w-[108px]">
                   </div>
                 </div>
 
@@ -10037,16 +10037,22 @@ function resetTable() {
 
     function getCleanTgChatAccName(c) {
       if (!c) return "";
-      let name = String(c.name || "").trim();
       const uname = String(c.username || "").replace(/^@/, "").trim();
+      let name = String(c.name || "").trim();
 
-      // Nếu tên dạng "Chủ thầu (8836005980)" hoặc "Thầu - ID: 8836005980 • @congty368", ưu tiên username nếu có
-      if (/^(?:Chủ\s*thầu|Thầu|Chủ\s*Bot|Khách)\s*[\(\-:]/i.test(name)) {
-        if (uname) return uname;
+      // 1. Ưu tiên hàng đầu định dạng @username để dễ nhận diện và tránh bị bấm nhầm nút tắt
+      if (uname) {
+        return "@" + uname;
       }
-      // Bỏ tiền tố vai trò
+
+      // 2. Tìm username @ trong trường tên nếu có
+      const atMatch = name.match(/@([A-Za-z0-9_]{3,})/);
+      if (atMatch && atMatch[1]) {
+        return "@" + atMatch[1];
+      }
+
+      // 3. Nếu chưa có username, làm sạch tên hiển thị
       name = name.replace(/^(?:Chủ\s*thầu|Thầu|Chủ\s*Bot|Khách)\s*[:\-•]?\s*/i, "").trim();
-      // Bỏ phần trong ngoặc tròn như " (@congty368)" hoặc " (8836005980)"
       const pMatch = name.match(/^(.+?)\s*\((?:@?[^)]+)\)$/);
       if (pMatch && pMatch[1].trim()) {
         name = pMatch[1].trim();
@@ -10054,14 +10060,13 @@ function resetTable() {
       if (name.includes("•")) {
         const parts = name.split("•").map(p => p.trim());
         const uPart = parts.find(p => p.startsWith("@"));
-        if (uPart) return uPart.replace(/^@/, "");
-        if (uname) return uname;
-      }
-      if (!name || name === String(c.chat_id) || /^ID:\s*\d+/i.test(name)) {
-        if (uname) return uname;
+        if (uPart) return uPart;
       }
       name = name.replace(/^@/, "").trim();
-      return name || uname || String(c.chat_id || "");
+      if (!name || name === String(c.chat_id) || /^ID:\s*\d+/i.test(name)) {
+        return c.chat_id ? String(c.chat_id) : "";
+      }
+      return "@" + name;
     }
 
     function renderTgChatContactTabs() {
@@ -10093,9 +10098,9 @@ function resetTable() {
         const cleanName = escapeHtmlChat(getCleanTgChatAccName(c));
 
         return `
-          <div onclick="selectTgChatContact('${safeCidAttr}')" class="px-2 py-1 rounded-xs border text-xs font-semibold flex items-center gap-1 cursor-pointer transition select-none ${isActive ? roleColorActive : roleColorInactive}">
-            <span class="truncate max-w-[120px] sm:max-w-[160px]">${cleanName}</span>
-            <span onclick="closeTgChatTab('${safeCidAttr}', event)" title="Đóng tab này" class="w-3.5 h-3.5 rounded-xs inline-flex items-center justify-center text-[10px] leading-none transition ${isActive ? 'text-white/80 hover:text-white hover:bg-black/30' : 'text-slate-400 hover:text-white hover:bg-rose-500'}">✕</span>
+          <div onclick="selectTgChatContact('${safeCidAttr}')" class="px-2.5 py-1 rounded-xs border text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition select-none ${isActive ? roleColorActive : roleColorInactive}">
+            <span class="truncate max-w-[130px] sm:max-w-[170px]">${cleanName}</span>
+            <span onclick="closeTgChatTab('${safeCidAttr}', event)" title="Đóng tab này" class="ml-1 w-4 h-4 rounded-xs inline-flex items-center justify-center text-[10px] leading-none transition ${isActive ? 'text-white/80 hover:text-white hover:bg-black/30' : 'text-slate-400 hover:text-white hover:bg-rose-500'}">✕</span>
           </div>
         `;
       }).join('');
