@@ -105,9 +105,24 @@
         touch-action: manipulation;
       }
       @media screen and (max-width: 768px) {
-        input, select, textarea, [contenteditable], [contenteditable="true"] {
+        #mainSpreadsheetWorkspace input:not([type="checkbox"]):not([type="radio"]), 
+        #mainSpreadsheetWorkspace select, 
+        #mainSpreadsheetWorkspace textarea, 
+        #mainSpreadsheetWorkspace [contenteditable] {
           font-size: 16px !important;
         }
+      }
+
+      /* Telegram Bot View Mobile Compact Inputs: Avoid vertical wrapping & keep crisp sizing */
+      #pageTelegramBotView input[type="date"] {
+        white-space: nowrap !important;
+        font-size: 11px !important;
+        line-height: normal !important;
+        min-height: 22px;
+      }
+      #pageTelegramBotView input[type="date"]::-webkit-date-and-time-value {
+        text-align: left;
+        white-space: nowrap;
       }
 
       /* Custom Scrollbars */
@@ -7592,10 +7607,10 @@ function resetTable() {
                     <i class="fa-solid fa-rotate"></i>
                   </button>
 
-                  <!-- Ô Chọn Ngày (Gọn gàng, nhỏ cỡ lại để vừa màn hình điện thoại) -->
-                  <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-dark-900 px-1 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs shrink-0" title="Chọn ngày xem tin cược &amp; đối soát">
-                    <i class="fa-regular fa-calendar-days text-sky-600 text-[9px]"></i>
-                    <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[9.5px] sm:text-[10px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none p-0 w-[84px] sm:w-[94px]">
+                  <!-- Ô Chọn Ngày (Gọn gàng, vừa khít, không bị xuống dòng) -->
+                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 px-1.5 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs shrink-0" title="Chọn ngày xem tin cược &amp; đối soát">
+                    <i class="fa-regular fa-calendar-days text-sky-600 text-[10px]"></i>
+                    <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[10.5px] sm:text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none p-0 min-w-[115px] sm:min-w-[125px] w-auto">
                   </div>
                 </div>
 
@@ -7679,7 +7694,7 @@ function resetTable() {
                 <!-- Ở cuối là Chọn ngày tháng để nhảy đến tin đầu tiên của ngày -->
                 <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 px-1.5 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs shrink-0" title="Chọn ngày để nhảy đến tin nhắn đầu tiên của ngày được chọn">
                   <i class="fa-regular fa-calendar-days text-sky-600 text-[10px]"></i>
-                  <input type="date" id="tgChatDatePicker" onchange="jumpTgChatToDate(this.value)" class="bg-transparent border-none text-[10px] sm:text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none p-0 w-[84px] sm:w-[96px]">
+                  <input type="date" id="tgChatDatePicker" onchange="jumpTgChatToDate(this.value)" class="bg-transparent border-none text-[10.5px] sm:text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none p-0 min-w-[115px] sm:min-w-[125px] w-auto">
                 </div>
               </div>
 
