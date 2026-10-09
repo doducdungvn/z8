@@ -7808,7 +7808,7 @@ function resetTable() {
                 </button>
               </div>
             </div>
-            <pre id="tgReportTextContent" class="whitespace-pre-wrap font-mono text-xs bg-white dark:bg-dark-900 p-2.5 rounded-xs border border-amber-200 dark:border-amber-900/60 text-slate-800 dark:text-slate-200 leading-relaxed max-h-72 overflow-y-auto"></pre>
+            <pre id="tgReportTextContent" class="whitespace-pre-wrap font-mono text-xs bg-white dark:bg-dark-900 p-2.5 rounded-xs border border-amber-200 dark:border-amber-900/60 text-slate-800 dark:text-slate-200 leading-relaxed max-h-72 overflow-y-auto break-words break-all max-w-full" style="word-break: break-word; overflow-wrap: anywhere;"></pre>
           </div>
 
           <!-- TOÀN CẢNH 3 CỘT DATA FLOW -->
@@ -11084,7 +11084,7 @@ function resetTable() {
         }
 
         return `
-          <div class="p-2.5 rounded-xs border ${cardBg} space-y-1.5 text-xs">
+          <div class="p-2.5 rounded-xs border ${cardBg} space-y-1.5 text-xs max-w-full overflow-hidden">
             <div class="flex items-center justify-between flex-wrap gap-1.5 pb-1 border-b border-slate-200 dark:border-slate-700">
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="font-bold text-slate-800 dark:text-slate-200">Tin #${idx + 1} 👤 ${m.name || m.sender_name || m.sender || 'Khách'}</span>
@@ -11109,12 +11109,12 @@ function resetTable() {
                 </button>
               </div>
             </div>
-            <div class="space-y-1.5 pt-1">
-              <div>
+            <div class="space-y-1.5 pt-1 min-w-0 max-w-full">
+              <div class="min-w-0 max-w-full">
                 <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1 mb-0.5">
                   <i class="fa-solid fa-file-lines text-slate-400"></i> 1. Tin cược gốc của khách:
                 </div>
-                <pre class="whitespace-pre-wrap font-mono text-[11px] sm:text-xs p-2 rounded-xs border ${preStyle} leading-relaxed">${displayContent || '<i class="text-slate-400 italic font-sans">(Tin trống / cược không chứa cú pháp hợp lệ)</i>'}</pre>
+                <pre class="whitespace-pre-wrap font-mono text-[11px] sm:text-xs p-2 rounded-xs border ${preStyle} leading-relaxed break-words break-all max-w-full" style="word-break: break-word; overflow-wrap: anywhere;">${displayContent || '<i class="text-slate-400 italic font-sans">(Tin trống / cược không chứa cú pháp hợp lệ)</i>'}</pre>
               </div>
 
               <!-- Cân chuyển & Giữ lại ôm -->
@@ -11172,24 +11172,24 @@ function resetTable() {
                 }
 
                 return `
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5 pt-0.5">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5 pt-0.5 min-w-0 max-w-full">
                     <!-- Cột 1: Cân chuyển thầu -->
-                    <div class="p-2 rounded-xs border ${tfBoxClass} transition-colors">
-                      <div class="flex items-center justify-between text-[11px] font-bold pb-1 border-b border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200">
-                        <span class="flex items-center gap-1"><i class="fa-solid fa-paper-plane ${isVoided ? 'text-rose-500' : 'text-sky-500'}"></i> 2. Cân chuyển (Thầu trên)</span>
+                    <div class="p-2 rounded-xs border ${tfBoxClass} transition-colors min-w-0 max-w-full overflow-hidden">
+                      <div class="flex items-center justify-between text-[11px] font-bold pb-1 border-b border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200 gap-1 min-w-0">
+                        <span class="flex items-center gap-1 min-w-0 truncate"><i class="fa-solid fa-paper-plane ${isVoided ? 'text-rose-500' : 'text-sky-500'} shrink-0"></i> <span class="truncate">2. Cân chuyển (Thầu trên)</span></span>
                         ${tfBadge}
                       </div>
-                      <pre class="whitespace-pre-wrap font-mono text-[11px] mt-1 ${tfTextStyle} leading-relaxed">${m.transfer_text ? m.transfer_text : '<span class="text-slate-400 italic font-sans font-normal">(Không có cược thừa cần chuyển)</span>'}</pre>
+                      <pre class="whitespace-pre-wrap font-mono text-[11px] mt-1 ${tfTextStyle} leading-relaxed break-words break-all max-w-full" style="word-break: break-word; overflow-wrap: anywhere;">${m.transfer_text ? m.transfer_text : '<span class="text-slate-400 italic font-sans font-normal">(Không có cược thừa cần chuyển)</span>'}</pre>
                       ${tfNote}
                     </div>
 
                     <!-- Cột 2: Giữ lại ôm -->
-                    <div class="p-2 rounded-xs border ${retBoxClass} transition-colors">
-                      <div class="flex items-center justify-between text-[11px] font-bold pb-1 border-b border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200">
-                        <span class="flex items-center gap-1"><i class="fa-solid fa-shield-halved ${isVoided ? 'text-rose-500' : 'text-emerald-500'}"></i> 3. Giữ lại (Thực ôm)</span>
+                    <div class="p-2 rounded-xs border ${retBoxClass} transition-colors min-w-0 max-w-full overflow-hidden">
+                      <div class="flex items-center justify-between text-[11px] font-bold pb-1 border-b border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200 gap-1 min-w-0">
+                        <span class="flex items-center gap-1 min-w-0 truncate"><i class="fa-solid fa-shield-halved ${isVoided ? 'text-rose-500' : 'text-emerald-500'} shrink-0"></i> <span class="truncate">3. Giữ lại (Thực ôm)</span></span>
                         ${retBadge}
                       </div>
-                      <pre class="whitespace-pre-wrap font-mono text-[11px] mt-1 ${retTextStyle} leading-relaxed">${m.retained_text ? m.retained_text : '<span class="text-slate-400 italic font-sans font-normal">(Không ôm / Chuyển 100%)</span>'}</pre>
+                      <pre class="whitespace-pre-wrap font-mono text-[11px] mt-1 ${retTextStyle} leading-relaxed break-words break-all max-w-full" style="word-break: break-word; overflow-wrap: anywhere;">${m.retained_text ? m.retained_text : '<span class="text-slate-400 italic font-sans font-normal">(Không ôm / Chuyển 100%)</span>'}</pre>
                       ${retNote}
                     </div>
                   </div>
@@ -12063,7 +12063,7 @@ function resetTable() {
                     </div>
                     <span class="text-[10px] text-slate-400 font-mono">${m.timestamp || m.time || ''}</span>
                   </div>
-                  <pre class="whitespace-pre-wrap font-mono text-[11px] p-1.5 rounded-xs bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-950 dark:text-amber-200 max-h-24 overflow-y-auto leading-relaxed">${(m.text || m.raw_text || '').trim()}</pre>
+                  <pre class="whitespace-pre-wrap font-mono text-[11px] p-1.5 rounded-xs bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-950 dark:text-amber-200 max-h-24 overflow-y-auto leading-relaxed break-words break-all max-w-full" style="word-break: break-word; overflow-wrap: anywhere;">${(m.text || m.raw_text || '').trim()}</pre>
                   <div class="flex items-center justify-end gap-1.5 pt-0.5">
                     <button type="button" onclick="approveTgPendingBet(${m.pending_id !== undefined && m.pending_id !== null ? m.pending_id : 'null'}, '${m.chat_id}', ${m.history_idx !== undefined && m.history_idx !== null ? m.history_idx : 'null'})" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xs text-[11px] font-bold shadow-xs flex items-center gap-1 cursor-pointer active:scale-95">
                       <i class="fa-solid fa-check"></i> Duyệt tin
@@ -12368,7 +12368,7 @@ function resetTable() {
                     ${voidBtn}
                   </div>
                 </div>
-                <pre class="whitespace-pre-wrap font-mono text-[11px] ${preStyle} p-1.5 rounded-xs border leading-relaxed">${h.transfer_text || ''}</pre>
+                <pre class="whitespace-pre-wrap font-mono text-[11px] ${preStyle} p-1.5 rounded-xs border leading-relaxed break-words break-all max-w-full" style="word-break: break-word; overflow-wrap: anywhere;">${h.transfer_text || ''}</pre>
               </div>
             `;
           }).join('');
@@ -13678,13 +13678,13 @@ function resetTable() {
                     </div>
                     ${netBadge}
                   </div>
-                  <pre class="whitespace-pre-wrap font-mono text-[11px] text-slate-700 dark:text-slate-300 p-2.5 bg-white dark:bg-dark-900 leading-relaxed">${msgText || '(Không có tin nhắn)'}</pre>
+                  <pre class="whitespace-pre-wrap font-mono text-[11px] text-slate-700 dark:text-slate-300 p-2.5 bg-white dark:bg-dark-900 leading-relaxed break-words break-all max-w-full" style="word-break: break-word; overflow-wrap: anywhere;">${msgText || '(Không có tin nhắn)'}</pre>
                 </div>`;
               }).join('');
             } else if (data.summary_text || data.full_summary) {
               // Fallback: hiển thị summary text nếu bot không trả về per-client
-              cardsHtml = `<div class="p-3 bg-white dark:bg-dark-900 rounded-xs border border-slate-200 dark:border-slate-700">
-                <pre class="whitespace-pre-wrap font-mono text-xs text-slate-700 dark:text-slate-300 leading-relaxed">${data.summary_text || data.full_summary}</pre>
+              cardsHtml = `<div class="p-3 bg-white dark:bg-dark-900 rounded-xs border border-slate-200 dark:border-slate-700 max-w-full overflow-hidden">
+                <pre class="whitespace-pre-wrap font-mono text-xs text-slate-700 dark:text-slate-300 leading-relaxed break-words break-all max-w-full" style="word-break: break-word; overflow-wrap: anywhere;">${data.summary_text || data.full_summary}</pre>
               </div>`;
             }
 
