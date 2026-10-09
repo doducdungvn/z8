@@ -7455,25 +7455,25 @@ function resetTable() {
     <!-- Main Body Container (Full Width / Max-width 7xl) -->
     <div id="tgModalBodyContainer" class="flex-1 flex flex-col hidden max-w-7xl w-full mx-auto p-2.5 sm:p-4 space-y-3">
 
-      <!-- Executive KPI Dashboard Card (Chỉ giữ lại thẻ Tin Cược & Khách, hiển thị số lần chuyển, % chuyển, % giữ lại) -->
+      <!-- Executive KPI Dashboard Card (Gọn gàng tối giản, biểu tượng lên đầu, 2 cột Giữ & Chuyển) -->
       <div class="select-none">
-        <!-- KPI: Tin Cược & Khách, Số lần chuyển, % Chuyển, % Giữ lại -->
         <div onclick="clickTgKpiCard('messages')" title="👉 Bấm để xem chi tiết Hộp Thư Tin Cược Gốc &amp; Tin Treo Chờ Duyệt" class="p-2 sm:p-2.5 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-2xs hover:border-sky-500 hover:shadow-xs cursor-pointer select-none group transition-all">
-          <div class="flex items-center justify-between flex-wrap gap-2">
-            <span class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 group-hover:text-sky-600 transition-colors flex items-center gap-1.5">
-              <i class="fa-solid fa-inbox text-sky-600 text-xs sm:text-sm"></i>
-              <span>TIN CƯỢC &amp; KHÁCH</span>
-            </span>
-            <div class="flex items-center gap-1.5 font-mono">
-              <span id="kpiTgClientsBadge" class="text-xs font-semibold px-2 py-0.5 rounded-xs bg-slate-100 dark:bg-dark-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"><b class="text-[13px] font-black text-slate-800 dark:text-slate-100">0</b> khách</span>
-              <span id="kpiTgTransfersStepsBadge" class="text-xs font-semibold px-2 py-0.5 rounded-xs bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"><b class="text-[13px] font-black text-indigo-800 dark:text-indigo-200">0</b> lần chuyển</span>
+          
+          <!-- Dòng 1: 3 biểu tượng duyệt, chờ, hủy & "2 tin đã duyệt" CÙNG 1 DÒNG -->
+          <div class="flex items-center justify-between gap-1 flex-wrap">
+            <div id="kpiTgMsgStatusDetail" class="text-xs font-mono text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-1.5 shrink-0">
+              <span>✅ <b class="text-xs font-black text-emerald-600 dark:text-emerald-400">0</b></span>
+              <span class="text-slate-300 dark:text-slate-600">|</span>
+              <span>⏳ <b class="text-xs font-black text-amber-600 dark:text-amber-400">0</b></span>
+              <span class="text-slate-300 dark:text-slate-600">|</span>
+              <span>🚫 <b class="text-xs font-black text-rose-600 dark:text-rose-400">0</b></span>
             </div>
-          </div>
-          <div class="mt-1 flex items-baseline justify-between flex-wrap gap-2">
-            <div class="flex items-baseline gap-2">
-              <div class="flex items-baseline gap-1">
-                <span id="kpiTgTotalMsgs" class="text-xl sm:text-2xl font-black font-mono text-slate-800 dark:text-white leading-tight">0</span>
-                <span class="text-xs text-slate-500 font-semibold">tin</span>
+
+            <!-- Cùng 1 dòng: Số tin cược & trạng thái duyệt -->
+            <div class="flex items-center gap-1 text-xs shrink-0">
+              <div class="flex items-baseline gap-0.5 text-slate-700 dark:text-slate-200">
+                <span id="kpiTgTotalMsgs" class="font-black font-mono text-slate-800 dark:text-white text-xs sm:text-sm">0</span>
+                <span class="text-[11px] text-slate-500 font-semibold">tin</span>
               </div>
               <div id="kpiTgPendingAlert" class="hidden text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
@@ -7483,16 +7483,26 @@ function resetTable() {
                 <i class="fa-solid fa-check text-[10px]"></i><span>Đã duyệt</span>
               </div>
             </div>
-            <!-- Phần trăm Giữ lại & Chuyển -->
-            <div id="kpiTgRetainRatioText" class="text-xs font-mono font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-dark-900/80 px-2 py-0.5 rounded-xs border border-slate-200 dark:border-slate-700">
-              <span class="inline-flex items-center gap-1 text-sky-700 dark:text-sky-300 font-bold"><i class="fa-solid fa-arrow-down text-sky-500 font-bold"></i> Giữ: <b class="font-mono">0</b></span>
-              <span class="text-slate-300 dark:text-slate-600 mx-1">|</span>
-              <span class="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 font-bold"><i class="fa-solid fa-arrow-up text-amber-500 font-bold"></i> Chuyển: <b class="font-mono">0</b></span>
-            </div>
+
+            <!-- Giữ lại thẻ ẩn để JavaScript không bị lỗi tham chiếu -->
+            <span id="kpiTgClientsBadge" class="hidden"></span>
+            <span id="kpiTgTransfersStepsBadge" class="hidden"></span>
           </div>
-          <div class="mt-1 pt-1 border-t border-slate-100 dark:border-slate-700/60 text-xs font-mono text-slate-500 dark:text-slate-400 flex items-center justify-between">
-            <span id="kpiTgMsgStatusDetail" class="truncate">✅ <b class="text-[13px] font-black text-emerald-600 dark:text-emerald-400">0</b> &nbsp;|&nbsp; ⏳ <b class="text-[13px] font-black text-amber-600 dark:text-amber-400">0</b> &nbsp;|&nbsp; 🚫 <b class="text-[13px] font-black text-rose-600 dark:text-rose-400">0</b></span>
-            <span class="text-sky-600 font-bold group-hover:translate-x-0.5 transition-transform text-[11px] ml-1 shrink-0">Xem Hộp Thư ❯</span>
+
+          <!-- Hàng 3: Giữ 1 cột và Chuyển 1 cột -->
+          <div id="kpiTgRetainRatioText" class="mt-1.5 grid grid-cols-2 gap-1.5 text-xs font-mono">
+            <div class="bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 rounded-xs p-1.5 flex flex-col justify-between">
+              <span class="text-[11px] font-bold text-sky-700 dark:text-sky-300 flex items-center gap-1">
+                <i class="fa-solid fa-arrow-down text-sky-500 text-[10px]"></i> Giữ:
+              </span>
+              <div class="text-slate-700 dark:text-slate-200 font-semibold text-[11px] mt-0.5 leading-snug">0</div>
+            </div>
+            <div class="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xs p-1.5 flex flex-col justify-between">
+              <span class="text-[11px] font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1">
+                <i class="fa-solid fa-arrow-up text-amber-500 text-[10px]"></i> Chuyển:
+              </span>
+              <div class="text-slate-700 dark:text-slate-200 font-semibold text-[11px] mt-0.5 leading-snug">0</div>
+            </div>
           </div>
         </div>
       </div>
@@ -7569,36 +7579,36 @@ function resetTable() {
             </div>
 
             <!-- KHU VỰC 2: HỘP THƯ TIN CƯỢC TRONG NGÀY (INBOX FEED) -->
-            <div class="bg-white dark:bg-dark-800 p-3 rounded-xs border border-slate-300 dark:border-slate-700 space-y-2.5">
+            <div class="bg-white dark:bg-dark-800 p-2 sm:p-3 rounded-xs border border-slate-300 dark:border-slate-700 space-y-2">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-slate-200 dark:border-slate-700">
-                <!-- Dòng 1: Chữ Hộp Thư + Nút Làm Mới + Ô Chọn Ngày CÙNG 1 DÒNG (gọn gàng không trượt ngang) -->
-                <div class="flex items-center gap-1.5 flex-nowrap select-none min-w-0">
-                  <span class="font-bold text-slate-800 dark:text-slate-100 text-xs uppercase flex items-center gap-1 shrink-0">
-                    <i class="fa-solid fa-envelope-open-text text-sky-600"></i>
+                <!-- Dòng 1: Chữ Hộp Thư + Nút Làm Mới + Ô Chọn Ngày CÙNG 1 DÒNG (nhỏ gọn, không trượt ngang) -->
+                <div class="flex items-center gap-1 sm:gap-1.5 flex-nowrap select-none min-w-0">
+                  <span class="font-bold text-slate-800 dark:text-slate-100 text-[11px] sm:text-xs uppercase flex items-center gap-1 shrink-0">
+                    <i class="fa-solid fa-envelope-open-text text-sky-600 text-[11px]"></i>
                     <span class="whitespace-nowrap">Hộp Thư (<span id="tgCountClientMsgs">0</span>)</span>
                   </span>
                   <!-- Nút Làm Mới (Chỉ Biểu Tượng) ngay sau tiêu đề Hộp Thư -->
-                  <button type="button" onclick="fetchTgBoard()" class="p-1 px-1.5 bg-white hover:bg-slate-100 active:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs text-sky-600 hover:text-sky-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs cursor-pointer shadow-2xs transition shrink-0" title="Làm mới Hộp Thư">
+                  <button type="button" onclick="fetchTgBoard()" class="p-0.5 px-1 bg-white hover:bg-slate-100 active:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs text-sky-600 hover:text-sky-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-[10px] cursor-pointer shadow-2xs transition shrink-0" title="Làm mới Hộp Thư">
                     <i class="fa-solid fa-rotate"></i>
                   </button>
 
-                  <!-- Ô Chọn Ngày (Gọn gàng, vừa vặn không tràn khung) -->
-                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 px-1 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs shrink-0" title="Chọn ngày xem tin cược &amp; đối soát">
-                    <i class="fa-regular fa-calendar-days text-sky-600 text-[10px]"></i>
-                    <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[10px] sm:text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none p-0 w-[92px] sm:w-[108px]">
+                  <!-- Ô Chọn Ngày (Gọn gàng, nhỏ cỡ lại để vừa màn hình điện thoại) -->
+                  <div class="flex items-center gap-0.5 bg-slate-100 dark:bg-dark-900 px-1 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs shrink-0" title="Chọn ngày xem tin cược &amp; đối soát">
+                    <i class="fa-regular fa-calendar-days text-sky-600 text-[9px]"></i>
+                    <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[9.5px] sm:text-[10px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none p-0 w-[84px] sm:w-[94px]">
                   </div>
                 </div>
 
-                <!-- Dòng 2: Tìm Khách & Bộ Lọc Trạng Thái CÙNG 1 DÒNG VỚI NHAU -->
-                <div class="flex items-center gap-1.5 flex-nowrap w-full sm:w-auto">
+                <!-- Dòng 2: Tìm Khách & Bộ Lọc Trạng Thái CÙNG 1 DÒNG VỚI NHAU (thu nhỏ cỡ lại) -->
+                <div class="flex items-center gap-1 sm:gap-1.5 flex-nowrap w-full sm:w-auto">
                   <div class="relative flex-1 sm:flex-initial flex items-center min-w-0">
-                    <input type="text" id="tgInboxSearchInput" oninput="filterTgClientMessages()" placeholder="Tìm khách, ID, nội dung..." class="w-full sm:w-44 border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-1 text-xs bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 pl-6 pr-6 outline-none focus:border-sky-500">
-                    <i class="fa-solid fa-magnifying-glass absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
-                    <button type="button" id="btnClearTgInboxSearch" onclick="clearTgInboxSearch()" class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-xs cursor-pointer p-0.5" title="Xóa tìm kiếm">
+                    <input type="text" id="tgInboxSearchInput" oninput="filterTgClientMessages()" placeholder="Tìm..." class="w-full sm:w-36 border border-slate-300 dark:border-slate-600 rounded-xs px-1.5 py-0.5 text-[10px] sm:text-[11px] bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 pl-5 pr-5 outline-none focus:border-sky-500">
+                    <i class="fa-solid fa-magnifying-glass absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-400 text-[9px]"></i>
+                    <button type="button" id="btnClearTgInboxSearch" onclick="clearTgInboxSearch()" class="hidden absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-[10px] cursor-pointer p-0.5" title="Xóa tìm kiếm">
                       <i class="fa-solid fa-circle-xmark"></i>
                     </button>
                   </div>
-                  <select id="tgInboxStatusFilter" onchange="filterTgClientMessages()" class="shrink-0 border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-1 text-xs bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
+                  <select id="tgInboxStatusFilter" onchange="filterTgClientMessages()" class="shrink-0 border border-slate-300 dark:border-slate-600 rounded-xs px-1.5 py-0.5 text-[10px] sm:text-[11px] bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
                     <option value="all">Tất cả trạng thái</option>
                     <option value="pending">🟡 Đang chờ duyệt</option>
                     <option value="approved">✅ Đã nhận</option>
@@ -7657,11 +7667,20 @@ function resetTable() {
           <div id="tgInboxSubContentChat" class="hidden bg-white dark:bg-dark-800 p-3 rounded-xs border border-slate-300 dark:border-slate-700 space-y-2.5 flex flex-col">
             <!-- Thanh tiêu đề + các tab con của từng đối tượng đang giao tiếp -->
             <div class="flex flex-col gap-1.5 pb-2 border-b border-slate-200 dark:border-slate-700">
-              <div class="flex items-center gap-1.5 w-full max-w-sm bg-slate-100 dark:bg-dark-900 border border-slate-300 dark:border-slate-600 rounded-xs px-2 py-1">
-                <input type="text" id="tgChatNewRecipientInput" placeholder="Nhập ID / @username mới..." class="flex-1 bg-transparent text-xs outline-none min-w-0 text-slate-800 dark:text-slate-200 font-mono">
-                <button type="button" onclick="openOrCreateTgChatTab()" class="px-2.5 py-1 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-xs text-xs font-bold cursor-pointer shrink-0 transition" title="Mở tab chat với người này">
-                  + Mở Chat
-                </button>
+              <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                <!-- Ô nhập ID / @username + Mở Chat (được thu ngắn gọn lại) -->
+                <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 border border-slate-300 dark:border-slate-600 rounded-xs px-1.5 py-0.5 flex-1 max-w-[210px] sm:max-w-xs min-w-0">
+                  <input type="text" id="tgChatNewRecipientInput" onkeydown="if(event.key==='Enter') openOrCreateTgChatTab()" placeholder="ID / @username..." class="flex-1 bg-transparent text-[11px] sm:text-xs outline-none min-w-0 text-slate-800 dark:text-slate-200 font-mono">
+                  <button type="button" onclick="openOrCreateTgChatTab()" class="px-2 py-0.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-xs text-[10px] sm:text-[11px] font-bold cursor-pointer shrink-0 transition" title="Mở tab chat với người này">
+                    + Mở Chat
+                  </button>
+                </div>
+
+                <!-- Ở cuối là Chọn ngày tháng để nhảy đến tin đầu tiên của ngày -->
+                <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 px-1.5 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs shrink-0" title="Chọn ngày để nhảy đến tin nhắn đầu tiên của ngày được chọn">
+                  <i class="fa-regular fa-calendar-days text-sky-600 text-[10px]"></i>
+                  <input type="date" id="tgChatDatePicker" onchange="jumpTgChatToDate(this.value)" class="bg-transparent border-none text-[10px] sm:text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none p-0 w-[84px] sm:w-[96px]">
+                </div>
               </div>
 
               <!-- Dải Sub-Tabs ngang: Mỗi tab con là 1 đối tượng, tự động xếp tầng/vảy cá khi hết khung mobile -->
@@ -8719,8 +8738,8 @@ function resetTable() {
       const btnLogs = document.getElementById('tgSubTabBtnInboxLogs');
       const btnChat = document.getElementById('tgSubTabBtnInboxChat');
 
-      const activeCls = "px-3 py-1.5 bg-[#1e293b] text-white font-bold text-xs rounded-xs border border-slate-700 flex items-center gap-1.5 cursor-pointer shadow-2xs";
-      const inactiveCls = "px-3 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700";
+      const activeCls = "px-1 sm:px-2 py-1.5 bg-[#1e293b] text-white font-bold text-[11px] sm:text-xs rounded-xs border border-slate-700 flex items-center justify-center gap-1 cursor-pointer shadow-2xs";
+      const inactiveCls = "px-1 sm:px-2 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-[11px] sm:text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-1 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700";
 
       if (mailContent) mailContent.classList.toggle('hidden', subName !== 'mail');
       if (logsContent) logsContent.classList.toggle('hidden', subName !== 'logs');
@@ -10117,44 +10136,143 @@ function resetTable() {
 
     function selectTgChatContact(chatId) {
       window.tgActiveChatContactId = String(chatId || "");
-      window._tgCustomPendingContactId = false;
       renderTgChatContactTabs();
       renderTgActiveChatPanel(true);
     }
     window.selectTgChatContact = selectTgChatContact;
 
-    function openTgChatWithContact(chatId, nameHint = "") {
+    async function resolveTargetToUserObject(target) {
+      const raw = String(target || "").trim();
+      if (!raw) return null;
+      const key = normChatKey(raw);
+
+      // 1. Tìm trong danh sách hội thoại hiện tại
+      const conv = (window.tgChatConversations || []).find(c =>
+        String(c.chat_id) === raw ||
+        (key && (normChatKey(c.username) === key || normChatKey(c.name) === key))
+      );
+      if (conv) {
+        return {
+          chat_id: String(conv.chat_id),
+          username: conv.username || (raw.startsWith('@') ? raw : ''),
+          name: conv.name || raw,
+          role: conv.role || 'client'
+        };
+      }
+
+      // 2. Tìm trong /api/bot/known_users từ máy chủ
+      try {
+        const res = await callBotApi("/api/bot/known_users");
+        if (res.ok) {
+          const uRaw = await res.json();
+          const list = Array.isArray(uRaw) ? uRaw : Object.values(uRaw.users || uRaw || {});
+          for (const u of list) {
+            if (!u || typeof u !== 'object') continue;
+            const uCid = String(u.chat_id || u.user_id || "").trim();
+            const un = String(u.username || "").trim();
+            const fn = String(u.first_name || u.name || "").trim();
+            if (uCid === raw || (key && (normChatKey(un) === key || normChatKey(fn) === key))) {
+              return {
+                chat_id: uCid || raw,
+                username: un ? (un.startsWith('@') ? un : '@' + un) : (raw.startsWith('@') ? raw : ''),
+                name: fn || un || raw,
+                role: 'client'
+              };
+            }
+          }
+        }
+      } catch (_) {}
+
+      // 3. Tìm trong tin nhắn Hộp Thư đã tải (window.tgBoardData)
+      const bData = window.tgBoardData || {};
+      const msgs = Array.isArray(bData.raw_messages) ? bData.raw_messages : (Array.isArray(bData.client_messages) ? bData.client_messages : []);
+      for (const m of msgs) {
+        const mCid = String(m.chat_id || m.sender || "").trim();
+        const un = String(m.username || "").trim();
+        const sName = String(m.sender_name || m.name || "").trim();
+        if (mCid === raw || (key && (normChatKey(un) === key || normChatKey(sName) === key))) {
+          return {
+            chat_id: mCid || raw,
+            username: un ? (un.startsWith('@') ? un : '@' + un) : (raw.startsWith('@') ? raw : ''),
+            name: sName || un || raw,
+            role: 'client'
+          };
+        }
+      }
+
+      // 4. Tìm trong CRM / Cấu hình máy chủ
+      const cfg = window.tgBotConfig;
+      if (cfg) {
+        if (cfg.owner_chat_id && (String(cfg.owner_chat_id) === raw || normChatKey(cfg.owner_chat_id) === key)) {
+          return { chat_id: String(cfg.owner_chat_id), username: '', name: 'Chủ Bot', role: 'owner' };
+        }
+        if (cfg.target_recipient && (String(cfg.target_recipient) === raw || normChatKey(cfg.target_recipient) === key)) {
+          return { chat_id: String(cfg.target_recipient), username: '', name: 'Thầu', role: 'contractor' };
+        }
+      }
+
+      return {
+        chat_id: raw,
+        username: raw.startsWith('@') ? raw : '',
+        name: raw,
+        role: 'client'
+      };
+    }
+    window.resolveTargetToUserObject = resolveTargetToUserObject;
+
+    async function openTgChatWithContact(chatId, nameHint = "", usernameHint = "") {
       const rawCid = String(chatId || "").trim();
       if (!rawCid) return;
-      unmarkClosedTgChatTab(rawCid, nameHint);
+      const uHint = String(usernameHint || (rawCid.startsWith('@') ? rawCid : (nameHint.startsWith('@') ? nameHint : ''))).trim();
+
+      unmarkClosedTgChatTab(rawCid, uHint);
+      if (uHint) unmarkClosedTgChatTab(uHint, rawCid);
+
       switchTgTab('inbox');
       switchTgInboxSubTab('chat');
-      const key = normChatKey(rawCid);
-      const existing = (window.tgChatConversations || []).find(c =>
+
+      const key = normChatKey(rawCid) || normChatKey(uHint);
+      let existing = (window.tgChatConversations || []).find(c =>
         String(c.chat_id) === rawCid ||
         (key && (normChatKey(c.username) === key || normChatKey(c.name) === key))
       );
+
       if (existing) {
-        selectTgChatContact(existing.chat_id);
+        if (uHint && !existing.username) existing.username = uHint.startsWith('@') ? uHint : '@' + uHint;
+        window.tgActiveChatContactId = String(existing.chat_id);
       } else {
-        window.tgChatConversations.unshift({
+        const newConv = {
           chat_id: rawCid,
-          name: nameHint || rawCid,
-          username: rawCid.startsWith("@") ? rawCid : "",
+          name: nameHint || (uHint || rawCid),
+          username: uHint ? (uHint.startsWith('@') ? uHint : '@' + uHint) : (rawCid.startsWith('@') ? rawCid : ''),
           role: "client",
-          role_label: "👤 Khách Cược",
+          role_label: "👤 Khách",
           _isCustomOpened: true,
           messages: []
-        });
-        window._tgCustomPendingContactId = true;
-        selectTgChatContact(rawCid);
-        fetchTgChatConversations(true);
+        };
+        if (!window.tgChatConversations) window.tgChatConversations = [];
+        window.tgChatConversations.unshift(newConv);
+        window.tgActiveChatContactId = String(rawCid);
+      }
+
+      window._tgCustomPendingContactId = true;
+      renderTgChatContactTabs();
+      renderTgActiveChatPanel(true);
+
+      try {
+        await fetchTgChatConversations(true);
+      } catch (_) {}
+
+      if (rawCid) {
+        window.tgActiveChatContactId = String(rawCid);
+        renderTgChatContactTabs();
+        renderTgActiveChatPanel(true);
       }
       setTimeout(() => document.getElementById('tgChatInputText')?.focus(), 100);
     }
     window.openTgChatWithContact = openTgChatWithContact;
 
-    function openOrCreateTgChatTab() {
+    async function openOrCreateTgChatTab() {
       const inp = document.getElementById('tgChatNewRecipientInput');
       const target = (inp?.value || "").trim();
       if (!target) {
@@ -10163,9 +10281,40 @@ function resetTable() {
         return;
       }
       if (inp) inp.value = "";
-      openTgChatWithContact(target, target);
+
+      const userInfo = await resolveTargetToUserObject(target);
+      const cid = userInfo ? userInfo.chat_id : target;
+      const uname = userInfo?.username || (target.startsWith('@') ? target : '');
+      const name = userInfo?.name || target;
+
+      await openTgChatWithContact(cid, name, uname);
     }
     window.openOrCreateTgChatTab = openOrCreateTgChatTab;
+
+    function jumpTgChatToDate(dateVal) {
+      if (!dateVal) return;
+      const listEl = document.getElementById('tgChatMessagesList');
+      if (!listEl) return;
+      const bubbles = listEl.querySelectorAll('[data-msg-date]');
+      let targetEl = null;
+      for (const b of bubbles) {
+        if (b.getAttribute('data-msg-date') === dateVal) {
+          targetEl = b;
+          break;
+        }
+      }
+
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.classList.add('ring-2', 'ring-amber-400');
+        setTimeout(() => targetEl.classList.remove('ring-2', 'ring-amber-400'), 2500);
+      } else {
+        const parts = dateVal.split('-');
+        const disp = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateVal;
+        alert(`Không tìm thấy tin nhắn nào trong ngày ${disp} với đối tượng này.`);
+      }
+    }
+    window.jumpTgChatToDate = jumpTgChatToDate;
 
     function renderTgActiveChatPanel(forceScrollBottom = false) {
       const roleBadge = document.getElementById('tgChatActiveRoleBadge');
@@ -10216,7 +10365,7 @@ function resetTable() {
         return;
       }
 
-      msgListEl.innerHTML = msgs.map(m => {
+      msgListEl.innerHTML = msgs.map((m, idx) => {
         const isOut = (m.direction === "out");
         const timeStr = escapeHtmlChat(m.time || m.timestamp || "");
         const textHtml = escapeHtmlChat(m.text || "").replace(/\n/g, "<br>");
@@ -10224,9 +10373,29 @@ function resetTable() {
           ? `🤖 Bot gửi (${m.tag === 'manual_chat' ? 'Nhắn trực tiếp' : 'Tự động'})`
           : `${conv.role === 'contractor' ? '🛸' : (conv.role === 'owner' ? '👑' : '👤')} ${escapeHtmlChat(m.sender_name || conv.name || cid)}`;
 
+        // Trích xuất ngày YYYY-MM-DD để phục vụ tìm kiếm theo ngày
+        let msgYmd = "";
+        if (m.ts || m._sortTs) {
+          const d = new Date(m.ts || m._sortTs);
+          if (!isNaN(d.getTime())) {
+            msgYmd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          }
+        }
+        if (!msgYmd && timeStr) {
+          const mDate = timeStr.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/);
+          if (mDate) {
+            const yr = mDate[3] || new Date().getFullYear();
+            msgYmd = `${yr}-${String(mDate[2]).padStart(2, '0')}-${String(mDate[1]).padStart(2, '0')}`;
+          }
+        }
+        if (!msgYmd) {
+          const now = new Date();
+          msgYmd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
         if (isOut) {
           return `
-            <div class="flex flex-col items-end">
+            <div id="tgChatBubble_${idx}" data-msg-date="${msgYmd}" class="flex flex-col items-end transition-all">
               <div class="max-w-[85%] sm:max-w-[75%] rounded-xs px-3 py-2 bg-sky-700/90 border border-sky-500/80 text-white shadow-xs">
                 <div class="flex items-center justify-between gap-3 text-[10px] text-sky-200 pb-1 mb-1 border-b border-sky-600/60">
                   <span class="font-bold">${senderTitle}</span>
@@ -10238,7 +10407,7 @@ function resetTable() {
           `;
         } else {
           return `
-            <div class="flex flex-col items-start">
+            <div id="tgChatBubble_${idx}" data-msg-date="${msgYmd}" class="flex flex-col items-start transition-all">
               <div class="max-w-[85%] sm:max-w-[75%] rounded-xs px-3 py-2 bg-slate-800 border border-slate-600 text-slate-100 shadow-xs">
                 <div class="flex items-center justify-between gap-3 text-[10px] text-amber-300 pb-1 mb-1 border-b border-slate-700">
                   <span class="font-bold">${senderTitle}</span>
@@ -11521,42 +11690,6 @@ function resetTable() {
           kpiTransStepsBadge.innerHTML = `<b class="text-[13px] font-black text-indigo-800 dark:text-indigo-200">${stepVal}</b> lần chuyển`;
         }
 
-        const kpiRetainRatioText = document.getElementById('kpiTgRetainRatioText');
-        if (kpiRetainRatioText) {
-          const fmtKpiAmt = (val) => {
-            const n = Math.round(Number(val) || 0);
-            return n.toLocaleString('vi-VN');
-          };
-
-          const retItems = [];
-          if (sumRetDe > 0) retItems.push(`Đề: ${fmtKpiAmt(sumRetDe)}`);
-          if (sumRetLo > 0) retItems.push(`Lô: ${fmtKpiAmt(sumRetLo)}`);
-          if (sumRetBc > 0) retItems.push(`3C: ${fmtKpiAmt(sumRetBc)}`);
-          if (sumRetX > 0) retItems.push(`Xiên: ${fmtKpiAmt(sumRetX)}`);
-          const retDisp = retItems.length > 0 ? retItems.join(' • ') : '0';
-
-          const transItems = [];
-          if (sumTransDe > 0) transItems.push(`Đề: ${fmtKpiAmt(sumTransDe)}`);
-          if (sumTransLo > 0) transItems.push(`Lô: ${fmtKpiAmt(sumTransLo)}`);
-          if (sumTransBc > 0) transItems.push(`3C: ${fmtKpiAmt(sumTransBc)}`);
-          if (sumTransX > 0) transItems.push(`Xiên: ${fmtKpiAmt(sumTransX)}`);
-          const transDisp = transItems.length > 0 ? transItems.join(' • ') : '0';
-
-          kpiRetainRatioText.innerHTML = `
-            <span class="inline-flex items-center gap-1 text-sky-700 dark:text-sky-300 font-bold" title="Giữ lại theo từng loại cược"><i class="fa-solid fa-arrow-down text-sky-500 font-bold"></i> Giữ: <b class="font-mono">${retDisp}</b></span>
-            <span class="text-slate-300 dark:text-slate-600 mx-1">|</span>
-            <span class="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 font-bold" title="Chuyển thầu theo từng loại cược"><i class="fa-solid fa-arrow-up text-amber-500 font-bold"></i> Chuyển: <b class="font-mono">${transDisp}</b></span>
-          `.trim();
-        }
-
-        // KPI 4: LÃI/LỖ & KQXS & BÁO CÁO TRẠNG THÁI CHỐT TIỀN
-        const kpiNetProfit = document.getElementById('kpiTgNetProfit');
-        const kpiKqxsStatus = document.getElementById('kpiTgKqxsStatus');
-        const kpiCard4Title = document.getElementById('kpiTgCard4Title');
-        const kpiSettleBadge = document.getElementById('kpiTgSettleBadge');
-        const kpiCard4Icon = document.getElementById('kpiTgCard4Icon');
-        const kpiKqxsDePrize = document.getElementById('kpiTgKqxsDePrize');
-
         // Xác định ngày đang xem
         let curViewDate = todayDisp;
         if (window.tgInboxDateMode === 'yesterday') {
@@ -11599,6 +11732,99 @@ function resetTable() {
           const p = settledDate.split('-');
           if (p.length === 3 && p[0].length === 4) settledDate = `${p[2]}/${p[1]}/${p[0]}`;
         }
+
+        // Tính tiền trúng thưởng cho từng thể loại Giữ & Chuyển (khi đã chốt hoặc có KQXS)
+        let winRetDe = 0, winRetLo = 0, winRetBc = 0, winRetX = 0;
+        let winTransDe = 0, winTransLo = 0, winTransBc = 0, winTransX = 0;
+
+        if (kqxs) {
+          // 1. Giữ lại
+          if (winDe && retDe[winDe]) winRetDe += (Number(retDe[winDe]) || 0);
+          if (winBc && retBc[winBc]) winRetBc += (Number(retBc[winBc]) || 0);
+          for (const [k, v] of Object.entries(retLo)) {
+            const hits = loHitCount[k] || 0;
+            if (hits > 0) winRetLo += (Number(v) || 0) * hits;
+          }
+          for (const xb of retX) {
+            if (xb.numbers && xb.numbers.length > 1 && xb.numbers.every(n => (loHitCount[n] || 0) >= 1)) {
+              winRetX += (Number(xb.amount) || 0);
+            }
+          }
+
+          // 2. Chuyển thầu
+          if (winDe && cumDe[winDe]) winTransDe += (Number(cumDe[winDe]) || 0);
+          if (winBc && cumBc[winBc]) winTransBc += (Number(cumBc[winBc]) || 0);
+          for (const [k, v] of Object.entries(cumLo)) {
+            const hits = loHitCount[k] || 0;
+            if (hits > 0) winTransLo += (Number(v) || 0) * hits;
+          }
+          for (const [k, v] of Object.entries(cumX)) {
+            const amt = typeof v === 'object' ? (Number(v.amount) || 0) : (Number(v) || 0);
+            const nums = k.split('-').map(s => s.trim());
+            if (nums.length > 1 && nums.every(n => (loHitCount[n] || 0) >= 1)) {
+              winTransX += amt;
+            }
+          }
+        }
+
+        const kpiRetainRatioText = document.getElementById('kpiTgRetainRatioText');
+        if (kpiRetainRatioText) {
+          const fmtKpiAmt = (val) => {
+            const n = Math.round(Number(val) || 0);
+            return n.toLocaleString('vi-VN');
+          };
+
+          const formatColBetItem = (label, stake, win) => {
+            if (isSettled) {
+              const winStr = win > 0 
+                ? `<span class="text-rose-600 dark:text-rose-400 font-bold">${fmtKpiAmt(win)}</span>` 
+                : '0';
+              return `${label}: ${fmtKpiAmt(stake)}/${winStr}`;
+            }
+            return `${label}: ${fmtKpiAmt(stake)}`;
+          };
+
+          const retItems = [];
+          if (sumRetDe > 0) retItems.push(formatColBetItem('Đề', sumRetDe, winRetDe));
+          if (sumRetLo > 0) retItems.push(formatColBetItem('Lô', sumRetLo, winRetLo));
+          if (sumRetBc > 0) retItems.push(formatColBetItem('3C', sumRetBc, winRetBc));
+          if (sumRetX > 0) retItems.push(formatColBetItem('Xiên', sumRetX, winRetX));
+          const retDisp = retItems.length > 0 
+            ? retItems.map(it => `<div class="truncate">${it}</div>`).join('') 
+            : '<div class="text-slate-400">0</div>';
+
+          const transItems = [];
+          if (sumTransDe > 0) transItems.push(formatColBetItem('Đề', sumTransDe, winTransDe));
+          if (sumTransLo > 0) transItems.push(formatColBetItem('Lô', sumTransLo, winTransLo));
+          if (sumTransBc > 0) transItems.push(formatColBetItem('3C', sumTransBc, winTransBc));
+          if (sumTransX > 0) transItems.push(formatColBetItem('Xiên', sumTransX, winTransX));
+          const transDisp = transItems.length > 0 
+            ? transItems.map(it => `<div class="truncate">${it}</div>`).join('') 
+            : '<div class="text-slate-400">0</div>';
+
+          kpiRetainRatioText.innerHTML = `
+            <div class="bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 rounded-xs p-1.5 flex flex-col justify-start">
+              <span class="text-[11px] font-bold text-sky-700 dark:text-sky-300 flex items-center gap-1 pb-1 mb-1 border-b border-sky-200/60 dark:border-sky-800/40">
+                <i class="fa-solid fa-arrow-down text-sky-500 text-[10px]"></i> Giữ:
+              </span>
+              <div class="text-slate-700 dark:text-slate-200 font-semibold text-[11px] leading-relaxed flex flex-col gap-0.5">${retDisp}</div>
+            </div>
+            <div class="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xs p-1.5 flex flex-col justify-start">
+              <span class="text-[11px] font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1 pb-1 mb-1 border-b border-amber-200/60 dark:border-amber-800/40">
+                <i class="fa-solid fa-arrow-up text-amber-500 text-[10px]"></i> Chuyển:
+              </span>
+              <div class="text-slate-700 dark:text-slate-200 font-semibold text-[11px] leading-relaxed flex flex-col gap-0.5">${transDisp}</div>
+            </div>
+          `.trim();
+        }
+
+        // KPI 4: LÃI/LỖ & KQXS & BÁO CÁO TRẠNG THÁI CHỐT TIỀN
+        const kpiNetProfit = document.getElementById('kpiTgNetProfit');
+        const kpiKqxsStatus = document.getElementById('kpiTgKqxsStatus');
+        const kpiCard4Title = document.getElementById('kpiTgCard4Title');
+        const kpiSettleBadge = document.getElementById('kpiTgSettleBadge');
+        const kpiCard4Icon = document.getElementById('kpiTgCard4Icon');
+        const kpiKqxsDePrize = document.getElementById('kpiTgKqxsDePrize');
 
         // Cập nhật Giải đặc biệt & Đề về
         if (kpiKqxsDePrize) {
