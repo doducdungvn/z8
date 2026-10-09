@@ -8741,14 +8741,21 @@ function resetTable() {
     window.switchTgInboxSubTab = switchTgInboxSubTab;
 
     function switchTgTab(tabName) {
+      let forceSubTab = null;
       if (tabName === 'logs') {
         tabName = 'inbox';
-        setTimeout(() => switchTgInboxSubTab('logs'), 50);
+        forceSubTab = 'logs';
       } else if (tabName === 'chat') {
         tabName = 'inbox';
-        setTimeout(() => switchTgInboxSubTab('chat'), 50);
+        forceSubTab = 'chat';
+      } else if (tabName === 'inbox') {
+        forceSubTab = 'mail';
       } else if (tabName === 'config' || tabName === 'retain') {
         tabName = 'settings';
+      }
+
+      if (forceSubTab) {
+        switchTgInboxSubTab(forceSubTab);
       }
 
       const tabs = ['inbox', 'board', 'clients', 'settings'];
@@ -8805,14 +8812,16 @@ function resetTable() {
       } else if (tabName === 'board') {
         fetchTgBoard();
       } else if (tabName === 'inbox') {
-        const logsTab = document.getElementById('tgInboxSubContentLogs');
-        const chatTab = document.getElementById('tgInboxSubContentChat');
-        if (logsTab && !logsTab.classList.contains('hidden')) {
-          fetchTgLogs();
-        } else if (chatTab && !chatTab.classList.contains('hidden')) {
-          fetchTgChatConversations(true);
-        } else {
-          fetchTgBoard();
+        if (!forceSubTab) {
+          const logsTab = document.getElementById('tgInboxSubContentLogs');
+          const chatTab = document.getElementById('tgInboxSubContentChat');
+          if (logsTab && !logsTab.classList.contains('hidden')) {
+            fetchTgLogs();
+          } else if (chatTab && !chatTab.classList.contains('hidden')) {
+            fetchTgChatConversations(true);
+          } else {
+            fetchTgBoard();
+          }
         }
       } else if (tabName === 'clients') {
         loadTgClientsCrm();
