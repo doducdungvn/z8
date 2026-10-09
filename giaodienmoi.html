@@ -19,6 +19,10 @@
     window.fsize = "14px";
     window.kqwidth = "500px";
   </script>
+  <!-- Google Fonts: Inter (UI) & JetBrains Mono (Numbers/Code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -43,15 +47,17 @@
             warning: '#d97706',
             danger: '#dc2626',
             dark: {
-              900: '#0f172a',
-              800: '#1e293b',
-              700: '#334155',
-              600: '#475569'
+              950: '#070b14',
+              900: '#0b0f19',
+              850: '#111827',
+              800: '#161e2e',
+              700: '#26334d',
+              600: '#3b4b68'
             }
           },
           fontFamily: {
-            sans: ['Segoe UI', '-apple-system', 'BlinkMacSystemFont', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
-            mono: ['Cascadia Code', 'Consolas', 'Courier New', 'monospace']
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'Cascadia Code', 'Consolas', 'monospace']
           }
         }
       }
@@ -7337,39 +7343,44 @@ function resetTable() {
 
 
   <!-- ==================== TELEGRAM BOT FULL PAGE WORKSPACE ==================== -->
-  <div id="pageTelegramBotView" class="hidden flex-1 flex flex-col min-h-screen bg-slate-100 dark:bg-dark-900 text-slate-800 dark:text-slate-200">
+  <div id="pageTelegramBotView" class="hidden flex-1 flex flex-col min-h-screen bg-slate-100 dark:bg-[#0b0f19] text-slate-800 dark:text-slate-100 font-sans transition-colors duration-200">
     
-    <!-- Top Header of Bot Dedicated Page -->
-    <header class="bg-[#1e293b] border-b border-slate-700 text-white px-2.5 sm:px-4 py-2 flex items-center justify-between gap-1.5 z-30 sticky top-0">
-      <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
-        <!-- Nút Quay lại Trang Chủ Phẳng -->
-        <button type="button" onclick="showMainCalculatorView()" class="px-2 sm:px-2.5 py-1 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-white rounded-xs text-xs font-semibold border border-slate-600 flex items-center gap-1 cursor-pointer shrink-0" title="Quay lại bảng tính cược">
+    <!-- Top Header of Bot Dedicated Page (Glassmorphic Luxury Slate) -->
+    <header class="bg-white/90 dark:bg-[#0f172a]/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-3 sm:px-5 py-2.5 flex items-center justify-between gap-2 z-30 sticky top-0 shadow-xs">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <!-- Nút Quay lại Trang Chủ -->
+        <button type="button" onclick="showMainCalculatorView()" class="px-2.5 sm:px-3 py-1.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-800/90 dark:hover:bg-slate-700 active:scale-95 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-700/80 flex items-center gap-1.5 cursor-pointer shrink-0 transition" title="Quay lại bảng tính cược">
           <i class="fa-solid fa-arrow-left text-xs"></i>
-          <span class="hidden sm:inline">Quay lại Trang Chủ</span>
-          <span class="sm:hidden">Trang Chủ</span>
+          <span class="hidden sm:inline">Trang Chủ</span>
+          <span class="sm:hidden">Về</span>
         </button>
 
-        <div class="flex items-center gap-1.5 min-w-0">
-          <i class="fa-brands fa-telegram text-sky-400 text-base shrink-0"></i>
-          <h2 class="text-xs sm:text-sm font-bold text-white tracking-wide truncate uppercase">
-            <span>Quản Trị Bot</span>
-          </h2>
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0 shadow-2xs">
+            <i class="fa-brands fa-telegram text-sky-500 text-lg"></i>
+          </div>
+          <div class="flex flex-col">
+            <h2 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white tracking-wide truncate uppercase flex items-center gap-1.5">
+              <span>Quản Trị Bot</span>
+              <span class="text-[9px] bg-sky-500/10 text-sky-600 dark:text-sky-400 px-1.5 py-0.2 rounded-full font-mono border border-sky-500/20">PRO</span>
+            </h2>
+          </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5 shrink-0 ml-auto">
-        <div id="tgModalStatusBadge" class="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-xs text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
-          <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-slate-400 shrink-0"></span>
+      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+        <div id="tgModalStatusBadge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-mono font-bold uppercase bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 shrink-0 shadow-2xs">
+          <span class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
           <span>Đang kiểm tra...</span>
         </div>
 
         <!-- Các nút thao tác chỉ hiện khi ĐÃ MỞ KHÓA -->
-        <div id="tgHeaderAdminControls" class="flex items-center gap-1 sm:gap-1.5 hidden">
-          <button id="btnToggleBotRun" type="button" class="px-2 sm:px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white rounded-xs text-xs font-semibold border border-emerald-800 flex items-center gap-1 cursor-pointer shrink-0">
+        <div id="tgHeaderAdminControls" class="flex items-center gap-1.5 hidden">
+          <button id="btnToggleBotRun" type="button" class="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 text-white rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0 transition">
             <i class="fa-solid fa-play text-[10px]"></i>
             <span id="lblToggleBotRun">Bật (tự động)</span>
           </button>
-          <button id="btnLockTgModal" type="button" onclick="lockTgModal()" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 text-slate-200 border border-slate-600 rounded-xs text-xs font-semibold flex items-center gap-1 cursor-pointer shrink-0" title="Khóa cài đặt ngay">
+          <button id="btnLockTgModal" type="button" onclick="lockTgModal()" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1 cursor-pointer shrink-0 transition" title="Khóa cài đặt ngay">
             <i class="fa-solid fa-lock text-[10px]"></i>
             <span class="hidden sm:inline">Khóa</span>
           </button>
@@ -7468,33 +7479,33 @@ function resetTable() {
     </div>
 
     <!-- Main Body Container (Full Width / Max-width 7xl) -->
-    <div id="tgModalBodyContainer" class="flex-1 flex flex-col hidden max-w-7xl w-full mx-auto p-2.5 sm:p-4 space-y-3">
+    <div id="tgModalBodyContainer" class="flex-1 flex flex-col hidden max-w-7xl w-full mx-auto p-2.5 sm:p-4 space-y-3.5">
 
-      <!-- Executive KPI Dashboard Card (Gọn gàng tối giản, biểu tượng lên đầu, 2 cột Giữ & Chuyển) -->
+      <!-- Executive KPI Dashboard Card (Fintech Precision Card) -->
       <div class="select-none">
-        <div onclick="clickTgKpiCard('messages')" title="👉 Bấm để xem chi tiết Hộp Thư Tin Cược Gốc &amp; Tin Treo Chờ Duyệt" class="p-2 sm:p-2.5 bg-white dark:bg-dark-800 rounded-xs border border-slate-300 dark:border-slate-700 shadow-2xs hover:border-sky-500 hover:shadow-xs cursor-pointer select-none group transition-all">
+        <div onclick="clickTgKpiCard('messages')" title="👉 Bấm để xem chi tiết Hộp Thư Tin Cược Gốc &amp; Tin Treo Chờ Duyệt" class="p-3 bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs hover:border-sky-500/50 hover:shadow-md cursor-pointer select-none group transition-all duration-200">
           
           <!-- Dòng 1: 3 biểu tượng duyệt, chờ, hủy & "2 tin đã duyệt" CÙNG 1 DÒNG -->
           <div class="flex items-center justify-between gap-1 flex-wrap">
-            <div id="kpiTgMsgStatusDetail" class="text-xs font-mono text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-1.5 shrink-0">
-              <span>✅ <b class="text-xs font-black text-emerald-600 dark:text-emerald-400">0</b></span>
+            <div id="kpiTgMsgStatusDetail" class="text-xs font-mono text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-2 shrink-0 bg-slate-50 dark:bg-slate-800/60 px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-slate-700/60 shadow-2xs">
+              <span class="flex items-center gap-1">✅ <b class="text-xs font-black text-emerald-600 dark:text-emerald-400">0</b></span>
               <span class="text-slate-300 dark:text-slate-600">|</span>
-              <span>⏳ <b class="text-xs font-black text-amber-600 dark:text-amber-400">0</b></span>
+              <span class="flex items-center gap-1">⏳ <b class="text-xs font-black text-amber-600 dark:text-amber-400">0</b></span>
               <span class="text-slate-300 dark:text-slate-600">|</span>
-              <span>🚫 <b class="text-xs font-black text-rose-600 dark:text-rose-400">0</b></span>
+              <span class="flex items-center gap-1">🚫 <b class="text-xs font-black text-rose-600 dark:text-rose-400">0</b></span>
             </div>
 
             <!-- Cùng 1 dòng: Số tin cược & trạng thái duyệt -->
-            <div class="flex items-center gap-1 text-xs shrink-0">
-              <div class="flex items-baseline gap-0.5 text-slate-700 dark:text-slate-200">
-                <span id="kpiTgTotalMsgs" class="font-black font-mono text-slate-800 dark:text-white text-xs sm:text-sm">0</span>
+            <div class="flex items-center gap-1.5 text-xs shrink-0">
+              <div class="flex items-baseline gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/70 dark:border-slate-700/60">
+                <span id="kpiTgTotalMsgs" class="font-black font-mono text-slate-900 dark:text-white text-xs sm:text-sm">0</span>
                 <span class="text-[11px] text-slate-500 font-semibold">tin</span>
               </div>
-              <div id="kpiTgPendingAlert" class="hidden text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+              <div id="kpiTgPendingAlert" class="hidden text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-700/60">
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
                 <span>Treo: <b id="kpiTgPendingCount">0</b></span>
               </div>
-              <div id="kpiTgNoPendingText" class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">
+              <div id="kpiTgNoPendingText" class="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/70 dark:border-emerald-700/60">
                 <i class="fa-solid fa-check text-[10px]"></i><span>Đã duyệt</span>
               </div>
             </div>
@@ -7505,41 +7516,40 @@ function resetTable() {
           </div>
 
           <!-- Hàng 3: Giữ 1 cột và Chuyển 1 cột -->
-          <div id="kpiTgRetainRatioText" class="mt-1.5 grid grid-cols-2 gap-1.5 text-xs font-mono">
-            <div class="bg-sky-50/70 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 rounded-xs p-1.5 flex flex-col justify-between">
+          <div id="kpiTgRetainRatioText" class="mt-2.5 grid grid-cols-2 gap-2 text-xs font-mono">
+            <div class="bg-gradient-to-br from-sky-50 to-blue-50/40 dark:from-sky-950/30 dark:to-slate-900/40 border-l-[3px] border-l-sky-500 border-y border-r border-slate-200/80 dark:border-slate-800/80 rounded-lg p-2.5 flex flex-col justify-between shadow-2xs">
               <span class="text-[11px] font-bold text-sky-700 dark:text-sky-300 flex items-center gap-1">
                 <i class="fa-solid fa-arrow-down text-sky-500 text-[10px]"></i> Giữ:
               </span>
-              <div class="text-slate-700 dark:text-slate-200 font-semibold text-[11px] mt-0.5 leading-snug">0</div>
+              <div class="text-slate-800 dark:text-slate-100 font-semibold text-[11px] mt-1 leading-snug">0</div>
             </div>
-            <div class="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xs p-1.5 flex flex-col justify-between">
+            <div class="bg-gradient-to-br from-amber-50 to-orange-50/40 dark:from-amber-950/30 dark:to-slate-900/40 border-l-[3px] border-l-amber-500 border-y border-r border-slate-200/80 dark:border-slate-800/80 rounded-lg p-2.5 flex flex-col justify-between shadow-2xs">
               <span class="text-[11px] font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1">
                 <i class="fa-solid fa-arrow-up text-amber-500 text-[10px]"></i> Chuyển:
               </span>
-              <div class="text-slate-700 dark:text-slate-200 font-semibold text-[11px] mt-0.5 leading-snug">0</div>
+              <div class="text-slate-800 dark:text-slate-100 font-semibold text-[11px] mt-1 leading-snug">0</div>
             </div>
           </div>
         </div>
       </div>
 
-
       <!-- Tabs Navigation (Responsive 4 Tabs Hiện Đại) -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-1.5 pt-0.5 select-none text-xs sm:text-sm font-bold">
-        <button id="tgTabBtnInbox" type="button" onclick="switchTgTab('inbox')" class="px-2.5 sm:px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none rounded-xs cursor-pointer shadow-md border-2 border-sky-700 text-xs sm:text-sm transition-all">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 pt-0.5 select-none text-xs sm:text-sm font-bold">
+        <button id="tgTabBtnInbox" type="button" onclick="switchTgTab('inbox')" class="px-3 sm:px-4 py-2.5 bg-gradient-to-r from-sky-600 to-blue-600 text-white font-bold flex items-center justify-center sm:justify-start gap-2 focus:outline-none rounded-xl cursor-pointer shadow-sm ring-1 ring-sky-500/40 text-xs sm:text-sm transition-all active:scale-[0.99]">
           <i class="fa-solid fa-inbox text-white shrink-0"></i>
           <span class="truncate">1. Duyệt Tin</span>
           <span id="tgTabInboxBadge" class="hidden px-1.5 py-0.2 bg-amber-500 text-white text-[10px] font-black rounded-full animate-pulse ml-auto">0</span>
         </button>
-        <button id="tgTabBtnBoard" type="button" onclick="switchTgTab('board')" class="px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-emerald-400 dark:border-emerald-700 text-slate-700 dark:text-slate-300 hover:bg-emerald-50/60 hover:border-emerald-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer">
-          <i class="fa-solid fa-table-columns text-emerald-600 shrink-0"></i>
+        <button id="tgTabBtnBoard" type="button" onclick="switchTgTab('board')" class="px-3 sm:px-4 py-2.5 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50/50 dark:hover:bg-slate-800/60 hover:border-emerald-500/40 font-semibold flex items-center justify-center sm:justify-start gap-2 focus:outline-none transition-all rounded-xl cursor-pointer text-xs sm:text-sm active:scale-[0.99]">
+          <i class="fa-solid fa-table-columns text-emerald-600 dark:text-emerald-400 shrink-0"></i>
           <span class="truncate">2. Bảng Cược</span>
         </button>
-        <button id="tgTabBtnClients" type="button" onclick="switchTgTab('clients')" class="px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-amber-400 dark:border-amber-700 text-slate-700 dark:text-slate-300 hover:bg-amber-50/60 hover:border-amber-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer">
-          <i class="fa-solid fa-users text-amber-600 shrink-0"></i>
+        <button id="tgTabBtnClients" type="button" onclick="switchTgTab('clients')" class="px-3 sm:px-4 py-2.5 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-amber-50/50 dark:hover:bg-slate-800/60 hover:border-amber-500/40 font-semibold flex items-center justify-center sm:justify-start gap-2 focus:outline-none transition-all rounded-xl cursor-pointer text-xs sm:text-sm active:scale-[0.99]">
+          <i class="fa-solid fa-users text-amber-600 dark:text-amber-400 shrink-0"></i>
           <span class="truncate">3. Setup Giá</span>
         </button>
-        <button id="tgTabBtnSettings" type="button" onclick="switchTgTab('settings')" class="px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-indigo-400 dark:border-indigo-700 text-slate-700 dark:text-slate-300 hover:bg-indigo-50/60 hover:border-indigo-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer">
-          <i class="fa-solid fa-sliders text-indigo-600 shrink-0"></i>
+        <button id="tgTabBtnSettings" type="button" onclick="switchTgTab('settings')" class="px-3 sm:px-4 py-2.5 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-indigo-50/50 dark:hover:bg-slate-800/60 hover:border-indigo-500/40 font-semibold flex items-center justify-center sm:justify-start gap-2 focus:outline-none transition-all rounded-xl cursor-pointer text-xs sm:text-sm active:scale-[0.99]">
+          <i class="fa-solid fa-sliders text-indigo-600 dark:text-indigo-400 shrink-0"></i>
           <span class="truncate">4. Hệ Thống</span>
         </button>
       </div>
@@ -7550,18 +7560,18 @@ function resetTable() {
         <!-- ==================== TAB 1: TRUNG TÂM TÁC NGHIỆP & DUYỆT TIN ==================== -->
         <div id="tgTabContentInbox" class="space-y-2.5">
           
-          <!-- Thanh chuyển 3 Sub-Tabs con trong Tab 1: 1.1 Inbox | 1.2 Nhật Ký | 1.3 Giao Tiếp (3 mục cùng 1 hàng) -->
-          <div class="grid grid-cols-3 gap-1 w-full pb-1.5 border-b border-slate-300 dark:border-slate-700">
-            <button type="button" id="tgSubTabBtnInboxMail" onclick="switchTgInboxSubTab('mail')" class="px-1 sm:px-2 py-1.5 bg-[#1e293b] text-white font-bold text-xs rounded-xs border border-slate-700 flex items-center justify-center gap-1 cursor-pointer shadow-2xs">
-              <i class="fa-solid fa-envelope-open-text text-sky-400 text-xs shrink-0"></i>
+          <!-- Thanh chuyển 3 Sub-Tabs con trong Tab 1: 1.1 Inbox | 1.2 Nhật Ký | 1.3 Giao Tiếp -->
+          <div class="p-1 bg-slate-200/70 dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-800 grid grid-cols-3 gap-1">
+            <button type="button" id="tgSubTabBtnInboxMail" onclick="switchTgInboxSubTab('mail')" class="px-2 py-1.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs rounded-lg shadow-xs border border-slate-200/60 dark:border-slate-700/50 flex items-center justify-center gap-1.5 cursor-pointer transition-all">
+              <i class="fa-solid fa-envelope-open-text text-sky-500 text-xs shrink-0"></i>
               <span class="truncate">1.1. Inbox</span>
               <span id="tgSubTabInboxPendingBadge" class="hidden px-1 py-0.2 bg-amber-500 text-white text-[9px] font-black rounded-full animate-pulse ml-0.5">0</span>
             </button>
-            <button type="button" id="tgSubTabBtnInboxLogs" onclick="switchTgInboxSubTab('logs')" class="px-1 sm:px-2 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-1 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700">
+            <button type="button" id="tgSubTabBtnInboxLogs" onclick="switchTgInboxSubTab('logs')" class="px-2 py-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-all">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
               <span class="truncate">1.2. Nhật Ký</span>
             </button>
-            <button type="button" id="tgSubTabBtnInboxChat" onclick="switchTgInboxSubTab('chat')" class="px-1 sm:px-2 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-1 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700">
+            <button type="button" id="tgSubTabBtnInboxChat" onclick="switchTgInboxSubTab('chat')" class="px-2 py-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-all">
               <i class="fa-solid fa-comments text-amber-500 text-xs shrink-0"></i>
               <span class="truncate">1.3. Giao Tiếp</span>
               <span id="tgSubTabInboxChatCountBadge" class="px-1.5 py-0.2 bg-sky-600 text-white text-[10px] font-bold rounded-full ml-0.5 shrink-0">0</span>
@@ -7571,8 +7581,8 @@ function resetTable() {
           <!-- SUB-TAB 1: HỘP THƯ & DUYỆT TIN (MAILBOX & PENDING QUEUE) -->
           <div id="tgInboxSubContentMail" class="space-y-2.5">
             <!-- KHU VỰC 1: TIN TREO CHỜ DUYỆT KHẨN CẤP (PENDING QUEUE) -->
-            <div id="tgPendingBetsArea" class="hidden p-3 bg-amber-50/90 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-700 rounded-xs space-y-2 shadow-sm">
-              <div class="flex items-center justify-between flex-wrap gap-2 pb-1.5 border-b border-amber-300 dark:border-amber-800">
+            <div id="tgPendingBetsArea" class="hidden p-3.5 bg-amber-50/90 dark:bg-amber-950/40 border-2 border-amber-400/90 dark:border-amber-700/80 rounded-xl space-y-2 shadow-xs">
+              <div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-amber-300 dark:border-amber-800">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-amber-500 animate-ping"></span>
                   <span class="font-bold text-amber-900 dark:text-amber-200 text-xs sm:text-sm uppercase tracking-wide flex items-center gap-1.5">
@@ -7581,7 +7591,7 @@ function resetTable() {
                   </span>
                 </div>
                 <div class="flex items-center gap-1.5">
-                  <button type="button" onclick="approveAllTgPendingBets()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white rounded-xs text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer transition">
+                  <button type="button" onclick="approveAllTgPendingBets()" class="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer transition">
                     <i class="fa-solid fa-check-double"></i> Duyệt tất cả tin treo
                   </button>
                 </div>
@@ -7594,36 +7604,36 @@ function resetTable() {
             </div>
 
             <!-- KHU VỰC 2: HỘP THƯ TIN CƯỢC TRONG NGÀY (INBOX FEED) -->
-            <div class="bg-white dark:bg-dark-800 p-2 sm:p-3 rounded-xs border border-slate-300 dark:border-slate-700 space-y-2">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-slate-200 dark:border-slate-700">
+            <div class="bg-white dark:bg-slate-900/90 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2.5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200 dark:border-slate-800">
                 <!-- Dòng 1: Chữ Hộp Thư + Nút Làm Mới + Ô Chọn Ngày CÙNG 1 DÒNG (nhỏ gọn, không trượt ngang) -->
-                <div class="flex items-center gap-1 sm:gap-1.5 flex-nowrap select-none min-w-0">
-                  <span class="font-bold text-slate-800 dark:text-slate-100 text-[11px] sm:text-xs uppercase flex items-center gap-1 shrink-0">
-                    <i class="fa-solid fa-envelope-open-text text-sky-600 text-[11px]"></i>
+                <div class="flex items-center gap-1.5 sm:gap-2 flex-nowrap select-none min-w-0">
+                  <span class="font-bold text-slate-900 dark:text-white text-[11px] sm:text-xs uppercase flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-envelope-open-text text-sky-500 text-[12px]"></i>
                     <span class="whitespace-nowrap">Hộp Thư (<span id="tgCountClientMsgs">0</span>)</span>
                   </span>
-                  <!-- Ô Chọn Ngày (Gọn gàng, vừa khít, không bị xuống dòng) -->
-                  <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 px-1.5 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs shrink-0" title="Chọn ngày xem tin cược &amp; đối soát">
-                    <i class="fa-regular fa-calendar-days text-sky-600 text-[10px]"></i>
-                    <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[10.5px] sm:text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none p-0 min-w-[115px] sm:min-w-[125px] w-auto">
+                  <!-- Ô Chọn Ngày -->
+                  <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700/80 text-xs shrink-0" title="Chọn ngày xem tin cược &amp; đối soát">
+                    <i class="fa-regular fa-calendar-days text-sky-500 text-[10px]"></i>
+                    <input type="date" id="tgInboxCustomDatePicker" onchange="switchTgInboxDate('custom', this.value)" class="bg-transparent border-none text-[10.5px] sm:text-[11px] font-mono font-bold text-slate-800 dark:text-slate-100 cursor-pointer outline-none p-0 min-w-[115px] sm:min-w-[125px] w-auto">
                   </div>
 
-                  <!-- Nút Làm Mới (Chỉ Biểu Tượng) ngay sau khung chọn ngày: quay lại trạng thái Live mới nhất -->
-                  <button type="button" id="btnRefreshTgInboxLive" onclick="refreshTgInboxLive(this)" class="p-0.5 px-1 bg-white hover:bg-slate-100 active:bg-slate-200 dark:bg-dark-700 dark:hover:bg-dark-600 rounded-xs text-sky-600 hover:text-sky-700 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-[10px] cursor-pointer shadow-2xs transition shrink-0" title="Quay lại trạng thái Live mới nhất hôm nay">
+                  <!-- Nút Làm Mới: quay lại trạng thái Live mới nhất -->
+                  <button type="button" id="btnRefreshTgInboxLive" onclick="refreshTgInboxLive(this)" class="p-1 px-1.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-sky-600 hover:text-sky-500 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[11px] cursor-pointer shadow-2xs transition shrink-0" title="Quay lại trạng thái Live mới nhất hôm nay">
                     <i class="fa-solid fa-rotate"></i>
                   </button>
                 </div>
 
-                <!-- Dòng 2: Tìm Khách & Bộ Lọc Trạng Thái CÙNG 1 DÒNG VỚI NHAU (thu nhỏ cỡ lại) -->
-                <div class="flex items-center gap-1 sm:gap-1.5 flex-nowrap w-full sm:w-auto">
+                <!-- Dòng 2: Tìm Khách & Bộ Lọc Trạng Thái CÙNG 1 DÒNG VỚI NHAU -->
+                <div class="flex items-center gap-1.5 flex-nowrap w-full sm:w-auto">
                   <div class="relative flex-1 sm:flex-initial flex items-center min-w-0">
-                    <input type="text" id="tgInboxSearchInput" oninput="filterTgClientMessages()" placeholder="Tìm..." class="w-full sm:w-36 border border-slate-300 dark:border-slate-600 rounded-xs px-1.5 py-0.5 text-[10px] sm:text-[11px] bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 pl-5 pr-5 outline-none focus:border-sky-500">
-                    <i class="fa-solid fa-magnifying-glass absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-400 text-[9px]"></i>
-                    <button type="button" id="btnClearTgInboxSearch" onclick="clearTgInboxSearch()" class="hidden absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-[10px] cursor-pointer p-0.5" title="Xóa tìm kiếm">
+                    <input type="text" id="tgInboxSearchInput" oninput="filterTgClientMessages()" placeholder="Tìm..." class="w-full sm:w-40 border border-slate-200 dark:border-slate-700/80 rounded-lg px-2 py-1 text-[11px] bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 pl-6 pr-6 outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition">
+                    <i class="fa-solid fa-magnifying-glass absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+                    <button type="button" id="btnClearTgInboxSearch" onclick="clearTgInboxSearch()" class="hidden absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 text-[10px] cursor-pointer p-0.5" title="Xóa tìm kiếm">
                       <i class="fa-solid fa-circle-xmark"></i>
                     </button>
                   </div>
-                  <select id="tgInboxStatusFilter" onchange="filterTgClientMessages()" class="shrink-0 border border-slate-300 dark:border-slate-600 rounded-xs px-1.5 py-0.5 text-[10px] sm:text-[11px] bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
+                  <select id="tgInboxStatusFilter" onchange="filterTgClientMessages()" class="shrink-0 border border-slate-200 dark:border-slate-700/80 rounded-lg px-2 py-1 text-[11px] bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 outline-none cursor-pointer focus:ring-1 focus:ring-sky-500">
                     <option value="all">Tất cả trạng thái</option>
                     <option value="pending">🟡 Đang chờ duyệt</option>
                     <option value="approved">✅ Đã nhận</option>
@@ -7679,53 +7689,53 @@ function resetTable() {
           </div>
 
           <!-- SUB-TAB 3: GIAO TIẾP TRỰC TIẾP VỚI CHỦ / THẦU / KHÁCH (2-WAY LIVE CHAT AS BOT) -->
-          <div id="tgInboxSubContentChat" class="hidden bg-white dark:bg-dark-800 p-3 rounded-xs border border-slate-300 dark:border-slate-700 space-y-2.5 flex flex-col">
+          <div id="tgInboxSubContentChat" class="hidden bg-white dark:bg-slate-900/90 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 flex flex-col">
             <!-- Thanh tiêu đề + các tab con của từng đối tượng đang giao tiếp -->
-            <div class="flex flex-col gap-1.5 pb-2 border-b border-slate-200 dark:border-slate-700">
+            <div class="flex flex-col gap-2 pb-2.5 border-b border-slate-200 dark:border-slate-800">
               <div class="flex items-center justify-between gap-1.5 flex-wrap">
                 <!-- Ô nhập ID / @username + Mở Chat (được thu ngắn gọn lại) -->
-                <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 border border-slate-300 dark:border-slate-600 rounded-xs px-1.5 py-0.5 flex-1 max-w-[210px] sm:max-w-xs min-w-0">
-                  <input type="text" id="tgChatNewRecipientInput" onkeydown="if(event.key==='Enter') openOrCreateTgChatTab()" placeholder="ID / @username..." class="flex-1 bg-transparent text-[11px] sm:text-xs outline-none min-w-0 text-slate-800 dark:text-slate-200 font-mono">
-                  <button type="button" onclick="openOrCreateTgChatTab()" class="px-2 py-0.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white rounded-xs text-[10px] sm:text-[11px] font-bold cursor-pointer shrink-0 transition" title="Mở tab chat với người này">
+                <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg px-2 py-1 flex-1 max-w-[220px] sm:max-w-xs min-w-0">
+                  <input type="text" id="tgChatNewRecipientInput" onkeydown="if(event.key==='Enter') openOrCreateTgChatTab()" placeholder="ID / @username..." class="flex-1 bg-transparent text-[11px] sm:text-xs outline-none min-w-0 text-slate-800 dark:text-slate-100 font-mono">
+                  <button type="button" onclick="openOrCreateTgChatTab()" class="px-2.5 py-1 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 active:scale-95 text-white rounded-md text-[10px] sm:text-[11px] font-bold cursor-pointer shrink-0 transition" title="Mở tab chat với người này">
                     + Mở Chat
                   </button>
                 </div>
 
                 <!-- Ở cuối là Chọn ngày tháng để nhảy đến tin đầu tiên của ngày -->
-                <div class="flex items-center gap-1 bg-slate-100 dark:bg-dark-900 px-1.5 py-0.5 rounded-xs border border-slate-300 dark:border-slate-600 text-xs shrink-0" title="Chọn ngày để nhảy đến tin nhắn đầu tiên của ngày được chọn">
-                  <i class="fa-regular fa-calendar-days text-sky-600 text-[10px]"></i>
-                  <input type="date" id="tgChatDatePicker" onchange="jumpTgChatToDate(this.value)" class="bg-transparent border-none text-[10.5px] sm:text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200 cursor-pointer outline-none p-0 min-w-[115px] sm:min-w-[125px] w-auto">
+                <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700/80 text-xs shrink-0" title="Chọn ngày để nhảy đến tin nhắn đầu tiên của ngày được chọn">
+                  <i class="fa-regular fa-calendar-days text-sky-500 text-[10px]"></i>
+                  <input type="date" id="tgChatDatePicker" onchange="jumpTgChatToDate(this.value)" class="bg-transparent border-none text-[10.5px] sm:text-[11px] font-mono font-bold text-slate-800 dark:text-slate-100 cursor-pointer outline-none p-0 min-w-[115px] sm:min-w-[125px] w-auto">
                 </div>
               </div>
 
               <!-- Dải Sub-Tabs ngang: 3 acc nằm cùng 1 hàng trên điện thoại (cuộn ngang mượt nếu nhiều hơn) -->
-              <div id="tgChatContactTabs" class="flex flex-nowrap items-center gap-1 pb-1 pt-0.5 overflow-x-auto w-full select-none" style="scrollbar-width: thin;">
+              <div id="tgChatContactTabs" class="flex flex-nowrap items-center gap-1.5 pb-1 pt-0.5 overflow-x-auto w-full select-none" style="scrollbar-width: thin;">
                 <span class="text-xs text-slate-400 italic">Đang tải danh sách đối tượng giao tiếp...</span>
               </div>
             </div>
 
             <!-- Thông tin đối tượng đang chọn: [Thầu] ID... @... và [Xóa] nằm CÙNG 1 DÒNG -->
-            <div id="tgChatActiveHeader" class="flex items-center justify-between gap-1.5 px-2.5 py-1.5 bg-slate-100 dark:bg-dark-900 rounded-xs border border-slate-200 dark:border-slate-700 text-xs select-none">
-              <div class="flex items-center gap-1.5 min-w-0 flex-nowrap">
-                <span id="tgChatActiveRoleBadge" class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] border border-indigo-300 dark:border-indigo-800 shrink-0">🛸 Thầu</span>
+            <div id="tgChatActiveHeader" class="flex items-center justify-between gap-1.5 px-3 py-2 bg-slate-100/90 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/80 text-xs select-none">
+              <div class="flex items-center gap-2 min-w-0 flex-nowrap">
+                <span id="tgChatActiveRoleBadge" class="px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold text-[11px] border border-indigo-200 dark:border-indigo-800/50 shrink-0">🛸 Thầu</span>
                 <span id="tgChatActiveName" class="hidden"></span>
-                <span id="tgChatActiveMeta" class="font-mono text-slate-600 dark:text-slate-300 text-xs font-semibold truncate"></span>
+                <span id="tgChatActiveMeta" class="font-mono text-slate-700 dark:text-slate-200 text-xs font-semibold truncate"></span>
               </div>
-              <button type="button" onclick="clearActiveTgChatHistory()" class="px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-xs text-[11px] font-semibold border border-rose-200 dark:border-rose-800 cursor-pointer shrink-0 transition flex items-center gap-1" title="Xóa lịch sử hiển thị trong khung chat này">
+              <button type="button" onclick="clearActiveTgChatHistory()" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded-lg text-[11px] font-semibold border border-rose-200 dark:border-rose-800 cursor-pointer shrink-0 transition flex items-center gap-1" title="Xóa lịch sử hiển thị trong khung chat này">
                 <i class="fa-solid fa-broom"></i> Xóa
               </button>
             </div>
 
             <!-- Khung hội thoại 2 chiều giữa Bot và đối tượng -->
-            <div id="tgChatMessagesList" class="bg-[#0f172a] text-slate-100 p-3.5 rounded-xs border border-slate-700 h-[48vh] overflow-y-auto space-y-2.5 flex flex-col select-text">
+            <div id="tgChatMessagesList" class="bg-slate-950 text-slate-100 p-4 rounded-xl border border-slate-800/90 h-[50vh] overflow-y-auto space-y-3 flex flex-col select-text shadow-inner">
               <p class="text-slate-400 italic text-center my-auto text-xs">Hãy chọn một đối tượng ở thanh tab phía trên để xem cuộc trò chuyện và nhắn tin.</p>
             </div>
 
             <!-- Khung nhập nội dung gửi dưới danh nghĩa Bot -->
             <div class="pt-1">
               <div class="flex items-stretch gap-2">
-                <textarea id="tgChatInputText" rows="2" onkeydown="handleTgChatInputKeydown(event)" placeholder="Nhập nội dung giao tiếp với đối tượng này dưới danh nghĩa là Bot... (Nhấn Enter để gửi, Shift+Enter để xuống dòng)" class="flex-1 border-2 border-slate-300 dark:border-slate-600 focus:border-sky-500 rounded-xs px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-100 outline-none resize-none"></textarea>
-                <button type="button" id="btnTgSendChat" onclick="sendTgDirectChatMessage()" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-bold rounded-xs text-xs sm:text-sm shadow-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition">
+                <textarea id="tgChatInputText" rows="2" onkeydown="handleTgChatInputKeydown(event)" placeholder="Nhập nội dung giao tiếp với đối tượng này dưới danh nghĩa là Bot... (Nhấn Enter để gửi, Shift+Enter để xuống dòng)" class="flex-1 border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 rounded-xl px-3 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 outline-none resize-none transition"></textarea>
+                <button type="button" id="btnTgSendChat" onclick="sendTgDirectChatMessage()" class="px-4 py-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 active:scale-95 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition">
                   <i class="fa-solid fa-paper-plane"></i>
                   <span>Send</span>
                 </button>
@@ -7735,37 +7745,37 @@ function resetTable() {
         </div>
 
         <!-- ==================== TAB 2: BẢNG CƯỢC & CÂN BẢNG TRỰC QUAN ==================== -->
-        <div id="tgTabContentBoard" class="hidden space-y-2.5">
+        <div id="tgTabContentBoard" class="hidden space-y-3">
           <!-- Thanh công cụ phẳng trên cùng -->
-          <div class="flex items-center justify-between flex-wrap gap-1.5 p-2 bg-[#f8fafc] dark:bg-dark-900 border border-slate-300 dark:border-slate-700 rounded-xs shadow-2xs">
+          <div class="flex items-center justify-between flex-wrap gap-2 p-3 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs">
             <div class="flex items-center gap-2 flex-wrap">
-              <span id="tgBoardStepBadge" class="text-xs font-mono font-bold px-2 py-0.5 bg-slate-200 dark:bg-dark-700 text-slate-800 dark:text-slate-200 rounded-xs border border-slate-300 dark:border-slate-600">
+              <span id="tgBoardStepBadge" class="text-xs font-mono font-bold px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-lg border border-slate-200 dark:border-slate-700">
                 Đã chuyển: 0 lần
               </span>
               <span id="tgBoardStatsText" class="text-xs text-slate-700 dark:text-slate-300 font-semibold font-mono">
                 Đề: 0 con | Lô: 0 con | 3C: 0 con | Xiên: 0 cặp
               </span>
-              <span id="tgBoardSettledBadge" class="hidden text-xs font-mono font-bold px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 rounded-xs border border-emerald-300 dark:border-emerald-700 flex items-center gap-1">
+              <span id="tgBoardSettledBadge" class="hidden text-xs font-mono font-bold px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 rounded-lg border border-emerald-300 dark:border-emerald-700 flex items-center gap-1">
                 <i class="fa-solid fa-circle-check text-emerald-600"></i> ĐÃ CHỐT SỔ (Về 0 lúc 00:00)
               </span>
             </div>
             
-            <div class="flex items-center gap-1 flex-wrap">
-              <label class="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 rounded-xs px-2 py-1 text-xs font-bold text-amber-900 dark:text-amber-200 cursor-pointer select-none" title="Bật/tắt tự động lấy KQXS và chốt tiền lúc 18h35 hàng ngày">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <label class="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-700/80 rounded-lg px-2.5 py-1.5 text-xs font-bold text-amber-900 dark:text-amber-200 cursor-pointer select-none" title="Bật/tắt tự động lấy KQXS và chốt tiền lúc 18h35 hàng ngày">
                 <input type="checkbox" id="tgChkAutoSettle1835Board" onchange="toggleTgAutoSettle1835(this.checked)" checked class="form-checkbox text-amber-600 rounded-xs w-3.5 h-3.5 cursor-pointer">
                 <span>Tự chốt 18h35</span>
               </label>
-              <div class="flex items-center gap-1 bg-white dark:bg-dark-800 border border-slate-300 dark:border-slate-600 rounded-xs px-1.5 py-0.5" title="Chọn ngày để thực hiện Chốt tiền, Báo Cáo hoặc xem KQXS">
-                <span class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1"><i class="fa-regular fa-calendar-days text-sky-600"></i> Ngày:</span>
+              <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1" title="Chọn ngày để thực hiện Chốt tiền, Báo Cáo hoặc xem KQXS">
+                <span class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1"><i class="fa-regular fa-calendar-days text-sky-500"></i> Ngày:</span>
                 <input type="date" id="tgActionDate" class="bg-transparent text-xs font-mono font-bold text-slate-800 dark:text-slate-200 outline-none border-none cursor-pointer">
               </div>
-              <button type="button" id="btnTgSettleMoney" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded-xs font-bold border border-amber-700 flex items-center gap-1.5 text-xs cursor-pointer shadow-2xs" title="Tự động tính toán và gửi tin nhắn chốt tiền theo ngày đã chọn">
+              <button type="button" id="btnTgSettleMoney" class="px-3 py-1.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-lg font-bold flex items-center gap-1.5 text-xs cursor-pointer shadow-xs active:scale-95 transition" title="Tự động tính toán và gửi tin nhắn chốt tiền theo ngày đã chọn">
                 <i class="fa-solid fa-bullseye text-white"></i> 🎯 Chốt tiền
               </button>
-              <button type="button" id="btnTgViewReport" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded-xs font-semibold border border-slate-800 flex items-center gap-1 text-xs cursor-pointer" title="Xem Báo Cáo Thầu hôm nay">
+              <button type="button" id="btnTgViewReport" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold flex items-center gap-1 text-xs cursor-pointer active:scale-95 transition" title="Xem Báo Cáo Thầu hôm nay">
                 <i class="fa-solid fa-chart-pie"></i> Báo Cáo
               </button>
-              <button type="button" id="btnTgViewKQXS" class="px-2 py-1 bg-teal-700 hover:bg-teal-600 text-white rounded-xs font-semibold border border-teal-800 flex items-center gap-1 text-xs cursor-pointer" title="Xem Kết Quả Xổ Số hôm nay">
+              <button type="button" id="btnTgViewKQXS" class="px-2.5 py-1.5 bg-teal-700 hover:bg-teal-600 text-white rounded-lg font-semibold flex items-center gap-1 text-xs cursor-pointer active:scale-95 transition" title="Xem Kết Quả Xổ Số hôm nay">
                 <i class="fa-solid fa-trophy"></i> KQXS
               </button>
               <button type="button" id="btnTgManualTransfer" class="px-2 py-1 bg-sky-700 hover:bg-sky-600 text-white rounded-xs font-semibold border border-sky-800 flex items-center gap-1 text-xs cursor-pointer" title="Bắn phần cược thừa cho chủ thầu ngay">
@@ -8753,8 +8763,8 @@ function resetTable() {
       const btnLogs = document.getElementById('tgSubTabBtnInboxLogs');
       const btnChat = document.getElementById('tgSubTabBtnInboxChat');
 
-      const activeCls = "px-1 sm:px-2 py-1.5 bg-[#1e293b] text-white font-bold text-[11px] sm:text-xs rounded-xs border border-slate-700 flex items-center justify-center gap-1 cursor-pointer shadow-2xs";
-      const inactiveCls = "px-1 sm:px-2 py-1.5 bg-white dark:bg-dark-800 text-slate-700 dark:text-slate-300 font-semibold text-[11px] sm:text-xs rounded-xs border border-slate-300 dark:border-slate-700 flex items-center justify-center gap-1 cursor-pointer hover:bg-slate-100 dark:hover:bg-dark-700";
+      const activeCls = "px-2 py-1.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold text-xs rounded-lg shadow-xs border border-slate-200/60 dark:border-slate-700/50 flex items-center justify-center gap-1.5 cursor-pointer transition-all";
+      const inactiveCls = "px-2 py-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-all";
 
       if (mailContent) mailContent.classList.toggle('hidden', subName !== 'mail');
       if (logsContent) logsContent.classList.toggle('hidden', subName !== 'logs');
@@ -8795,26 +8805,26 @@ function resetTable() {
       const tabs = ['inbox', 'board', 'clients', 'settings'];
       const tabStyles = {
         inbox: {
-          activeBtn: "px-2.5 sm:px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none rounded-xs cursor-pointer shadow-md border-2 border-sky-700 text-xs sm:text-sm transition-all",
-          inactiveBtn: "px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-sky-400 dark:border-sky-600 text-slate-700 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-sky-950/40 hover:border-sky-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer text-xs sm:text-sm",
+          activeBtn: "px-3 sm:px-4 py-2.5 bg-gradient-to-r from-sky-600 to-blue-600 text-white font-bold flex items-center justify-center sm:justify-start gap-2 focus:outline-none rounded-xl cursor-pointer shadow-sm ring-1 ring-sky-500/40 text-xs sm:text-sm transition-all active:scale-[0.99]",
+          inactiveBtn: "px-3 sm:px-4 py-2.5 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-sky-50/50 dark:hover:bg-slate-800/60 hover:border-sky-500/40 font-semibold flex items-center justify-center sm:justify-start gap-2 focus:outline-none transition-all rounded-xl cursor-pointer text-xs sm:text-sm active:scale-[0.99]",
           iconActive: "fa-solid fa-inbox text-white shrink-0",
           iconInactive: "fa-solid fa-inbox text-sky-600 dark:text-sky-400 shrink-0"
         },
         board: {
-          activeBtn: "px-2.5 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none rounded-xs cursor-pointer shadow-md border-2 border-emerald-700 text-xs sm:text-sm transition-all",
-          inactiveBtn: "px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-emerald-400 dark:border-emerald-600 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer text-xs sm:text-sm",
+          activeBtn: "px-3 sm:px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold flex items-center justify-center sm:justify-start gap-2 focus:outline-none rounded-xl cursor-pointer shadow-sm ring-1 ring-emerald-500/40 text-xs sm:text-sm transition-all active:scale-[0.99]",
+          inactiveBtn: "px-3 sm:px-4 py-2.5 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-50/50 dark:hover:bg-slate-800/60 hover:border-emerald-500/40 font-semibold flex items-center justify-center sm:justify-start gap-2 focus:outline-none transition-all rounded-xl cursor-pointer text-xs sm:text-sm active:scale-[0.99]",
           iconActive: "fa-solid fa-table-columns text-white shrink-0",
           iconInactive: "fa-solid fa-table-columns text-emerald-600 dark:text-emerald-400 shrink-0"
         },
         clients: {
-          activeBtn: "px-2.5 sm:px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none rounded-xs cursor-pointer shadow-md border-2 border-amber-700 text-xs sm:text-sm transition-all",
-          inactiveBtn: "px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-amber-400 dark:border-amber-600 text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:border-amber-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer text-xs sm:text-sm",
+          activeBtn: "px-3 sm:px-4 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold flex items-center justify-center sm:justify-start gap-2 focus:outline-none rounded-xl cursor-pointer shadow-sm ring-1 ring-amber-500/40 text-xs sm:text-sm transition-all active:scale-[0.99]",
+          inactiveBtn: "px-3 sm:px-4 py-2.5 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-amber-50/50 dark:hover:bg-slate-800/60 hover:border-amber-500/40 font-semibold flex items-center justify-center sm:justify-start gap-2 focus:outline-none transition-all rounded-xl cursor-pointer text-xs sm:text-sm active:scale-[0.99]",
           iconActive: "fa-solid fa-users text-white shrink-0",
           iconInactive: "fa-solid fa-users text-amber-600 dark:text-amber-400 shrink-0"
         },
         settings: {
-          activeBtn: "px-2.5 sm:px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none rounded-xs cursor-pointer shadow-md border-2 border-indigo-700 text-xs sm:text-sm transition-all",
-          inactiveBtn: "px-2.5 sm:px-3.5 py-2 bg-white dark:bg-dark-900 border-2 border-indigo-400 dark:border-indigo-600 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:border-indigo-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 focus:outline-none transition rounded-xs cursor-pointer text-xs sm:text-sm",
+          activeBtn: "px-3 sm:px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold flex items-center justify-center sm:justify-start gap-2 focus:outline-none rounded-xl cursor-pointer shadow-sm ring-1 ring-indigo-500/40 text-xs sm:text-sm transition-all active:scale-[0.99]",
+          inactiveBtn: "px-3 sm:px-4 py-2.5 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-indigo-50/50 dark:hover:bg-slate-800/60 hover:border-indigo-500/40 font-semibold flex items-center justify-center sm:justify-start gap-2 focus:outline-none transition-all rounded-xl cursor-pointer text-xs sm:text-sm active:scale-[0.99]",
           iconActive: "fa-solid fa-sliders text-white shrink-0",
           iconInactive: "fa-solid fa-sliders text-indigo-600 dark:text-indigo-400 shrink-0"
         }
@@ -8977,7 +8987,7 @@ function resetTable() {
 
         const isViewingArchiveMode = (window.tgInboxDateMode === 'yesterday' || window.tgInboxDateMode === 'custom' || !!window.tgCurrentArchiveDate);
 
-        if (rolledOverNewDay && !isViewingArchiveMode) {
+        if (rolledOverNewDay) {
           fetchTgBoard('');
         } else if (!isViewingArchiveMode) {
           // Tự làm mới ngay khi có tin cược mới, hoặc chu kỳ thường xuyên khi đang mở Hộp Thư
