@@ -1024,26 +1024,37 @@
                 Giao Tiếp Trực Tiếp Với Chủ / Khách Dưới Danh Nghĩa Bot
               </h3>
               <div class="flex items-center gap-2 flex-wrap">
+                <!-- Ô nhập ID / @username... + Mở Chat -->
                 <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1">
-                  <input type="text" id="botChatNewRecipientInput" placeholder="Nhập ID / @username mới..." class="bg-transparent text-xs outline-none w-40 text-slate-100 font-mono">
+                  <input type="text" id="botChatNewRecipientInput" onkeydown="if(event.key==='Enter') openOrCreateBotChatTab()" placeholder="ID / @username..." class="bg-transparent text-xs outline-none w-44 text-slate-100 font-mono">
                   <button type="button" onclick="openOrCreateBotChatTab()" class="px-2.5 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded text-xs font-bold cursor-pointer">+ Mở Chat</button>
+                </div>
+
+                <!-- Chọn ngày tháng để nhảy đến tin đầu tiên của ngày + Nút xoay tròn quay lại live mới nhất -->
+                <div class="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded-lg border border-slate-700 text-xs shrink-0" title="Chọn ngày để nhảy đến tin nhắn đầu tiên của ngày được chọn">
+                  <i class="fa-regular fa-calendar-days text-sky-400 text-[10px]"></i>
+                  <input type="date" id="botChatDatePicker" onchange="jumpBotChatToDate(this.value)" class="bg-transparent border-none text-[11px] font-mono font-bold text-slate-100 cursor-pointer outline-none p-0 w-auto">
+                  <button type="button" id="btnBotChatLiveReset" onclick="jumpBotChatToLatestLive()" class="ml-1 px-1.5 py-0.5 rounded hover:bg-slate-800 text-sky-400 hover:text-sky-300 transition text-[11px]" title="Quay lại tin nhắn mới nhất (Live)">
+                    <i class="fa-solid fa-rotate"></i>
+                  </button>
                 </div>
               </div>
             </div>
 
-            <!-- Thanh Sub-Tabs từng đối tượng -->
-            <div id="botChatContactTabs" class="flex items-center gap-2 overflow-x-auto pb-1">
-              <span class="text-xs text-slate-400 italic">Đang tải danh sách đối tượng giao tiếp...</span>
+            <!-- Danh sách acc đối tượng: đúng 3 acc 1 dòng, thêm acc thì xuống hàng dưới -->
+            <div id="botChatContactTabs" class="grid grid-cols-3 gap-1.5 w-full select-none pb-1 pt-0.5">
+              <span class="col-span-3 text-xs text-slate-400 italic">Đang tải danh sách đối tượng giao tiếp...</span>
             </div>
           </div>
 
-          <div class="flex items-center justify-between flex-wrap gap-2 px-3 py-2 bg-slate-900 rounded-lg border border-slate-800 text-xs">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span id="botChatActiveRoleBadge" class="px-2.5 py-0.5 rounded-full bg-sky-950 text-sky-300 font-bold text-[11px] border border-sky-800">👤 Đối tượng</span>
-              <span id="botChatActiveName" class="font-bold text-white text-sm">Chưa chọn đối tượng</span>
-              <span id="botChatActiveMeta" class="font-mono text-slate-400 text-[11px]"></span>
+          <!-- Thông tin đối tượng đang chọn: [Vai trò] ID... tên acc và nút Xóa -->
+          <div class="flex items-center justify-between gap-1.5 px-3 py-2 bg-slate-900 rounded-lg border border-slate-800 text-xs select-none">
+            <div class="flex items-center gap-2 min-w-0 flex-nowrap">
+              <span id="botChatActiveRoleBadge" class="px-2.5 py-0.5 rounded-full bg-sky-950 text-sky-300 font-bold text-[11px] border border-sky-800 shrink-0">👤 Đối tượng</span>
+              <span id="botChatActiveName" class="font-bold text-white text-sm truncate hidden"></span>
+              <span id="botChatActiveMeta" class="font-mono text-slate-200 text-xs font-semibold truncate"></span>
             </div>
-            <button type="button" onclick="clearActiveBotChatHistory()" class="px-2.5 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded text-xs font-semibold border border-rose-800 cursor-pointer">
+            <button type="button" onclick="clearActiveBotChatHistory()" class="px-2.5 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded text-xs font-semibold border border-rose-800 cursor-pointer shrink-0">
               <i class="fa-solid fa-broom"></i> Xóa khung chat
             </button>
           </div>
@@ -2389,6 +2400,30 @@
       return new Date(yr, mon, day, hh, mm, ss).getTime();
     }
 
+    async function ensureBotKnownUsersMap(forceRefresh = false) {
+      if (!forceRefresh && window.botKnownUsersMap && Object.keys(window.botKnownUsersMap).length > 0) {
+        return window.botKnownUsersMap;
+      }
+      try {
+        const uRaw = await apiGet("/api/bot/known_users");
+        if (uRaw) {
+          const usersEntries = Array.isArray(uRaw) ? uRaw : Object.values(uRaw.users || uRaw);
+          window.botKnownUsersMap = window.botKnownUsersMap || {};
+          usersEntries.forEach(u => {
+            if (!u || typeof u !== 'object') return;
+            const cid = String(u.chat_id || u.user_id || "").trim();
+            if (!cid || ["11223344", "99999", "111", "web_sync"].includes(cid)) return;
+            const un = String(u.username || "").trim().replace(/^@/, "");
+            const fn = String(u.first_name || "").trim();
+            window.botKnownUsersMap[cid] = { chat_id: cid, username: un, first_name: fn, updated_at: u.updated_at || "" };
+            if (un) window.botKnownUsersMap[un.toLowerCase()] = window.botKnownUsersMap[cid];
+          });
+        }
+      } catch (_) {}
+      return window.botKnownUsersMap || {};
+    }
+    window.ensureBotKnownUsersMap = ensureBotKnownUsersMap;
+
     async function buildBotCloudFallbackConversations() {
       const nowMs = Date.now();
       const useCachedMeta = window._botChatMetaCacheTs && (nowMs - window._botChatMetaCacheTs < 20000) && window._botChatCachedCfg && window._botChatCachedUsers;
@@ -2421,6 +2456,7 @@
         if (un) unameToCid[normBotChatKey(un)] = cid;
         if (fn) unameToCid[normBotChatKey(fn)] = unameToCid[normBotChatKey(fn)] || cid;
       });
+      window.botKnownUsersMap = Object.assign(window.botKnownUsersMap || {}, cidToUser);
 
       const resolveCanonicalId = (rawTarget) => {
         const s = String(rawTarget || "").trim();
@@ -2472,6 +2508,7 @@
           convMap[cid] = {
             chat_id: cid,
             name: dispName,
+            first_name: uInfo.first_name || "",
             username: un ? `@${un}` : "",
             role: rInfo.role,
             role_label: rInfo.role_label,
@@ -2480,6 +2517,9 @@
             messages: []
           };
         } else {
+          if (uInfo.first_name && !convMap[cid].first_name) {
+            convMap[cid].first_name = uInfo.first_name;
+          }
           if (dispName && (convMap[cid].name === cid || convMap[cid].name.startsWith("@"))) {
             convMap[cid].name = dispName;
           }
@@ -2665,6 +2705,20 @@
           });
         }
 
+        // Đồng bộ và làm giàu thông tin tên thật (first_name / tên acc) từ known_users cho mọi đối tượng
+        try {
+          const kMap = await ensureBotKnownUsersMap();
+          list.forEach(c => {
+            const cid = String(c.chat_id || "");
+            const un = String(c.username || "").replace(/^@/, "").toLowerCase();
+            const uInfo = kMap[cid] || (un ? kMap[un] : null);
+            if (uInfo) {
+              if (uInfo.first_name && !c.first_name) c.first_name = uInfo.first_name;
+              if (uInfo.username && !c.username) c.username = "@" + uInfo.username;
+            }
+          });
+        } catch (_) {}
+
         const prevList = window.botChatConversations || [];
         prevList.forEach(prevConv => {
           if (!prevConv || !prevConv.chat_id) return;
@@ -2777,12 +2831,41 @@
     }
     window.closeBotChatTab = closeBotChatTab;
 
+    function getCleanBotChatAccName(c) {
+      if (!c) return "";
+      const uname = String(c.username || "").replace(/^@/, "").trim();
+      let name = String(c.name || "").trim();
+
+      // 1. Ưu tiên hàng đầu định dạng @username
+      if (uname) return "@" + uname;
+
+      // 2. Tìm username @ trong trường tên nếu có
+      const atMatch = name.match(/@([A-Za-z0-9_]{3,})/);
+      if (atMatch && atMatch[1]) return "@" + atMatch[1];
+
+      // 3. Làm sạch tên hiển thị
+      name = name.replace(/^(?:Chủ\s*thầu|Thầu|Chủ\s*Bot|Khách)\s*[:\-•]?\s*/i, "").trim();
+      const pMatch = name.match(/^(.+?)\s*\((?:@?[^)]+)\)$/);
+      if (pMatch && pMatch[1].trim()) name = pMatch[1].trim();
+      if (name.includes("•")) {
+        const parts = name.split("•").map(p => p.trim());
+        const uPart = parts.find(p => p.startsWith("@"));
+        if (uPart) return uPart;
+      }
+      name = name.replace(/^@/, "").trim();
+      if (!name || name === String(c.chat_id) || /^ID:\s*\d+/i.test(name)) {
+        return c.chat_id ? String(c.chat_id) : "";
+      }
+      return "@" + name;
+    }
+    window.getCleanBotChatAccName = getCleanBotChatAccName;
+
     function renderBotChatContactTabs() {
       const tabsEl = document.getElementById('botChatContactTabs');
       if (!tabsEl) return;
       const list = window.botChatConversations || [];
       if (list.length === 0) {
-        tabsEl.innerHTML = `<span class="text-xs text-slate-400 italic py-1">Chưa có đối tượng giao tiếp nào. Hãy nhập ID / @username ở ô bên phải rồi bấm "+ Mở Chat".</span>`;
+        tabsEl.innerHTML = `<span class="col-span-3 text-xs text-slate-400 italic py-1">Chưa có đối tượng giao tiếp nào. Hãy nhập ID / @username... ở ô bên trên rồi bấm "+ Mở Chat".</span>`;
         return;
       }
 
@@ -2790,21 +2873,23 @@
         const cid = String(c.chat_id || "");
         const isActive = (cid === String(window.botActiveChatContactId));
         const role = c.role || "client";
-        const roleIcon = role === "contractor" ? "🛸" : (role === "owner" ? "👑" : "👤");
-        const roleTag = role === "contractor" ? "Chủ Thầu" : (role === "owner" ? "Chủ Bot" : "Khách");
-        const msgCount = (c.messages || []).length;
+        let activeCls = "bg-sky-600 text-white border-sky-500 shadow";
+        let inactiveCls = "bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800";
+        if (role === "contractor") {
+          activeCls = "bg-indigo-600 text-white border-indigo-500 shadow";
+          inactiveCls = "bg-indigo-950/40 text-indigo-200 border-indigo-800 hover:bg-indigo-900/50";
+        } else if (role === "owner") {
+          activeCls = "bg-amber-600 text-white border-amber-500 shadow";
+          inactiveCls = "bg-amber-950/40 text-amber-200 border-amber-800 hover:bg-amber-900/50";
+        }
+
         const safeCidAttr = cid.replace(/'/g, "\\'");
-        const activeCls = role === "contractor"
-          ? "bg-indigo-600 text-white border-indigo-500 shadow"
-          : (role === "owner" ? "bg-amber-600 text-white border-amber-500 shadow" : "bg-sky-600 text-white border-sky-500 shadow");
-        const inactiveCls = "bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800";
+        const cleanName = escapeBotChatHtml(getCleanBotChatAccName(c));
 
         return `
-          <div onclick="selectBotChatContact('${safeCidAttr}')" class="pl-3 pr-2 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-pointer transition select-none ${isActive ? activeCls : inactiveCls}">
-            <span>${roleIcon}</span>
-            <span>${escapeBotChatHtml(c.name || cid)}</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded ${isActive ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-400'} font-mono">${roleTag} (${msgCount})</span>
-            <span onclick="closeBotChatTab('${safeCidAttr}', event)" title="Đóng tab này" class="ml-0.5 w-4 h-4 rounded inline-flex items-center justify-center text-[11px] leading-none transition ${isActive ? 'text-white/80 hover:text-white hover:bg-black/30' : 'text-slate-400 hover:text-white hover:bg-rose-600'}">✕</span>
+          <div onclick="selectBotChatContact('${safeCidAttr}')" class="w-full min-w-0 px-2 py-1 rounded-lg border text-[11px] sm:text-xs font-semibold flex items-center justify-between gap-1 cursor-pointer transition select-none ${isActive ? activeCls : inactiveCls}">
+            <span class="truncate min-w-0 flex-1">${cleanName}</span>
+            <span onclick="closeBotChatTab('${safeCidAttr}', event)" title="Đóng tab này" class="w-3.5 h-3.5 rounded inline-flex items-center justify-center text-[10px] leading-none shrink-0 transition ${isActive ? 'text-white/80 hover:text-white hover:bg-black/30' : 'text-slate-400 hover:text-white hover:bg-rose-500'}">✕</span>
           </div>
         `;
       }).join('');
@@ -2815,6 +2900,14 @@
       window._botCustomPendingContactId = false;
       renderBotChatContactTabs();
       renderBotActiveChatPanel(true);
+      const listEl = document.getElementById('botChatMessagesList');
+      const chatDatePicker = document.getElementById('botChatDatePicker');
+      if (listEl && chatDatePicker) {
+        const lastBubble = listEl.querySelector('[data-msg-date]:last-child');
+        if (lastBubble) {
+          chatDatePicker.value = lastBubble.getAttribute('data-msg-date') || '';
+        }
+      }
     }
     window.selectBotChatContact = selectBotChatContact;
 
@@ -2853,6 +2946,71 @@
     }
     window.openOrCreateBotChatTab = openOrCreateBotChatTab;
 
+    function jumpBotChatToDate(dateVal) {
+      if (!dateVal) return;
+      const listEl = document.getElementById('botChatMessagesList');
+      if (!listEl) return;
+      const bubbles = Array.from(listEl.querySelectorAll('[data-msg-date]'));
+      if (bubbles.length === 0) {
+        alert("Cuộc trò chuyện này hiện chưa có tin nhắn nào.");
+        return;
+      }
+
+      const cleanTargetDate = String(dateVal).trim();
+      let targetEl = bubbles.find(b => b.getAttribute('data-msg-date') === cleanTargetDate);
+
+      if (!targetEl && cleanTargetDate.includes('-')) {
+        const parts = cleanTargetDate.split('-');
+        if (parts.length === 3) {
+          const dmySub = `${parts[2]}/${parts[1]}`;
+          targetEl = bubbles.find(b => {
+            const bDate = b.getAttribute('data-msg-date') || '';
+            const bTxt = b.textContent || '';
+            return bDate.endsWith(`-${parts[1]}-${parts[2]}`) || bTxt.includes(dmySub);
+          });
+        }
+      }
+
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.classList.add('ring-4', 'ring-amber-400', 'bg-amber-500/20');
+        setTimeout(() => {
+          targetEl.classList.remove('ring-4', 'ring-amber-400', 'bg-amber-500/20');
+        }, 3000);
+      } else {
+        const parts = cleanTargetDate.split('-');
+        const disp = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : cleanTargetDate;
+        const availableDates = Array.from(new Set(bubbles.map(b => b.getAttribute('data-msg-date')).filter(Boolean)))
+          .map(d => {
+            const p = d.split('-');
+            return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+          });
+
+        let msg = `Không tìm thấy tin nhắn nào trong ngày ${disp} với đối tượng này.`;
+        if (availableDates.length > 0) {
+          msg += `\n(Các ngày có tin nhắn hiện tại: ${availableDates.join(', ')})`;
+        }
+        alert(msg);
+      }
+    }
+    window.jumpBotChatToDate = jumpBotChatToDate;
+
+    function jumpBotChatToLatestLive() {
+      const listEl = document.getElementById('botChatMessagesList');
+      if (listEl) {
+        listEl.scrollTop = listEl.scrollHeight;
+      }
+      const picker = document.getElementById('botChatDatePicker');
+      if (picker) {
+        picker.value = '';
+        if (listEl) {
+          const lastBubble = listEl.querySelector('[data-msg-date]:last-child');
+          if (lastBubble) picker.value = lastBubble.getAttribute('data-msg-date') || '';
+        }
+      }
+    }
+    window.jumpBotChatToLatestLive = jumpBotChatToLatestLive;
+
     function renderBotActiveChatPanel(forceScrollBottom = false) {
       const roleBadge = document.getElementById('botChatActiveRoleBadge');
       const nameEl = document.getElementById('botChatActiveName');
@@ -2870,9 +3028,67 @@
         return;
       }
 
-      if (roleBadge) roleBadge.textContent = conv.role_label || "👤 Khách Cược";
-      if (nameEl) nameEl.textContent = conv.name || cid;
-      if (metaEl) metaEl.textContent = `ID: ${cid}${conv.username && conv.username !== cid ? ' • ' + conv.username : ''}`;
+      if (roleBadge) {
+        let rLabel = conv.role_label || "👤 Khách Cược";
+        if (conv.role === "contractor") {
+          rLabel = "🛸 Chủ Thầu";
+          roleBadge.className = "px-2.5 py-0.5 rounded-full bg-indigo-950 text-indigo-300 font-bold text-[11px] border border-indigo-800 shrink-0";
+        } else if (conv.role === "owner") {
+          rLabel = "👑 Chủ Bot";
+          roleBadge.className = "px-2.5 py-0.5 rounded-full bg-amber-950 text-amber-300 font-bold text-[11px] border border-amber-700 shrink-0";
+        } else {
+          rLabel = "👤 Khách Cược";
+          roleBadge.className = "px-2.5 py-0.5 rounded-full bg-sky-950 text-sky-300 font-bold text-[11px] border border-sky-800 shrink-0";
+        }
+        roleBadge.textContent = rLabel;
+      }
+      if (nameEl) {
+        nameEl.textContent = "";
+        nameEl.classList.add("hidden");
+      }
+      if (metaEl) {
+        let accName = '';
+        const cIdStr = String(cid);
+        const uKey = (conv.username || "").replace(/^@/, "").toLowerCase();
+        const known = (window.botKnownUsersMap && (window.botKnownUsersMap[cIdStr] || (uKey && window.botKnownUsersMap[uKey]))) || {};
+
+        // 1. Ưu tiên tên tài khoản (first_name / tên acc) từ known_users hoặc conv
+        accName = (known.first_name || conv.first_name || '').trim();
+
+        // 2. Nếu chưa có, phân tích từ conv.name
+        if (!accName && conv.name) {
+          let raw = String(conv.name).trim();
+          raw = raw.replace(/\s*\(@?[^)]+\)$/, '').trim();
+          raw = raw.replace(/^(?:Chủ\s*thầu|Thầu|Chủ\s*Bot|Khách)\s*[:\-•]?\s*/i, '').trim();
+          const rawKey = raw.replace(/^@/, '').toLowerCase();
+          if (window.botKnownUsersMap && window.botKnownUsersMap[rawKey] && window.botKnownUsersMap[rawKey].first_name) {
+            accName = window.botKnownUsersMap[rawKey].first_name;
+          } else if (raw && raw !== cIdStr && !/^ID:\s*\d+/i.test(raw)) {
+            accName = raw.replace(/^@/, '');
+          }
+        }
+
+        // 3. Nếu vẫn chưa có, lấy username
+        if (!accName) {
+          const un = (known.username || conv.username || '').replace(/^@/, '').trim();
+          if (un) accName = un;
+        }
+
+        if (accName === cIdStr) accName = '';
+
+        metaEl.textContent = `ID: ${cid}${accName ? ' • ' + accName : ''}`;
+
+        // Luôn đảm bảo nạp đồng bộ known_users trong nền để cập nhật chính xác tên acc (ví dụ Zeng)
+        if (!known.first_name && !conv.first_name) {
+          ensureBotKnownUsersMap().then(km => {
+            const u = km && (km[cIdStr] || (uKey && km[uKey]));
+            if (u && u.first_name && u.first_name !== cIdStr) {
+              conv.first_name = u.first_name;
+              metaEl.textContent = `ID: ${cid} • ${u.first_name}`;
+            }
+          }).catch(() => {});
+        }
+      }
 
       const msgs = Array.isArray(conv.messages) ? conv.messages : [];
       const isNearBottom = (msgListEl.scrollHeight - msgListEl.scrollTop - msgListEl.clientHeight) < 100;
@@ -2890,27 +3106,38 @@
           ? `🤖 Bot gửi (${m.tag === 'manual_chat' ? 'Nhắn trực tiếp' : 'Tự động'})`
           : `${conv.role === 'contractor' ? '🛸' : (conv.role === 'owner' ? '👑' : '👤')} ${escapeBotChatHtml(m.sender_name || conv.name || cid)}`;
 
+        let msgYmd = "";
+        if (timeStr) {
+          const mDmy = timeStr.match(/(\b\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/);
+          if (mDmy) {
+            const day = String(mDmy[1]).padStart(2, '0');
+            const mon = String(mDmy[2]).padStart(2, '0');
+            const yr = mDmy[3] || String(new Date().getFullYear());
+            msgYmd = `${yr}-${mon}-${day}`;
+          }
+        }
+
         if (isOut) {
           return `
-            <div class="flex flex-col items-end">
+            <div data-msg-date="${msgYmd}" class="flex flex-col items-end w-full">
               <div class="max-w-[85%] sm:max-w-[75%] rounded-xl px-3.5 py-2 bg-sky-700/90 border border-sky-500/80 text-white shadow">
                 <div class="flex items-center justify-between gap-3 text-[10px] text-sky-200 pb-1 mb-1 border-b border-sky-600/60">
                   <span class="font-bold">${senderTitle}</span>
                   <span class="font-mono">${timeStr}</span>
                 </div>
-                <div class="font-mono text-xs leading-relaxed break-words">${textHtml}</div>
+                <div class="font-mono text-xs leading-relaxed break-words" style="word-break: break-word; overflow-wrap: anywhere;">${textHtml}</div>
               </div>
             </div>
           `;
         } else {
           return `
-            <div class="flex flex-col items-start">
+            <div data-msg-date="${msgYmd}" class="flex flex-col items-start w-full">
               <div class="max-w-[85%] sm:max-w-[75%] rounded-xl px-3.5 py-2 bg-slate-800 border border-slate-700 text-slate-100 shadow">
                 <div class="flex items-center justify-between gap-3 text-[10px] text-amber-300 pb-1 mb-1 border-b border-slate-700">
                   <span class="font-bold">${senderTitle}</span>
                   <span class="font-mono text-slate-400">${timeStr}</span>
                 </div>
-                <div class="font-mono text-xs leading-relaxed break-words">${textHtml}</div>
+                <div class="font-mono text-xs leading-relaxed break-words" style="word-break: break-word; overflow-wrap: anywhere;">${textHtml}</div>
               </div>
             </div>
           `;
