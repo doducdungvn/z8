@@ -7361,7 +7361,7 @@ function resetTable() {
           </div>
           <div class="flex flex-col">
             <h2 class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white tracking-wide truncate uppercase flex items-center gap-1.5">
-              <span>Quản Trị Bot</span>
+              <span>BOT</span>
               <span class="text-[9px] bg-sky-500/10 text-sky-600 dark:text-sky-400 px-1.5 py-0.2 rounded-full font-mono border border-sky-500/20">PRO</span>
             </h2>
           </div>
@@ -7693,7 +7693,7 @@ function resetTable() {
             <!-- Thanh tiêu đề + các tab con của từng đối tượng đang giao tiếp -->
             <div class="flex flex-col gap-2 pb-2.5 border-b border-slate-200 dark:border-slate-800">
               <div class="flex items-center justify-between gap-1.5 flex-wrap">
-                <!-- Ô nhập ID / @username + Mở Chat (được thu ngắn gọn lại) -->
+                <!-- Ô nhập ID / @username... + Mở Chat -->
                 <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg px-2 py-1 flex-1 max-w-[220px] sm:max-w-xs min-w-0">
                   <input type="text" id="tgChatNewRecipientInput" onkeydown="if(event.key==='Enter') openOrCreateTgChatTab()" placeholder="ID / @username..." class="flex-1 bg-transparent text-[11px] sm:text-xs outline-none min-w-0 text-slate-800 dark:text-slate-100 font-mono">
                   <button type="button" onclick="openOrCreateTgChatTab()" class="px-2.5 py-1 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 active:scale-95 text-white rounded-md text-[10px] sm:text-[11px] font-bold cursor-pointer shrink-0 transition" title="Mở tab chat với người này">
@@ -7708,9 +7708,9 @@ function resetTable() {
                 </div>
               </div>
 
-              <!-- Dải Sub-Tabs ngang: 3 acc nằm cùng 1 hàng trên điện thoại (cuộn ngang mượt nếu nhiều hơn) -->
-              <div id="tgChatContactTabs" class="flex flex-nowrap items-center gap-1.5 pb-1 pt-0.5 overflow-x-auto w-full select-none" style="scrollbar-width: thin;">
-                <span class="text-xs text-slate-400 italic">Đang tải danh sách đối tượng giao tiếp...</span>
+              <!-- Danh sách acc đối tượng: đúng 3 acc 1 dòng, thêm acc thì xuống hàng dưới -->
+              <div id="tgChatContactTabs" class="grid grid-cols-3 gap-1.5 w-full select-none pb-1 pt-0.5">
+                <span class="col-span-3 text-xs text-slate-400 italic">Đang tải danh sách đối tượng giao tiếp...</span>
               </div>
             </div>
 
@@ -9520,6 +9520,31 @@ function resetTable() {
       return 0;
     }
 
+    async function ensureTgKnownUsersMap(forceRefresh = false) {
+      if (!forceRefresh && window.tgKnownUsersMap && Object.keys(window.tgKnownUsersMap).length > 0) {
+        return window.tgKnownUsersMap;
+      }
+      try {
+        const res = await callBotApi("/api/bot/known_users");
+        if (res && res.ok) {
+          const uRaw = await res.json();
+          const usersEntries = Array.isArray(uRaw) ? uRaw : Object.values(uRaw.users || uRaw);
+          window.tgKnownUsersMap = window.tgKnownUsersMap || {};
+          usersEntries.forEach(u => {
+            if (!u || typeof u !== 'object') return;
+            const cid = String(u.chat_id || u.user_id || "").trim();
+            if (!cid || ["11223344", "99999", "111", "web_sync"].includes(cid)) return;
+            const un = String(u.username || "").trim().replace(/^@/, "");
+            const fn = String(u.first_name || "").trim();
+            window.tgKnownUsersMap[cid] = { chat_id: cid, username: un, first_name: fn, updated_at: u.updated_at || "" };
+            if (un) window.tgKnownUsersMap[un.toLowerCase()] = window.tgKnownUsersMap[cid];
+          });
+        }
+      } catch (_) {}
+      return window.tgKnownUsersMap || {};
+    }
+    window.ensureTgKnownUsersMap = ensureTgKnownUsersMap;
+
     async function buildCloudFallbackChatConversations() {
       const nowMs = Date.now();
       const useCachedMeta = window._tgChatMetaCacheTs && (nowMs - window._tgChatMetaCacheTs < 20000) && window._tgChatCachedCfg && window._tgChatCachedUsers;
@@ -9565,6 +9590,7 @@ function resetTable() {
         if (un) unameToCid[normChatKey(un)] = cid;
         if (fn) unameToCid[normChatKey(fn)] = unameToCid[normChatKey(fn)] || cid;
       });
+      window.tgKnownUsersMap = Object.assign(window.tgKnownUsersMap || {}, cidToUser);
 
       const resolveCanonicalId = (rawTarget) => {
         const s = String(rawTarget || "").trim();
@@ -9617,6 +9643,7 @@ function resetTable() {
           convMap[cid] = {
             chat_id: cid,
             name: dispName,
+            first_name: uInfo.first_name || "",
             username: un ? `@${un}` : "",
             role: rInfo.role,
             role_label: rInfo.role_label,
@@ -9625,6 +9652,9 @@ function resetTable() {
             messages: []
           };
         } else {
+          if (uInfo.first_name && !convMap[cid].first_name) {
+            convMap[cid].first_name = uInfo.first_name;
+          }
           if (dispName && (convMap[cid].name === cid || convMap[cid].name.startsWith("@"))) {
             convMap[cid].name = dispName;
           }
@@ -10004,6 +10034,20 @@ function resetTable() {
           });
         }
 
+        // Đồng bộ và làm giàu thông tin tên thật (first_name / tên acc) từ known_users cho mọi đối tượng
+        try {
+          const kMap = await ensureTgKnownUsersMap();
+          list.forEach(c => {
+            const cid = String(c.chat_id || "");
+            const un = String(c.username || "").replace(/^@/, "").toLowerCase();
+            const uInfo = kMap[cid] || (un ? kMap[un] : null);
+            if (uInfo) {
+              if (uInfo.first_name && !c.first_name) c.first_name = uInfo.first_name;
+              if (uInfo.username && !c.username) c.username = "@" + uInfo.username;
+            }
+          });
+        } catch (_) {}
+
         // 3. Giữ lại các tab đối tượng mà người dùng vừa chủ động bấm "+ Mở Chat" nhưng chưa gửi tin nhắn
         const prevList = window.tgChatConversations || [];
         prevList.forEach(prevConv => {
@@ -10165,7 +10209,7 @@ function resetTable() {
       const list = window.tgChatConversations || [];
 
       if (list.length === 0) {
-        tabsEl.innerHTML = `<span class="text-xs text-slate-400 italic py-1">Chưa có đối tượng giao tiếp nào. Hãy nhập ID / @username ở ô bên phải rồi bấm "+ Mở Chat".</span>`;
+        tabsEl.innerHTML = `<span class="col-span-3 text-xs text-slate-400 italic py-1">Chưa có đối tượng giao tiếp nào. Hãy nhập ID / @username... ở ô bên trên rồi bấm "+ Mở Chat".</span>`;
         return;
       }
 
@@ -10188,7 +10232,7 @@ function resetTable() {
         const cleanName = escapeHtmlChat(getCleanTgChatAccName(c));
 
         return `
-          <div onclick="selectTgChatContact('${safeCidAttr}')" class="flex-1 sm:flex-initial min-w-0 max-w-[32.5%] sm:max-w-[170px] px-1.5 sm:px-2.5 py-1 rounded-xs border text-[10.5px] sm:text-xs font-semibold flex items-center justify-between sm:justify-start gap-1 cursor-pointer transition select-none shrink-0 ${isActive ? roleColorActive : roleColorInactive}">
+          <div onclick="selectTgChatContact('${safeCidAttr}')" class="w-full min-w-0 px-2 py-1 rounded-xs border text-[10.5px] sm:text-xs font-semibold flex items-center justify-between gap-1 cursor-pointer transition select-none ${isActive ? roleColorActive : roleColorInactive}">
             <span class="truncate min-w-0 flex-1">${cleanName}</span>
             <span onclick="closeTgChatTab('${safeCidAttr}', event)" title="Đóng tab này" class="w-3.5 h-3.5 rounded-xs inline-flex items-center justify-center text-[9px] leading-none shrink-0 transition ${isActive ? 'text-white/80 hover:text-white hover:bg-black/30' : 'text-slate-400 hover:text-white hover:bg-rose-500'}">✕</span>
           </div>
@@ -10448,8 +10492,48 @@ function resetTable() {
         nameEl.classList.add("hidden");
       }
       if (metaEl) {
-        const uname = conv.username ? (conv.username.startsWith('@') ? conv.username : '@' + conv.username) : '';
-        metaEl.textContent = `ID: ${cid}${uname && uname !== cid ? ' • ' + uname : ''}`;
+        let accName = '';
+        const cIdStr = String(cid);
+        const uKey = (conv.username || "").replace(/^@/, "").toLowerCase();
+        const known = (window.tgKnownUsersMap && (window.tgKnownUsersMap[cIdStr] || (uKey && window.tgKnownUsersMap[uKey]))) || {};
+
+        // 1. Ưu tiên tên tài khoản (first_name / tên acc) từ known_users hoặc conv
+        accName = (known.first_name || conv.first_name || '').trim();
+
+        // 2. Nếu chưa có, phân tích từ conv.name
+        if (!accName && conv.name) {
+          let raw = String(conv.name).trim();
+          raw = raw.replace(/\s*\(@?[^)]+\)$/, '').trim();
+          raw = raw.replace(/^(?:Chủ\s*thầu|Thầu|Chủ\s*Bot|Khách)\s*[:\-•]?\s*/i, '').trim();
+          // Nếu dạng "@Zeng86" -> tra cứu trong knownUsersMap
+          const rawKey = raw.replace(/^@/, '').toLowerCase();
+          if (window.tgKnownUsersMap && window.tgKnownUsersMap[rawKey] && window.tgKnownUsersMap[rawKey].first_name) {
+            accName = window.tgKnownUsersMap[rawKey].first_name;
+          } else if (raw && raw !== cIdStr && !/^ID:\s*\d+/i.test(raw)) {
+            accName = raw.replace(/^@/, '');
+          }
+        }
+
+        // 3. Nếu vẫn chưa có, lấy username
+        if (!accName) {
+          const un = (known.username || conv.username || '').replace(/^@/, '').trim();
+          if (un) accName = un;
+        }
+
+        if (accName === cIdStr) accName = '';
+
+        metaEl.textContent = `ID: ${cid}${accName ? ' • ' + accName : ''}`;
+
+        // Luôn đảm bảo nạp đồng bộ known_users trong nền để cập nhật chính xác tên acc (ví dụ Zeng)
+        if (!known.first_name && !conv.first_name) {
+          ensureTgKnownUsersMap().then(km => {
+            const u = km && (km[cIdStr] || (uKey && km[uKey]));
+            if (u && u.first_name && u.first_name !== cIdStr) {
+              conv.first_name = u.first_name;
+              metaEl.textContent = `ID: ${cid} • ${u.first_name}`;
+            }
+          }).catch(() => {});
+        }
       }
 
       const msgs = Array.isArray(conv.messages) ? conv.messages : [];
@@ -11213,6 +11297,17 @@ function resetTable() {
         const cData = cRes && cRes.ok ? await cRes.json() : {};
         const rawUsers = uData ? (Array.isArray(uData) ? uData : (uData.users || Object.values(uData))) : [];
         const users = rawUsers.filter(u => u && (u.chat_id || u.user_id || u.username));
+        window.tgKnownUsersMap = window.tgKnownUsersMap || {};
+        users.forEach(u => {
+          const cid = String(u.chat_id || u.user_id || '').trim();
+          if (cid) {
+            window.tgKnownUsersMap[cid] = {
+              chat_id: cid,
+              username: String(u.username || '').replace(/^@/, '').trim(),
+              first_name: String(u.first_name || '').trim()
+            };
+          }
+        });
         const norm = (v) => (!v ? '' : v.toString().trim().replace(/^@/, '').toLowerCase());
 
         let rawAllowed = cData.allowed_senders || [];
