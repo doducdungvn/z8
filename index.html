@@ -13426,21 +13426,26 @@ function resetTable() {
         }
       }
 
-      // 4. Nút "Lấy dữ liệu cược từ Bot về Web": Kéo toàn bộ cược hôm nay nạp vào khung tính của Web
-      // 4. Nút "Lấy dữ liệu cược từ Bot về Web": Kéo toàn bộ tin gốc hôm nay nạp vào khung tính của Web (mỗi tin 1 dòng)
+      // 4. Nút "Lấy dữ liệu cược từ Bot về Web": Kéo toàn bộ tin gốc (theo ngày đang chọn) nạp vào khung tính của Web (mỗi tin 1 dòng)
       async function pullBetsFromBotToWeb() {
         try {
-          const res = await callBotApi("/api/bot/board");
+          const selDate = (typeof getTgSelectedDate === 'function') ? getTgSelectedDate() : '';
+          const dispDate = (typeof formatTgDateDisplay === 'function') ? formatTgDateDisplay(selDate) : selDate;
+          const endpoint = dispDate ? `/api/bot/board?date=${encodeURIComponent(dispDate)}` : "/api/bot/board";
+
+          const res = await callBotApi(endpoint);
           if (!res.ok) throw new Error("Backend offline");
           const data = await res.json();
           const rawMsgs = data.raw_messages || [];
 
           const lines = rawMsgs
+            .filter(m => !m.voided && !m.rejected && m.status !== 'rejected' && m.status !== 'voided')
             .map(m => (m.text || m.raw_text || '').replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim())
             .filter(Boolean);
 
+          const dateLabel = dispDate || "hôm nay";
           if (lines.length === 0) {
-            alert("Bot chưa có dữ liệu tin gốc nào hôm nay để lấy về.");
+            alert(`Bot chưa có dữ liệu tin gốc nào (${dateLabel}) để lấy về.`);
             return;
           }
 
@@ -13461,7 +13466,7 @@ function resetTable() {
               document.getElementById('topMainHeader')?.classList.remove('hidden');
               document.getElementById('mainSpreadsheetWorkspace')?.classList.remove('hidden');
             }
-            alert(`✅ ĐÃ LẤY ${lines.length} TIN GỐC TỪ BOT VỀ WEB!\nMỗi tin nhận được là 1 dòng riêng biệt.`);
+            alert(`✅ ĐÃ LẤY ${lines.length} TIN GỐC TỪ BOT VỀ WEB (${dateLabel})!\nMỗi tin nhận được là 1 dòng riêng biệt.`);
           }
         } catch (err) {
           alert("Không kết nối được Backend Bot (" + TG_BOT_API + ") để lấy cược. Hãy kiểm tra lại kết nối mạng hoặc dịch vụ Render!");
