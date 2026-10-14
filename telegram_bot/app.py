@@ -482,6 +482,21 @@ def get_board():
         archive = bot_service.load_daily_archive(date_arg)
         if archive:
             b_data = archive.get("board", {})
+            raw_msgs = archive.get("raw_messages") or []
+            if not raw_msgs and "client_bets" in archive:
+                raw_msgs = []
+                for cid_str, cdata in archive["client_bets"].items():
+                    name = cdata.get("name") or cid_str
+                    username = cdata.get("username") or ""
+                    for h_idx, item in enumerate(cdata.get("history", [])):
+                        raw_msgs.append({
+                            "chat_id": cid_str,
+                            "sender_name": name,
+                            "username": username,
+                            "raw_text": item.get("raw_text") or item.get("text", ""),
+                            "timestamp": item.get("timestamp"),
+                            "voided": item.get("voided", False)
+                        })
             return jsonify({
                 "from_archive": True,
                 "date": archive.get("date"),
@@ -495,7 +510,7 @@ def get_board():
                 "xien_count": len(b_data.get("xien_bets", [])),
                 "history": archive.get("transfer_history", []),
                 "retained": b_data.get("retained", {}),
-                "raw_messages": archive.get("raw_messages", []),
+                "raw_messages": raw_msgs,
                 "pending_transfers": {},
                 "pending_text": "",
                 "transfers": {},
