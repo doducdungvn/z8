@@ -7383,8 +7383,7 @@ function resetTable() {
         <i class="fa-solid fa-shield-halved text-sky-600"></i>
       </div>
       <div>
-        <h3 class="font-bold text-sm sm:text-base text-slate-800 dark:text-white uppercase tracking-wide">Mở Khóa Quản Trị Telegram Bot</h3>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Dữ liệu cược và cấu hình được bảo vệ. Vui lòng nhập mật khẩu quản trị để tiếp tục:</p>
+        <h3 class="font-bold text-sm sm:text-base text-slate-800 dark:text-white uppercase tracking-wide">Quản Trị Bot</h3>
       </div>
       <form id="formTgModalUnlock" onsubmit="event.preventDefault(); submitTgModalUnlock();" class="space-y-3 text-left">
         <div class="relative">
@@ -7395,10 +7394,7 @@ function resetTable() {
         </div>
         <p id="tgModalUnlockError" class="text-xs text-rose-500 font-bold hidden text-center"></p>
         <button type="submit" id="btnSubmitTgModalUnlock" class="w-full py-2 bg-sky-700 hover:bg-sky-600 text-white rounded-xs text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer border border-sky-800">
-          <i class="fa-solid fa-lock-open"></i> Mở Khóa Quản Trị
-        </button>
-        <button type="button" onclick="showMainCalculatorView()" class="w-full py-2 bg-slate-200 dark:bg-dark-700 hover:bg-slate-300 dark:hover:bg-dark-600 text-slate-700 dark:text-slate-300 rounded-xs text-xs font-bold flex items-center justify-center gap-2 cursor-pointer border border-slate-300 dark:border-slate-600">
-          <i class="fa-solid fa-arrow-left"></i> Quay Lại Trang Chủ
+          <i class="fa-solid fa-lock-open"></i> Connect
         </button>
         <!-- Trạng Thái Máy Chủ Backend (Khóa bảo vệ bằng mật khẩu khi sửa) -->
         <div class="pt-3 mt-2 border-t border-slate-200 dark:border-dark-700 text-left">
@@ -12638,7 +12634,7 @@ function resetTable() {
         errEl.classList.remove('hidden');
         return;
       }
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang mở...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting...';
       try {
         const res = await callBotApi("/api/bot/verify_password", {
           method: "POST",
@@ -12667,7 +12663,7 @@ function resetTable() {
         errEl.classList.remove('hidden');
         testTgLockBackendConnection(TG_BOT_API);
       } finally {
-        btn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Mở Khóa';
+        btn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Connect';
       }
     }
 
