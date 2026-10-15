@@ -193,3 +193,18 @@ Hủy tin (Lần #1):
 [23:36:45 23/09] [ERROR] ⚠️ Lỗi gửi tin báo tin treo #99 cho Chủ bot (1023927138): Chưa nhập Bot Token.
 [23:37:22 23/09] [SUCCESS] Khách @Zeng86 (1023927138): de 00x5 (Đã duyệt tin #2 -> Giữ lại 100%, đã nhắn Ok tin 1)
 [23:37:31 23/09] [WARN] Chủ bot đã TỪ CHỐI tin #2 của @Zeng86 (1023927138) ('de 00x5')
+[21:53:30 24/09] [SUCCESS] Chủ thầu (@congty368) gửi bảng chốt tiền: 24/09/2026: De: 491(4)=-112 Lo: 88(13)=-887 Tong nhan:-999
+[21:53:30 24/09] [INFO] Chủ thầu (@congty368): Hôm nay nghỉ sớm nhé
+[22:21:13 03/10] [WARN] Bot đã TẮT (Chế độ Treo chờ duyệt): Vẫn quản lý tin nhắn nhưng không Ok khách, chờ Chủ bot duyệt.
+[22:23:11 03/10] [WARN] Bot đã TẮT (Chế độ Treo chờ duyệt): Vẫn quản lý tin nhắn nhưng không Ok khách, chờ Chủ bot duyệt.
+[22:24:01 03/10] [WARN] Bot đã TẮT (Chế độ Treo chờ duyệt): Vẫn quản lý tin nhắn nhưng không Ok khách, chờ Chủ bot duyệt.
+[22:25:54 03/10] [WARN] Bot đã TẮT (Chế độ Treo chờ duyệt): Vẫn quản lý tin nhắn nhưng không Ok khách, chờ Chủ bot duyệt.
+[22:25:54 03/10] [SUCCESS] Đã cập nhật bảng giá riêng cho khách test_vip_999
+[22:25:54 03/10] [INFO] Đã xóa cấu hình giá riêng của khách test_vip_999
+[22:26:35 03/10] [WARN] Bot đã TẮT (Chế độ Treo chờ duyệt): Vẫn quản lý tin nhắn nhưng không Ok khách, chờ Chủ bot duyệt.
+[22:26:35 03/10] [SUCCESS] Đã cập nhật bảng giá riêng cho khách test_vip_999
+[22:26:35 03/10] [INFO] Đã xóa cấu hình giá riêng của khách test_vip_999
+[22:27:07 03/10] [WARN] Bot đã TẮT (Chế độ Treo chờ duyệt): Vẫn quản lý tin nhắn nhưng không Ok khách, chờ Chủ bot duyệt.
+[22:27:07 03/10] [SUCCESS] Đã cập nhật bảng giá riêng cho khách test_vip_999
+[22:27:08 03/10] [INFO] Đã xóa cấu hình giá riêng của khách test_vip_999
+[22:27:08 03/10] [WARN] Chủ bot đã TỪ CHỐI tin #999123 của 999999 ('de 12 100n')

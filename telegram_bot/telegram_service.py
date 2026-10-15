@@ -2095,6 +2095,8 @@ class TelegramBotService:
         excess = self.balancer.add_bets(parsed)
         excess_count = sum(len(v) for v in excess.values())
         has_forwarded_excess = False
+        transfer_failed = False
+        transfer_err = ""
 
         # 4. Nếu có cược thừa và bật chế độ tự động bắn
         if self.config.get("auto_forward_excess", True) and self.config.get("mode", "instant") == "instant":
@@ -2120,7 +2122,29 @@ class TelegramBotService:
                         transfer_summary = " ; ".join(transfer_msg.strip().splitlines())
                         self.log(f"Gửi chủ thầu {target_recipient}: {transfer_summary}", "INFO")
                     else:
+                        transfer_failed = True
+                        transfer_err = err or "Lỗi gửi Telegram"
                         self.log(f"❌ Thất bại khi gửi cược thừa tới {target_recipient}: {err}", "ERROR")
+                else:
+                    transfer_failed = True
+                    transfer_err = "Chưa thiết lập người nhận cược thừa (target_recipient)"
+                    self.log("⚠️ Có cược thừa nhưng chưa thiết lập người nhận (target_recipient)!", "WARN")
+
+        # NẾU CÓ CƯỢC THỪA NHƯNG GỬI THẦU THẤT BẠI TRONG LÚC DUYỆT THỦ CÔNG:
+        if excess_count > 0 and not has_forwarded_excess:
+            self.balancer.rollback_bets(parsed)
+            c_hist = self.client_bets.get(chat_id_str, {}).get("history", [])
+            if c_hist and c_hist[-1].get("msg_index") == msg_idx:
+                c_hist.pop()
+                self.recompute_client_totals(chat_id_str)
+                self.client_msg_counters[chat_id_str] = max(0, msg_idx - 1)
+                self.save_client_bets()
+            item["status"] = "pending"
+            item["transfer_error"] = transfer_err or "Lỗi gửi thầu"
+            self.save_pending_bets()
+            err_msg = f"Không thể duyệt tin #{pending_id} vì bắn cược thừa sang chủ thầu thất bại ({transfer_err}). Vui lòng kiểm tra lại chủ thầu!"
+            self.log(f"❌ {err_msg}", "ERROR")
+            return {"success": False, "error": err_msg}
 
         # Lưu nội dung cân chuyển và giữ lại vào chi tiết tin khách
         single_transfer_txt = self.balancer.format_transfer_message(excess, include_header=False) if excess_count > 0 else ""
@@ -2739,6 +2763,28 @@ class TelegramBotService:
                 reply += "💡 <i>Gửi tin cược (VD: <code>de 88=100</code>, <code>lo 12=10d</code>) để đặt số.\n🔒 Quản trị viên: Gõ <code>/mk &lt;mật_khẩu&gt;</code> để mở khóa quyền quản lý.</i>"
             self.send_telegram_message(str(chat_id), reply)
             self.log(f"Người dùng {sender_label} đã kết nối và nhận Chat ID: {chat_id}", "INFO")
+
+            # Nếu người bấm /start chính là Chủ thầu (target_recipient), kiểm tra xem có tin treo đang chờ không
+            target_rec = str(self.config.get("target_recipient", "")).strip().lstrip("@").lower()
+            sender_uname = (username or "").strip().lstrip("@").lower()
+            if target_rec and (str(chat_id).strip().lower() == target_rec or sender_uname == target_rec):
+                pending_list = [b for b in getattr(self, "pending_bets", []) if b.get("status") == "pending"]
+                if pending_list:
+                    owner_cid = self.get_owner_chat_id()
+                    if owner_cid:
+                        remind_msg = (
+                            f"🟢 <b>CHỦ THẦU ({sender_label}) VỪA BẤM /START MỞ LẠI KẾT NỐI!</b>\n"
+                            f"━━━━━━━━━━━━━━━━━━\n"
+                            f"Hiện có <b>{len(pending_list)} tin cược treo</b> đang chờ chuyển thầu.\n"
+                            f"👉 Bấm nút bên dưới để duyệt và tự động bắn cược thừa sang thầu ngay:"
+                        )
+                        reply_markup = {
+                            "inline_keyboard": [
+                                [{"text": "⚡ Duyệt tất cả tin treo ngay", "callback_data": "duyet_all"}]
+                            ]
+                        }
+                        self.send_telegram_message(str(owner_cid), remind_msg, reply_markup=reply_markup, force=True, tag="owner_alert")
+                        self.log(f"🔔 Đã gửi tin nhắc duyệt {len(pending_list)} tin treo cho Chủ bot khi Chủ thầu kết nối lại.", "SUCCESS")
             return
 
         # E. /help hoặc help
@@ -3848,6 +3894,8 @@ class TelegramBotService:
         excess = self.balancer.add_bets(parsed)
         excess_count = sum(len(v) for v in excess.values())
         has_forwarded_excess = False
+        transfer_failed = False
+        transfer_error_reason = ""
 
         # 4. Nếu có cược thừa và bật chế độ tự động bắn (instant)
         if self.config.get("auto_forward_excess", True) and self.config.get("mode", "instant") == "instant":
@@ -3873,11 +3921,64 @@ class TelegramBotService:
                         transfer_summary = " ; ".join(transfer_msg.strip().splitlines())
                         self.log(f"Gửi chủ thầu {target_recipient}: {transfer_summary}", "INFO")
                     else:
+                        transfer_failed = True
+                        transfer_error_reason = err or "Lỗi gửi Telegram"
                         self.log(f"❌ Thất bại khi gửi cược thừa tới {target_recipient}: {err}", "ERROR")
                 else:
+                    transfer_failed = True
+                    transfer_error_reason = "Chưa thiết lập người nhận cược thừa (target_recipient)"
                     self.log("⚠️ Có cược thừa nhưng chưa thiết lập người nhận (target_recipient)!", "WARN")
             else:
                 self.log(f"🛡️ Toàn bộ cược nằm trong định mức giữ lại, không có cược thừa cần chuyển.", "INFO")
+
+        # KIỂM TRA BẢO VỆ CHẶT CHẼ:
+        # Nếu CÓ cược thừa (excess_count > 0) mà việc gửi thầu bị THẤT BẠI:
+        # TUYỆT ĐỐI KHÔNG tự động nhắn Ok cho khách và KHÔNG tự động ôm giữ lại 100%!
+        if excess_count > 0 and not has_forwarded_excess:
+            err_desc = transfer_error_reason or "Chủ thầu chặn bot hoặc lỗi kết nối"
+            # 1. Rollback khỏi balancer ngay để không bị ôm cược vào bảng giữ lại của chủ bảng
+            self.balancer.rollback_bets(parsed)
+
+            # 2. Xóa khỏi client_bets history (vì tin chưa được nhận hợp lệ)
+            c_hist = self.client_bets.get(chat_id_str, {}).get("history", [])
+            if c_hist and c_hist[-1].get("msg_index") == msg_idx:
+                c_hist.pop()
+                self.recompute_client_totals(chat_id_str)
+                self.client_msg_counters[chat_id_str] = max(0, msg_idx - 1)
+                self.save_client_bets()
+
+            # 3. Đưa vào danh sách tin TREO (pending_bets) để Chủ bot kiểm tra và xử lý thủ công
+            pending_item = self.add_pending_bet(
+                chat_id_str=chat_id_str,
+                sender_label=sender_label,
+                username=username,
+                parsed=parsed,
+                raw_text=text,
+                user_msg_id=user_msg_id,
+                filter_return_msg=f"⚠️ LỖI BẮN THẦU ({err_desc}). ĐÃ CHẶN NHẬN TỰ ĐỘNG!"
+            )
+            pending_item["transfer_failed"] = True
+            pending_item["transfer_error"] = err_desc
+            self.save_pending_bets()
+
+            # 4. Gửi thông báo khẩn cấp tới Chủ Bot
+            owner_cid = self.get_owner_chat_id()
+            alert_msg = (
+                f"🚨 BÁO ĐỘNG ĐỎ: LỖI BẮN CƯỢC THỪA SANG CHỦ THẦU!\n"
+                f"━━━━━━━━━━━━━━━━━━\n"
+                f"👤 Khách: {sender_label} (@{username or 'không có'})\n"
+                f"❌ Lý do: {err_desc}\n"
+                f"📝 Nội dung cược: {text}\n"
+                f"━━━━━━━━━━━━━━━━━━\n"
+                f"🛡️ HỆ THỐNG ĐÃ TỰ ĐỘNG CHẶN:\n"
+                f"• KHÔNG gửi tin Ok cho khách (khách CHƯA được nhận tin này).\n"
+                f"• KHÔNG ôm cược thừa vào bảng giữ lại của bạn.\n"
+                f"• Đã đưa vào Hàng Đợi Tin Treo #{pending_item['id']} chờ bạn xử lý!"
+            )
+            self.log(f"🚨 [BÁO ĐỘNG] {alert_msg.replace(chr(10), ' | ')}", "ERROR")
+            if owner_cid:
+                self.send_telegram_message(str(owner_cid), alert_msg, force=True, tag="owner_alert")
+            return
 
         # Lưu nội dung cân chuyển và giữ lại vào chi tiết tin khách
         single_transfer_txt = self.balancer.format_transfer_message(excess, include_header=False) if excess_count > 0 else ""

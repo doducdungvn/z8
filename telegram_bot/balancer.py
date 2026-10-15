@@ -64,6 +64,46 @@ class BoardBalancer:
 
         return self.calculate_excess()
 
+    def rollback_bets(self, parsed_bets: dict):
+        """
+        Rollback các cược vừa cộng vào balancer khi việc chuyển thầu bị lỗi hoặc tin cược bị từ chối
+        """
+        for item in parsed_bets.get('de', []):
+            num = item['number']
+            amt = item['amount']
+            cur = self.de_sums.get(num, 0.0) - amt
+            if cur <= 1e-6:
+                self.de_sums.pop(num, None)
+            else:
+                self.de_sums[num] = cur
+
+        for item in parsed_bets.get('lo', []):
+            num = item['number']
+            amt = item['amount']
+            cur = self.lo_sums.get(num, 0.0) - amt
+            if cur <= 1e-6:
+                self.lo_sums.pop(num, None)
+            else:
+                self.lo_sums[num] = cur
+
+        for item in parsed_bets.get('bacang', []):
+            num = item['number']
+            amt = item['amount']
+            cur = self.bacang_sums.get(num, 0.0) - amt
+            if cur <= 1e-6:
+                self.bacang_sums.pop(num, None)
+            else:
+                self.bacang_sums[num] = cur
+
+        xien_to_remove = []
+        for cat in ['xien2', 'xien3', 'xien4']:
+            for item in parsed_bets.get(cat, []):
+                xien_to_remove.append(item)
+        if xien_to_remove and self.xien_bets:
+            for item in xien_to_remove:
+                if item in self.xien_bets:
+                    self.xien_bets.remove(item)
+
     def _get_category_retain_type(self, cat: str) -> str:
         """Xác định loại tính giữ lại (tiền hoặc %) cho từng thể loại theo cấu hình"""
         r_type = self.config.get("retain_type", "money")
