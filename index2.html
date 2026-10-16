@@ -89,49 +89,163 @@
       height: 85px;
     }
 
-    /* === CÁC NÚT BẤM (GỌN GÀNG, TRUNG TÍNH) === */
+    /* === CÁC NÚT BẤM (GỌN GÀNG, TRUNG TÍNH, NẰM TRÊN 1 HÀNG) === */
     .button-group {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+      flex-wrap: nowrap;
+      gap: 5px;
       align-items: center;
+      width: 100%;
     }
 
-    button {
+    .button-group button {
+      flex: 1 1 0;
+      min-width: 0;
       background-color: #374151;
       color: #ffffff;
       border: 1px solid #1f2937;
-      padding: 7px 14px;
-      font-size: 13px;
+      padding: 7px 3px;
+      font-size: 11.5px;
       font-weight: 500;
       border-radius: 3px;
       cursor: pointer;
       transition: background-color 0.15s ease;
+      white-space: nowrap;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    button:hover {
+    .button-group button:hover {
       background-color: #1f2937;
     }
 
+    /* === KHUNG CÀI ĐẶT GIỮ LẠI (PHÂN LOẠI HÌNH, TIỀN/%, GIỚI HẠN) === */
     .retain-box {
       display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      margin-top: 5px;
-      background: #f3f4f6;
-      padding: 6px 10px;
-      border-radius: 3px;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      margin-top: 2px;
+      background: #f9fafb;
+      padding: 8px 10px;
+      border-radius: 4px;
       border: 1px solid #e5e7eb;
     }
 
-    #retainNumber {
-      width: 60px;
-      padding: 4px 6px;
-      font-size: 13px;
+    .retain-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .retain-title {
+      font-weight: 600;
+      color: #374151;
+      font-size: 12px;
+    }
+
+    .retain-desc {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .retain-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 3px;
+    }
+
+    .retain-table th {
+      background: #f3f4f6;
+      color: #4b5563;
+      font-weight: 600;
+      padding: 4px 5px;
+      text-align: center;
+      border-bottom: 1px solid #e5e7eb;
+      border-right: 1px solid #f3f4f6;
+      font-size: 11px;
+    }
+
+    .retain-table td {
+      padding: 4px 5px;
+      border-bottom: 1px solid #f3f4f6;
+      border-right: 1px solid #f3f4f6;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .retain-table td.cat-label {
+      font-weight: 600;
+      color: #1f2937;
+      background: #fafafa;
+      width: 16%;
+    }
+
+    .retain-table input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 4px 4px;
+      font-size: 12px;
       border: 1px solid #d1d5db;
       border-radius: 3px;
       text-align: center;
+      background: #ffffff;
+      color: #111827;
+    }
+
+    .retain-table select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 4px 2px;
+      font-size: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 3px;
+      text-align: center;
+      background: #ffffff;
+      color: #111827;
+      cursor: pointer;
+    }
+
+    .section-label-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-fetch-kqxs {
+      background-color: #059669;
+      color: #ffffff;
+      border: 1px solid #047857;
+      padding: 3px 8px;
+      font-size: 11.5px;
+      font-weight: 500;
+      border-radius: 3px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-fetch-kqxs:hover {
+      background-color: #047857;
+    }
+
+    .btn-fetch-kqxs:disabled {
+      background-color: #9ca3af;
+      border-color: #6b7280;
+      cursor: not-allowed;
+    }
+
+    .fetch-status {
+      font-size: 11px;
+      color: #059669;
+      margin-top: 2px;
+      min-height: 14px;
     }
 
     .footer-links {
@@ -158,15 +272,55 @@
     }
 
     .summary-badge-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
-      padding: 8px 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 8px 10px;
+      border-radius: 4px;
+    }
+
+    .summary-col-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       border-radius: 3px;
-      font-size: 13px;
-      font-weight: 600;
+      padding: 7px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .summary-col-header {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1e293b;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 3px;
+      margin-bottom: 2px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .summary-col-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5px;
+      font-size: 11.5px;
+      color: #334155;
+      font-family: inherit;
+    }
+
+    .summary-col-body .summary-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .win-num {
+      color: #dc2626;
+      font-weight: 700;
     }
 
     .results-grid {
@@ -223,6 +377,36 @@
     .details-list li {
       padding: 4px 0;
       border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* Tiêu đề phân loại loại hình (Đề, Lô, Xiên, 3 Càng) cho 3 cột */
+    .category-header-badge {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 4px 8px;
+      margin: 8px 0 4px 0;
+      border-radius: 2px;
+      border-left: 3px solid #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .category-block {
+      margin-bottom: 8px;
+    }
+
+    .details-list li.cat-header {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 4px 8px;
+      margin: 6px 0 3px 0;
+      border-left: 3px solid #475569;
+      text-transform: uppercase;
+      border-bottom: none;
     }
 
     /* === BẢNG TÍNH TIỀN CƯỢC & THANH TOÁN (CHUYÊN NGHIỆP, KHÔNG MÀU MÈ) === */
@@ -307,52 +491,86 @@
       font-weight: 700;
     }
 
-    /* Cài đặt giá (Đ, L, X, C) */
+    /* Cài đặt giá & thưởng (Đề, Lô, X2, X3, X4, 3C Chính, 3C Áp má) */
     .rate-card {
-      width: 220px;
+      width: 290px;
       border: 1px solid #9ca3af;
-      border-radius: 3px;
+      border-radius: 4px;
       background: #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
 
     .rate-card-header {
       background: #f3f4f6;
       border-bottom: 1px solid #9ca3af;
       padding: 8px 12px;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 13px;
       text-align: center;
+      color: #111827;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .rate-card-body {
-      padding: 12px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
+    }
+
+    .rate-table-header {
+      display: flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #4b5563;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #e5e7eb;
+      text-transform: uppercase;
+    }
+
+    .rate-table-header .th-label {
+      flex: 1;
+      padding-left: 2px;
+    }
+
+    .rate-table-header .th-val {
+      width: 82px;
+      text-align: center;
     }
 
     .rate-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      font-size: 13px;
+      gap: 6px;
+      font-size: 12px;
       font-weight: 500;
+      padding: 2px 0;
     }
 
     .rate-row label {
-      width: 25px;
+      flex: 1;
       font-weight: 600;
+      color: #1f2937;
+      white-space: nowrap;
     }
 
     .rate-input {
-      width: 90px;
-      height: 28px;
+      width: 82px;
+      height: 26px;
       border: 1px solid #cbd5e1;
       border-radius: 2px;
       text-align: center;
-      font-size: 13px;
+      font-size: 12px;
       font-family: inherit;
+      padding: 0 4px;
+    }
+
+    .rate-input:focus {
+      border-color: #2563eb;
+      outline: none;
+      box-shadow: 0 0 0 1px #2563eb;
     }
 
     .rate-card-footer {
@@ -404,12 +622,6 @@
       .rate-card {
         width: 100%;
       }
-
-      .rate-card-body {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-between;
-      }
     }
   </style>
 </head>
@@ -427,22 +639,84 @@
         </div>
 
         <div class="button-group">
-          <button type="button" id="normalizeButton">Chuẩn hóa 27</button>
-          <button type="button" id="calculateButton">Tính tổng</button>
-          <button type="button" id="copyButton">Sao chép Chuyển</button>
-          <button type="button" id="copyInputListButton">Sao chép Input</button>
+          <button type="button" id="normalizeButton" title="Chuẩn hóa khoảng trắng và 27 giải">Chuẩn hóa 27</button>
+          <button type="button" id="calculateButton" title="Tính tổng cược và chuyển">Tính tổng</button>
+          <button type="button" id="copyButton" title="Sao chép danh sách số chuyển">Sao chép Chuyển</button>
+          <button type="button" id="copyInputListButton" title="Sao chép chi tiết input">Sao chép Input</button>
         </div>
 
         <div class="retain-box">
-          <label for="retainNumber">Giữ lại:</label>
-          <input type="text" id="retainNumber" value="0">
-          <label><input type="radio" name="retainType" id="retainTypeMoney" value="money" checked> Tiền</label>
-          <label><input type="radio" name="retainType" id="retainTypePercentage" value="percentage"> Phần trăm</label>
+          <div class="retain-header">
+            <span class="retain-title">Cài đặt giữ lại:</span>
+            <span class="retain-desc">(Dôi dư chuyển đi)</span>
+          </div>
+          <table class="retain-table">
+            <thead>
+              <tr>
+                <th style="width: 16%;">Loại</th>
+                <th style="width: 30%;">Mức giữ</th>
+                <th style="width: 26%;">Kiểu</th>
+                <th style="width: 28%;">Giữ tối đa</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="cat-label">Đề</td>
+                <td><input type="number" id="retainVal_de" value="0" min="0" step="any"></td>
+                <td>
+                  <select id="retainType_de">
+                    <option value="money">Tiền</option>
+                    <option value="percentage">%</option>
+                  </select>
+                </td>
+                <td><input type="number" id="retainMax_de" placeholder="Max" min="0" step="any" title="Giới hạn giữ lại tối đa cho 1 con"></td>
+              </tr>
+              <tr>
+                <td class="cat-label">Lô</td>
+                <td><input type="number" id="retainVal_lo" value="0" min="0" step="any"></td>
+                <td>
+                  <select id="retainType_lo">
+                    <option value="money">Tiền</option>
+                    <option value="percentage">%</option>
+                  </select>
+                </td>
+                <td><input type="number" id="retainMax_lo" placeholder="Max" min="0" step="any" title="Giới hạn giữ lại tối đa cho 1 con"></td>
+              </tr>
+              <tr>
+                <td class="cat-label">Xiên</td>
+                <td><input type="number" id="retainVal_xien" value="0" min="0" step="any"></td>
+                <td>
+                  <select id="retainType_xien">
+                    <option value="money">Tiền</option>
+                    <option value="percentage">%</option>
+                  </select>
+                </td>
+                <td><input type="number" id="retainMax_xien" placeholder="Max" min="0" step="any" title="Giới hạn giữ lại tối đa cho 1 con"></td>
+              </tr>
+              <tr>
+                <td class="cat-label">Càng</td>
+                <td><input type="number" id="retainVal_bacang" value="0" min="0" step="any"></td>
+                <td>
+                  <select id="retainType_bacang">
+                    <option value="money">Tiền</option>
+                    <option value="percentage">%</option>
+                  </select>
+                </td>
+                <td><input type="number" id="retainMax_bacang" placeholder="Max" min="0" step="any" title="Giới hạn giữ lại tối đa cho 1 con"></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <div class="input-section">
-          <label for="twentySevenNumbers">27 giải:</label>
-          <textarea id="twentySevenNumbers" rows="3"></textarea>
+          <div class="section-label-bar">
+            <label for="twentySevenNumbers">27 giải:</label>
+            <button type="button" id="btnFetchMinhNgoc" class="btn-fetch-kqxs" title="Tự động lấy 27 giải KQXS Miền Bắc mới nhất từ Minh Ngọc">
+              🔄 Lấy KQ Minh Ngọc
+            </button>
+          </div>
+          <textarea id="twentySevenNumbers" rows="3" placeholder="Nhập 27 giải hoặc bấm 'Lấy KQ Minh Ngọc' để tải tự động"></textarea>
+          <div id="minhngocStatus" class="fetch-status"></div>
         </div>
 
         <div class="input-section">
@@ -458,8 +732,47 @@
       <!-- Cột phải: 3 cột kết quả -->
       <div class="right-section">
         <div class="summary-badge-bar">
-          <div><u>Tất cả:</u> <span id="numResults">0 con</span></div>
-          <div id="totalSum2"></div>
+          <!-- KHỐI 1: CƯỢC -->
+          <div class="summary-col-card">
+            <div class="summary-col-header">
+              <span>CƯỢC:</span>
+              <span id="sumBetTotal">0</span>
+            </div>
+            <div class="summary-col-body" id="sumBetDetail">
+              <div class="summary-line"><span>Đ:</span> <span>0/0</span></div>
+              <div class="summary-line"><span>L:</span> <span>0/0</span></div>
+              <div class="summary-line"><span>X:</span> <span>0/0</span></div>
+              <div class="summary-line"><span>C:</span> <span>0/0</span></div>
+            </div>
+          </div>
+
+          <!-- KHỐI 2: CHUYỂN -->
+          <div class="summary-col-card">
+            <div class="summary-col-header">
+              <span>CHUYỂN:</span>
+              <span id="sumTransferTotal">0</span>
+            </div>
+            <div class="summary-col-body" id="sumTransferDetail">
+              <div class="summary-line"><span>Đ:</span> <span>0/0</span></div>
+              <div class="summary-line"><span>L:</span> <span>0/0</span></div>
+              <div class="summary-line"><span>X:</span> <span>0/0</span></div>
+              <div class="summary-line"><span>C:</span> <span>0/0</span></div>
+            </div>
+          </div>
+
+          <!-- KHỐI 3: GIỮ LẠI -->
+          <div class="summary-col-card">
+            <div class="summary-col-header">
+              <span>GIỮ LẠI:</span>
+              <span id="sumRetainTotal">0</span>
+            </div>
+            <div class="summary-col-body" id="sumRetainDetail">
+              <div class="summary-line"><span>Đ:</span> <span>0/0</span></div>
+              <div class="summary-line"><span>L:</span> <span>0/0</span></div>
+              <div class="summary-line"><span>X:</span> <span>0/0</span></div>
+              <div class="summary-line"><span>C:</span> <span>0/0</span></div>
+            </div>
+          </div>
         </div>
 
         <div class="results-grid">
@@ -505,41 +818,63 @@
           <table class="pro-table">
             <thead>
               <tr>
-                <th style="width: 15%;"></th>
-                <th style="width: 20%;">Cược</th>
+                <th style="width: 14%;">Loại</th>
+                <th style="width: 18%;">Cược</th>
                 <th style="width: 25%;">Tiền</th>
                 <th style="width: 25%;">Tiền Trúng</th>
-                <th style="width: 15%;">Trúng</th>
+                <th style="width: 18%;">Trúng</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="cell-label">Đ</td>
-                <td><input type="text" class="table-input" id="input1" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResult(1)" /></td>
-                <td class="col-num"><span id="result1">0</span></td>
-                <td class="col-num"><span id="bonusResult1">0</span></td>
-                <td><input type="text" class="table-input" id="bonus1" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResult(1)" /></td>
+                <td class="cell-label">Đề</td>
+                <td><input type="text" class="table-input" id="input_de" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('de')" /></td>
+                <td class="col-num"><span id="result_de">0</span></td>
+                <td class="col-num"><span id="bonusResult_de">0</span></td>
+                <td><input type="text" class="table-input" id="bonus_de" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('de')" /></td>
               </tr>
               <tr>
-                <td class="cell-label">L</td>
-                <td><input type="text" class="table-input" id="input2" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResult(2)" /></td>
-                <td class="col-num"><span id="result2">0</span></td>
-                <td class="col-num"><span id="bonusResult2">0</span></td>
-                <td><input type="text" class="table-input" id="bonus2" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResult(2)" /></td>
+                <td class="cell-label">Lô</td>
+                <td><input type="text" class="table-input" id="input_lo" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('lo')" /></td>
+                <td class="col-num"><span id="result_lo">0</span></td>
+                <td class="col-num"><span id="bonusResult_lo">0</span></td>
+                <td><input type="text" class="table-input" id="bonus_lo" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('lo')" /></td>
               </tr>
               <tr>
-                <td class="cell-label">X</td>
-                <td><input type="text" class="table-input" id="input3" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResult(3)" /></td>
-                <td class="col-num"><span id="result3">0</span></td>
-                <td class="col-num"><span id="bonusResult3">0</span></td>
-                <td><input type="text" class="table-input" id="bonus3" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResult(3)" /></td>
+                <td class="cell-label">Xiên 2</td>
+                <td><input type="text" class="table-input" id="input_x2" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('x2')" /></td>
+                <td class="col-num"><span id="result_x2">0</span></td>
+                <td class="col-num"><span id="bonusResult_x2">0</span></td>
+                <td><input type="text" class="table-input" id="bonus_x2" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('x2')" /></td>
               </tr>
               <tr>
-                <td class="cell-label">C</td>
-                <td><input type="text" class="table-input" id="input4" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResult(4)" /></td>
-                <td class="col-num"><span id="result4">0</span></td>
-                <td class="col-num"><span id="bonusResult4">0</span></td>
-                <td><input type="text" class="table-input" id="bonus4" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResult(4)" /></td>
+                <td class="cell-label">Xiên 3</td>
+                <td><input type="text" class="table-input" id="input_x3" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('x3')" /></td>
+                <td class="col-num"><span id="result_x3">0</span></td>
+                <td class="col-num"><span id="bonusResult_x3">0</span></td>
+                <td><input type="text" class="table-input" id="bonus_x3" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('x3')" /></td>
+              </tr>
+              <tr>
+                <td class="cell-label">Xiên 4</td>
+                <td><input type="text" class="table-input" id="input_x4" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('x4')" /></td>
+                <td class="col-num"><span id="result_x4">0</span></td>
+                <td class="col-num"><span id="bonusResult_x4">0</span></td>
+                <td><input type="text" class="table-input" id="bonus_x4" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('x4')" /></td>
+              </tr>
+              <tr>
+                <td class="cell-label">3 Càng</td>
+                <td><input type="text" class="table-input" id="input_c3" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('c3')" /></td>
+                <td class="col-num"><span id="result_c3">0</span></td>
+                <td class="col-num"><span id="bonusResult_c3">0</span></td>
+                <td style="padding: 2px 4px;">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 3px;">
+                    <input type="text" class="table-input" id="bonus_c3" value="0" placeholder="Chính" title="Số tiền gốc trúng Chính diện" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('c3')" />
+                    <span id="bonus_c3apma_wrap" style="display: none; align-items: center; gap: 3px;">
+                      <span style="color: #4b5563; font-weight: bold; font-size: 11px; white-space: nowrap;">/ Áp:</span>
+                      <input type="text" class="table-input" style="width: 44px; font-size: 12px; padding: 0 2px;" id="bonus_c3apma" value="0" placeholder="Áp má" title="Số tiền gốc trúng Áp má" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResultRow('c3')" />
+                    </span>
+                  </div>
+                </td>
               </tr>
               <tr class="row-summary">
                 <td class="cell-label">Thầu</td>
@@ -558,25 +893,49 @@
           </table>
         </div>
 
-        <!-- Khung thiết lập giá / tỷ lệ Đ, L, X, C -->
+        <!-- Khung thiết lập giá & thưởng (Đề, Lô, Xiên 2, 3, 4, 3 Càng Chính diện, Áp má) -->
         <div class="rate-card">
-          <div class="rate-card-header">Cài đặt giá</div>
+          <div class="rate-card-header">Cài đặt giá & thưởng</div>
           <div class="rate-card-body">
-            <div class="rate-row">
-              <label for="percentage1">Đ:</label>
-              <input type="text" class="rate-input" id="percentage1" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResult(1)" />
+            <div class="rate-table-header">
+              <span class="th-label">Loại</span>
+              <span class="th-val">Giá</span>
+              <span class="th-val">Thưởng</span>
             </div>
             <div class="rate-row">
-              <label for="percentage2">L:</label>
-              <input type="text" class="rate-input" id="percentage2" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResult(2)" />
+              <label for="price_de">Đề:</label>
+              <input type="text" class="rate-input" id="price_de" value="88" placeholder="Giá %" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('de')" />
+              <input type="text" class="rate-input" id="payout_de" value="80" placeholder="Thưởng" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('de')" />
             </div>
             <div class="rate-row">
-              <label for="percentage3">X:</label>
-              <input type="text" class="rate-input" id="percentage3" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResult(3)" />
+              <label for="price_lo">Lô:</label>
+              <input type="text" class="rate-input" id="price_lo" value="21.9" placeholder="Giá vốn" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('lo')" />
+              <input type="text" class="rate-input" id="payout_lo" value="80" placeholder="Thưởng" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('lo')" />
             </div>
             <div class="rate-row">
-              <label for="percentage4">C:</label>
-              <input type="text" class="rate-input" id="percentage4" value="0" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="calculateResult(4)" />
+              <label for="price_x2">Xiên 2:</label>
+              <input type="text" class="rate-input" id="price_x2" value="65" placeholder="Giá %" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('x2')" />
+              <input type="text" class="rate-input" id="payout_x2" value="11" placeholder="Thưởng" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('x2')" />
+            </div>
+            <div class="rate-row">
+              <label for="price_x3">Xiên 3:</label>
+              <input type="text" class="rate-input" id="price_x3" value="65" placeholder="Giá %" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('x3')" />
+              <input type="text" class="rate-input" id="payout_x3" value="45" placeholder="Thưởng" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('x3')" />
+            </div>
+            <div class="rate-row">
+              <label for="price_x4">Xiên 4:</label>
+              <input type="text" class="rate-input" id="price_x4" value="65" placeholder="Giá %" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('x4')" />
+              <input type="text" class="rate-input" id="payout_x4" value="140" placeholder="Thưởng" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('x4')" />
+            </div>
+            <div class="rate-row">
+              <label for="price_c3">3 Càng:</label>
+              <input type="text" class="rate-input" id="price_c3" value="75" placeholder="Giá %" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('c3')" />
+              <input type="text" class="rate-input" id="payout_c3" value="400" placeholder="Thưởng chính" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('c3')" />
+            </div>
+            <div class="rate-row">
+              <label for="payout_c3apma">3C (Áp má):</label>
+              <span style="width: 82px; text-align: center; font-size: 11px; color: #6b7280; font-style: italic;">(dùng giá 3C)</span>
+              <input type="text" class="rate-input" id="payout_c3apma" value="5" placeholder="Thưởng áp má" onfocus="clearDefaultValue(this)" onblur="restoreDefaultValue(this)" oninput="onPriceConfigChange('c3')" />
             </div>
           </div>
           <div class="rate-card-footer">
@@ -597,15 +956,158 @@
       return cleanNum.toString();
     }
 
-    // Khởi tạo các giá trị mặc định cho bảng tính
-    function initializeDefaultValues() {
-      for (let i = 1; i <= 4; i++) {
-        document.getElementById(`result${i}`).textContent = "0";
-        document.getElementById(`bonusResult${i}`).textContent = "0";
+    // Biến lưu trạng thái cược hiện tại để cập nhật số tiền -/+ khi đổi giá
+    window.currentBetState = {
+      betSums: { de: 0, lo: 0, x2: 0, x3: 0, x4: 0, c3: 0, xien: 0, bacang: 0 },
+      winAmounts: { de: 0, lo: 0, x2: 0, x3: 0, x4: 0, c3: 0, c3_chinh: 0, c3_apma: 0, xien: 0, bacang: 0 },
+      transferSums: { de: 0, lo: 0, x2: 0, x3: 0, x4: 0, c3: 0, xien: 0, bacang: 0 },
+      transferWinAmounts: { de: 0, lo: 0, x2: 0, x3: 0, x4: 0, c3: 0, c3_chinh: 0, c3_apma: 0, xien: 0, bacang: 0 },
+      retainSums: { de: 0, lo: 0, x2: 0, x3: 0, x4: 0, c3: 0, xien: 0, bacang: 0 },
+      retainWinAmounts: { de: 0, lo: 0, x2: 0, x3: 0, x4: 0, c3: 0, c3_chinh: 0, c3_apma: 0, xien: 0, bacang: 0 }
+    };
+
+    function getPriceConfig() {
+      return {
+        de: {
+          price: parseFloat(document.getElementById("price_de")?.value) || 0,
+          payout: parseFloat(document.getElementById("payout_de")?.value) || 0,
+          isPoint: false
+        },
+        lo: {
+          price: parseFloat(document.getElementById("price_lo")?.value) || 0,
+          payout: parseFloat(document.getElementById("payout_lo")?.value) || 0,
+          isPoint: true
+        },
+        x2: {
+          price: parseFloat(document.getElementById("price_x2")?.value) || 0,
+          payout: parseFloat(document.getElementById("payout_x2")?.value) || 0,
+          isPoint: false
+        },
+        x3: {
+          price: parseFloat(document.getElementById("price_x3")?.value) || 0,
+          payout: parseFloat(document.getElementById("payout_x3")?.value) || 0,
+          isPoint: false
+        },
+        x4: {
+          price: parseFloat(document.getElementById("price_x4")?.value) || 0,
+          payout: parseFloat(document.getElementById("payout_x4")?.value) || 0,
+          isPoint: false
+        },
+        c3: {
+          price: parseFloat(document.getElementById("price_c3")?.value) || 0,
+          payout: parseFloat(document.getElementById("payout_c3")?.value) || 0,
+          payout_apma: parseFloat(document.getElementById("payout_c3apma")?.value) || 0,
+          isPoint: false
+        }
+      };
+    }
+
+    function calcCategoryNet(cuocObj, winObj) {
+      if (!cuocObj || !winObj) return 0;
+      const cfg = getPriceConfig();
+      const keys = ['de', 'lo', 'x2', 'x3', 'x4', 'c3'];
+      let totalXac = 0;
+      let totalTrung = 0;
+
+      keys.forEach(k => {
+        const cVal = (cuocObj[k] || 0);
+        const itemCfg = cfg[k];
+        if (!itemCfg) return;
+
+        if (itemCfg.isPoint) {
+          totalXac += cVal * itemCfg.price;
+        } else {
+          totalXac += (cVal * itemCfg.price) / 100;
+        }
+
+        if (k === 'c3') {
+          const chinhVal = (winObj.c3_chinh !== undefined) ? winObj.c3_chinh : 0;
+          const apmaVal = (winObj.c3_apma !== undefined) ? winObj.c3_apma : 0;
+          if (chinhVal > 0 || apmaVal > 0) {
+            totalTrung += (chinhVal * itemCfg.payout) + (apmaVal * itemCfg.payout_apma);
+          } else {
+            const wVal = (winObj[k] || 0);
+            totalTrung += wVal * itemCfg.payout;
+          }
+        } else {
+          const wVal = (winObj[k] || 0);
+          totalTrung += wVal * itemCfg.payout;
+        }
+      });
+
+      return totalXac - totalTrung;
+    }
+
+    // Hàm làm tròn chuẩn theo nguyên tắc số thập phân (thành số nguyên: >= 0.5 làm tròn lên, < 0.5 làm tròn xuống)
+    function roundStandard(val) {
+      if (isNaN(val) || val === null || val === undefined) return 0;
+      const sign = val < 0 ? -1 : 1;
+      return sign * Math.round(Math.abs(val));
+    }
+
+    function formatNetBalance(val) {
+      const rounded = roundStandard(val);
+      if (rounded > 0) {
+        return `<span style="color: #059669; font-weight: 700;">+${rounded.toString()}</span>`;
+      } else if (rounded < 0) {
+        return `<span class="win-num">${rounded.toString()}</span>`;
+      } else {
+        return `<span>0</span>`;
       }
-      document.getElementById('total').textContent = "0";
-      document.getElementById('bonusTotal').textContent = "0";
-      document.getElementById('finalResult').textContent = "0";
+    }
+
+    function updateSummaryCardHeaders() {
+      if (!window.currentBetState) return;
+      const { betSums, winAmounts, transferSums, transferWinAmounts, retainSums, retainWinAmounts } = window.currentBetState;
+
+      const netBet = calcCategoryNet(betSums, winAmounts);
+      const netTransfer = calcCategoryNet(transferSums, transferWinAmounts);
+      const netRetain = calcCategoryNet(retainSums, retainWinAmounts);
+
+      const sumBetTotalEl = document.getElementById("sumBetTotal");
+      const sumTransferTotalEl = document.getElementById("sumTransferTotal");
+      const sumRetainTotalEl = document.getElementById("sumRetainTotal");
+
+      if (sumBetTotalEl) sumBetTotalEl.innerHTML = formatNetBalance(netBet);
+      if (sumTransferTotalEl) sumTransferTotalEl.innerHTML = formatNetBalance(netTransfer);
+      if (sumRetainTotalEl) sumRetainTotalEl.innerHTML = formatNetBalance(netRetain);
+    }
+
+    // Hàm ẩn/hiện ô Áp má của 3 Càng: chỉ hiện khi có tiền trúng áp má > 0
+    function updateBonusC3Visibility() {
+      const apmaVal = parseFloat(document.getElementById("bonus_c3apma")?.value) || 0;
+      const wrap = document.getElementById("bonus_c3apma_wrap");
+      const inC3 = document.getElementById("bonus_c3");
+      if (wrap && inC3) {
+        if (apmaVal > 0) {
+          wrap.style.display = "inline-flex";
+          inC3.style.width = "44px";
+        } else {
+          wrap.style.display = "none";
+          inC3.style.width = "80px";
+        }
+      }
+    }
+
+    // Khởi tạo các giá trị mặc định cho bảng tính
+    const BET_ROW_KEYS = ['de', 'lo', 'x2', 'x3', 'x4', 'c3'];
+    function initializeDefaultValues() {
+      BET_ROW_KEYS.forEach(k => {
+        const rEl = document.getElementById(`result_${k}`);
+        const bEl = document.getElementById(`bonusResult_${k}`);
+        if (rEl) rEl.textContent = "0";
+        if (bEl) bEl.textContent = "0";
+      });
+      const b3ApmaEl = document.getElementById('bonus_c3apma');
+      if (b3ApmaEl) b3ApmaEl.value = "0";
+      const tEl = document.getElementById('total');
+      const btEl = document.getElementById('bonusTotal');
+      const frEl = document.getElementById('finalResult');
+      if (tEl) tEl.textContent = "0";
+      if (btEl) btEl.textContent = "0";
+      if (frEl) frEl.textContent = "0";
+      updateBonusC3Visibility();
+      updateSummaryCardHeaders();
     }
 
     initializeDefaultValues();
@@ -1042,6 +1544,7 @@
         xien3: [],
         xien4: [],
         bacang: [],
+        ordered_items: [],
         invalid_items: []
       };
 
@@ -1127,6 +1630,7 @@
           if (lineType === 'xien') {
             if (validNumbers.length >= 2 && validNumbers.length <= 4) {
               parsedBets[`xien${validNumbers.length}`].push({ numbers: validNumbers, amount: amt });
+              parsedBets.ordered_items.push({ type: 'xien', number: validNumbers.join('-'), amount: amt });
             } else {
               parsedBets.invalid_items.push(validNumbers.join('.'));
             }
@@ -1146,6 +1650,7 @@
                 if (validNumbers.length >= kLen) {
                   combos(validNumbers, kLen).forEach(c => {
                     parsedBets[`xien${kLen}`].push({ numbers: c, amount: amt });
+                    parsedBets.ordered_items.push({ type: 'xien', number: c.join('-'), amount: amt });
                   });
                 }
               });
@@ -1153,6 +1658,7 @@
           } else {
             for (let idx = 0; idx < validNumbers.length; idx++) {
               parsedBets[lineType].push({ number: validNumbers[idx], amount: amt });
+              parsedBets.ordered_items.push({ type: lineType, number: validNumbers[idx], amount: amt });
             }
           }
         }
@@ -1168,21 +1674,36 @@
       return parsedBets;
     }
 
-    // TÍNH TỔNG SỐ CƯỢC & SO KHỚP KẾT QUẢ 27 GIẢI
+    // TÍNH TỔNG SỐ CƯỢC & SO KHỚP KẾT QUẢ 27 GIẢI (PHÂN BIỆT RẠCH RÒI TỪNG LOẠI HÌNH Ở CẢ 3 CỘT)
     function calculateSum() {
       const numbersInput = document.getElementById("numbers").value;
       const customShortcuts = getCustomShortcuts();
       const parsedData = parseCombinedInput(numbersInput, customShortcuts);
 
-      const sums = {};
-      const processedNumbers = [];
+      // Cấu trúc phân loại riêng biệt cho các loại hình
+      const categories = {
+        de: { label: "ĐỀ", short: "Đ", sums: {}, processed: [], total: 0 },
+        lo: { label: "LÔ", short: "L", sums: {}, processed: [], total: 0 },
+        bacang: { label: "3 CÀNG", short: "C", sums: {}, processed: [], total: 0 },
+        xien: { label: "XIÊN", short: "X", sums: {}, processed: [], total: 0 }
+      };
 
-      // 1. Tổng hợp cược Đề
-      let sumDe = 0;
+      // Cược chi tiết cho từng loại hình phục vụ bảng cược: de, lo, x2, x3, x4, c3
+      const subBets = {
+        de: 0,
+        lo: 0,
+        x2: 0,
+        x3: 0,
+        x4: 0,
+        c3: 0
+      };
+
+      // 1. Phân loại cược Đề
       parsedData.de.forEach(item => {
-        sums[item.number] = (sums[item.number] || 0) + item.amount;
-        sumDe += item.amount;
-        processedNumbers.push({
+        categories.de.sums[item.number] = (categories.de.sums[item.number] || 0) + item.amount;
+        categories.de.total += item.amount;
+        subBets.de += item.amount;
+        categories.de.processed.push({
           type: 'de',
           number: item.number,
           amount: item.amount,
@@ -1190,12 +1711,12 @@
         });
       });
 
-      // 2. Tổng hợp cược Lô
-      let sumLo = 0;
+      // 2. Phân loại cược Lô
       parsedData.lo.forEach(item => {
-        sums[item.number] = (sums[item.number] || 0) + item.amount;
-        sumLo += item.amount;
-        processedNumbers.push({
+        categories.lo.sums[item.number] = (categories.lo.sums[item.number] || 0) + item.amount;
+        categories.lo.total += item.amount;
+        subBets.lo += item.amount;
+        categories.lo.processed.push({
           type: 'lo',
           number: item.number,
           amount: item.amount,
@@ -1203,12 +1724,12 @@
         });
       });
 
-      // 3. Tổng hợp 3 Càng
-      let sum3C = 0;
+      // 3. Phân loại cược 3 Càng (chỉ tính 1 lần cược cho 3C)
       parsedData.bacang.forEach(item => {
-        sums[item.number] = (sums[item.number] || 0) + item.amount;
-        sum3C += item.amount;
-        processedNumbers.push({
+        categories.bacang.sums[item.number] = (categories.bacang.sums[item.number] || 0) + item.amount;
+        categories.bacang.total += item.amount;
+        subBets.c3 += item.amount;
+        categories.bacang.processed.push({
           type: 'bacang',
           number: item.number,
           amount: item.amount,
@@ -1216,14 +1737,15 @@
         });
       });
 
-      // 4. Tổng hợp Xiên
-      let sumXien = 0;
+      // 4. Phân loại cược Xiên (xien2, xien3, xien4)
       ['xien2', 'xien3', 'xien4'].forEach(xKey => {
+        const subKey = xKey === 'xien2' ? 'x2' : (xKey === 'xien3' ? 'x3' : 'x4');
         parsedData[xKey].forEach(item => {
           const xStr = item.numbers.join('-');
-          sums[xStr] = (sums[xStr] || 0) + item.amount;
-          sumXien += item.amount;
-          processedNumbers.push({
+          categories.xien.sums[xStr] = (categories.xien.sums[xStr] || 0) + item.amount;
+          categories.xien.total += item.amount;
+          subBets[subKey] += item.amount;
+          categories.xien.processed.push({
             type: 'xien',
             number: xStr,
             amount: item.amount,
@@ -1232,100 +1754,434 @@
         });
       });
 
-      // Hiển thị danh sách kết quả (sắp xếp theo tiền cược giảm dần)
-      const resultDiv = document.getElementById("result");
-      resultDiv.innerHTML = "";
-      const sortedSums = Object.entries(sums).sort((a, b) => b[1] - a[1]);
-      sortedSums.forEach(([key, value]) => {
-        const div = document.createElement("div");
-        div.innerHTML = key + " = " + value;
-        resultDiv.appendChild(div);
-      });
-
-      // So khớp với 27 giải
+      // Đọc 27 giải xổ số
       const twentySevenNumbersInput = document.getElementById("twentySevenNumbers").value;
       const twentySevenNumbersArray = twentySevenNumbersInput.split(/\s+/).map(s => s.trim().toLowerCase()).filter(Boolean);
-      const matchingNumbers = {};
-      let matchingSum = 0;
 
-      for (let i = 0; i < twentySevenNumbersArray.length; i++) {
-        const number = twentySevenNumbersArray[i];
-        if (sums.hasOwnProperty(number)) {
-          matchingNumbers[number] = (matchingNumbers[number] || 0) + 1;
-          matchingSum += sums[number];
-        }
-      }
+      // Nhận diện giải Đặc biệt (phần tử đầu tiên hoặc có độ dài >= 5)
+      const specialPrize = twentySevenNumbersArray.length > 0 ? twentySevenNumbersArray[0] : "";
+      const specialLast2 = specialPrize.length >= 2 ? specialPrize.slice(-2) : "";
+      const specialLast3 = specialPrize.length >= 3 ? specialPrize.slice(-3) : "";
 
-      // Đánh dấu số trúng trên danh sách kết quả
-      const resultDivs = resultDiv.getElementsByTagName("div");
-      for (let i = 0; i < resultDivs.length; i++) {
-        const resultNumber = resultDivs[i].textContent.split(" = ")[0].trim();
-        if (matchingNumbers.hasOwnProperty(resultNumber)) {
-          resultDivs[i].classList.add("matching-number");
-          if (matchingNumbers[resultNumber] > 1) {
-            resultDivs[i].textContent += " (" + matchingNumbers[resultNumber] + " nhay)";
+      // ==========================================
+      // CỘT 1: KẾT QUẢ (PHÂN BIỆT THEO LOẠI HÌNH)
+      // ==========================================
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "";
+
+      let grandTotalBet = 0;
+      let grandTotalWin = 0;
+      const winAmounts = { de: 0, lo: 0, bacang: 0, xien: 0 };
+      const subWins = { de: 0, lo: 0, x2: 0, x3: 0, x4: 0, c3: 0, c3_chinh: 0, c3_apma: 0 };
+      const summaryBadges = [];
+      const catOrder = ['de', 'lo', 'bacang', 'xien'];
+
+      catOrder.forEach(catKey => {
+        const cat = categories[catKey];
+        const entries = Object.entries(cat.sums).sort((a, b) => b[1] - a[1]);
+        if (entries.length === 0) return;
+
+        grandTotalBet += cat.total;
+        summaryBadges.push(`${cat.label}: ${entries.length} con (${cat.total.toLocaleString("vi-VN")})`);
+
+        const catBlock = document.createElement("div");
+        catBlock.className = "category-block";
+
+        const badge = document.createElement("div");
+        badge.className = "category-header-badge";
+        badge.textContent = `── ${cat.label} (${entries.length} con - ${cat.total.toLocaleString("vi-VN")}) ──`;
+        catBlock.appendChild(badge);
+
+        entries.forEach(([num, amt]) => {
+          const div = document.createElement("div");
+          div.textContent = `${num} = ${amt}`;
+
+          // So giải trúng: Lô tính theo số lần xuất hiện (nháy); Đề, 3 Càng, Xiên chỉ trúng tối đa 1 lần
+          let hits = 0;
+          if (catKey === 'lo') {
+            hits = twentySevenNumbersArray.filter(prize => prize === num || prize.endsWith(num)).length;
+            if (hits > 0) subWins.lo += amt * hits;
+          } else if (catKey === 'xien') {
+            const parts = num.split('-');
+            if (parts.length > 0 && parts.every(p => twentySevenNumbersArray.some(prize => prize === p || prize.endsWith(p)))) {
+              hits = 1;
+              const xKey = parts.length === 2 ? 'x2' : (parts.length === 3 ? 'x3' : 'x4');
+              subWins[xKey] += amt;
+            }
+          } else if (catKey === 'bacang') {
+            // 3 Càng: Kiểm tra Chính diện và Áp má theo giải Đặc biệt (chỉ tính 1 lần cược)
+            let isChinh = false;
+            let isApMa = false;
+            if (specialLast3 && num === specialLast3) {
+              isChinh = true;
+              subWins.c3_chinh += amt;
+              subWins.c3 += amt;
+            } else if (specialLast2 && num.slice(-2) === specialLast2) {
+              isApMa = true;
+              subWins.c3_apma += amt;
+              subWins.c3 += amt;
+            }
+
+            const hasHit = isChinh || isApMa;
+            hits = hasHit ? 1 : 0;
+            if (isChinh) {
+              div.textContent += " (Chính diện)";
+            } else if (isApMa) {
+              div.textContent += " (Áp má)";
+            }
+          } else {
+            // Đề chỉ trúng tối đa 1 lần
+            const hasHit = twentySevenNumbersArray.some(prize => prize === num || prize.endsWith(num));
+            hits = hasHit ? 1 : 0;
+            if (hits > 0) subWins.de += amt;
           }
+
+          if (hits > 0) {
+            div.classList.add("matching-number");
+            if (hits > 1 && catKey === 'lo') {
+              div.textContent += ` (${hits} nháy)`;
+            }
+            const winVal = amt * hits;
+            grandTotalWin += winVal;
+            winAmounts[catKey] += winVal;
+          }
+
+          catBlock.appendChild(div);
+        });
+
+        resultDiv.appendChild(catBlock);
+      });
+
+      // Cập nhật số con của từng loại hình tại header cột Kết quả (span#totalSum)
+      const resCounts = [];
+      if (Object.keys(categories.de.sums).length > 0) resCounts.push(`Đ: ${Object.keys(categories.de.sums).length}`);
+      if (Object.keys(categories.lo.sums).length > 0) resCounts.push(`L: ${Object.keys(categories.lo.sums).length}`);
+      if (Object.keys(categories.bacang.sums).length > 0) resCounts.push(`C: ${Object.keys(categories.bacang.sums).length}`);
+      if (Object.keys(categories.xien.sums).length > 0) resCounts.push(`X: ${Object.keys(categories.xien.sums).length}`);
+      document.getElementById("totalSum").textContent = resCounts.length > 0 ? resCounts.join(" | ") : "0";
+
+      // ==========================================
+      // CỘT 2: CHUYỂN (PHÂN BIỆT THEO LOẠI HÌNH)
+      // ==========================================
+      const retainCats = ['de', 'lo', 'xien', 'bacang'];
+      const retainConfig = {};
+      retainCats.forEach(k => {
+        retainConfig[k] = {
+          val: parseFloat(document.getElementById(`retainVal_${k}`)?.value) || 0,
+          type: document.getElementById(`retainType_${k}`)?.value || "money",
+          max: parseFloat(document.getElementById(`retainMax_${k}`)?.value) || 0
+        };
+      });
+
+      let modifiedHtml = "";
+      let grandTotalTransfer = 0;
+      const transferCounts = [];
+      const transferSums = { de: 0, lo: 0, xien: 0, bacang: 0 };
+      const transferWinAmounts = { de: 0, lo: 0, xien: 0, bacang: 0 };
+      const subTransferBets = { de: 0, lo: 0, x2: 0, x3: 0, x4: 0, c3: 0 };
+      const subTransferWins = { de: 0, lo: 0, x2: 0, x3: 0, x4: 0, c3: 0, c3_chinh: 0, c3_apma: 0 };
+      const catPrefixMap = {
+        de: 'ĐỀ ',
+        lo: 'LÔ ',
+        bacang: '3c ',
+        xien: 'Xiên '
+      };
+      const transferExportLines = [];
+
+      catOrder.forEach(catKey => {
+        const cat = categories[catKey];
+        const entries = Object.entries(cat.sums).sort((a, b) => b[1] - a[1]);
+        if (entries.length === 0) return;
+
+        const cfg = retainConfig[catKey] || { val: 0, type: "money", max: 0 };
+        const catTransferLines = [];
+        const catTransferHtmlItems = [];
+        let catTransferSum = 0;
+
+        entries.forEach(([num, amt]) => {
+          let retained = 0;
+          if (cfg.type === "money") {
+            retained = Math.min(amt, cfg.val);
+          } else if (cfg.type === "percentage") {
+            retained = amt * (cfg.val / 100);
+          }
+
+          // Giới hạn giữ lại tối đa cho 1 con (nếu có đặt max > 0)
+          if (cfg.max > 0 && retained > cfg.max) {
+            retained = cfg.max;
+          }
+
+          let modSum = amt - retained;
+
+          if (modSum >= 1) {
+            const roundedMod = Math.trunc(modSum);
+            catTransferLines.push(`${num}x${roundedMod}`);
+            catTransferSum += roundedMod;
+
+            if (catKey === 'de') subTransferBets.de += roundedMod;
+            else if (catKey === 'lo') subTransferBets.lo += roundedMod;
+            else if (catKey === 'bacang') {
+              subTransferBets.c3 += roundedMod;
+            } else if (catKey === 'xien') {
+              const pCount = num.split('-').length;
+              const subK = pCount === 2 ? 'x2' : (pCount === 3 ? 'x3' : 'x4');
+              subTransferBets[subK] += roundedMod;
+            }
+
+            // Kiểm tra số nháy trúng của con này để tính tiền trúng của phần chuyển
+            let hits = 0;
+            let isChinh = false;
+            let isApMa = false;
+            if (catKey === 'lo') {
+              hits = twentySevenNumbersArray.filter(prize => prize === num || prize.endsWith(num)).length;
+              if (hits > 0) subTransferWins.lo += roundedMod * hits;
+            } else if (catKey === 'xien') {
+              const parts = num.split('-');
+              if (parts.length > 0 && parts.every(p => twentySevenNumbersArray.some(prize => prize === p || prize.endsWith(p)))) {
+                hits = 1;
+                const subK = parts.length === 2 ? 'x2' : (parts.length === 3 ? 'x3' : 'x4');
+                subTransferWins[subK] += roundedMod;
+              }
+            } else if (catKey === 'bacang') {
+              if (specialLast3 && num === specialLast3) {
+                isChinh = true;
+                subTransferWins.c3_chinh += roundedMod;
+                subTransferWins.c3 += roundedMod;
+              } else if (specialLast2 && num.slice(-2) === specialLast2) {
+                isApMa = true;
+                subTransferWins.c3_apma += roundedMod;
+                subTransferWins.c3 += roundedMod;
+              }
+              const hasHit = isChinh || isApMa;
+              hits = hasHit ? 1 : 0;
+            } else {
+              // Đề chỉ trúng tối đa 1 lần
+              const hasHit = twentySevenNumbersArray.some(prize => prize === num || prize.endsWith(num));
+              hits = hasHit ? 1 : 0;
+              if (hits > 0) subTransferWins.de += roundedMod;
+            }
+
+            if (hits > 0) {
+              transferWinAmounts[catKey] += roundedMod * hits;
+              let extraText = '';
+              if (hits > 1 && catKey === 'lo') {
+                extraText = ` (${hits} nháy)`;
+              } else if (catKey === 'bacang') {
+                if (isChinh) extraText = ' (Chính diện)';
+                else if (isApMa) extraText = ' (Áp má)';
+              }
+              catTransferHtmlItems.push(`<div class="matching-number">${num}x${roundedMod}${extraText}</div>`);
+            } else {
+              catTransferHtmlItems.push(`<div>${num}x${roundedMod}</div>`);
+            }
+          }
+        });
+
+        transferSums[catKey] = catTransferSum;
+
+        if (catTransferLines.length > 0) {
+          grandTotalTransfer += catTransferSum;
+          transferCounts.push(`${cat.short.toUpperCase()}: ${catTransferLines.length}`);
+          modifiedHtml += `<div class="category-header-badge">── ${cat.label} (chuyển ${catTransferSum.toLocaleString("vi-VN")}) ──</div>`;
+          modifiedHtml += catTransferHtmlItems.join("");
+
+          catTransferLines.forEach((line, idx) => {
+            if (idx === 0) {
+              transferExportLines.push(catPrefixMap[catKey] + line);
+            } else {
+              transferExportLines.push(line);
+            }
+          });
         }
+      });
+
+      window.transferExportText = transferExportLines.join("\n");
+      document.getElementById("modifiedResult").innerHTML = modifiedHtml;
+      // Cập nhật số con của từng loại hình tại header cột Chuyển (span#modifiedTotalSum)
+      document.getElementById("modifiedTotalSum").textContent = transferCounts.length > 0 ? transferCounts.join(" | ") : "0";
+
+      // ==========================================
+      // CẬP NHẬT THANH "TẤT CẢ" (HIỂN THỊ KIỂU: CƯỢC/TRÚNG CHO TỪNG LOẠI HÌNH Đ, L, X, C)
+      // ==========================================
+      const betSums = {
+        de: categories.de.total,
+        lo: categories.lo.total,
+        xien: categories.xien.total,
+        bacang: categories.bacang.total,
+        ...subBets
+      };
+
+      const transferSumsAll = {
+        ...transferSums,
+        ...subTransferBets
+      };
+
+      const winAmountsAll = {
+        ...winAmounts,
+        ...subWins
+      };
+
+      const transferWinAmountsAll = {
+        ...transferWinAmounts,
+        ...subTransferWins
+      };
+
+      const retainSums = {
+        de: Math.max(0, betSums.de - transferSums.de),
+        lo: Math.max(0, betSums.lo - transferSums.lo),
+        xien: Math.max(0, betSums.xien - transferSums.xien),
+        bacang: Math.max(0, betSums.bacang - transferSums.bacang),
+        x2: Math.max(0, subBets.x2 - subTransferBets.x2),
+        x3: Math.max(0, subBets.x3 - subTransferBets.x3),
+        x4: Math.max(0, subBets.x4 - subTransferBets.x4),
+        c3: Math.max(0, subBets.c3 - subTransferBets.c3)
+      };
+
+      const retainWinAmounts = {
+        de: Math.max(0, winAmounts.de - transferWinAmounts.de),
+        lo: Math.max(0, winAmounts.lo - transferWinAmounts.lo),
+        xien: Math.max(0, winAmounts.xien - transferWinAmounts.xien),
+        bacang: Math.max(0, winAmounts.bacang - transferWinAmounts.bacang),
+        x2: Math.max(0, subWins.x2 - subTransferWins.x2),
+        x3: Math.max(0, subWins.x3 - subTransferWins.x3),
+        x4: Math.max(0, subWins.x4 - subTransferWins.x4),
+        c3: Math.max(0, subWins.c3 - subTransferWins.c3),
+        c3_chinh: Math.max(0, subWins.c3_chinh - subTransferWins.c3_chinh),
+        c3_apma: Math.max(0, subWins.c3_apma - subTransferWins.c3_apma)
+      };
+
+      const totalBet = grandTotalBet;
+      const totalWin = grandTotalWin;
+
+      const totalTransfer = grandTotalTransfer;
+      const totalTransferWin = transferWinAmounts.de + transferWinAmounts.lo + transferWinAmounts.xien + transferWinAmounts.bacang;
+
+      const totalRetain = Math.max(0, totalBet - totalTransfer);
+      const totalRetainWin = Math.max(0, totalWin - totalTransferWin);
+
+      function renderCategoryLines(mainObj, winObj) {
+        const catDefs = [
+          { key: 'de', label: 'Đ' },
+          { key: 'lo', label: 'L' },
+          { key: 'xien', label: 'X' },
+          { key: 'bacang', label: 'C' }
+        ];
+        return catDefs.map(c => {
+          const mainVal = (mainObj[c.key] || 0).toLocaleString("vi-VN");
+          const winVal = winObj[c.key] || 0;
+          const winText = winVal > 0 ? `<span class="win-num">${winVal.toLocaleString("vi-VN")}</span>` : '0';
+          return `<div class="summary-line"><span>${c.label}:</span> <span>${mainVal}/${winText}</span></div>`;
+        }).join("");
       }
 
-      // Cập nhật tổng tiền cược và tổng trúng
-      const totalSum = Object.values(sums).reduce((a, b) => a + b, 0);
-      let totalSumText = totalSum.toLocaleString("vi-VN");
-      if (matchingSum > 0) {
-        totalSumText = totalSumText + "/" + matchingSum.toLocaleString("vi-VN");
-      }
-      document.getElementById("totalSum").textContent = totalSumText;
-      document.getElementById("numResults").textContent = sortedSums.length + " con";
+      // Lưu lại trạng thái cược hiện tại
+      window.currentBetState = {
+        betSums: betSums,
+        winAmounts: winAmountsAll,
+        transferSums: transferSumsAll,
+        transferWinAmounts: transferWinAmountsAll,
+        retainSums: retainSums,
+        retainWinAmounts: retainWinAmounts
+      };
 
-      // Cập nhật danh sách Chi tiết (inputList)
+      // 1. Cột CƯỢC
+      const sumBetDetailEl = document.getElementById("sumBetDetail");
+      if (sumBetDetailEl) sumBetDetailEl.innerHTML = renderCategoryLines(betSums, winAmounts);
+
+      // 2. Cột CHUYỂN
+      const sumTransferDetailEl = document.getElementById("sumTransferDetail");
+      if (sumTransferDetailEl) sumTransferDetailEl.innerHTML = renderCategoryLines(transferSums, transferWinAmounts);
+
+      // 3. Cột GIỮ LẠI
+      const sumRetainDetailEl = document.getElementById("sumRetainDetail");
+      if (sumRetainDetailEl) sumRetainDetailEl.innerHTML = renderCategoryLines(retainSums, retainWinAmounts);
+
+      // Cập nhật số tiền -/+ trên header của 3 cột
+      updateSummaryCardHeaders();
+
+      // ==========================================
+      // CỘT 3: CHI TIẾT (HIỂN THỊ THEO CHÍNH XÁC THỨ TỰ NHẬP VÀO)
+      // ==========================================
       const inputList = document.getElementById("inputList");
       inputList.innerHTML = "";
-      processedNumbers.forEach(item => {
+
+      const detailPrefixMap = {
+        de: 'Đề ',
+        lo: 'Lô ',
+        bacang: '3c ',
+        xien: 'Xiên '
+      };
+
+      (parsedData.ordered_items || []).forEach(item => {
         const li = document.createElement("li");
-        li.textContent = item.text;
-        const isMatch = (item.type === 'xien') ? false : twentySevenNumbersArray.includes(item.number);
-        if (isMatch) {
+        const prefix = detailPrefixMap[item.type] || '';
+        li.textContent = `${prefix}${item.number}x${item.amount}`;
+
+        // Kiểm tra trúng để tô đỏ và hiển thị mở ngoặc (Chính diện / Áp má / nháy)
+        let hits = 0;
+        let extraText = '';
+        if (item.type === 'lo') {
+          hits = twentySevenNumbersArray.filter(prize => prize === item.number || prize.endsWith(item.number)).length;
+          if (hits > 1) extraText = ` (${hits} nháy)`;
+        } else if (item.type === 'xien') {
+          const parts = item.number.split('-');
+          hits = (parts.length > 0 && parts.every(p => twentySevenNumbersArray.some(prize => prize === p || prize.endsWith(p)))) ? 1 : 0;
+        } else if (item.type === 'bacang') {
+          let isChinh = false;
+          let isApMa = false;
+          if (specialLast3 && item.number === specialLast3) {
+            isChinh = true;
+          } else if (specialLast2 && item.number.slice(-2) === specialLast2) {
+            isApMa = true;
+          }
+          hits = (isChinh || isApMa) ? 1 : 0;
+          if (isChinh) extraText = ' (Chính diện)';
+          else if (isApMa) extraText = ' (Áp má)';
+        } else {
+          // Đề chỉ trúng tối đa 1 lần
+          const hasHit = twentySevenNumbersArray.some(prize => prize === item.number || prize.endsWith(item.number));
+          hits = hasHit ? 1 : 0;
+        }
+
+        if (hits > 0) {
           li.classList.add("matching-number");
+          li.textContent += extraText;
         }
         inputList.appendChild(li);
       });
 
-      // Xử lý giữ lại & Chuyển
-      const retainNumber = document.getElementById("retainNumber").value;
-      const retainNumberInt = parseFloat(retainNumber) || 0;
-      const retainTypeEl = document.querySelector('input[name="retainType"]:checked');
-      const retainType = retainTypeEl ? retainTypeEl.value : "money";
-      let modifiedResultText = "";
-      let modifiedTotalSum = 0;
+      // ==========================================
+      // TỰ ĐỘNG ĐỒNG BỘ VÀO BẢNG TÍNH TIỀN CƯỢC 6 DÒNG (ĐỀ, LÔ, X2, X3, X4, 3 CÀNG)
+      // ==========================================
+      const hasAnyBet = categories.de.total > 0 || categories.lo.total > 0 || categories.xien.total > 0 || categories.bacang.total > 0;
+      if (hasAnyBet || grandTotalWin > 0) {
+        // Đồng bộ Cột Cược
+        const syncRow = (k, betVal, winVal) => {
+          const inEl = document.getElementById(`input_${k}`);
+          const bnEl = document.getElementById(`bonus_${k}`);
+          if (inEl) inEl.value = betVal;
+          if (bnEl) bnEl.value = winVal;
+        };
 
-      for (const key in sums) {
-        if (sums.hasOwnProperty(key)) {
-          let modifiedSum = 0;
-          if (retainType === "money") {
-            modifiedSum = sums[key] - retainNumberInt;
-          } else if (retainType === "percentage") {
-            const percentage = sums[key] * (retainNumberInt / 100);
-            modifiedSum = sums[key] - percentage;
-          }
-          if (modifiedSum >= 1) {
-            modifiedSum = Math.trunc(modifiedSum);
-            modifiedResultText += key + "x" + modifiedSum + "<br>";
-            modifiedTotalSum += modifiedSum;
-          }
-        }
-      }
-      document.getElementById("modifiedResult").innerHTML = modifiedResultText;
-      document.getElementById("modifiedTotalSum").textContent = modifiedTotalSum.toLocaleString("vi-VN");
+        syncRow('de', subBets.de, subWins.de);
+        syncRow('lo', subBets.lo, subWins.lo);
+        syncRow('x2', subBets.x2, subWins.x2);
+        syncRow('x3', subBets.x3, subWins.x3);
+        syncRow('x4', subBets.x4, subWins.x4);
 
-      // Tự động đồng bộ số tiền cược vào bảng tính tiền cược phía dưới nếu có phân loại
-      if (sumDe > 0 || sumLo > 0 || sumXien > 0 || sum3C > 0) {
-        if (sumDe > 0) document.getElementById("input1").value = sumDe;
-        if (sumLo > 0) document.getElementById("input2").value = sumLo;
-        if (sumXien > 0) document.getElementById("input3").value = sumXien;
-        if (sum3C > 0) document.getElementById("input4").value = sum3C;
-        for (let r = 1; r <= 4; r++) {
-          calculateResult(r);
-        }
+        // 3 Càng: Cược 1 ô, Trúng chia làm 2 ô (Chính diện và Áp má)
+        const inC3 = document.getElementById('input_c3');
+        const bnC3 = document.getElementById('bonus_c3');
+        const bnC3Apma = document.getElementById('bonus_c3apma');
+        if (inC3) inC3.value = subBets.c3;
+        if (bnC3) bnC3.value = subWins.c3_chinh;
+        if (bnC3Apma) bnC3Apma.value = subWins.c3_apma;
+        updateBonusC3Visibility();
+
+        // Tính toán lại toàn bộ bảng thanh toán
+        BET_ROW_KEYS.forEach(k => {
+          calculateResultRow(k);
+        });
       }
     }
 
@@ -1334,44 +2190,119 @@
       // Đã được tích hợp trọn vẹn và đồng bộ 100% trong calculateSum()
     }
 
-    // === TÍNH TOÁN BẢNG CƯỢC: CHÍNH XÁC, TUYỆT ĐỐI KHÔNG LÀM TRÒN SỐ NGUYÊN ===
-    function calculateResult(row) {
-      const input = parseFloat(document.getElementById(`input${row}`).value) || 0;
-      const bonus = parseFloat(document.getElementById(`bonus${row}`).value) || 0;
-      const percentageInput = document.getElementById(`percentage${row}`).value;
-      const percentage = parseFloat(percentageInput) || 0;
+    // Lưu và nạp Cài đặt giá & thưởng vào localStorage
+    function savePriceSettings() {
+      const cfg = {};
+      BET_ROW_KEYS.forEach(k => {
+        cfg[k] = {
+          price: document.getElementById(`price_${k}`)?.value || "0",
+          payout: document.getElementById(`payout_${k}`)?.value || "0"
+        };
+      });
+      cfg.c3apma = {
+        payout: document.getElementById("payout_c3apma")?.value || "5"
+      };
+      localStorage.setItem("bet_price_and_payout_settings_v2", JSON.stringify(cfg));
+    }
+
+    function loadPriceSettings() {
+      try {
+        const raw = localStorage.getItem("bet_price_and_payout_settings_v2");
+        if (raw) {
+          const cfg = JSON.parse(raw);
+          BET_ROW_KEYS.forEach(k => {
+            if (cfg[k]) {
+              const pEl = document.getElementById(`price_${k}`);
+              const pyEl = document.getElementById(`payout_${k}`);
+              if (pEl && cfg[k].price !== undefined) pEl.value = cfg[k].price;
+              if (pyEl && cfg[k].payout !== undefined) pyEl.value = cfg[k].payout;
+            }
+          });
+          if (cfg.c3apma && cfg.c3apma.payout !== undefined) {
+            const pyApmaEl = document.getElementById("payout_c3apma");
+            if (pyApmaEl) pyApmaEl.value = cfg.c3apma.payout;
+          }
+        }
+      } catch (e) {
+        console.error("Lỗi nạp cài đặt giá & thưởng:", e);
+      }
+    }
+
+    // Sự kiện khi người dùng sửa giá hoặc thưởng ở khung Cài đặt giá
+    function onPriceConfigChange(k) {
+      savePriceSettings();
+      calculateResultRow(k);
+      updateSummaryCardHeaders();
+    }
+
+    // === TÍNH TOÁN DÒNG CƯỢC CỤ THỂ TRONG BẢNG: ĐỀ, LÔ, X2, X3, X4, 3 CÀNG ===
+    function calculateResultRow(key) {
+      const input = parseFloat(document.getElementById(`input_${key}`)?.value) || 0;
+      const bonus = parseFloat(document.getElementById(`bonus_${key}`)?.value) || 0;
+      const priceVal = parseFloat(document.getElementById(`price_${key}`)?.value) || 0;
+      const payoutVal = parseFloat(document.getElementById(`payout_${key}`)?.value) || 0;
 
       let result = 0;
       let bonusResult = 0;
 
-      if (row === 3 || row === 4) {
-        // X, C: tính theo tỷ lệ trực tiếp
-        result = (input * percentage) / 100;
-        bonusResult = bonus;
+      if (key === 'lo') {
+        // Lô: tiền xác = điểm * giá vốn, tiền trúng = điểm trúng * thưởng
+        result = input * priceVal;
+        bonusResult = bonus * payoutVal;
+      } else if (key === 'c3') {
+        // 3 Càng: tiền xác = tiền cược * giá / 100 (tính 1 lần duy nhất)
+        result = (input * priceVal) / 100;
+        const bonusChinh = parseFloat(document.getElementById("bonus_c3")?.value) || 0;
+        const bonusApma = parseFloat(document.getElementById("bonus_c3apma")?.value) || 0;
+        const payoutApma = parseFloat(document.getElementById("payout_c3apma")?.value) || 0;
+        bonusResult = (bonusChinh * payoutVal) + (bonusApma * payoutApma);
       } else {
-        // Đ, L: tính tiền chính xác không làm tròn, trúng nhân 80
-        result = (input * percentage) / 100;
-        bonusResult = bonus * 80;
+        // Đề, Xiên: tiền xác = tiền cược * giá / 100, tiền trúng = tiền trúng * thưởng
+        result = (input * priceVal) / 100;
+        bonusResult = bonus * payoutVal;
       }
 
-      document.getElementById(`result${row}`).textContent = formatExact(result);
-      document.getElementById(`bonusResult${row}`).textContent = formatExact(bonusResult);
+      const rEl = document.getElementById(`result_${key}`);
+      const bEl = document.getElementById(`bonusResult_${key}`);
+      if (rEl) rEl.textContent = formatExact(result);
+      if (bEl) bEl.textContent = formatExact(bonusResult);
 
       calculateTotal();
       calculateFinalResult();
+      savePriceSettings();
+
+      if (key === 'c3') {
+        updateBonusC3Visibility();
+      }
+
+      if (window.currentBetState) {
+        if (window.currentBetState.betSums) window.currentBetState.betSums[key] = input;
+        if (window.currentBetState.winAmounts) {
+          if (key === 'c3') {
+            const bonusChinh = parseFloat(document.getElementById("bonus_c3")?.value) || 0;
+            const bonusApma = parseFloat(document.getElementById("bonus_c3apma")?.value) || 0;
+            window.currentBetState.winAmounts.c3_chinh = bonusChinh;
+            window.currentBetState.winAmounts.c3_apma = bonusApma;
+            window.currentBetState.winAmounts.c3 = bonusChinh + bonusApma;
+          } else {
+            window.currentBetState.winAmounts[key] = bonus;
+          }
+        }
+      }
+      updateSummaryCardHeaders();
     }
 
     function calculateTotal() {
       let total = 0;
       let bonusTotal = 0;
-      for (let i = 1; i <= 4; i++) {
-        const rEl = document.getElementById(`result${i}`);
-        const bEl = document.getElementById(`bonusResult${i}`);
+      BET_ROW_KEYS.forEach(k => {
+        const rEl = document.getElementById(`result_${k}`);
+        const bEl = document.getElementById(`bonusResult_${k}`);
         const rVal = parseFloat(rEl ? rEl.textContent : 0) || 0;
         const bVal = parseFloat(bEl ? bEl.textContent : 0) || 0;
         total += rVal;
         bonusTotal += bVal;
-      }
+      });
 
       document.getElementById('total').textContent = formatExact(total);
       document.getElementById('bonusTotal').textContent = formatExact(bonusTotal);
@@ -1382,7 +2313,7 @@
       const bonusTotal = parseFloat(document.getElementById('bonusTotal').textContent) || 0;
       const finalResult = total - bonusTotal;
 
-      document.getElementById('finalResult').textContent = formatExact(finalResult);
+      document.getElementById('finalResult').textContent = roundStandard(finalResult).toString();
     }
 
     // Quản lý giá trị mặc định cho ô nhập
@@ -1396,9 +2327,10 @@
       if (inputField.value.trim() === "") {
         inputField.value = "0";
       }
-      const match = inputField.id.match(/\d+/);
+      const match = inputField.id.match(/(?:input_|bonus_|price_|payout_)([a-z0-9]+)/);
       if (match) {
-        calculateResult(parseInt(match[0], 10));
+        const k = match[1] === 'c3apma' ? 'c3' : match[1];
+        calculateResultRow(k);
       }
     }
 
@@ -1422,7 +2354,14 @@
 
     // Sao chép kết quả chuyển
     function copyText() {
-      var textToCopy = document.getElementById("modifiedResult").innerText;
+      var textToCopy = window.transferExportText;
+      if (textToCopy === undefined || textToCopy === null || textToCopy.trim() === "") {
+        textToCopy = document.getElementById("modifiedResult").innerText.trim();
+      }
+      if (!textToCopy) {
+        alert("Chưa có danh sách chuyển để sao chép!");
+        return;
+      }
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(textToCopy)
           .then(function () {
@@ -1462,12 +2401,12 @@
       btn.disabled = true;
 
       try {
-        // Tạo container ẩn để render bảng cược tối ưu cho màn hình điện thoại (chiều rộng 400px)
+        // Tạo container ẩn để render bảng cược tối ưu cho màn hình điện thoại (chiều rộng 440px)
         const targetWrapper = document.createElement("div");
         targetWrapper.style.position = "fixed";
         targetWrapper.style.left = "-9999px";
         targetWrapper.style.top = "0";
-        targetWrapper.style.width = "400px";
+        targetWrapper.style.width = "440px";
         targetWrapper.style.background = "#ffffff";
         targetWrapper.style.padding = "16px";
         targetWrapper.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
@@ -1477,12 +2416,34 @@
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} - ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
 
-        const rows = [
-          { name: "Đ", cuoc: document.getElementById("input1").value, tien: document.getElementById("result1").textContent, trungTien: document.getElementById("bonusResult1").textContent, trung: document.getElementById("bonus1").value },
-          { name: "L", cuoc: document.getElementById("input2").value, tien: document.getElementById("result2").textContent, trungTien: document.getElementById("bonusResult2").textContent, trung: document.getElementById("bonus2").value },
-          { name: "X", cuoc: document.getElementById("input3").value, tien: document.getElementById("result3").textContent, trungTien: document.getElementById("bonusResult3").textContent, trung: document.getElementById("bonus3").value },
-          { name: "C", cuoc: document.getElementById("input4").value, tien: document.getElementById("result4").textContent, trungTien: document.getElementById("bonusResult4").textContent, trung: document.getElementById("bonus4").value }
+        const rowDefs = [
+          { key: "de", name: "Đề" },
+          { key: "lo", name: "Lô" },
+          { key: "x2", name: "Xiên 2" },
+          { key: "x3", name: "Xiên 3" },
+          { key: "x4", name: "Xiên 4" },
+          { key: "c3", name: "3 Càng" }
         ];
+
+        const rows = rowDefs.map(r => {
+          let trungStr = document.getElementById(`bonus_${r.key}`)?.value || "0";
+          if (r.key === 'c3') {
+            const c3Chinh = document.getElementById("bonus_c3")?.value || "0";
+            const c3Apma = parseFloat(document.getElementById("bonus_c3apma")?.value) || 0;
+            if (c3Apma > 0) {
+              trungStr = `${c3Chinh}/ Áp:${c3Apma}`;
+            } else {
+              trungStr = c3Chinh;
+            }
+          }
+          return {
+            name: r.name,
+            cuoc: document.getElementById(`input_${r.key}`)?.value || "0",
+            tien: document.getElementById(`result_${r.key}`)?.textContent || "0",
+            trungTien: document.getElementById(`bonusResult_${r.key}`)?.textContent || "0",
+            trung: trungStr
+          };
+        });
 
         const totalTien = document.getElementById("total").textContent;
         const bonusTotal = document.getElementById("bonusTotal").textContent;
@@ -1493,24 +2454,24 @@
             <div style="font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #111827;">BẢNG THANH TOÁN CƯỢC</div>
             <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">Thời gian: ${timeStr}</div>
           </div>
-          <table style="width: 100%; border-collapse: collapse; border: 1px solid #4b5563; font-size: 13px;">
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid #4b5563; font-size: 12px;">
             <thead>
               <tr style="background-color: #f3f4f6;">
-                <th style="border: 1px solid #4b5563; padding: 7px 4px; width: 45px; text-align: center; color: #111827;">Loại</th>
-                <th style="border: 1px solid #4b5563; padding: 7px 4px; width: 60px; text-align: center; color: #111827;">Cược</th>
-                <th style="border: 1px solid #4b5563; padding: 7px 6px; text-align: right; color: #111827;">Tiền</th>
-                <th style="border: 1px solid #4b5563; padding: 7px 6px; text-align: right; color: #111827;">Tiền Trúng</th>
-                <th style="border: 1px solid #4b5563; padding: 7px 4px; width: 55px; text-align: center; color: #111827;">Trúng</th>
+                <th style="border: 1px solid #4b5563; padding: 6px 4px; width: 85px; text-align: center; color: #111827;">Loại</th>
+                <th style="border: 1px solid #4b5563; padding: 6px 4px; width: 60px; text-align: center; color: #111827;">Cược</th>
+                <th style="border: 1px solid #4b5563; padding: 6px 6px; text-align: right; color: #111827;">Tiền</th>
+                <th style="border: 1px solid #4b5563; padding: 6px 6px; text-align: right; color: #111827;">Tiền Trúng</th>
+                <th style="border: 1px solid #4b5563; padding: 6px 4px; width: 55px; text-align: center; color: #111827;">Trúng</th>
               </tr>
             </thead>
             <tbody>
               ${rows.map(r => `
                 <tr>
-                  <td style="border: 1px solid #4b5563; padding: 6px 4px; text-align: center; font-weight: 700; background: #fafafa;">${r.name}</td>
-                  <td style="border: 1px solid #4b5563; padding: 6px 4px; text-align: center; font-weight: 600;">${r.cuoc}</td>
-                  <td style="border: 1px solid #4b5563; padding: 6px 6px; text-align: right; font-family: Consolas, monospace; font-weight: 600;">${r.tien}</td>
-                  <td style="border: 1px solid #4b5563; padding: 6px 6px; text-align: right; font-family: Consolas, monospace; font-weight: 700; color: ${parseFloat(r.trungTien) > 0 ? '#b91c1c' : '#111827'};">${r.trungTien}</td>
-                  <td style="border: 1px solid #4b5563; padding: 6px 4px; text-align: center; font-weight: 700; color: ${parseFloat(r.trung) > 0 ? '#b91c1c' : '#111827'};">${r.trung}</td>
+                  <td style="border: 1px solid #4b5563; padding: 5px 4px; text-align: center; font-weight: 700; background: #fafafa;">${r.name}</td>
+                  <td style="border: 1px solid #4b5563; padding: 5px 4px; text-align: center; font-weight: 600;">${r.cuoc}</td>
+                  <td style="border: 1px solid #4b5563; padding: 5px 6px; text-align: right; font-family: Consolas, monospace; font-weight: 600;">${r.tien}</td>
+                  <td style="border: 1px solid #4b5563; padding: 5px 6px; text-align: right; font-family: Consolas, monospace; font-weight: 700; color: ${parseFloat(r.trungTien) > 0 ? '#b91c1c' : '#111827'};">${r.trungTien}</td>
+                  <td style="border: 1px solid #4b5563; padding: 5px 4px; text-align: center; font-weight: 700; color: ${parseFloat(r.trung) > 0 ? '#b91c1c' : '#111827'};">${r.trung}</td>
                 </tr>
               `).join('')}
               <tr style="background-color: #f9fafb; font-weight: 700;">
@@ -1632,13 +2593,71 @@
         }
       });
 
-      // Ô giữ lại
-      const retainNumberInput = document.getElementById("retainNumber");
-      retainNumberInput.addEventListener("focus", function () {
-        if (retainNumberInput.value === "0") retainNumberInput.value = "";
-      });
-      retainNumberInput.addEventListener("blur", function () {
-        if (retainNumberInput.value.trim() === "") retainNumberInput.value = "0";
+      // Quản lý cài đặt Giữ lại (Lưu/Tải localStorage & Tự động cập nhật Chuyển)
+      const retainCats = ['de', 'lo', 'xien', 'bacang'];
+      function saveRetainSettings() {
+        const settings = {};
+        retainCats.forEach(k => {
+          settings[k] = {
+            val: document.getElementById(`retainVal_${k}`)?.value || "0",
+            type: document.getElementById(`retainType_${k}`)?.value || "money",
+            max: document.getElementById(`retainMax_${k}`)?.value || ""
+          };
+        });
+        localStorage.setItem("bet_retain_settings_v2", JSON.stringify(settings));
+      }
+
+      function loadRetainSettings() {
+        try {
+          const raw = localStorage.getItem("bet_retain_settings_v2");
+          if (raw) {
+            const settings = JSON.parse(raw);
+            retainCats.forEach(k => {
+              if (settings[k]) {
+                const valEl = document.getElementById(`retainVal_${k}`);
+                const typeEl = document.getElementById(`retainType_${k}`);
+                const maxEl = document.getElementById(`retainMax_${k}`);
+                if (valEl && settings[k].val !== undefined) valEl.value = settings[k].val;
+                if (typeEl && settings[k].type !== undefined) typeEl.value = settings[k].type;
+                if (maxEl && settings[k].max !== undefined) maxEl.value = settings[k].max;
+              }
+            });
+          }
+        } catch (e) {
+          console.error("Lỗi đọc retain settings:", e);
+        }
+      }
+
+      loadRetainSettings();
+
+      // Gán sự kiện cho các ô cài đặt giữ lại: lưu và tự động cập nhật Chuyển
+      retainCats.forEach(k => {
+        const valEl = document.getElementById(`retainVal_${k}`);
+        const typeEl = document.getElementById(`retainType_${k}`);
+        const maxEl = document.getElementById(`retainMax_${k}`);
+
+        [valEl, maxEl].forEach(inp => {
+          if (!inp) return;
+          inp.addEventListener("focus", function () {
+            if (this.value === "0") this.value = "";
+          });
+          inp.addEventListener("blur", function () {
+            if (this.id.startsWith("retainVal_") && this.value.trim() === "") this.value = "0";
+            saveRetainSettings();
+            calculateSum();
+          });
+          inp.addEventListener("input", function () {
+            saveRetainSettings();
+            calculateSum();
+          });
+        });
+
+        if (typeEl) {
+          typeEl.addEventListener("change", function () {
+            saveRetainSettings();
+            calculateSum();
+          });
+        }
       });
 
       // Nút tính tổng
@@ -1651,6 +2670,139 @@
       // Nút sao chép chuyển
       var clipboardButton = document.getElementById("copyButton");
       clipboardButton.addEventListener("click", copyText);
+
+      // Tự động lấy kết quả 27 giải Miền Bắc từ Minh Ngọc
+      async function fetchMinhNgocKQXS() {
+        const btn = document.getElementById("btnFetchMinhNgoc");
+        const statusEl = document.getElementById("minhngocStatus");
+        const originalText = btn ? btn.innerHTML : "🔄 Lấy KQ Minh Ngọc";
+
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = "⏳ Đang lấy...";
+        }
+        if (statusEl) {
+          statusEl.style.color = "#4b5563";
+          statusEl.textContent = "Đang kết nối tới Minh Ngọc...";
+        }
+
+        // Mini wrapper jQuery cho script của Minh Ngọc nếu chưa có
+        if (!window.$) {
+          window.$ = function (selector) {
+            const els = document.querySelectorAll(selector);
+            return {
+              html: function (str) {
+                els.forEach(el => el.innerHTML = str);
+                return this;
+              },
+              append: function (str) {
+                els.forEach(el => el.insertAdjacentHTML('beforeend', str));
+                return this;
+              },
+              css: function (prop, val) {
+                els.forEach(el => { if (el.style) el.style[prop] = val; });
+                return this;
+              }
+            };
+          };
+        }
+
+        let box = document.getElementById("box_kqxs_minhngoc");
+        if (!box) {
+          box = document.createElement("div");
+          box.id = "box_kqxs_minhngoc";
+          box.style.display = "none";
+          document.body.appendChild(box);
+        }
+        box.innerHTML = "";
+
+        const oldScript = document.getElementById("script_minhngoc_widget");
+        if (oldScript) oldScript.remove();
+
+        const loadScriptPromise = new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.id = "script_minhngoc_widget";
+          script.type = "text/javascript";
+          const timer = setTimeout(() => {
+            script.remove();
+            reject(new Error("Quá thời gian tải kết quả (5 giây)"));
+          }, 5000);
+
+          script.onload = () => {
+            clearTimeout(timer);
+            try {
+              const prizes = [];
+              const classList = ['giaidb', 'giai1', 'giai2', 'giai3', 'giai4', 'giai5', 'giai6', 'giai7'];
+              classList.forEach(cls => {
+                const els = box.querySelectorAll(`.${cls}`);
+                els.forEach(el => {
+                  const text = el.textContent || '';
+                  const nums = text.split(/[\s\-–—,.\n\r]+/).map(n => n.trim()).filter(n => n.length >= 2 && /^\d+$/.test(n));
+                  prizes.push(...nums);
+                });
+              });
+
+              if (prizes.length === 0) {
+                return reject(new Error("Chưa có kết quả hoặc không trích xuất được 27 giải."));
+              }
+
+              const dateEl = box.querySelector('.ngay');
+              const dateText = dateEl ? dateEl.textContent.trim().replace(/^ng[aà]y:\s*/i, '') : "";
+              resolve({ prizes, dateText });
+            } catch (err) {
+              reject(err);
+            }
+          };
+
+          script.onerror = () => {
+            clearTimeout(timer);
+            script.remove();
+            reject(new Error("Không kết nối được server Minh Ngọc."));
+          };
+
+          script.src = `https://www.minhngoc.net.vn/getkqxs/mien-bac.js?t=${Date.now()}`;
+          document.body.appendChild(script);
+        });
+
+        try {
+          const data = await loadScriptPromise;
+          const textarea = document.getElementById("twentySevenNumbers");
+          if (textarea) {
+            textarea.value = data.prizes.join(" ");
+          }
+
+          if (statusEl) {
+            statusEl.style.color = "#059669";
+            statusEl.textContent = `✓ Đã cập nhật đủ ${data.prizes.length} giải (${data.dateText ? 'Ngày ' + data.dateText : 'Miền Bắc'})`;
+          }
+
+          // Tự động tính toán lại và so khớp các giải trúng
+          calculateSum();
+          processInputNumbers();
+        } catch (err) {
+          console.error("Lỗi lấy KQXS Minh Ngọc:", err);
+          if (statusEl) {
+            statusEl.style.color = "#dc2626";
+            statusEl.textContent = `✗ ${err.message || "Lỗi khi lấy kết quả"}`;
+          }
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+          }
+        }
+      }
+
+      const btnFetchMinhNgoc = document.getElementById("btnFetchMinhNgoc");
+      if (btnFetchMinhNgoc) {
+        btnFetchMinhNgoc.addEventListener("click", fetchMinhNgocKQXS);
+      }
+
+      // Nạp cài đặt giá & thưởng từ localStorage và tính toán bảng cược
+      loadPriceSettings();
+      BET_ROW_KEYS.forEach(k => {
+        calculateResultRow(k);
+      });
 
       // Chạy tính toán ban đầu
       calculateSum();
