@@ -143,6 +143,16 @@ def update_config():
         current["bet_filter_enabled"] = bool(data["bet_filter_enabled"])
     if "bet_filter_keywords" in data:
         current["bet_filter_keywords"] = str(data["bet_filter_keywords"]).strip()
+    if "number_limit_enabled" in data:
+        current["number_limit_enabled"] = bool(data["number_limit_enabled"])
+    if "number_limit_scope" in data:
+        current["number_limit_scope"] = str(data["number_limit_scope"]).strip()
+    if "number_limit_global" in data:
+        current["number_limit_global"] = bool(data["number_limit_global"])
+    if "number_limit_client" in data:
+        current["number_limit_client"] = bool(data["number_limit_client"])
+    if "number_limit_rules" in data:
+        current["number_limit_rules"] = str(data["number_limit_rules"])
     if "cancel_detail_client" in data:
         current["cancel_detail_client"] = bool(data["cancel_detail_client"])
     if "cancel_detail_contractor" in data:
@@ -212,6 +222,13 @@ def update_config():
     safe_cfg = dict(bot_service.config)
     safe_cfg["has_admin_password"] = bool(safe_cfg.get("admin_password"))
     safe_cfg.pop("admin_password", None)
+    try:
+        from number_limits import parse_number_limit_rules
+        _rules, _errs = parse_number_limit_rules(safe_cfg.get("number_limit_rules", ""))
+        safe_cfg["number_limit_rule_count"] = len(_rules)
+        safe_cfg["number_limit_errors"] = _errs
+    except Exception:
+        pass
     return jsonify({"success": True, "config": safe_cfg})
 
 

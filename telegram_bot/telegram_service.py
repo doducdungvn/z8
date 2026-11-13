@@ -5,6 +5,7 @@ import time
 import threading
 import requests
 import re
+import html as _html
 from datetime import datetime, timezone, timedelta
 
 VN_TZ = timezone(timedelta(hours=7))
@@ -23,6 +24,11 @@ from bet_parser import (
     strip_accents
 )
 from balancer import BoardBalancer
+from number_limits import (
+    parse_number_limit_rules,
+    split_by_number_limits,
+    count_bets,
+)
 from lottery_engine import (
     DEFAULT_PRICE_CONFIG,
     fetch_xsmb,
@@ -114,6 +120,11 @@ class TelegramBotService:
                         cfg["forward_client_to_owner"] = False
                     if "bet_filter_enabled" not in cfg:
                         cfg["bet_filter_enabled"] = False
+                    # Tính năng: giới hạn tiền đánh theo con số (phần thừa trả lại khách)
+                    cfg.setdefault("number_limit_enabled", False)
+                    cfg.setdefault("number_limit_global", True)    # giới hạn tổng của cả bảng
+                    cfg.setdefault("number_limit_client", False)   # giới hạn riêng từng khách
+                    cfg.setdefault("number_limit_rules", "")
                     if "bot_filter_keywords" not in cfg:
                         cfg["bet_filter_keywords"] = ""
                     if "bot_mode" not in cfg:
@@ -154,6 +165,10 @@ class TelegramBotService:
             "forward_client_to_owner": False,     # Chuyển tiếp tin nhắn khách cược cho chủ bot
             "bet_filter_enabled": False,  # Bật/tắt bộ lọc cược cấm nhận
             "bet_filter_keywords": "",    # Từ khóa hoặc số cấm nhận
+            "number_limit_enabled": False,        # Bật giới hạn tiền theo con số
+            "number_limit_global": True,          # Giới hạn tổng của cả bảng
+            "number_limit_client": False,         # Giới hạn riêng từng khách
+            "number_limit_rules": "",             # Danh sách luật (xem number_limits.py)
             "cancel_detail_client": False,      # Kèm diễn giải con số cược khi nhắn hủy cho Khách
             "cancel_detail_contractor": False,  # Kèm diễn giải con số cược khi báo hủy cho Chủ thầu
             "ok_detail_client": False,          # Kèm diễn giải con số cược & giá tiền khi Ok tin cho Khách
@@ -1619,6 +1634,119 @@ class TelegramBotService:
         except Exception:
             pass
 
+    # ------------------------------------------------------------------
+    # FORWARD TIN BOT -> KHÁCH SANG CHỦ BOT (dùng chung ô forward_client_to_owner)
+    # ------------------------------------------------------------------
+    _MIRROR_SKIP_TAGS = {
+        "mirror", "transfer", "transfer_cancel", "owner_alert", "system_alert",
+        "daily_report", "recipient_settlement", "contractor_settlement",
+    }
+    _MIRROR_SKIP_COMMANDS = {
+        "mk", "/mk", "pass", "/pass", "login", "/login",
+        "matkhau", "/matkhau", "doimk", "/doimk",
+    }
+
+    def _chat_display_name(self, chat_id_str: str) -> str:
+        c = self.client_bets.get(chat_id_str) or {}
+        if c.get("name"):
+            return str(c["name"])
+        u = self.known_users.get(chat_id_str) or {}
+        if u.get("username"):
+            return f"@{u['username']}"
+        if u.get("first_name"):
+            return str(u["first_name"])
+        return chat_id_str
+
+    def _mirror_to_owner(self, direction: str, chat_id_str: str, text: str,
+                              tag: str = "", username: str = "", label: str = ""):
+        """Sao chép tin nhắn giữa bot và KHÁCH sang chủ bot (nếu bật cấu hình).
+        direction: 'in' (khách -> bot) hoặc 'out' (bot -> khách)."""
+        try:
+            if not self.config.get("forward_client_to_owner", False):
+                return
+            if not text or tag in self._MIRROR_SKIP_TAGS:
+                return
+            owner_id = str(self.get_owner_chat_id()).strip()
+            if not owner_id:
+                return
+            target = owner_id
+            contractor = str(self.config.get("target_recipient", "")).strip()
+            first = text.strip().split()[0].lower() if text.strip() else ""
+            if direction == "in" and (text.strip().startswith("/") or first in self._MIRROR_SKIP_COMMANDS):
+                return  # không bao giờ forward lệnh / mật khẩu
+
+            # Bỏ qua tin của chính chủ thầu, chủ bot và admin
+            cid = str(chat_id_str).strip()
+            if contractor:
+                c_cid, _ = self.resolve_recipient(contractor)
+                if cid == contractor.lstrip("@").lower() or (c_cid and cid == str(c_cid)):
+                    return  # chat với chủ thầu không phải hội thoại khách
+            if cid == owner_id or self.is_admin(cid, username):
+                return
+
+            name = label or self._chat_display_name(cid)
+            if direction == "in":
+                head = f"🔁 <b>[Khách → Bot]</b> {_html.escape(name)}"
+                body = _html.escape(text)
+            else:
+                head = f"🔁 <b>[Bot → Khách]</b> {_html.escape(name)}"
+                body = text
+            self.send_telegram_message(
+                target, f"{head}\n{body}", tag="mirror", force=True
+            )
+        except Exception as e:
+            self.log(f"Lỗi forward hội thoại sang chủ bot: {e}", "WARN")
+
+    # ------------------------------------------------------------------
+    # GIỚI HẠN TIỀN ĐÁNH THEO CON SỐ (phần thừa trả lại khách)
+    # ------------------------------------------------------------------
+    def _collect_limit_totals(self, chat_id_str: str) -> tuple[dict, dict]:
+        """Tổng tiền hiện có của cả bảng (glob) và của riêng khách này (cli), theo từng con số."""
+        glob = {
+            "de": dict(self.balancer.de_sums),
+            "lo": dict(self.balancer.lo_sums),
+            "bacang": dict(self.balancer.bacang_sums),
+            "xien": {},
+        }
+        for x in self.balancer.xien_bets:
+            key = "-".join(sorted(str(n).zfill(2) for n in x.get("numbers", [])))
+            glob["xien"][key] = glob["xien"].get(key, 0.0) + float(x.get("amount", 0))
+
+        c = self.client_bets.get(chat_id_str) or {}
+        cli = {
+            "de": dict(c.get("de", {})),
+            "lo": dict(c.get("lo", {})),
+            "bacang": dict(c.get("bacang", {})),
+            "xien": {},
+        }
+        for x in c.get("xien", []):
+            key = "-".join(sorted(str(n).zfill(2) for n in x.get("numbers", [])))
+            cli["xien"][key] = cli["xien"].get(key, 0.0) + float(x.get("amount", 0))
+        return glob, cli
+
+    def apply_number_limits(self, parsed: dict, chat_id_str: str):
+        """Áp hạn mức từng con số. Trả về (accepted, rejected_text).
+        rejected_text rỗng nếu không có gì bị trả lại."""
+        if not self.config.get("number_limit_enabled", False):
+            return parsed, ""
+        use_g = bool(self.config.get("number_limit_global", True))
+        use_c = bool(self.config.get("number_limit_client", False))
+        if not (use_g or use_c):
+            return parsed, ""
+        rules, errs = parse_number_limit_rules(self.config.get("number_limit_rules", ""))
+        for e in errs:
+            self.log(f"[Hạn mức số] {e}", "WARN")
+        if not rules:
+            return parsed, ""
+        glob, cli = self._collect_limit_totals(chat_id_str)
+        accepted, rejected = split_by_number_limits(parsed, rules, glob, cli, use_g, use_c)
+        if count_bets(rejected) == 0:
+            return parsed, ""
+        text = format_rejected_receipt(rejected)
+        if text:
+            text += " (vượt hạn mức)"
+        return accepted, text
+
     def send_telegram_message(self, recipient: str, text: str, track_for_cleanup: bool = False, tag: str = "outgoing", reply_markup: dict = None, force: bool = False) -> tuple[bool, str]:
         """Gửi tin nhắn qua Telegram Bot API. Trả về (thành công, thông điệp lỗi nếu có)"""
         rec_str = str(recipient).strip()
@@ -1680,6 +1808,10 @@ class TelegramBotService:
                 self.record_chat_message(str(sent_cid), "out", text, sender_name="Bot", tag=tag)
             except Exception:
                 pass
+
+            # Forward tin bot -> khách sang chủ bot (nếu bật)
+            if not is_owner_target:
+                self._mirror_to_owner("out", str(sent_cid), text, tag=tag)
 
             return True, ""
         except Exception as e:
@@ -3832,6 +3964,33 @@ class TelegramBotService:
                     parsed = accepted
                     summary = acc_summary
                     total_bets_count = acc_count
+
+        # 2c. Giới hạn tiền đánh theo con số: phần vượt hạn mức trả lại khách
+        limit_text = ""
+        if self.config.get("number_limit_enabled", False):
+            try:
+                limited, limit_text = self.apply_number_limits(parsed, str(chat_id))
+            except Exception as e:
+                limited, limit_text = parsed, ""
+                self.log(f"Lỗi kiểm tra hạn mức số: {e}", "ERROR")
+            if limit_text:
+                owner_cid = self.get_owner_chat_id()
+                parsed = limited
+                summary = parsed.get("summary", {})
+                total_bets_count = count_bets(parsed)
+                if total_bets_count == 0:
+                    # Toàn bộ vượt hạn mức -> trả lại hết, không tính tiền
+                    if user_msg_id and chat_id:
+                        self.track_message(chat_id, user_msg_id, tag="incoming_bet")
+                    self.send_telegram_message(str(chat_id), limit_text, track_for_cleanup=True, tag="rejected_receipt")
+                    self.log(f"Khách {sender_label}: {text} (Hạn mức số: {limit_text})", "WARN")
+                    if owner_cid and str(chat_id) != str(owner_cid):
+                        self.send_telegram_message(str(owner_cid), f"⚠️ [HẠN MỨC SỐ] Đã trả lại Khách {sender_label}:\n{limit_text}\n(Tin gốc: {text})", force=True, tag="owner_alert")
+                    return
+                self.log(f"Khách {sender_label}: {text} (Hạn mức số: {limit_text})", "INFO")
+                if owner_cid and str(chat_id) != str(owner_cid):
+                    self.send_telegram_message(str(owner_cid), f"⚠️ [HẠN MỨC SỐ] Khách {sender_label} bị trả lại một phần:\n{limit_text}\n(Tin gốc: {text})", force=True, tag="owner_alert")
+                filter_return_msg = f"{filter_return_msg}\n{limit_text}".strip() if filter_return_msg else limit_text
 
         # Lưu vết tin nhắn cược của khách để tự động xóa sau 24h
         if user_msg_id and chat_id:
